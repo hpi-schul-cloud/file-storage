@@ -1,0 +1,70 @@
+  - name: External Secret for Filestorage Server
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: filestorage-server-external-secret.yml.j2
+      state: "{{ 'present' if WITH_BRANCH_MONGO_DB_MANAGEMENT is defined and WITH_BRANCH_MONGO_DB_MANAGEMENT|bool else 'absent'}}"
+    when:
+     - EXTERNAL_SECRETS_OPERATOR is defined and EXTERNAL_SECRETS_OPERATOR|bool
+     - WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+     - 1password
+
+  - name: Filestorage server Secret (from 1Password)
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: onepassword.yml.j2
+    when:
+     - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
+     - WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+      - 1password
+
+  - name: Filestorage server configmap
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: configmap.yml.j2
+    when:
+      - ONEPASSWORD_OPERATOR is defined and ONEPASSWORD_OPERATOR|bool
+      - WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+      - configmap
+
+  - name: Filestorage server deployment
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: deployment.yml.j2
+      state: "{{ 'present' if WITH_FILESTORAGE else 'absent'}}"
+    tags:
+      - deployment
+
+  - name: Filestorage server service
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: server-svc.yml.j2
+    when: WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+      - service
+
+  - name: Filestorage server pod monitor
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: pod-monitor.yml.j2
+    when: WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+      - prometheus
+
+  - name: Filestorage ingress
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: ingress.yml.j2
+      apply: yes
+    when: WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+      - ingress
