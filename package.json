@@ -1,0 +1,24 @@
+{
+  "name": "file-storage",
+  "version": "0.0.1",
+  "description": "Filestorage for svs",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hpi-schul-cloud/file-storage.git"
+  },
+	"author": "Schulcloud-Verbund",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/hpi-schul-cloud/file-storage/issues"
+  },
+  "homepage": "https://github.com/hpi-schul-cloud/file-storage#readme",
+  "engines": {
+		"node": "22",
+		"npm": ">=9"
+	}
+}
