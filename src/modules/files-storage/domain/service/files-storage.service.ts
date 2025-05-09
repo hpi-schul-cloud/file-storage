@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { Counted, EntityId } from '@shared/domain/types';
 import FileType from 'file-type-cjs/file-type-cjs-index';
 import { PassThrough, Readable } from 'stream';
-import { ScanStatus } from '../../domain';
+import { ScanStatus } from '..';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';

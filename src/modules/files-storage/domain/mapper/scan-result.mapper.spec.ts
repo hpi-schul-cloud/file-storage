@@ -1,6 +1,6 @@
 import { ScanResult } from '@infra/antivirus';
-import { ScanStatus } from '../../domain';
-import { ScanResultDto } from '../../domain/dto';
+import { ScanStatus } from '..';
+import { ScanResultDto } from '../dto';
 import { ScanResultDtoMapper } from './scan-result.mapper';
 
 describe('ScanResultDtoMapper', () => {
