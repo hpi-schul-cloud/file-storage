@@ -34,7 +34,7 @@ spec:
   - host: {{ DOMAIN }}
     http:
       paths:
-      - path: /file
+      - path: /api/v3/file/
         backend:
           service:
             name: filestorage-server-svc
