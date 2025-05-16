@@ -19,4 +19,8 @@ export class LoggerConfig {
 	@IsBoolean()
 	@Transform(({ value }: { value: string }) => value === 'true')
 	public LOGGER_EXIT_ON_ERROR = true;
+
+	@IsBoolean()
+	@Transform(({ value }: { value: string }) => value === 'true')
+	public LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED = false;
 }

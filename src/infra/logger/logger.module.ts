@@ -1,9 +1,10 @@
+import { ConfigurationModule } from '@infra/configuration';
 import { Module } from '@nestjs/common';
 import { utilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { ConfigurationModule } from '../configuration/configuration.module.js';
-import { LoggerConfig } from './logger.config.js';
-import { Logger } from './logger.js';
+import { ErrorLogger } from './error-logger';
+import { Logger } from './logger';
+import { LoggerConfig } from './logger.config';
 
 @Module({
 	imports: [
@@ -30,7 +31,7 @@ import { Logger } from './logger.js';
 			inject: [LoggerConfig],
 		}),
 	],
-	providers: [Logger],
-	exports: [Logger],
+	providers: [Logger, ErrorLogger],
+	exports: [Logger, ErrorLogger],
 })
 export class LoggerModule {}

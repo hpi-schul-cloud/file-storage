@@ -2,9 +2,8 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger as WinstonLogger } from 'winston';
-import { Loggable } from './interfaces';
+import { ErrorLogMessage, Loggable, LogMessage, ValidationErrorLogMessage } from './interfaces';
 import { Logger } from './logger';
-import { ErrorLogMessage, LogMessage, ValidationErrorLogMessage } from './types';
 
 class SampleLoggable implements Loggable {
 	getLogMessage(): LogMessage | ErrorLogMessage | ValidationErrorLogMessage {
@@ -50,7 +49,6 @@ describe('Logger', () => {
 			const loggable = new SampleLoggable();
 			service.setContext('test context');
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const expectedMessage = expect.objectContaining({
 				message: "{ message: 'test message', data: 'test data' }",
 				context: 'test context',
@@ -67,7 +65,6 @@ describe('Logger', () => {
 			const loggable = new SampleLoggable();
 			service.setContext('test context');
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const expectedMessage = expect.objectContaining({
 				message: "{ message: 'test message', data: 'test data' }",
 				context: 'test context',
@@ -84,7 +81,6 @@ describe('Logger', () => {
 			const loggable = new SampleLoggable();
 			service.setContext('test context');
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const expectedMessage = expect.objectContaining({
 				message: "{ message: 'test message', data: 'test data' }",
 				context: 'test context',
@@ -110,7 +106,6 @@ describe('Logger', () => {
 			const loggable = new SampleLoggable();
 			service.setContext('test context');
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const expectedMessage = expect.objectContaining({
 				message: "{ message: 'test message', data: 'test data' }",
 				context: 'test context',

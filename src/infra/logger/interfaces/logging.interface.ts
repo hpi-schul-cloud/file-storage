@@ -1,31 +1,31 @@
 /**
  * Information inside this file should be placed in shared, type are copied to it.
  */
-export type LogMessage = {
+export interface LogMessage {
 	message: string;
 	data?: LogMessageData;
-};
+}
 
-export type ErrorLogMessage = {
+export interface ErrorLogMessage {
 	error?: Error;
 	type: string;
 	stack?: string;
 	data?: LogMessageDataObject;
-};
+}
 
-export type ValidationErrorLogMessage = {
+export interface ValidationErrorLogMessage {
 	validationErrors: string[];
 	stack?: string;
 	type: string;
-};
+}
 
-export type LogMessageWithContext = {
+export interface LogMessageWithContext {
 	message: string;
 	context: string | undefined;
-};
+}
 
 export type LogMessageData = LogMessageDataObject | string | number | boolean | undefined;
 
-export type LogMessageDataObject = {
+export interface LogMessageDataObject {
 	[key: string]: LogMessageData;
-};
+}
