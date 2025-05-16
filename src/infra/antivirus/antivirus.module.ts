@@ -1,39 +1,46 @@
+import { ConfigurationModule } from '@infra/configuration';
 import { DynamicModule, Module } from '@nestjs/common';
 import NodeClam from 'clamscan';
+import { AntivirusConfig } from './antivirus.config';
 import { AntivirusService } from './antivirus.service';
-import { AntivirusModuleOptions } from './interfaces';
+import { AntivirusServiceOptions } from './interfaces';
 
 @Module({})
 export class AntivirusModule {
-	static forRoot(options: AntivirusModuleOptions): DynamicModule {
+	public static forRoot(): DynamicModule {
 		return {
 			module: AntivirusModule,
+			imports: [ConfigurationModule.register(AntivirusConfig)],
 			providers: [
 				AntivirusService,
 				{
 					provide: 'ANTIVIRUS_SERVICE_OPTIONS',
-					useValue: {
-						enabled: options.enabled,
-						filesServiceBaseUrl: options.filesServiceBaseUrl,
-						exchange: options.exchange,
-						routingKey: options.routingKey,
+					useFactory: (config: AntivirusConfig): AntivirusServiceOptions => {
+						return {
+							enabled: config.ENABLE_FILE_SECURITY_CHECK,
+							filesServiceBaseUrl: config.FILE_STORAGE_SERVICE_HOSTNAME,
+							exchange: config.ANTIVIRUS_EXCHANGE,
+							routingKey: config.ANTIVIRUS_ROUTING_KEY,
+						};
 					},
+					inject: [AntivirusConfig],
 				},
 				{
 					provide: NodeClam,
-					useFactory: () => {
-						const isLocalhost = options.hostname === 'localhost';
+					useFactory: (config: AntivirusConfig): Promise<NodeClam> => {
+						const isLocalhost = config.ANTIVIRUS_SERVICE_HOSTNAME === 'localhost';
 
 						return new NodeClam().init({
 							debugMode: isLocalhost,
 							clamdscan: {
-								host: options.hostname,
-								port: options.port,
+								host: config.ANTIVIRUS_SERVICE_HOSTNAME,
+								port: config.ANTIVIRUS_SERVICE_PORT,
 								bypassTest: true,
 								localFallback: false,
 							},
 						});
 					},
+					inject: [AntivirusConfig],
 				},
 			],
 

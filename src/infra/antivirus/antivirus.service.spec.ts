@@ -3,8 +3,8 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import NodeClam from 'clamscan';
+import { randomUUID } from 'node:crypto';
 import { Readable } from 'stream';
-import { v4 as uuid } from 'uuid';
 import { AntivirusService } from './antivirus.service';
 
 describe('AntivirusService', () => {
@@ -46,7 +46,7 @@ describe('AntivirusService', () => {
 	describe('send', () => {
 		describe('when service can handle passing parameters', () => {
 			const setup = () => {
-				const requestToken = uuid();
+				const requestToken = randomUUID();
 
 				const expectedParams = [
 					antivirusServiceOptions.exchange,
@@ -73,7 +73,7 @@ describe('AntivirusService', () => {
 
 		describe('when amqpConnection throws an error', () => {
 			const setup = () => {
-				const requestToken = uuid();
+				const requestToken = randomUUID();
 
 				amqpConnection.publish.mockRejectedValueOnce(new Error('fail'));
 
@@ -115,6 +115,7 @@ describe('AntivirusService', () => {
 					virus_detected: true,
 					virus_signature: 'test',
 				};
+
 				return { readable, expectedResult };
 			};
 
@@ -138,6 +139,7 @@ describe('AntivirusService', () => {
 					virus_signature: undefined,
 					error: '',
 				};
+
 				return { readable, expectedResult };
 			};
 
@@ -159,6 +161,7 @@ describe('AntivirusService', () => {
 				const expectedResult = {
 					virus_detected: false,
 				};
+
 				return { readable, expectedResult };
 			};
 

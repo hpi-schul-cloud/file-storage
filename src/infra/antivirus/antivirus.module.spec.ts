@@ -6,18 +6,10 @@ import { AntivirusService } from './antivirus.service';
 describe('AntivirusModule', () => {
 	let module: TestingModule;
 	let antivirusService: AntivirusService;
-	const antivirusModuleOptions = {
-		enabled: false,
-		filesServiceBaseUrl: 'http://localhost',
-		exchange: 'exchange',
-		routingKey: 'routingKey',
-		hostname: 'localhost',
-		port: 3311,
-	};
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
-			imports: [RabbitMQWrapperTestModule, AntivirusModule.forRoot(antivirusModuleOptions)],
+			imports: [RabbitMQWrapperTestModule, AntivirusModule.forRoot()],
 		}).compile();
 		antivirusService = module.get(AntivirusService);
 	});

@@ -1,6 +1,5 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ErrorUtils } from '@core/error/utils';
 import NodeClam from 'clamscan';
 import { Readable } from 'stream';
 import { AntivirusServiceOptions, ScanResult } from './interfaces';
@@ -17,7 +16,7 @@ export class AntivirusService {
 	constructor(
 		private readonly amqpConnection: AmqpConnection,
 		@Inject('ANTIVIRUS_SERVICE_OPTIONS') private readonly options: AntivirusServiceOptions,
-		private readonly clamConnection: NodeClam
+		private readonly clamConnection: NodeClam,
 	) {}
 
 	public async checkStream(stream: Readable): Promise<ScanResult> {
@@ -38,10 +37,7 @@ export class AntivirusService {
 				scanResult.virus_detected = false;
 			}
 		} catch (err) {
-			throw new InternalServerErrorException(
-				null,
-				ErrorUtils.createHttpExceptionOptions(err, 'AntivirusService:checkStream')
-			);
+			throw new InternalServerErrorException(null, err);
 		}
 
 		return scanResult;
@@ -57,11 +53,11 @@ export class AntivirusService {
 					this.options.exchange,
 					this.options.routingKey,
 					{ download_uri: downloadUri, callback_uri: callbackUri },
-					{ persistent: true }
+					{ persistent: true },
 				);
 			}
 		} catch (err) {
-			throw new InternalServerErrorException(null, ErrorUtils.createHttpExceptionOptions(err, 'AntivirusService:send'));
+			throw new InternalServerErrorException('AntivirusService:send', err);
 		}
 	}
 
