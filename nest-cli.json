@@ -3,7 +3,22 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "builder": "swc",
+  "monorepo": true,
   "compilerOptions": {
     "deleteOutDir": true
+  },
+  "projects": {
+    "files-storage": {
+      "type": "application",
+      "entryFile": "apps/files-storage.app"
+    },
+    "files-storage-amqp": {
+      "type": "application",
+      "entryFile": "apps/files-storage-consumer.app"
+    },
+    "preview-generator-amqp": {
+      "type": "application",
+      "entryFile": "apps/preview-generator-consumer.app"
+    }
   }
 }
