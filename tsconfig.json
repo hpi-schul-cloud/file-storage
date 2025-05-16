@@ -1,0 +1,39 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"declaration": true,
+		"removeComments": true,
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"useDefineForClassFields": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"baseUrl": "./src",
+		"incremental": true,
+		"strictNullChecks": true,
+		"noImplicitAny": true,
+		"strictBindCallApply": true,
+		"forceConsistentCasingInFileNames": true,
+		"noFallthroughCasesInSwitch": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization": true,
+		"skipLibCheck": true,
+		"paths": {
+			"@shared/*": ["./shared/*"],
+			"@infra/*": ["./infra/*"],
+			"@modules/*": ["./modules/*"],
+			"@testing/*": ["./testing/*"]
+		}
+	},
+	"exclude": ["scripts", "dist"],
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"ts-node": {
+		"transpileOnly": true,
+		"files": true,
+		"experimentalResolver": true
+	}
+}
