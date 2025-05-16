@@ -1,9 +1,9 @@
 import { S3Client, S3ServiceException } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { DomainErrorHandler } from '@core/error';
-import { ErrorUtils } from '@core/error/utils';
-import { LegacyLogger } from '@core/logger';
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { DomainErrorHandler } from '@infra/error';
+import { ErrorUtils } from '@infra/error/utils';
+import { Logger } from '@infra/logger';
 import { HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Readable } from 'node:stream';
 import { File, S3Config } from './interface';
@@ -13,6 +13,7 @@ import { createListObjectsV2CommandOutput } from './testing';
 const createParameter = () => {
 	const bucket = 'test-bucket';
 	const config = {
+		connectionName: 'test-connection',
 		endpoint: '',
 		region: '',
 		bucket,
@@ -33,7 +34,7 @@ describe(S3ClientAdapter.name, () => {
 	beforeAll(() => {
 		const { config } = createParameter();
 
-		const logger = createMock<LegacyLogger>();
+		const logger = createMock<Logger>();
 		const configuration = createMock<S3Config>(config);
 		const errorHandler = createMock<DomainErrorHandler>();
 		client = createMock<S3Client>({
@@ -71,7 +72,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: config.bucket },
-					})
+					}),
 				);
 			});
 		});
@@ -117,7 +118,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: config.bucket, Key: pathToFile },
-					})
+					}),
 				);
 			});
 
@@ -129,7 +130,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: config.bucket, Key: pathToFile, Range: bytesRange },
-					})
+					}),
 				);
 			});
 
@@ -146,7 +147,7 @@ describe(S3ClientAdapter.name, () => {
 						contentLength: 'data.ContentLength',
 						contentRange: 'data.ContentRange',
 						etag: 'data.ETag',
-					})
+					}),
 				);
 			});
 		});
@@ -283,7 +284,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: bucket, CopySource: `${bucket}/test/text.txt`, Key: 'trash/test/text.txt' },
-					})
+					}),
 				);
 			});
 
@@ -295,7 +296,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: bucket, Delete: { Objects: [{ Key: 'test/text.txt' }] } },
-					})
+					}),
 				);
 			});
 		});
@@ -338,7 +339,7 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: 'test/text.txt', MaxKeys: 1000 },
-						})
+						}),
 					);
 				});
 
@@ -392,13 +393,13 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
-						})
+						}),
 					);
 					expect(client.send).toHaveBeenNthCalledWith(
 						2,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, ContinuationToken: nextFilePath, MaxKeys: 1000 },
-						})
+						}),
 					);
 				});
 
@@ -445,7 +446,7 @@ describe(S3ClientAdapter.name, () => {
 
 					const expectedError = new InternalServerErrorException(
 						'S3ClientAdapter:moveDirectoryToTrash',
-						ErrorUtils.createHttpExceptionOptions(error)
+						ErrorUtils.createHttpExceptionOptions(error),
 					);
 
 					return { pathToFile, expectedError };
@@ -484,7 +485,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: bucket, Delete: { Objects: [{ Key: 'test/text.txt' }] } },
-					})
+					}),
 				);
 			});
 		});
@@ -547,7 +548,7 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
-						})
+						}),
 					);
 				});
 
@@ -560,7 +561,7 @@ describe(S3ClientAdapter.name, () => {
 						2,
 						expect.objectContaining({
 							input: { Bucket: bucket, Delete: { Objects: [{ Key: pathToFile }] } },
-						})
+						}),
 					);
 				});
 			});
@@ -605,13 +606,13 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
-						})
+						}),
 					);
 					expect(client.send).toHaveBeenNthCalledWith(
 						2,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, ContinuationToken: nextFilePath, MaxKeys: 1000 },
-						})
+						}),
 					);
 				});
 
@@ -668,13 +669,13 @@ describe(S3ClientAdapter.name, () => {
 				const { pathToFile } = createParameter();
 				const filePath = 'directory/test.txt';
 				const error = new Error('testError');
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+
 				// @ts-ignore
 				client.send.mockRejectedValueOnce(error);
 
 				const expectedError = new InternalServerErrorException(
 					'S3ClientAdapter:deleteDirectory',
-					ErrorUtils.createHttpExceptionOptions(error)
+					ErrorUtils.createHttpExceptionOptions(error),
 				);
 
 				return { pathToFile, filePath, expectedError };
@@ -701,13 +702,12 @@ describe(S3ClientAdapter.name, () => {
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce(expectedResponse);
 
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				client.send.mockRejectedValueOnce();
 
 				const expectedError = new InternalServerErrorException(
 					'S3ClientAdapter:deleteDirectory',
-					ErrorUtils.createHttpExceptionOptions(error)
+					ErrorUtils.createHttpExceptionOptions(error),
 				);
 
 				return { pathToFile, filePath, expectedError };
@@ -740,7 +740,7 @@ describe(S3ClientAdapter.name, () => {
 						CopySource: `${bucket}/trash/test/text.txt`,
 						Key: 'test/text.txt',
 					},
-				})
+				}),
 			);
 		});
 
@@ -752,7 +752,7 @@ describe(S3ClientAdapter.name, () => {
 			expect(client.send).toBeCalledWith(
 				expect.objectContaining({
 					input: { Bucket: bucket, Delete: { Objects: [{ Key: 'trash/test/text.txt' }] } },
-				})
+				}),
 			);
 		});
 
@@ -787,7 +787,7 @@ describe(S3ClientAdapter.name, () => {
 						CopySource: `${bucket}/trash/test/text.txt`,
 						Key: 'test/text.txt',
 					},
-				})
+				}),
 			);
 		});
 
@@ -813,7 +813,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: 'test-bucket', Key: pathToFile },
-					})
+					}),
 				);
 			});
 		});
@@ -882,7 +882,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: undefined,
 							MaxKeys: 500,
 						},
-					})
+					}),
 				);
 			});
 
@@ -916,7 +916,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: undefined,
 							MaxKeys: 1200,
 						},
-					})
+					}),
 				);
 
 				expect(client.send).toHaveBeenNthCalledWith(
@@ -928,7 +928,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: 'KEY-1000',
 							MaxKeys: 200,
 						},
-					})
+					}),
 				);
 
 				expect(client.send).toHaveBeenCalledTimes(2);
@@ -970,7 +970,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: undefined,
 							MaxKeys: 1000,
 						},
-					})
+					}),
 				);
 
 				expect(client.send).toHaveBeenNthCalledWith(
@@ -982,7 +982,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: '1',
 							MaxKeys: 1000,
 						},
-					})
+					}),
 				);
 
 				expect(client.send).toHaveBeenNthCalledWith(
@@ -994,7 +994,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: '2',
 							MaxKeys: 1000,
 						},
-					})
+					}),
 				);
 			});
 		});
