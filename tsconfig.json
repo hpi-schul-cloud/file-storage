@@ -7,7 +7,9 @@
 		"removeComments": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
+		"useDefineForClassFields": true,
 		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
 		"sourceMap": true,
 		"outDir": "./dist",
 		"baseUrl": "./src",
@@ -21,7 +23,10 @@
 		"strictPropertyInitialization": true,
 		"skipLibCheck": true,
 		"paths": {
+			"@shared/*": ["./shared/*"],
 			"@infra/*": ["./infra/*"],
+			"@modules/*": ["./modules/*"],
+			"@testing/*": ["./testing/*"]
 		}
 	},
 	"exclude": ["scripts", "dist"],
