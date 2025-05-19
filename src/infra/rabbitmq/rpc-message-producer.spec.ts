@@ -51,7 +51,7 @@ describe('RpcMessageProducer', () => {
 					value: true,
 				};
 
-				const message = [];
+				const message: string[] = [];
 				amqpConnection.request.mockResolvedValueOnce({ message });
 
 				const expectedParams = {
@@ -99,9 +99,7 @@ describe('RpcMessageProducer', () => {
 			it('should call error mapper and throw with error', async () => {
 				const { params, spy, error } = setup();
 
-				await expect(service.testRequest(params)).rejects.toThrowError(
-					ErrorMapper.mapRpcErrorResponseToDomainError(error)
-				);
+				await expect(service.testRequest(params)).rejects.toThrow(ErrorMapper.mapRpcErrorResponseToDomainError(error));
 				expect(spy).toBeCalled();
 			});
 		});

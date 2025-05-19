@@ -6,13 +6,14 @@ export abstract class RpcMessageProducer {
 	constructor(
 		protected readonly amqpConnection: AmqpConnection,
 		protected readonly exchange: string,
-		protected readonly timeout: number
+		protected readonly timeout: number,
 	) {}
 
 	protected async request<T>(event: string, payload: unknown) {
 		const response = await this.amqpConnection.request<RpcMessage<T>>(this.createRequest(event, payload));
 
 		this.checkError<T>(response);
+
 		return response.message;
 	}
 
