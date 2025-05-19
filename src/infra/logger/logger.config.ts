@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { StringToBoolean } from '@shared/transformer';
 import { IsBoolean, IsEnum } from 'class-validator';
 
 export enum LoggerLogLevel {
@@ -17,10 +17,10 @@ export class LoggerConfig {
 	public LOGGER_LOG_LEVEL!: LoggerLogLevel;
 
 	@IsBoolean()
-	@Transform(({ value }: { value: string }) => value === 'true')
+	@StringToBoolean()
 	public LOGGER_EXIT_ON_ERROR = true;
 
 	@IsBoolean()
-	@Transform(({ value }: { value: string }) => value === 'true')
+	@StringToBoolean()
 	public LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED = false;
 }

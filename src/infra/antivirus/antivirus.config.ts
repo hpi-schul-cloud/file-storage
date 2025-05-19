@@ -1,10 +1,10 @@
-import { Transform } from 'class-transformer';
+import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class AntivirusConfig {
 	// the antivirus service is enabled
 	@IsBoolean()
-	@Transform(({ value }) => value === 'true')
+	@StringToBoolean()
 	ENABLE_FILE_SECURITY_CHECK = false;
 	// base url for the file storage service
 	@IsString()
@@ -22,6 +22,6 @@ export class AntivirusConfig {
 	// Port of host to use when connecting via TCP interface of antivirus service
 	@IsNumber()
 	@IsOptional()
-	@Transform(({ value }) => parseInt(value))
+	@StringToNumber()
 	ANTIVIRUS_SERVICE_PORT!: number;
 }

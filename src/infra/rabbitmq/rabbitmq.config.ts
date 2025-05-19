@@ -1,10 +1,13 @@
+import { StringToNumber } from '@shared/transformer';
 import { IsNumber, IsString } from 'class-validator';
 
 export class RabbitMqConfig {
 	@IsNumber()
+	@StringToNumber()
 	RABBITMQ_GLOBAL_PREFETCH_COUNT = 5;
 
 	@IsNumber()
+	@StringToNumber()
 	RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS = 20;
 
 	@IsString()
