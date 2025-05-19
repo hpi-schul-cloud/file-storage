@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { InternalServerErrorException, UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@core/logger';
 import { PassThrough, Readable } from 'node:stream';
 import { ErrorType } from './interface/error-status.enum';
-import { PreviewGeneratorService } from './preview-generator.service';
+import { FILE_STORAGE_CLIENT, PreviewGeneratorService } from './preview-generator.service';
 
 let streamMock = jest.fn();
 const resizeMock = jest.fn();
@@ -51,7 +50,7 @@ const createMockStream = (err: Error | null = null) => {
 		.mockImplementation(
 			(_format: string, callback: (err: Error | null, stdout: PassThrough, stderr: PassThrough) => void) => {
 				callback(err, stdout, stderr);
-			}
+			},
 		);
 
 	return { stdout, stderr };
@@ -67,7 +66,7 @@ describe('PreviewGeneratorService', () => {
 			providers: [
 				PreviewGeneratorService,
 				{
-					provide: S3ClientAdapter,
+					provide: FILE_STORAGE_CLIENT,
 					useValue: createMock<S3ClientAdapter>(),
 				},
 				{
@@ -78,7 +77,7 @@ describe('PreviewGeneratorService', () => {
 		}).compile();
 
 		service = module.get(PreviewGeneratorService);
-		s3ClientAdapter = module.get(S3ClientAdapter);
+		s3ClientAdapter = module.get(FILE_STORAGE_CLIENT);
 	});
 
 	afterAll(async () => {
@@ -148,7 +147,6 @@ describe('PreviewGeneratorService', () => {
 					it('should call S3ClientAdapters create method', async () => {
 						const { params } = setup();
 
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 						const expectedFileData = expect.objectContaining({
 							data: expect.any(PassThrough),
 							mimeType: params.previewOptions.format,
@@ -344,7 +342,6 @@ describe('PreviewGeneratorService', () => {
 				try {
 					await service.generatePreview(params);
 				} catch (error) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					expect(error.getLogMessage().error).toEqual(new Error('imagemagick is not found'));
 				}
 			});

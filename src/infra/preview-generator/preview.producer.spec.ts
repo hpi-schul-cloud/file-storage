@@ -1,10 +1,11 @@
-import { Logger } from '@core/logger';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Logger } from '@infra/logger';
 import { InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ErrorMapper, FilesPreviewEvents, FilesPreviewExchange } from '../rabbitmq';
+import { ErrorMapper } from '../rabbitmq';
+import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
 import { PreviewFileOptions } from './interface';
 import { PreviewProducer } from './preview.producer';
 
@@ -69,7 +70,7 @@ describe('PreviewProducer', () => {
 					},
 				};
 
-				const message = [];
+				const message: string[] = [];
 				amqpConnection.request.mockResolvedValueOnce({ message });
 
 				const expectedParams = {
@@ -123,7 +124,7 @@ describe('PreviewProducer', () => {
 				const { params, spy, error } = setup();
 
 				await expect(service.generate(params)).rejects.toThrowError(
-					new InternalServerErrorException(null, { cause: error })
+					new InternalServerErrorException(null, { cause: error }),
 				);
 				expect(spy).toBeCalled();
 			});

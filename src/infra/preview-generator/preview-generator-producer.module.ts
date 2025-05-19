@@ -1,10 +1,11 @@
+import { LoggerModule } from '@infra/logger';
+import { RabbitMQWrapperModule } from '@infra/rabbitmq';
 import { Module } from '@nestjs/common';
-import { LoggerModule } from '@core/logger';
-import { RabbitMQWrapperModule } from '../rabbitmq';
 import { PreviewProducer } from './preview.producer';
+import { FilesPreviewExchange } from './files-preview.exchange';
 
 @Module({
-	imports: [LoggerModule, RabbitMQWrapperModule],
+	imports: [LoggerModule, RabbitMQWrapperModule.forRoot([FilesPreviewExchange])],
 	providers: [PreviewProducer],
 	exports: [PreviewProducer],
 })

@@ -1,10 +1,10 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { FilesPreviewEvents, FilesPreviewExchange, RpcMessageProducer } from '@infra/rabbitmq';
+import { Logger } from '@infra/logger';
+import { RpcMessageProducer } from '@infra/rabbitmq';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@core/logger';
+import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
 import { PreviewFileOptions, PreviewResponseMessage } from './interface';
-import { PreviewModuleConfig } from './interface/preview-consumer-config';
 import { PreviewActionsLoggable } from './loggable/preview-actions.loggable';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class PreviewProducer extends RpcMessageProducer {
 	constructor(
 		protected readonly amqpConnection: AmqpConnection,
 		private readonly logger: Logger,
-		protected readonly configService: ConfigService<PreviewModuleConfig, true>
+		protected readonly configService: ConfigService<any, true>,
 	) {
 		const timeout = configService.get<number>('INCOMING_REQUEST_TIMEOUT');
 

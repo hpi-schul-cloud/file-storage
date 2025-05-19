@@ -1,6 +1,6 @@
+import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { Logger } from '@core/logger';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import m, { subClass } from 'gm';
 import { PassThrough } from 'stream';
 import { PreviewFileOptions, PreviewInputMimeTypes, PreviewOptions, PreviewResponseMessage } from './interface';
@@ -8,11 +8,15 @@ import { PreviewActionsLoggable } from './loggable/preview-actions.loggable';
 import { PreviewNotPossibleException } from './loggable/preview-exception';
 import { PreviewGeneratorBuilder } from './preview-generator.builder';
 
+export const FILE_STORAGE_CLIENT = 'FILE_STORAGE_CLIENT';
 @Injectable()
 export class PreviewGeneratorService {
 	private imageMagick = subClass({ imageMagick: '7+' });
 
-	constructor(private readonly storageClient: S3ClientAdapter, private logger: Logger) {
+	constructor(
+		@Inject(FILE_STORAGE_CLIENT) private readonly storageClient: S3ClientAdapter,
+		private logger: Logger,
+	) {
 		this.logger.setContext(PreviewGeneratorService.name);
 	}
 
@@ -90,7 +94,7 @@ export class PreviewGeneratorService {
 					resolve(throughStream);
 				});
 
-				const errorChunks: Array<Uint8Array> = [];
+				const errorChunks: Uint8Array[] = [];
 				stderr.on('data', (chunk: Uint8Array) => {
 					errorChunks.push(chunk);
 				});

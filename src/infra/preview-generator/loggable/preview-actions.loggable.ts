@@ -1,11 +1,15 @@
-import { LogMessage, Loggable } from '@core/logger';
+import { LogMessage, Loggable } from '@infra/logger';
 import { PreviewFileOptions } from '../interface';
 
 export class PreviewActionsLoggable implements Loggable {
-	constructor(private readonly message: string, private readonly payload: PreviewFileOptions) {}
+	constructor(
+		private readonly message: string,
+		private readonly payload: PreviewFileOptions,
+	) {}
 
 	getLogMessage(): LogMessage {
 		const { originFilePath, previewFilePath, previewOptions } = this.payload;
+
 		return {
 			message: this.message,
 			data: {

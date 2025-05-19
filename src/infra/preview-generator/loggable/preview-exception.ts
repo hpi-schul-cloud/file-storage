@@ -1,10 +1,13 @@
+import { ErrorLogMessage, Loggable } from '@infra/logger';
 import { InternalServerErrorException } from '@nestjs/common';
-import { ErrorLogMessage, Loggable } from '@core/logger';
 import { PreviewFileOptions } from '../interface';
 import { ErrorType } from '../interface/error-status.enum';
 
 export class PreviewNotPossibleException extends InternalServerErrorException implements Loggable {
-	constructor(private readonly payload: PreviewFileOptions, private readonly error?: Error) {
+	constructor(
+		private readonly payload: PreviewFileOptions,
+		private readonly error?: Error,
+	) {
 		super(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
 	}
 

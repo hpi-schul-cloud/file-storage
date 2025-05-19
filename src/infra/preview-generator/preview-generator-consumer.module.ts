@@ -1,35 +1,39 @@
+import { LoggerModule } from '@infra/logger';
 import { RabbitMQWrapperModule } from '@infra/rabbitmq';
-import { S3ClientAdapter, S3ClientModule } from '@infra/s3-client';
+import { S3ClientAdapter } from '@infra/s3-client';
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { Logger, LoggerModule } from '@core/logger';
-import { PreviewConfig } from './interface/preview-consumer-config';
+import { FilesPreviewExchange } from './files-preview.exchange';
+import { PreviewModuleAsyncOptions } from './interface/module-options.type';
 import { PreviewGeneratorConsumer } from './preview-generator.consumer';
-import { PreviewGeneratorService } from './preview-generator.service';
+import { FILE_STORAGE_CLIENT, PreviewGeneratorService } from './preview-generator.service';
 
 @Module({})
 export class PreviewGeneratorConsumerModule {
-	static register(config: PreviewConfig): DynamicModule {
-		const { storageConfig, serverConfig } = config;
+	static register(storageClient: S3ClientAdapter): DynamicModule {
 		const providers = [
-			{
-				provide: PreviewGeneratorService,
-				useFactory: (logger: Logger, storageClient: S3ClientAdapter) =>
-					new PreviewGeneratorService(storageClient, logger),
-				inject: [Logger, storageConfig.connectionName],
-			},
+			PreviewGeneratorService,
 			PreviewGeneratorConsumer,
+			{
+				provide: FILE_STORAGE_CLIENT,
+				useValue: storageClient,
+			},
 		];
 
 		return {
 			module: PreviewGeneratorConsumerModule,
-			imports: [
-				LoggerModule,
-				S3ClientModule.register([storageConfig]),
-				RabbitMQWrapperModule,
-				ConfigModule.forFeature(() => serverConfig),
-			],
+			imports: [LoggerModule, RabbitMQWrapperModule.forRoot([FilesPreviewExchange])],
 			providers,
+		};
+	}
+
+	public static registerAsync(options: PreviewModuleAsyncOptions): DynamicModule {
+		const providers = [PreviewGeneratorService, PreviewGeneratorConsumer];
+
+		return {
+			module: PreviewGeneratorConsumerModule,
+			imports: [LoggerModule, RabbitMQWrapperModule.forRoot([FilesPreviewExchange]), ...(options.imports || [])],
+			providers: [...providers],
+			exports: providers,
 		};
 	}
 }

@@ -1,6 +1,6 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { Logger } from '@infra/logger';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@core/logger';
 import { PreviewFileOptions, PreviewResponseMessage } from './interface';
 import { PreviewGeneratorConsumer } from './preview-generator.consumer';
 import { PreviewGeneratorService } from './preview-generator.service';
