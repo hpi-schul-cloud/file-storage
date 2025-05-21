@@ -5,12 +5,7 @@ module.exports = {
 		'^(\\.{1,2}/.*)\\.js$': '$1',
 	},
 	transform: {
-		'^.+\\.tsx?$': [
-			'ts-jest',
-			{
-				useESM: true,
-			},
-		],
+		'^.+\\.tsx?$': ['@swc/jest'],
 	},
 	moduleFileExtensions: ['js', 'json', 'ts'],
 	rootDir: 'src',
