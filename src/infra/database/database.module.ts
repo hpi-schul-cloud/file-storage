@@ -1,6 +1,5 @@
 import { ConfigurationModule } from '@infra/configuration';
-import { Dictionary, EntityClass, IPrimaryKey } from '@mikro-orm/core';
-import { defineConfig } from '@mikro-orm/mongodb';
+import { defineConfig, Dictionary, EntityClass, IPrimaryKey } from '@mikro-orm/mongodb';
 import { MikroOrmModule, MikroOrmModuleSyncOptions } from '@mikro-orm/nestjs';
 import { DynamicModule, Module, NotFoundException } from '@nestjs/common';
 import { DatabaseConfig } from './database.config';
