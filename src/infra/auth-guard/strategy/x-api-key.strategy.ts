@@ -10,7 +10,13 @@ export class XApiKeyStrategy extends PassportStrategy(Strategy, StrategyType.API
 	private readonly allowedApiKeys: string[];
 
 	constructor(private readonly configService: ConfigService<XApiKeyAuthGuardConfig, true>) {
-		super({ header: 'X-API-KEY' }, false);
+		super(
+			{
+				header: 'X-API-KEY',
+				prefix: '',
+			},
+			false,
+		);
 		this.allowedApiKeys = this.configService.getOrThrow<string[]>('ADMIN_API__ALLOWED_API_KEYS');
 	}
 

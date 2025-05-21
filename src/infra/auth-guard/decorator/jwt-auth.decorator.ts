@@ -6,11 +6,10 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { JwtExtractor } from '@shared/common/utils';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../guard';
-import { ICurrentUser } from '../interface';
 import { isCurrentUser } from '../mapper';
+import { JwtExtractor } from '../utils/jwt';
 
 /**
  * Authentication Decorator taking care of require authentication header to be present, setting up the user context and extending openAPI spec.
@@ -30,13 +29,13 @@ export const JwtAuthentication = () => {
  * Returns the current authenticated user.
  * @requires Authenticated
  */
-export const CurrentUser = createParamDecorator<never, never, ICurrentUser>((_, ctx: ExecutionContext) => {
+export const CurrentUser = createParamDecorator((_, ctx: ExecutionContext) => {
 	const expressRequest = ctx.switchToHttp().getRequest<Request>();
 	const requestUser = expressRequest.user;
 
 	if (!requestUser || !isCurrentUser(requestUser)) {
 		throw new UnauthorizedException(
-			'CurrentUser missing in request context. This route requires jwt authentication guard enabled.'
+			'CurrentUser missing in request context. This route requires jwt authentication guard enabled.',
 		);
 	}
 
@@ -47,7 +46,7 @@ export const CurrentUser = createParamDecorator<never, never, ICurrentUser>((_, 
  * Returns the current JWT.
  * @requires Authenticated
  */
-export const JWT = createParamDecorator<never, never, string>((_, ctx: ExecutionContext) => {
+export const JWT = createParamDecorator((_, ctx: ExecutionContext) => {
 	const req: Request = ctx.switchToHttp().getRequest();
 	const jwt = JwtExtractor.extractJwtFromRequest(req);
 

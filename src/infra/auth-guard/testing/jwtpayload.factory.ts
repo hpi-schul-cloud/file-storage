@@ -1,6 +1,5 @@
-import { faker } from '@faker-js/faker';
+import { ObjectId } from '@mikro-orm/mongodb';
 import { BaseFactory } from '@testing/factory/base.factory';
-import { ObjectId } from 'bson';
 import { JwtPayload } from '../interface';
 
 class JwtPayloadImpl implements JwtPayload {
@@ -52,7 +51,7 @@ class JwtPayloadImpl implements JwtPayload {
 
 class JwtPayloadFactory extends BaseFactory<JwtPayloadImpl, JwtPayload> {}
 
-export const jwtPayloadFactory = JwtPayloadFactory.define(JwtPayloadImpl, ({ sequence }) => {
+export const jwtPayloadFactory = JwtPayloadFactory.define(JwtPayloadImpl, ({ sequence }: { sequence: number }) => {
 	return {
 		accountId: new ObjectId().toHexString(),
 		userId: new ObjectId().toHexString(),
@@ -61,10 +60,10 @@ export const jwtPayloadFactory = JwtPayloadFactory.define(JwtPayloadImpl, ({ seq
 		systemId: new ObjectId().toHexString(),
 		support: true,
 		isExternalUser: true,
-		sub: `${faker.lorem.word()} ${sequence}`,
-		jti: `${faker.lorem.word()} ${sequence}`,
-		aud: `${faker.lorem.word()}`,
-		iss: `${faker.lorem.word()}`,
+		sub: `sub-${sequence}`,
+		jti: `jit-${sequence}`,
+		aud: `aud-${sequence}`,
+		iss: `iss-${sequence}`,
 		iat: Math.floor(new Date().getTime() / 1000),
 		exp: Math.floor(new Date().getTime() / 1000) + 3600,
 	};

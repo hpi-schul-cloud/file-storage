@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { EntityManager } from '@mikro-orm/mongodb';
-import { ServerTestModule } from '@modules/server';
 import { Controller, Get, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { MongoMemoryDatabaseModule } from '@testing/database';
+import { AccountEntity } from '@testing/entity/account.entity';
+import { RoleEntity } from '@testing/entity/role.entity';
+import { UserEntity } from '@testing/entity/user.entity';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
+import { AuthGuardModule, AuthGuardOptions } from '../auth-guard.module';
 import { ICurrentUser } from '../interface';
 import { CurrentUser, JWT, JwtAuthentication } from './jwt-auth.decorator';
 
@@ -35,7 +38,10 @@ describe('Decorators', () => {
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
-			imports: [ServerTestModule],
+			imports: [
+				AuthGuardModule.register([AuthGuardOptions.JWT]),
+				MongoMemoryDatabaseModule.forRoot([UserEntity, AccountEntity, RoleEntity]),
+			],
 			controllers: [TestDecoratorCurrentUserController, TestDecoratorJWTController],
 		}).compile();
 
@@ -67,7 +73,7 @@ describe('Decorators', () => {
 				await em.persistAndFlush([teacherAccount, teacherUser]);
 				em.clear();
 
-				const loggedInClient = await apiClient.login(teacherAccount);
+				const loggedInClient = apiClient.loginByUser(teacherAccount, teacherUser);
 
 				return { loggedInClient, teacherUser };
 			};
@@ -105,13 +111,13 @@ describe('Decorators', () => {
 				await em.persistAndFlush([teacherAccount, teacherUser]);
 				em.clear();
 
-				const loggedInClient = await apiClient.login(teacherAccount);
+				const loggedInClient = apiClient.loginByUser(teacherAccount, teacherUser);
 
 				const expectedCurrentUser = {
 					accountId: teacherAccount.id,
-					isExternalUser: teacherUser.externalId !== undefined,
+					isExternalUser: false,
 					roles: [teacherUser.roles[0].id],
-					schoolId: teacherUser.school.id,
+					schoolId: teacherUser.school.toHexString(),
 					support: false,
 					userId: teacherUser.id,
 				};

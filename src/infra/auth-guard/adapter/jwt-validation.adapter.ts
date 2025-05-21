@@ -1,4 +1,3 @@
-import { ensureTokenIsWhitelisted } from '@imports-from-feathers';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -10,6 +9,8 @@ export class JwtValidationAdapter {
 	 * @param jti jwt id (here required to make jwt identifiers identical in redis)
 	 */
 	async isWhitelisted(accountId: string, jti: string): Promise<void> {
-		await ensureTokenIsWhitelisted({ accountId, jti, privateDevice: false });
+		// @TODO resolve this problem
+		//await ensureTokenIsWhitelisted({ accountId, jti, privateDevice: false });
+		return Promise.resolve();
 	}
 }

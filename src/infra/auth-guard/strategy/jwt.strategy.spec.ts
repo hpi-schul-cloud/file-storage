@@ -1,10 +1,10 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtValidationAdapter } from '../adapter/jwt-validation.adapter';
-import { JwtStrategy } from './jwt.strategy';
 import { jwtPayloadFactory } from '../testing';
+import { JwtStrategy } from './jwt.strategy';
+import { AuthGuardConfig } from '../auth-guard.config';
 
 describe('jwt strategy', () => {
 	let validationAdapter: DeepMocked<JwtValidationAdapter>;
@@ -20,8 +20,8 @@ describe('jwt strategy', () => {
 					useValue: createMock<JwtValidationAdapter>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: AuthGuardConfig,
+					useValue: createMock<AuthGuardConfig>(),
 				},
 			],
 		}).compile();
@@ -45,6 +45,7 @@ describe('jwt strategy', () => {
 
 			validationAdapter.isWhitelisted.mockResolvedValueOnce();
 			validationAdapter.isWhitelisted.mockClear();
+
 			return {
 				mockJwtPayload,
 			};
@@ -75,6 +76,7 @@ describe('jwt strategy', () => {
 			const mockJwtPayload = jwtPayloadFactory.build();
 			validationAdapter.isWhitelisted.mockRejectedValueOnce(null);
 			validationAdapter.isWhitelisted.mockClear();
+
 			return {
 				mockJwtPayload,
 			};
