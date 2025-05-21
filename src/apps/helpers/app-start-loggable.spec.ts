@@ -23,7 +23,6 @@ describe('AppStartLoggable', () => {
 				};
 
 				const testLogMessage = new AppStartLoggable(testInfo).getLogMessage();
-				console.log(testLogMessage);
 
 				expect(testLogMessage).toHaveProperty('message', expectedMessage);
 				expect(testLogMessage).toHaveProperty('data', testInfo);

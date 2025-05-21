@@ -4,7 +4,7 @@ import { EntityId } from '@shared/domain/types';
 export class ObjectIdType extends Type<EntityId, ObjectId> {
 	convertToDatabaseValue(value: EntityId, platform: Platform): ObjectId {
 		this.validatePlatformSupport(platform);
-		console.log('ObjectIdType.convertToDatabaseValue', value);
+
 		return new ObjectId(value);
 	}
 
