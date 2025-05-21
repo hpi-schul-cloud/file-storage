@@ -17,7 +17,7 @@ import { DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { TypeGuard } from '@shared/guards';
+import { TypeGuard } from '@shared/guard';
 import { Readable } from 'stream';
 import { CopyFiles, File, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
