@@ -8,6 +8,7 @@ import { Transform, TransformFnParams } from 'class-transformer';
 export function StringToNumber(): PropertyDecorator {
 	return Transform((params: TransformFnParams) => {
 		const str = params.obj[params.key] as string;
-		parseInt(str);
+
+		return parseInt(str);
 	});
 }
