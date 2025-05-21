@@ -1,10 +1,13 @@
+import { ErrorLogMessage } from '@infra/logger';
+import { Loggable } from '@infra/logger/interfaces';
 import { ForbiddenException } from '@nestjs/common';
-import { Loggable } from '@core/logger/interfaces';
-import { ErrorLogMessage } from '@core/logger/types';
 import { AuthorizationBodyParams } from '../authorization-api-client';
 
 export class AuthorizationErrorLoggableException extends ForbiddenException implements Loggable {
-	constructor(private readonly error: unknown, private readonly params: AuthorizationBodyParams) {
+	constructor(
+		private readonly error: unknown,
+		private readonly params: AuthorizationBodyParams,
+	) {
 		super();
 	}
 

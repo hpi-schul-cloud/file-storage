@@ -6,8 +6,8 @@ import {
 
 export class AuthorizationContextBuilder {
 	static build(
-		requiredPermissions: Array<AuthorizationContextParamsRequiredPermissions>,
-		action: AuthorizationContextParamsAction
+		requiredPermissions: AuthorizationContextParamsRequiredPermissions[],
+		action: AuthorizationContextParamsAction,
 	): AuthorizationContextParams {
 		return {
 			action,
