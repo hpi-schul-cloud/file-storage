@@ -30,6 +30,6 @@ export class MongoMemoryDatabaseModule implements OnModuleDestroy {
 	}
 
 	public async onModuleDestroy(): Promise<void> {
-		await this.em.getConnection().close();
+		await this.em.getConnection().close(true);
 	}
 }
