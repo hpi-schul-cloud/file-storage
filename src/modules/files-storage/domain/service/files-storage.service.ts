@@ -1,19 +1,25 @@
-import { ErrorUtils } from '@core/error/utils';
-import { LegacyLogger } from '@core/logger';
 import { AntivirusService, ScanResult } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
+import { Logger } from '@infra/logger';
 import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
-import { ConflictException, Inject, Injectable, NotAcceptableException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import {
+	ConflictException,
+	Inject,
+	Injectable,
+	InternalServerErrorException,
+	NotAcceptableException,
+	NotFoundException,
+} from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import FileType from 'file-type-cjs/file-type-cjs-index';
+import { loadEsm } from 'load-esm';
 import { PassThrough, Readable } from 'stream';
-import { ScanStatus } from '..';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileRecord, ParentInfo } from '../file-record.do';
+import { FileRecord, ParentInfo, ScanStatus } from '../file-record.do';
 import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 
 @Injectable()
@@ -22,8 +28,9 @@ export class FilesStorageService {
 		@Inject(FILE_RECORD_REPO) private readonly fileRecordRepo: FileRecordRepo,
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
 		private readonly antivirusService: AntivirusService,
-		private readonly configService: ConfigService<FileStorageConfig, true>,
-		private logger: LegacyLogger
+		private readonly config: FileStorageConfig,
+		private logger: Logger,
+		private readonly domainErrorHandler: DomainErrorHandler,
 	) {
 		this.logger.setContext(FilesStorageService.name);
 	}
@@ -81,7 +88,7 @@ export class FilesStorageService {
 	private async createFileRecord(
 		file: FileDto,
 		parentInfo: ParentInfo,
-		userId: EntityId
+		userId: EntityId,
 	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file);
@@ -120,7 +127,9 @@ export class FilesStorageService {
 	}
 
 	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const stream = await FileType.fileTypeStream(file);
+		const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
+
+		const stream = await fileTypeStream(file);
 
 		return { mime: stream.fileType?.mime, stream };
 	}
@@ -138,7 +147,7 @@ export class FilesStorageService {
 
 	private async createFileInStorageAndRollbackOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		const filePath = fileRecord.createPath();
-		const useStreamToAntivirus = this.configService.get<boolean>('USE_STREAM_TO_ANTIVIRUS');
+		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 
 		try {
 			const fileSizePromise = this.countFileSize(file);
@@ -188,7 +197,7 @@ export class FilesStorageService {
 	}
 
 	private async sendToAntivirus(fileRecord: FileRecord): Promise<void> {
-		const maxSecurityCheckFileSize = this.configService.get('MAX_SECURITY_CHECK_FILE_SIZE', { infer: true });
+		const maxSecurityCheckFileSize = this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE;
 
 		if (fileRecord.sizeInByte > maxSecurityCheckFileSize) {
 			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
@@ -199,7 +208,7 @@ export class FilesStorageService {
 	}
 
 	public getMaxFileSize(): number {
-		const maxFileSize = this.configService.get('MAX_FILE_SIZE', { infer: true });
+		const maxFileSize = this.config.FILES_STORAGE_MAX_FILE_SIZE;
 
 		return maxFileSize;
 	}
@@ -234,14 +243,21 @@ export class FilesStorageService {
 	// download
 	public checkFileName(fileRecord: FileRecord, fileName: string): void | NotFoundException {
 		if (!fileRecord.hasName(fileName)) {
-			this.logger.debug(`could not find file with id: ${fileRecord.id} by filename`);
+			this.logger.debug(
+				new FileStorageActionsLoggable(`could not find file by filename`, {
+					action: 'checkFileName',
+					sourcePayload: fileRecord,
+				}),
+			);
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		}
 	}
 
 	private checkScanStatus(fileRecord: FileRecord): void | NotAcceptableException {
 		if (fileRecord.isBlocked()) {
-			this.logger.warn(`file is blocked with id: ${fileRecord.id}`);
+			this.logger.warning(
+				new FileStorageActionsLoggable(`file is blocked`, { action: 'checkScanStatus', sourcePayload: fileRecord }),
+			);
 			throw new NotAcceptableException(ErrorType.FILE_IS_BLOCKED);
 		}
 	}
@@ -280,7 +296,9 @@ export class FilesStorageService {
 	}
 
 	public async delete(fileRecords: FileRecord[]): Promise<void> {
-		this.logger.debug({ action: 'delete', fileRecords });
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords }),
+		);
 
 		FileRecord.markForDelete(fileRecords);
 		await this.fileRecordRepo.save(fileRecords);
@@ -304,14 +322,8 @@ export class FilesStorageService {
 		const result = await this.fileRecordRepo.markForDeleteByStorageLocation(storageLocation, storageLocationId);
 
 		this.storageClient.moveDirectoryToTrash(storageLocationId).catch((error) => {
-			this.logger.error(
-				{
-					message: 'Error while moving directory to trash',
-					action: 'markForDeleteByStorageLocation',
-					storageLocation,
-					storageLocationId,
-				},
-				ErrorUtils.createHttpExceptionOptions(error)
+			this.domainErrorHandler.exec(
+				new InternalServerErrorException('Error while moving directory to trash', { cause: error }),
 			);
 		});
 
@@ -339,17 +351,20 @@ export class FilesStorageService {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 			parentInfo.storageLocation,
 			parentInfo.storageLocationId,
-			parentInfo.parentId
+			parentInfo.parentId,
 		);
 
 		if (count > 0) {
 			await this.restore(fileRecords);
 		}
+
 		return [fileRecords, count];
 	}
 
 	public async restore(fileRecords: FileRecord[]): Promise<void> {
-		this.logger.debug({ action: 'restore', fileRecords });
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords }),
+		);
 
 		FileRecord.unmarkForDelete(fileRecords);
 		await this.fileRecordRepo.save(fileRecords);
@@ -361,12 +376,12 @@ export class FilesStorageService {
 	public async copyFilesOfParent(
 		userId: string,
 		sourceParentInfo: ParentInfo,
-		targetParentInfo: ParentInfo
+		targetParentInfo: ParentInfo,
 	): Promise<Counted<CopyFileResult[]>> {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentId(
 			sourceParentInfo.storageLocation,
 			sourceParentInfo.storageLocationId,
-			sourceParentInfo.parentId
+			sourceParentInfo.parentId,
 		);
 
 		if (count === 0) {
@@ -381,7 +396,7 @@ export class FilesStorageService {
 	private async copyFileRecord(
 		sourceFile: FileRecord,
 		targetParentInfo: ParentInfo,
-		userId: EntityId
+		userId: EntityId,
 	): Promise<FileRecord> {
 		const fileRecord = FileRecordFactory.copy(sourceFile, userId, targetParentInfo);
 		await this.fileRecordRepo.save(fileRecord);
@@ -417,9 +432,15 @@ export class FilesStorageService {
 	public async copy(
 		userId: EntityId,
 		sourceFileRecords: FileRecord[],
-		targetParentInfo: ParentInfo
+		targetParentInfo: ParentInfo,
 	): Promise<CopyFileResult[]> {
-		this.logger.debug({ action: 'copy', sourceFileRecords, targetParams: targetParentInfo });
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start copy of FileRecords', {
+				action: 'copy',
+				sourcePayload: sourceFileRecords,
+				targetPayload: targetParentInfo,
+			}),
+		);
 
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
 			try {
@@ -430,7 +451,11 @@ export class FilesStorageService {
 
 				return copyFileResult;
 			} catch (error) {
-				this.logger.error(`copy file failed for source fileRecordId ${sourceFile.id}`, error);
+				this.domainErrorHandler.exec(
+					new InternalServerErrorException(`copy file failed for source fileRecordId ${sourceFile.id}`, {
+						cause: error,
+					}),
+				);
 
 				const copyFileResult: CopyFileResult = { id: undefined, sourceId: sourceFile.id, name: sourceFile.getName() };
 

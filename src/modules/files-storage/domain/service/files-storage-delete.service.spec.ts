@@ -1,24 +1,24 @@
-import { ErrorUtils } from '@core/error/utils';
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
+import { ErrorUtils } from '@infra/error/utils';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { fileRecordTestFactory } from '../../testing';
 import { FileRecord, FileRecordProps, FileRecordSecurityCheckProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
 import { FilesStorageService } from './files-storage.service';
-import { fileRecordTestFactory } from '../../testing';
 
 describe('FilesStorageService delete methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
-	let legacyLogger: DeepMocked<LegacyLogger>;
+	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -33,16 +33,20 @@ describe('FilesStorageService delete methods', () => {
 					useValue: createMock<FileRecordRepo>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AntivirusService,
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>(),
+				},
+				{
+					provide: DomainErrorHandler,
+					useValue: createMock<DomainErrorHandler>(),
 				},
 			],
 		}).compile();
@@ -50,7 +54,7 @@ describe('FilesStorageService delete methods', () => {
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
-		legacyLogger = module.get(LegacyLogger);
+		domainErrorHandler = module.get(DomainErrorHandler);
 	});
 
 	beforeEach(() => {
@@ -87,6 +91,7 @@ describe('FilesStorageService delete methods', () => {
 						props: fileRecordProps,
 						securityCheck: securityCheckProps,
 					};
+
 					return props;
 				});
 
@@ -99,8 +104,8 @@ describe('FilesStorageService delete methods', () => {
 									deletedSince: expect.any(Date),
 								},
 								securityCheck: props.securityCheck,
-							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps }
-					)
+							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps },
+					),
 				);
 			});
 
@@ -274,24 +279,21 @@ describe('FilesStorageService delete methods', () => {
 				storageClient.moveDirectoryToTrash.mockRejectedValueOnce(error);
 
 				const expectedProps = [
-					{
-						action: 'markForDeleteByStorageLocation',
-						message: 'Error while moving directory to trash',
-						storageLocation: params.storageLocation,
-						storageLocationId: params.storageLocationId,
-					},
-					ErrorUtils.createHttpExceptionOptions(error),
+					new InternalServerErrorException(
+						'Error while moving directory to trash',
+						ErrorUtils.createHttpExceptionOptions(error),
+					),
 				];
 
 				return { storageLocation, storageLocationId, params, expectedProps };
 			};
 
-			it('should call legacyLogger.error with expected props', async () => {
+			it('should call Logger.error with expected props', async () => {
 				const { params, expectedProps } = setup();
 
 				await service.markForDeleteByStorageLocation(params);
 
-				expect(legacyLogger.error).toBeCalledWith(...expectedProps);
+				expect(domainErrorHandler.exec).toHaveBeenCalledWith(...expectedProps);
 			});
 		});
 	});

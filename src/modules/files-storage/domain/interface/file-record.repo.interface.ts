@@ -18,14 +18,14 @@ export interface FileRecordRepo {
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
 		parentId: EntityId,
-		options?: IFindOptions<FileRecord>
+		options?: IFindOptions<FileRecord>,
 	): Promise<Counted<FileRecord[]>>;
 
 	findByStorageLocationIdAndParentIdAndMarkedForDelete(
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
 		parentId: EntityId,
-		options?: IFindOptions<FileRecord>
+		options?: IFindOptions<FileRecord>,
 	): Promise<Counted<FileRecord[]>>;
 
 	findBySecurityCheckRequestToken(token: string): Promise<FileRecord>;

@@ -1,14 +1,16 @@
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import FileType from 'file-type-cjs/file-type-cjs-index';
+import FileType from 'file-type';
+import { loadEsm } from 'load-esm';
 import { PassThrough, Readable } from 'stream';
-import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory, readableStreamWithFileTypeFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -16,8 +18,9 @@ import { FileRecord, FileRecordSecurityCheck, ScanStatus } from '../file-record.
 import { FileRecordFactory } from '../file-record.factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FilesStorageService } from './files-storage.service';
-
-jest.mock('file-type-cjs/file-type-cjs-index', () => {
+const FileType = await loadEsm<typeof import('file-type')>('file-type');
+// @ts-ignore
+jest.unstable_mockModule('file-type', () => {
 	return {
 		fileTypeStream: jest.fn(),
 	};
@@ -30,6 +33,7 @@ describe('FilesStorageService upload methods', () => {
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
 	let configService: DeepMocked<ConfigService>;
+	//let FileType: typeof import('file-type');
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -44,16 +48,20 @@ describe('FilesStorageService upload methods', () => {
 					useValue: createMock<FileRecordRepo>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AntivirusService,
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>(),
+				},
+				{
+					provide: DomainErrorHandler,
+					useValue: createMock<DomainErrorHandler>(),
 				},
 			],
 		}).compile();
@@ -62,12 +70,7 @@ describe('FilesStorageService upload methods', () => {
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
-		configService = module.get(ConfigService);
-	});
-
-	beforeEach(() => {
-		jest.resetAllMocks();
-		configService.get.mockReturnValue(2560000000);
+		FileType = await loadEsm<typeof import('file-type')>('file-type');
 	});
 
 	afterAll(async () => {
@@ -145,7 +148,6 @@ describe('FilesStorageService upload methods', () => {
 				const getMimeTypeSpy = jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();
@@ -250,7 +252,7 @@ describe('FilesStorageService upload methods', () => {
 							...expectedSecurityCheck,
 							updatedAt: expect.any(Date),
 						},
-					})
+					}),
 				);
 			});
 
@@ -330,7 +332,7 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
+
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();
@@ -365,7 +367,7 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
+
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();
@@ -408,7 +410,7 @@ describe('FilesStorageService upload methods', () => {
 				configService.get.mockReturnValueOnce(2);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
+
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();
@@ -432,8 +434,8 @@ describe('FilesStorageService upload methods', () => {
 
 				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(
 					1,
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					expect.objectContaining({ securityCheck: expect.objectContaining({ status: 'wont_check' }) })
+
+					expect.objectContaining({ securityCheck: expect.objectContaining({ status: 'wont_check' }) }),
 				);
 			});
 
@@ -459,7 +461,7 @@ describe('FilesStorageService upload methods', () => {
 				configService.get.mockReturnValueOnce(false);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
+
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();
@@ -495,7 +497,7 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
+
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();
@@ -528,7 +530,7 @@ describe('FilesStorageService upload methods', () => {
 				const getMimeTypeSpy = jest.spyOn(FileType, 'fileTypeStream');
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				// eslint-disable-next-line @typescript-eslint/require-await
+
 				fileRecordRepo.save.mockImplementation((fr) => {
 					if (fr instanceof FileRecord && !fr.id) {
 						const props = fr.getProps();

@@ -1,5 +1,4 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
-import { AuthorizableReferenceType } from '@modules/authorization/domain';
 import { NotImplementedException } from '@nestjs/common';
 import { PreviewStatus, StorageLocation } from '../../domain';
 import { FileRecordParentType } from '../../domain/interface';
@@ -11,32 +10,32 @@ describe('FilesStorageMapper', () => {
 	describe('mapToAllowedAuthorizationEntityType()', () => {
 		it('should return allowed type equal Course', () => {
 			const result = FilesStorageMapper.mapToAllowedAuthorizationEntityType(FileRecordParentType.Course);
-			expect(result).toBe(AuthorizableReferenceType.Course);
+			expect(result).toBe(AuthorizationBodyParamsReferenceType.COURSES);
 		});
 
 		it('should return allowed type equal Task', () => {
 			const result = FilesStorageMapper.mapToAllowedAuthorizationEntityType(FileRecordParentType.Task);
-			expect(result).toBe(AuthorizableReferenceType.Task);
+			expect(result).toBe(AuthorizationBodyParamsReferenceType.TASKS);
 		});
 
 		it('should return allowed type equal School', () => {
 			const result = FilesStorageMapper.mapToAllowedAuthorizationEntityType(FileRecordParentType.School);
-			expect(result).toBe(AuthorizableReferenceType.School);
+			expect(result).toBe(AuthorizationBodyParamsReferenceType.SCHOOLS);
 		});
 
 		it('should return allowed type equal User', () => {
 			const result = FilesStorageMapper.mapToAllowedAuthorizationEntityType(FileRecordParentType.User);
-			expect(result).toBe(AuthorizableReferenceType.User);
+			expect(result).toBe(AuthorizationBodyParamsReferenceType.USERS);
 		});
 
 		it('should return allowed type equal Submission', () => {
 			const result = FilesStorageMapper.mapToAllowedAuthorizationEntityType(FileRecordParentType.Submission);
-			expect(result).toBe(AuthorizableReferenceType.Submission);
+			expect(result).toBe(AuthorizationBodyParamsReferenceType.SUBMISSIONS);
 		});
 
 		it('should return allowed type equal ExternalTool', () => {
 			const result = FilesStorageMapper.mapToAllowedAuthorizationEntityType(FileRecordParentType.ExternalTool);
-			expect(result).toBe(AuthorizableReferenceType.ExternalTool);
+			expect(result).toBe(AuthorizationBodyParamsReferenceType.EXTERNAL_TOOLS);
 		});
 
 		it('should throw Error', () => {
@@ -114,7 +113,7 @@ describe('FilesStorageMapper', () => {
 					total: fileRecords.length,
 					skip: 0,
 					limit: 5,
-				})
+				}),
 			);
 		});
 

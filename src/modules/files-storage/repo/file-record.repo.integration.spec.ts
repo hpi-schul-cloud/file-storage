@@ -1,9 +1,8 @@
-import { NotFoundError } from '@mikro-orm/core';
-import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { EntityManager, NotFoundError, ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
-import { cleanupCollections } from '@testing/cleanup-collections';
-import { MongoMemoryDatabaseModule } from '@testing/database';
+import { cleanupCollections, MongoMemoryDatabaseModule } from '@testing/database';
 import { FileRecord, FileRecordParentType, StorageLocation } from '../domain';
+import { TEST_ENTITIES } from '../files-storage.entity.imports';
 import { fileRecordEntityFactory } from '../testing';
 import { FileRecordEntity } from './file-record.entity';
 import { FileRecordMikroOrmRepo } from './file-record.repo';
@@ -18,7 +17,7 @@ describe('FileRecordRepo', () => {
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
-			imports: [MongoMemoryDatabaseModule.forRoot({ entities: [FileRecordEntity] })],
+			imports: [MongoMemoryDatabaseModule.forRoot(TEST_ENTITIES)],
 			providers: [FileRecordMikroOrmRepo],
 		}).compile();
 		repo = module.get(FileRecordMikroOrmRepo);
@@ -63,7 +62,7 @@ describe('FileRecordRepo', () => {
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id]);
 
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord)
+				FileRecordEntityMapper.mapEntityToDo(fileRecord),
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -81,7 +80,7 @@ describe('FileRecordRepo', () => {
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id, fileRecord3.id]);
 
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord)
+				FileRecordEntityMapper.mapEntityToDo(fileRecord),
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -226,8 +225,9 @@ describe('FileRecordRepo', () => {
 			expect(
 				results.map((o) => {
 					const props = o.getProps();
+
 					return props.parentId;
-				})
+				}),
 			).toEqual([parentId1, parentId1, parentId1]);
 		});
 
@@ -242,7 +242,7 @@ describe('FileRecordRepo', () => {
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction),
 			);
 		});
 	});
@@ -328,7 +328,7 @@ describe('FileRecordRepo', () => {
 				parentId1,
 				{
 					pagination,
-				}
+				},
 			);
 
 			expect(count).toEqual(3);
@@ -346,7 +346,7 @@ describe('FileRecordRepo', () => {
 				parentId1,
 				{
 					pagination,
-				}
+				},
 			);
 
 			expect(count).toEqual(3);
@@ -367,7 +367,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentId(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1
+				parentId1,
 			);
 
 			expect(count).toEqual(3);
@@ -375,8 +375,9 @@ describe('FileRecordRepo', () => {
 			expect(
 				results.map((o) => {
 					const props = o.getProps();
+
 					return props.parentId;
-				})
+				}),
 			).toEqual([parentId1, parentId1, parentId1]);
 		});
 
@@ -394,7 +395,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentId(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1
+				parentId1,
 			);
 
 			expect(count).toEqual(3);
@@ -402,8 +403,9 @@ describe('FileRecordRepo', () => {
 			expect(
 				results.map((o) => {
 					const parentInfo = o.getParentInfo();
+
 					return parentInfo.storageLocationId;
-				})
+				}),
 			).toEqual([storageLocationId1, storageLocationId1, storageLocationId1]);
 		});
 
@@ -420,13 +422,13 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentId(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1
+				parentId1,
 			);
 
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction),
 			);
 		});
 	});
@@ -459,7 +461,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1
+				parentId1,
 			);
 
 			expect(count).toEqual(3);
@@ -467,8 +469,9 @@ describe('FileRecordRepo', () => {
 			expect(
 				results.map((o) => {
 					const props = o.getProps();
+
 					return props.parentId;
-				})
+				}),
 			).toEqual([parentId1, parentId1, parentId1]);
 		});
 
@@ -487,7 +490,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1
+				parentId1,
 			);
 
 			expect(count).toEqual(3);
@@ -495,8 +498,9 @@ describe('FileRecordRepo', () => {
 			expect(
 				results.map((o) => {
 					const parentInfo = o.getParentInfo();
+
 					return parentInfo.storageLocationId;
-				})
+				}),
 			).toEqual([storageLocationId1, storageLocationId1, storageLocationId1]);
 		});
 
@@ -513,13 +517,13 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1
+				parentId1,
 			);
 
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction),
 			);
 		});
 	});
@@ -587,8 +591,9 @@ describe('FileRecordRepo', () => {
 			expect(
 				results.map((o) => {
 					const props = o.getProps();
+
 					return props.creatorId;
-				})
+				}),
 			).toEqual([creator1, creator1, creator1, creator1]);
 		});
 	});

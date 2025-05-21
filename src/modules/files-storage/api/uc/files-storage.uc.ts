@@ -1,5 +1,3 @@
-import { DomainErrorHandler } from '@core/error';
-import { LegacyLogger } from '@core/logger';
 import {
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationClientAdapter,
@@ -7,7 +5,9 @@ import {
 	AuthorizationContextParams,
 	AuthorizationContextParamsRequiredPermissions,
 } from '@infra/authorization-client';
-import { EntityManager, RequestContext } from '@mikro-orm/core';
+import { DomainErrorHandler } from '@infra/error';
+import { Logger } from '@infra/logger';
+import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
@@ -57,14 +57,14 @@ export const FileStorageAuthorizationContext = {
 @Injectable()
 export class FilesStorageUC {
 	constructor(
-		private readonly logger: LegacyLogger,
+		private readonly logger: Logger,
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
 		private readonly httpService: HttpService,
 		private readonly filesStorageService: FilesStorageService,
 		private readonly previewService: PreviewService,
 		// maybe better to pass the request context from controller and avoid em at this place
 		private readonly em: EntityManager,
-		private readonly domainErrorHandler: DomainErrorHandler
+		private readonly domainErrorHandler: DomainErrorHandler,
 	) {
 		this.logger.setContext(FilesStorageUC.name);
 	}
@@ -72,7 +72,7 @@ export class FilesStorageUC {
 	private async checkPermission(
 		parentType: FileRecordParentType,
 		parentId: EntityId,
-		context: AuthorizationContextParams
+		context: AuthorizationContextParams,
 	): Promise<void> {
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
@@ -113,7 +113,7 @@ export class FilesStorageUC {
 			await this.authorizationClientAdapter.checkPermissionsByReference(
 				AuthorizationBodyParamsReferenceType.INSTANCES,
 				storageLocationId,
-				AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.INSTANCE_VIEW])
+				AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.INSTANCE_VIEW]),
 			);
 		}
 
@@ -121,7 +121,7 @@ export class FilesStorageUC {
 			await this.authorizationClientAdapter.checkPermissionsByReference(
 				AuthorizationBodyParamsReferenceType.SCHOOLS,
 				storageLocationId,
-				AuthorizationContextBuilder.write([])
+				AuthorizationContextBuilder.write([]),
 			);
 		}
 	}
@@ -134,7 +134,7 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				const fileDto = FileDtoBuilder.buildFromRequest(info, file);
 
-				fileRecordPromise = RequestContext.createAsync(this.em, () => {
+				fileRecordPromise = RequestContext.create(this.em, () => {
 					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
 
 					return record;
@@ -171,7 +171,7 @@ export class FilesStorageUC {
 	}
 
 	private async getResponse(
-		params: FileRecordParams & FileUrlParams
+		params: FileRecordParams & FileUrlParams,
 	): Promise<AxiosResponse<internal.Readable, unknown>> {
 		const config: AxiosRequestConfig = {
 			headers: params.headers,
@@ -190,12 +190,7 @@ export class FilesStorageUC {
 
 			return response;
 		} catch (error) {
-			this.logger.warn({
-				message: 'could not find file by url',
-				url: params.url,
-				error: error as Error,
-			});
-			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND, { cause: error });
 		}
 	}
 
@@ -220,7 +215,7 @@ export class FilesStorageUC {
 		userId: EntityId,
 		params: DownloadFileParams,
 		previewParams: PreviewParams,
-		bytesRange?: string
+		bytesRange?: string,
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const { parentType, parentId } = fileRecord.getParentInfo();
@@ -294,20 +289,20 @@ export class FilesStorageUC {
 	public async copyFilesOfParent(
 		userId: string,
 		params: FileRecordParams,
-		copyFilesParams: CopyFilesOfParentParams
+		copyFilesParams: CopyFilesOfParentParams,
 	): Promise<Counted<CopyFileResponse[]>> {
 		await Promise.all([
 			this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create),
 			this.checkPermission(
 				copyFilesParams.target.parentType,
 				copyFilesParams.target.parentId,
-				FileStorageAuthorizationContext.create
+				FileStorageAuthorizationContext.create,
 			),
 		]);
 
 		const copyFileResults = await this.filesStorageService.copyFilesOfParent(userId, params, copyFilesParams.target);
 		const copyFileResponses = copyFileResults[0].map((copyFileResult) =>
-			CopyFileResponseBuilder.build(copyFileResult.id, copyFileResult.sourceId, copyFileResult.name)
+			CopyFileResponseBuilder.build(copyFileResult.id, copyFileResult.sourceId, copyFileResult.name),
 		);
 		const countedFileResponses: Counted<CopyFileResponse[]> = [copyFileResponses, copyFileResults[1]];
 
@@ -317,7 +312,7 @@ export class FilesStorageUC {
 	public async copyOneFile(
 		userId: string,
 		params: SingleFileParams,
-		copyFileParams: CopyFileParams
+		copyFileParams: CopyFileParams,
 	): Promise<CopyFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const { parentType, parentId } = fileRecord.getParentInfo();
@@ -327,7 +322,7 @@ export class FilesStorageUC {
 			this.checkPermission(
 				copyFileParams.target.parentType,
 				copyFileParams.target.parentId,
-				FileStorageAuthorizationContext.create
+				FileStorageAuthorizationContext.create,
 			),
 		]);
 

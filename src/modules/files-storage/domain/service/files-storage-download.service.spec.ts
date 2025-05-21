@@ -1,18 +1,18 @@
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { NotAcceptableException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ScanStatus } from '..';
-import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { ScanStatus } from '../../domain';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileResponseBuilder } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
+import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();
@@ -41,16 +41,20 @@ describe('FilesStorageService download methods', () => {
 					useValue: createMock<FileRecordRepo>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AntivirusService,
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>(),
+				},
+				{
+					provide: DomainErrorHandler,
+					useValue: createMock<DomainErrorHandler>(),
 				},
 			],
 		}).compile();

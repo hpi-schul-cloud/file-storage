@@ -1,15 +1,24 @@
-import { CoreModule } from '@core/core.module';
+import { ConfigurationModule } from '@infra/configuration';
+import { CoreModule } from '@infra/core';
 import { PreviewGeneratorConsumerModule } from '@infra/preview-generator';
+import { FILE_STORAGE_CLIENT } from '@infra/preview-generator/preview-generator.service';
+import { S3ClientModule } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { createConfigModuleOptions } from '@shared/common/config-module-options';
-import { config, defaultConfig, s3Config } from './files-storage.config';
+import { createS3ModuleOptions, FileStorageConfig } from './files-storage.config';
 
 @Module({
 	imports: [
-		ConfigModule.forRoot(createConfigModuleOptions(config)),
-		PreviewGeneratorConsumerModule.register({ storageConfig: s3Config, serverConfig: defaultConfig }),
-		CoreModule,
+		PreviewGeneratorConsumerModule.registerAsync({
+			imports: [
+				CoreModule,
+				S3ClientModule.registerAsync({
+					injectionToken: FILE_STORAGE_CLIENT,
+					useFactory: createS3ModuleOptions,
+					inject: [FileStorageConfig],
+					imports: [ConfigurationModule.register(FileStorageConfig)],
+				}),
+			],
+		}),
 	],
 })
 export class PreviewGeneratorAMQPModule {}

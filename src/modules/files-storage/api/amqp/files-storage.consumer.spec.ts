@@ -1,12 +1,11 @@
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { MikroORM } from '@mikro-orm/core';
-import { ObjectId } from '@mikro-orm/mongodb';
+import { Logger } from '@infra/logger';
+import { MikroORM, ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
 import { setupEntities } from '@testing/database';
 import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
-import { FileRecordEntity } from '../../repo';
+import { ENTITIES } from '../../files-storage.entity.imports';
 import { fileRecordTestFactory } from '../../testing';
 import { CopyFilesOfParentPayload, FileRecordResponse } from '../dto';
 import { FilesStorageConsumer } from './files-storage.consumer';
@@ -37,12 +36,12 @@ describe('FilesStorageConsumer', () => {
 					useValue: createMock<PreviewService>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: MikroORM,
-					useValue: await setupEntities([FileRecordEntity]),
+					useValue: await setupEntities(ENTITIES),
 				},
 			],
 		}).compile();
@@ -287,7 +286,7 @@ describe('FilesStorageConsumer', () => {
 
 				expect(result.message).toHaveLength(fileRecords.length);
 				expect(Object.keys(result.message[0])).toEqual(
-					expect.arrayContaining(['id', 'name', 'parentId', 'securityCheckStatus', 'size', 'mimeType', 'parentType'])
+					expect.arrayContaining(['id', 'name', 'parentId', 'securityCheckStatus', 'size', 'mimeType', 'parentType']),
 				);
 			});
 		});

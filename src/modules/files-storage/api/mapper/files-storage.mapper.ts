@@ -5,7 +5,7 @@ import { FileRecordParentType, GetFileResponse, StorageLocation } from '../../do
 import { FileRecordListResponse, FileRecordResponse } from '../dto';
 
 export class FilesStorageMapper {
-	private static authorizationEntityMap: Map<FileRecordParentType, AuthorizationBodyParamsReferenceType> = new Map([
+	private static authorizationEntityMap = new Map<FileRecordParentType, AuthorizationBodyParamsReferenceType>([
 		[FileRecordParentType.Task, AuthorizationBodyParamsReferenceType.TASKS],
 		[FileRecordParentType.Course, AuthorizationBodyParamsReferenceType.COURSES],
 		[FileRecordParentType.User, AuthorizationBodyParamsReferenceType.USERS],
@@ -17,7 +17,7 @@ export class FilesStorageMapper {
 		[FileRecordParentType.ExternalTool, AuthorizationBodyParamsReferenceType.EXTERNAL_TOOLS],
 	]);
 
-	private static storageLocationMap: Map<StorageLocation, AuthorizationBodyParamsReferenceType> = new Map([
+	private static storageLocationMap = new Map<StorageLocation, AuthorizationBodyParamsReferenceType>([
 		[StorageLocation.INSTANCE, AuthorizationBodyParamsReferenceType.INSTANCES],
 		[StorageLocation.SCHOOL, AuthorizationBodyParamsReferenceType.SCHOOLS],
 	]);
@@ -49,10 +49,10 @@ export class FilesStorageMapper {
 		fileRecords: FileRecord[],
 		total: number,
 		skip?: number,
-		limit?: number
+		limit?: number,
 	): FileRecordListResponse {
 		const responseFileRecords: FileRecordResponse[] = fileRecords.map((fileRecord) =>
-			FilesStorageMapper.mapToFileRecordResponse(fileRecord)
+			FilesStorageMapper.mapToFileRecordResponse(fileRecord),
 		);
 
 		const response = new FileRecordListResponse(responseFileRecords, total, skip, limit);

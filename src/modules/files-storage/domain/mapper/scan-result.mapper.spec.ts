@@ -1,5 +1,5 @@
 import { ScanResult } from '@infra/antivirus';
-import { ScanStatus } from '..';
+import { ScanStatus } from '../../domain';
 import { ScanResultDto } from '../dto';
 import { ScanResultDtoMapper } from './scan-result.mapper';
 

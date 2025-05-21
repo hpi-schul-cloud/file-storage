@@ -1,18 +1,18 @@
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService, ScanResult } from '@infra/antivirus';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import _ from 'lodash';
-import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
+import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecord = () => {
 	const parentId = new ObjectId().toHexString();
@@ -41,16 +41,20 @@ describe('FilesStorageService update methods', () => {
 					useValue: createMock<FileRecordRepo>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AntivirusService,
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>(),
+				},
+				{
+					provide: DomainErrorHandler,
+					useValue: createMock<DomainErrorHandler>(),
 				},
 			],
 		}).compile();
@@ -189,7 +193,7 @@ describe('FilesStorageService update methods', () => {
 			const setup = () => {
 				const { fileRecord } = buildFileRecord();
 				const scanResult: ScanResult = { virus_detected: false };
-				const token = fileRecord.getSecurityToken() || '';
+				const token = fileRecord.getSecurityToken() ?? '';
 
 				fileRecordRepo.findBySecurityCheckRequestToken.mockResolvedValueOnce(fileRecord);
 				fileRecordRepo.save.mockResolvedValue();
@@ -234,7 +238,7 @@ describe('FilesStorageService update methods', () => {
 			const setup = () => {
 				const { fileRecord } = buildFileRecord();
 				const scanResult: ScanResult = { virus_detected: true, virus_signature: 'Win.Test.EICAR_HDB-1' };
-				const token = fileRecord.getSecurityToken() || '';
+				const token = fileRecord.getSecurityToken() ?? '';
 
 				fileRecordRepo.findBySecurityCheckRequestToken.mockResolvedValueOnce(fileRecord);
 				fileRecordRepo.save.mockResolvedValue();
@@ -271,7 +275,7 @@ describe('FilesStorageService update methods', () => {
 			const setup = () => {
 				const { fileRecord } = buildFileRecord();
 				const scanResult: ScanResult = { virus_detected: false, error: 'file to large' };
-				const token = fileRecord.getSecurityToken() || '';
+				const token = fileRecord.getSecurityToken() ?? '';
 
 				fileRecordRepo.findBySecurityCheckRequestToken.mockResolvedValueOnce(fileRecord);
 				fileRecordRepo.save.mockResolvedValue();
@@ -302,7 +306,7 @@ describe('FilesStorageService update methods', () => {
 			const setup = () => {
 				const { fileRecord } = buildFileRecord();
 				const scanResult: ScanResult = { virus_detected: false };
-				const token = fileRecord.getSecurityToken() || '';
+				const token = fileRecord.getSecurityToken() ?? '';
 				const error = new NotFoundException();
 
 				fileRecordRepo.findBySecurityCheckRequestToken.mockRejectedValueOnce(error);
@@ -321,7 +325,7 @@ describe('FilesStorageService update methods', () => {
 			const setup = () => {
 				const { fileRecord } = buildFileRecord();
 				const scanResult: ScanResult = { virus_detected: false };
-				const token = fileRecord.getSecurityToken() || '';
+				const token = fileRecord.getSecurityToken() ?? '';
 				const error = new Error('bla');
 
 				fileRecordRepo.findBySecurityCheckRequestToken.mockResolvedValueOnce(fileRecord);

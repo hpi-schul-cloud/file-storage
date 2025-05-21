@@ -1,4 +1,4 @@
-import { Embeddable, Embedded, Entity, Enum, Index, Property } from '@mikro-orm/core';
+import { Embeddable, Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
 import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
@@ -7,7 +7,7 @@ import { FileRecordParentType, StorageLocation } from '../domain/interface';
 
 @Embeddable()
 export class FileRecordSecurityCheckEmbeddable implements FileRecordSecurityCheckProps {
-	@Enum()
+	@Enum(() => ScanStatus)
 	status!: ScanStatus;
 
 	@Property()
@@ -50,7 +50,7 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	securityCheck!: FileRecordSecurityCheckEmbeddable;
 
 	@Index()
-	@Enum()
+	@Enum(() => FileRecordParentType)
 	parentType!: FileRecordParentType;
 
 	@Property({ nullable: true })
@@ -67,7 +67,7 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	@Property({ type: ObjectIdType, fieldName: 'storageLocationId', nullable: false })
 	storageLocationId!: EntityId;
 
-	@Property()
+	@Property({ type: 'StorageLocation' })
 	storageLocation!: StorageLocation;
 
 	@Property({ type: ObjectIdType, fieldName: 'isCopyFrom', nullable: true })

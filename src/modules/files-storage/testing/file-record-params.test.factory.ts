@@ -1,7 +1,7 @@
-import { ObjectId } from 'bson';
-import { fileRecordTestFactory } from './file-record.test.factory';
-import { FileRecordParentType, StorageLocation, type FileRecord, type ParentInfo } from '../domain';
+import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
+import { FileRecordParentType, StorageLocation, type FileRecord, type ParentInfo } from '../domain';
+import { fileRecordTestFactory } from './file-record.test.factory';
 
 export class FileRecordParamsTestFactory {
 	public static build(): {

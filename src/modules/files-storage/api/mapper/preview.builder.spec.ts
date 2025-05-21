@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+import { ObjectId } from '@mikro-orm/mongodb';
 import crypto from 'crypto';
 import { PreviewOutputMimeTypes } from '../../domain';
 import { fileRecordTestFactory } from '../../testing';

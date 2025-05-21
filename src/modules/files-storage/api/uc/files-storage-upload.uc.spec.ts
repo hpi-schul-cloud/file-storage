@@ -1,16 +1,14 @@
-import { DomainErrorHandler } from '@core/error';
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { AuthorizationClientAdapter } from '@infra/authorization-client';
+import { AuthorizationClientAdapter, AuthorizationContextBuilder } from '@infra/authorization-client';
+import { DomainErrorHandler } from '@infra/error';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { EntityManager } from '@mikro-orm/core';
-import { ObjectId } from '@mikro-orm/mongodb';
-import { Action, AuthorizableReferenceType, AuthorizationContextBuilder } from '@modules/authorization/domain';
+import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Permission } from '@shared/domain/interface';
+import { Permission } from '@testing/entity/user-role-permissions';
 import { AxiosHeadersKeyValue, axiosResponseFactory } from '@testing/factory/axios-response.factory';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Request } from 'express';
@@ -94,8 +92,8 @@ describe('FilesStorageUC upload methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AuthorizationClientAdapter,
@@ -178,7 +176,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toBeCalledWith(
 					uploadFromUrlParams.parentType,
 					uploadFromUrlParams.parentId,
-					{ action: Action.write, requiredPermissions: [Permission.FILESTORAGE_CREATE] }
+					{ action: 'write', requiredPermissions: [Permission.FILESTORAGE_CREATE] },
 				);
 			});
 
@@ -188,9 +186,9 @@ describe('FilesStorageUC upload methods', () => {
 				await filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams);
 
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
-					AuthorizableReferenceType.School,
+					'schools',
 					uploadFromUrlParams.storageLocationId,
-					AuthorizationContextBuilder.write([])
+					AuthorizationContextBuilder.write([]),
 				);
 			});
 
@@ -216,7 +214,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(filesStorageService.uploadFile).toHaveBeenCalledWith(
 					userId,
 					uploadFromUrlParams,
-					expectedFileDescription
+					expectedFileDescription,
 				);
 			});
 
@@ -253,6 +251,7 @@ describe('FilesStorageUC upload methods', () => {
 
 				httpService.get.mockImplementation(() => {
 					const observable = of(errorResponse);
+
 					return observable;
 				});
 
@@ -263,7 +262,7 @@ describe('FilesStorageUC upload methods', () => {
 				const { uploadFromUrlParams, userId } = setup();
 				const error = new NotFoundException(ErrorType.FILE_NOT_FOUND);
 
-				await expect(filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams)).rejects.toThrowError(error);
+				await expect(filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams)).rejects.toThrow(error.message);
 			});
 		});
 
@@ -326,7 +325,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					allowedType,
 					params.parentId,
-					FileStorageAuthorizationContext.create
+					FileStorageAuthorizationContext.create,
 				);
 			});
 
@@ -336,9 +335,9 @@ describe('FilesStorageUC upload methods', () => {
 				await filesStorageUC.upload(userId, params, request);
 
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
-					AuthorizableReferenceType.Instance,
+					'instances',
 					params.storageLocationId,
-					AuthorizationContextBuilder.write([Permission.INSTANCE_VIEW])
+					AuthorizationContextBuilder.write([Permission.INSTANCE_VIEW]),
 				);
 			});
 

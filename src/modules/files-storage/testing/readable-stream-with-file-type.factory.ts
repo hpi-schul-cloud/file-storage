@@ -16,7 +16,6 @@ class ReadableStreamWithFileTypeImp extends Readable implements ReadableStreamWi
 	}
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const readableStreamWithFileTypeFactory = BaseFactory.define<
 	ReadableStreamWithFileTypeImp,
 	ReadableStreamWithFileTypeProps

@@ -1,4 +1,4 @@
-import { ScanStatus } from '..';
+import { ScanStatus } from '../file-record.do';
 
 export class ScanResultDto {
 	public status: ScanStatus;

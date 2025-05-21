@@ -2,7 +2,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { cleanupCollections } from '@testing/cleanup-collections';
+import { cleanupCollections } from '@testing/database';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
@@ -70,7 +70,7 @@ describe(`${baseRouteName} (api)`, () => {
 				parentId: validId,
 				parentType: FileRecordParentType.School,
 			});
-			const token = fileRecord.securityCheck.requestToken || '';
+			const token = fileRecord.securityCheck.requestToken ?? '';
 			await em.persistAndFlush(fileRecord);
 			em.clear();
 

@@ -18,7 +18,7 @@ describe('FilesStorageMapper', () => {
 					securityCheckStatus: 'pending',
 					size: expect.any(Number),
 					mimeType: 'application/octet-stream',
-				})
+				}),
 			);
 		});
 	});
@@ -38,7 +38,7 @@ describe('FilesStorageMapper', () => {
 					total: fileRecords.length,
 					skip: 0,
 					limit: 5,
-				})
+				}),
 			);
 		});
 		it('should contains instances of FileRecordResponse', () => {

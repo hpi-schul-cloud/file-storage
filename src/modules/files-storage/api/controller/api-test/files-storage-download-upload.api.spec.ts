@@ -5,7 +5,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ApiValidationError } from '@shared/common/error';
+import { ApiValidationError } from '@shared/error';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
@@ -14,8 +14,8 @@ import { ErrorType } from '../../../domain';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
-import { availableParentTypes } from './mocks';
 import { GetFileTestFactory } from '../../../testing';
+import { availableParentTypes } from './mocks';
 
 jest.mock('file-type-cjs/file-type-cjs-index', () => {
 	return {
@@ -165,7 +165,7 @@ describe('files-storage controller (API)', () => {
 						parentType: 'schools',
 						securityCheckStatus: 'pending',
 						size: expect.any(Number),
-					})
+					}),
 				);
 			});
 
@@ -342,7 +342,7 @@ describe('files-storage controller (API)', () => {
 							mimeType: 'application/octet-stream',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
-						})
+						}),
 					);
 				});
 			});
@@ -610,7 +610,7 @@ describe('files-storage controller (API)', () => {
 				const { newRecord, fileApiClient } = await setup();
 
 				const response = await fileApiClient.get(
-					`/file-security/download/${newRecord.securityCheck.requestToken || ''}`
+					`/file-security/download/${newRecord.securityCheck.requestToken || ''}`,
 				);
 
 				expect(response.status).toEqual(200);

@@ -5,11 +5,11 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ApiValidationError } from '@shared/common/error';
+import { ApiValidationError } from '@shared/error';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import FileType from 'file-type-cjs/file-type-cjs-index';
+import FileType from 'file-type';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
@@ -19,7 +19,7 @@ import { availableStorageLocations } from './mocks';
 
 const baseRouteName = '';
 
-jest.mock('file-type-cjs/file-type-cjs-index', () => {
+jest.mock('file-type', () => {
 	return {
 		fileTypeStream: jest.fn(),
 	};
@@ -112,7 +112,7 @@ describe(`${baseRouteName} (api)`, () => {
 				loggedInClient: TestApiClient,
 				schoolId: string,
 				parentId: string,
-				fileName: string
+				fileName: string,
 			) => {
 				const response = await loggedInClient
 					.post(`file/upload/school/${schoolId}/schools/${parentId}`)

@@ -1,5 +1,5 @@
 import { PreviewFileOptions } from '@infra/preview-generator';
-import { PreviewFileParams, PreviewOutputMimeTypes } from '..';
+import { PreviewFileParams, PreviewOutputMimeTypes } from '../../domain';
 import { fileRecordTestFactory } from '../../testing';
 import { PreviewFileOptionsMapper } from './preview-file-params.mapper';
 

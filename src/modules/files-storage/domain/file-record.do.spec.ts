@@ -1,8 +1,8 @@
+import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
 import { FileRecord, PreviewOutputMimeTypes, PreviewStatus, ScanStatus } from './file-record.do';
-import { ObjectId } from 'bson';
 
 describe('FileRecord', () => {
 	describe('hasDuplicateName', () => {
@@ -278,7 +278,7 @@ describe('FileRecord', () => {
 			const maxSize = 4096;
 
 			// Call the function
-			fileRecord['setSizeInByte'](newSize, maxSize);
+			fileRecord.setSizeInByte(newSize, maxSize);
 
 			// Assert the size is updated
 			expect(fileRecord.sizeInByte).toBe(newSize);
@@ -290,8 +290,8 @@ describe('FileRecord', () => {
 			const maxSize = 4096;
 
 			// Assert exception is thrown
-			expect(() => fileRecord['setSizeInByte'](invalidSize, maxSize)).toThrow(BadRequestException);
-			expect(() => fileRecord['setSizeInByte'](invalidSize, maxSize)).toThrowError(ErrorType.FILE_IS_EMPTY);
+			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
+			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrowError(ErrorType.FILE_IS_EMPTY);
 		});
 
 		it('should throw BadRequestException if size exceeds maxSizeInByte', () => {
@@ -300,8 +300,8 @@ describe('FileRecord', () => {
 			const maxSize = 4096;
 
 			// Assert exception is thrown
-			expect(() => fileRecord['setSizeInByte'](invalidSize, maxSize)).toThrow(BadRequestException);
-			expect(() => fileRecord['setSizeInByte'](invalidSize, maxSize)).toThrowError(ErrorType.FILE_TOO_BIG);
+			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
+			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrowError(ErrorType.FILE_TOO_BIG);
 		});
 	});
 

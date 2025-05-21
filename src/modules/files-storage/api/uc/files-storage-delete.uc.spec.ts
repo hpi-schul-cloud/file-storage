@@ -1,11 +1,10 @@
-import { DomainErrorHandler } from '@core/error';
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
+import { DomainErrorHandler } from '@infra/error';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { EntityManager } from '@mikro-orm/core';
-import { ObjectId } from '@mikro-orm/mongodb';
+import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -77,8 +76,8 @@ describe('FilesStorageUC delete methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AuthorizationClientAdapter,
@@ -140,7 +139,7 @@ describe('FilesStorageUC delete methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toBeCalledWith(
 					allowedType,
 					requestParams.parentId,
-					FileStorageAuthorizationContext.delete
+					FileStorageAuthorizationContext.delete,
 				);
 			});
 
@@ -236,7 +235,7 @@ describe('FilesStorageUC delete methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toBeCalledWith(
 					allowedType,
 					parentInfo.parentId,
-					FileStorageAuthorizationContext.delete
+					FileStorageAuthorizationContext.delete,
 				);
 			});
 

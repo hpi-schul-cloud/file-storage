@@ -1,33 +1,23 @@
-import { CoreModule } from '@core/core.module';
-import { LoggerModule } from '@core/logger';
-import { DB_PASSWORD, DB_URL, DB_USERNAME } from '@imports-from-feathers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { ConfigurationModule } from '@infra/configuration';
+import { DatabaseModule } from '@infra/database';
+import { LoggerModule } from '@infra/logger';
+import { RabbitMQWrapperModule } from '@infra/rabbitmq';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { createConfigModuleOptions } from '@shared/common/config-module-options';
-import { defaultMikroOrmOptions } from '@shared/common/defaultMikroOrmOptions';
 import { FilesStorageConsumer } from './api';
-import { config } from './files-storage.config';
+import { FilesStorageExchange } from './api/amqp';
+import { FileStorageConfig } from './files-storage.config';
 import { ENTITIES } from './files-storage.entity.imports';
 import { FilesStorageModule } from './files-storage.module';
+import { CoreModule } from '@infra/core';
 
 @Module({
 	imports: [
+		ConfigurationModule.register(FileStorageConfig),
 		FilesStorageModule,
 		CoreModule,
 		LoggerModule,
-		ConfigModule.forRoot(createConfigModuleOptions(config)),
-		MikroOrmModule.forRoot({
-			...defaultMikroOrmOptions,
-			type: 'mongo',
-			// TODO add mongoose options as mongo options (see database.js)
-			clientUrl: DB_URL,
-			password: DB_PASSWORD,
-			user: DB_USERNAME,
-			entities: ENTITIES,
-
-			// debug: true, // use it for locally debugging of querys
-		}),
+		DatabaseModule.forRoot(ENTITIES),
+		RabbitMQWrapperModule.forRoot([FilesStorageExchange]),
 	],
 	providers: [FilesStorageConsumer],
 })

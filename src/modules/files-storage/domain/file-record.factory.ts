@@ -1,5 +1,5 @@
+import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
-import { ObjectId } from 'bson';
 import { FileRecord, FileRecordProps, FileRecordSecurityCheck, ParentInfo } from './file-record.do';
 
 export class FileRecordFactory {
@@ -14,7 +14,7 @@ export class FileRecordFactory {
 		size: number,
 		mimeType: string,
 		params: ParentInfo,
-		userId: string
+		userId: string,
 	): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 

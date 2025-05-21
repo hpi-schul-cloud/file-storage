@@ -1,11 +1,10 @@
-import { DomainErrorHandler } from '@core/error';
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
+import { DomainErrorHandler } from '@infra/error';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { EntityManager } from '@mikro-orm/core';
-import { ObjectId } from '@mikro-orm/mongodb';
+import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -94,8 +93,8 @@ describe('FilesStorageUC', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AuthorizationClientAdapter,
@@ -154,7 +153,7 @@ describe('FilesStorageUC', () => {
 					1,
 					sourceParams.parentType,
 					sourceParams.parentId,
-					FileStorageAuthorizationContext.create
+					FileStorageAuthorizationContext.create,
 				);
 			});
 
@@ -167,7 +166,7 @@ describe('FilesStorageUC', () => {
 					2,
 					targetParams.target.parentType,
 					targetParams.target.parentId,
-					FileStorageAuthorizationContext.create
+					FileStorageAuthorizationContext.create,
 				);
 			});
 
@@ -290,7 +289,7 @@ describe('FilesStorageUC', () => {
 				const fileResponse = CopyFileResponseBuilder.build(
 					fileRecord.id,
 					singleFileParams.fileRecordId,
-					fileRecord.getName()
+					fileRecord.getName(),
 				);
 
 				filesStorageService.getFileRecord.mockResolvedValue(fileRecord);
@@ -318,7 +317,7 @@ describe('FilesStorageUC', () => {
 					1,
 					parentInfo.parentType,
 					parentInfo.parentId,
-					FileStorageAuthorizationContext.create
+					FileStorageAuthorizationContext.create,
 				);
 			});
 
@@ -331,7 +330,7 @@ describe('FilesStorageUC', () => {
 					2,
 					copyFileParams.target.parentType,
 					copyFileParams.target.parentId,
-					FileStorageAuthorizationContext.create
+					FileStorageAuthorizationContext.create,
 				);
 			});
 

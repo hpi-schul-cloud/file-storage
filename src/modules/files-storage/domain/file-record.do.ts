@@ -2,8 +2,8 @@ import { PreviewInputMimeTypes } from '@infra/preview-generator';
 import { BadRequestException } from '@nestjs/common';
 import { AuthorizableObject, DomainObject } from '@shared/domain/domain-object';
 import { EntityId } from '@shared/domain/types';
+import { randomUUID } from 'node:crypto';
 import path from 'path';
-import { v4 as uuid } from 'uuid';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
 
@@ -40,7 +40,7 @@ export class FileRecordSecurityCheck implements FileRecordSecurityCheckProps {
 			status: ScanStatus.PENDING,
 			reason: 'not yet scanned',
 			updatedAt: new Date(),
-			requestToken: uuid(),
+			requestToken: randomUUID(),
 		};
 		const securityCheck = new FileRecordSecurityCheck(props);
 

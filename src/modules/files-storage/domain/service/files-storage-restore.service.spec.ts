@@ -1,15 +1,15 @@
-import { LegacyLogger } from '@core/logger';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
 import { FileRecord, FileRecordProps, FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FilesStorageService } from './files-storage.service';
+import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();
@@ -42,16 +42,20 @@ describe('FilesStorageService restore methods', () => {
 					useValue: createMock<FileRecordRepo>(),
 				},
 				{
-					provide: LegacyLogger,
-					useValue: createMock<LegacyLogger>(),
+					provide: Logger,
+					useValue: createMock<Logger>(),
 				},
 				{
 					provide: AntivirusService,
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>(),
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>(),
+				},
+				{
+					provide: DomainErrorHandler,
+					useValue: createMock<DomainErrorHandler>(),
 				},
 			],
 		}).compile();
@@ -101,7 +105,7 @@ describe('FilesStorageService restore methods', () => {
 				expect(fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete).toHaveBeenCalledWith(
 					params.storageLocation,
 					params.storageLocationId,
-					params.parentId
+					params.parentId,
 				);
 			});
 
@@ -216,7 +220,7 @@ describe('FilesStorageService restore methods', () => {
 					// Recreate the FileRecord instance with copied properties
 					const copiedFileRecord = new FileRecord(
 						{ ...fileRecordProps },
-						new FileRecordSecurityCheck(securityCheckProps)
+						new FileRecordSecurityCheck(securityCheckProps),
 					);
 
 					return copiedFileRecord;
@@ -281,6 +285,7 @@ describe('FilesStorageService restore methods', () => {
 						props: fileRecordProps,
 						securityCheck: securityCheckProps,
 					};
+
 					return props;
 				});
 
@@ -293,8 +298,8 @@ describe('FilesStorageService restore methods', () => {
 									deletedSince: expect.any(Date),
 								},
 								securityCheck: props.securityCheck,
-							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps }
-					)
+							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps },
+					),
 				);
 			});
 		});

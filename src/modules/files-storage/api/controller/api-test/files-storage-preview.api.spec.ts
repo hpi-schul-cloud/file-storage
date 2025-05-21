@@ -6,22 +6,22 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { INestApplication, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ApiValidationError } from '@shared/common/error';
 import { EntityId } from '@shared/domain/types';
-import { cleanupCollections } from '@testing/cleanup-collections';
+import { ApiValidationError } from '@shared/error';
+import { cleanupCollections } from '@testing/database';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import FileType from 'file-type-cjs/file-type-cjs-index';
+import FileType from 'file-type';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
-import { FileRecordResponse } from '../../dto';
 import { GetFileTestFactory } from '../../../testing';
+import { FileRecordResponse } from '../../dto';
 
-jest.mock('file-type-cjs/file-type-cjs-index', () => {
+jest.mock('file-type', () => {
 	return {
 		fileTypeStream: jest.fn(),
 	};

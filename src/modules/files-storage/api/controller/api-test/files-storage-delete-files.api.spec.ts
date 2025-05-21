@@ -6,8 +6,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
-import { ApiValidationError } from '@shared/common/error';
 import { EntityId } from '@shared/domain/types';
+import { ApiValidationError } from '@shared/error';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
@@ -129,7 +129,7 @@ describe(`${baseRouteName} (api)`, () => {
 				loggedInClient: TestApiClient,
 				schoolId: string,
 				parentId: string,
-				fileName: string
+				fileName: string,
 			) => {
 				const response = await loggedInClient
 					.post(`/upload/school/${schoolId}/schools/${parentId}`)

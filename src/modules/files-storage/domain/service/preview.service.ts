@@ -1,4 +1,4 @@
-import { LegacyLogger } from '@core/logger';
+import { Logger } from '@infra/logger';
 import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
@@ -6,14 +6,15 @@ import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { ErrorType } from '../error';
 import { FileRecord, PreviewStatus } from '../file-record.do';
 import { GetFileResponse, PreviewFileParams } from '../interface';
+import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, PreviewFileOptionsMapper } from '../mapper';
 
 @Injectable()
 export class PreviewService {
 	constructor(
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
-		private logger: LegacyLogger,
-		private readonly previewProducer: PreviewProducer
+		private logger: Logger,
+		private readonly previewProducer: PreviewProducer,
 	) {
 		this.logger.setContext(PreviewService.name);
 	}
@@ -36,7 +37,12 @@ export class PreviewService {
 
 	private checkIfPreviewPossible(fileRecord: FileRecord): void | UnprocessableEntityException {
 		if (fileRecord.getPreviewStatus() !== PreviewStatus.PREVIEW_POSSIBLE) {
-			this.logger.warn(`could not generate preview for : ${fileRecord.id} ${fileRecord.mimeType}`);
+			this.logger.warning(
+				new FileStorageActionsLoggable(`could not generate preview for mime type: ${fileRecord.mimeType}`, {
+					action: 'checkIfPreviewPossible',
+					sourcePayload: fileRecord,
+				}),
+			);
 			throw new UnprocessableEntityException(ErrorType.PREVIEW_NOT_POSSIBLE);
 		}
 	}

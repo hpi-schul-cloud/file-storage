@@ -1,23 +1,56 @@
-import { CoreModuleConfig } from '@core/core.config';
-import { Configuration } from '@hpi-schul-cloud/commons';
-import { JwtAuthGuardConfig } from '@infra/auth-guard';
-import { AuthorizationClientConfig } from '@infra/authorization-client';
 import { S3Config } from '@infra/s3-client';
-import { Algorithm } from 'jsonwebtoken';
+import { Injectable } from '@nestjs/common';
+import { StringToBoolean, StringToNumber } from '@shared/transformer';
+import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
 
 export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
-export interface FileStorageConfig extends CoreModuleConfig, AuthorizationClientConfig, JwtAuthGuardConfig {
-	MAX_FILE_SIZE: number;
-	MAX_SECURITY_CHECK_FILE_SIZE: number;
-	USE_STREAM_TO_ANTIVIRUS: boolean;
+@Injectable()
+export class FileStorageConfig {
+	@IsNumber()
+	@StringToNumber()
+	FILES_STORAGE_MAX_FILE_SIZE = 2684354560;
+
+	@IsNumber()
+	@StringToNumber()
+	FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE = 2684354560;
+
+	@IsBoolean()
+	@StringToBoolean()
+	FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS = false;
+
+	@IsUrl({ require_tld: false })
+	FILES_STORAGE_S3_ENDPOINT = 'http://localhost:9000/';
+
+	@IsString()
+	FILES_STORAGE_S3_REGION = 'eu-central-1';
+
+	@IsString()
+	FILES_STORAGE_S3_BUCKET = 'schulcloud';
+
+	@IsString()
+	FILES_STORAGE_S3_ACCESS_KEY_ID = 'miniouser';
+
+	@IsString()
+	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
 }
 
-export const defaultConfig = {
-	NEST_LOG_LEVEL: Configuration.get('NEST_LOG_LEVEL') as string,
-	INCOMING_REQUEST_TIMEOUT: Configuration.get('FILES_STORAGE__INCOMING_REQUEST_TIMEOUT') as number,
+export const createS3ModuleOptions = async (config: FileStorageConfig): Promise<S3Config> => {
+	return {
+		connectionName: FILES_STORAGE_S3_CONNECTION,
+		endpoint: config.FILES_STORAGE_S3_ENDPOINT,
+		region: config.FILES_STORAGE_S3_REGION,
+		bucket: config.FILES_STORAGE_S3_BUCKET,
+		accessKeyId: config.FILES_STORAGE_S3_ACCESS_KEY_ID,
+		secretAccessKey: config.FILES_STORAGE_S3_SECRET_ACCESS_KEY,
+	};
 };
 
-export const authorizationClientConfig: AuthorizationClientConfig = {
+export const defaultConfig = {
+	NEST_LOG_LEVEL: 'debug',
+	INCOMING_REQUEST_TIMEOUT: 4999,
+};
+
+/*export const authorizationClientConfig: AuthorizationClientConfig = {
 	basePath: `${Configuration.get('API_HOST') as string}/v3/`,
 };
 
@@ -36,19 +69,6 @@ const fileStorageConfig: FileStorageConfig = {
 	...authorizationClientConfig,
 	...defaultConfig,
 	...jwtAuthGuardConfig,
-	EXIT_ON_ERROR: Configuration.get('EXIT_ON_ERROR') as boolean,
+	//EXIT_ON_ERROR: Configuration.get('EXIT_ON_ERROR') as boolean,
 };
-
-// The configurations lookup
-// config/development.json for development
-// config/test.json for tests
-export const s3Config: S3Config = {
-	connectionName: FILES_STORAGE_S3_CONNECTION,
-	endpoint: Configuration.get('FILES_STORAGE__S3_ENDPOINT') as string,
-	region: Configuration.get('FILES_STORAGE__S3_REGION') as string,
-	bucket: Configuration.get('FILES_STORAGE__S3_BUCKET') as string,
-	accessKeyId: Configuration.get('FILES_STORAGE__S3_ACCESS_KEY_ID') as string,
-	secretAccessKey: Configuration.get('FILES_STORAGE__S3_SECRET_ACCESS_KEY') as string,
-};
-
-export const config = () => fileStorageConfig;
+*/

@@ -1,10 +1,10 @@
-import { Logger } from '@core/logger';
 import {
 	AuthorizationClientAdapter,
 	AuthorizationContextBuilder,
 	AuthorizationContextParams,
 	AuthorizationContextParamsRequiredPermissions,
 } from '@infra/authorization-client';
+import { Logger } from '@infra/logger';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { FilesStorageService, StorageLocation } from '../../domain';
@@ -16,7 +16,7 @@ export class FilesStorageAdminUC {
 	constructor(
 		private readonly filesStorageAdminService: FilesStorageService,
 		private readonly logger: Logger,
-		private readonly authorizationClientAdapter: AuthorizationClientAdapter
+		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
 	) {
 		this.logger.setContext(FilesStorageAdminUC.name);
 	}
@@ -36,7 +36,7 @@ export class FilesStorageAdminUC {
 	private async checkPermission(
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
-		context: AuthorizationContextParams
+		context: AuthorizationContextParams,
 	): Promise<void> {
 		const referenceType = FilesStorageMapper.mapToAllowedStorageLocationType(storageLocation);
 
