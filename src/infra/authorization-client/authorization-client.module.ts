@@ -16,7 +16,7 @@ export class AuthorizationClientModule {
 			{
 				provide: AuthorizationApi,
 				useFactory: (config: AuthorizationConfig) => {
-					const configuration = new Configuration({ basePath: config.AUTHORIZATION_API_HOST });
+					const configuration = new Configuration({ basePath: config.AUTHORIZATION_API_URL });
 
 					return new AuthorizationApi(configuration);
 				},

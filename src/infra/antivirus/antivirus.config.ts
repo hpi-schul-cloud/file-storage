@@ -8,7 +8,7 @@ export class AntivirusConfig {
 	ENABLE_FILE_SECURITY_CHECK = false;
 	// base url for the file storage service
 	@IsString()
-	FILE_STORAGE_SERVICE_HOSTNAME!: string;
+	FILE_STORAGE_SERVICE_URL!: string;
 	// rabbitmq exchange name for antivirus
 	@IsString()
 	ANTIVIRUS_EXCHANGE = 'antivirus';

@@ -18,7 +18,7 @@ export class AntivirusModule {
 					useFactory: (config: AntivirusConfig): AntivirusServiceOptions => {
 						return {
 							enabled: config.ENABLE_FILE_SECURITY_CHECK,
-							filesServiceBaseUrl: config.FILE_STORAGE_SERVICE_HOSTNAME,
+							filesServiceBaseUrl: config.FILE_STORAGE_SERVICE_URL,
 							exchange: config.ANTIVIRUS_EXCHANGE,
 							routingKey: config.ANTIVIRUS_ROUTING_KEY,
 						};
