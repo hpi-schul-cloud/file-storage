@@ -75,8 +75,7 @@ export class DownloadFileParams {
 
 export class ScanResultParams implements ScanResult {
 	@ApiProperty()
-	@IsBoolean()
-	@StringToBoolean()
+	@Allow()
 	public virus_detected?: boolean;
 
 	@ApiProperty()
