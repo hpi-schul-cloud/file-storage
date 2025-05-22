@@ -14,7 +14,7 @@ metadata:
     app.kubernetes.io/part-of: schulcloud-verbund
     app.kubernetes.io/version: {{ FILE_STORAGE_IMAGE_TAG }}
     app.kubernetes.io/name: file-storage
-    app.kubernetes.io/component: filestorage
+    app.kubernetes.io/component: file-storage
     app.kubernetes.io/managed-by: ansible
     git.branch: {{ FILE_STORAGE_BRANCH_NAME }}
     git.repo: {{ FILE_STORAGE_REPO_NAME }}
@@ -37,7 +37,7 @@ spec:
         app.kubernetes.io/part-of: schulcloud-verbund
         app.kubernetes.io/version: {{ FILE_STORAGE_IMAGE_TAG }}
         app.kubernetes.io/name: file-storage
-        app.kubernetes.io/component: filestorage
+        app.kubernetes.io/component: file-storage
         app.kubernetes.io/managed-by: ansible
         git.branch: {{ FILE_STORAGE_BRANCH_NAME }}
         git.repo: {{ FILE_STORAGE_REPO_NAME }}
@@ -50,12 +50,12 @@ spec:
       os:
         name: linux
       containers:
-      - name: filestorage
+      - name: file-storage
         image: {{ FILE_STORAGE_IMAGE }}:{{ FILE_STORAGE_IMAGE_TAG }}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 4444
-          name: filestorage-http
+          name: file-storage
           protocol: TCP
         - containerPort: 9090
           name: metrics
