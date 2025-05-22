@@ -17,4 +17,4 @@ RUN npm run build
 ENV NODE_ENV=production
 ENV NO_COLOR="true"
 
-CMD ["npm", "run", "start:prod"]
+CMD ["npm", "run", "nest:start:files-storage:prod"]
