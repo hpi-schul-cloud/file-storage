@@ -41,6 +41,15 @@
     tags:
       - deployment
 
+  - name: Filestorage server deployment
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: amqp-file-storage-deployment.yml.j2
+      state: "{{ 'present' if WITH_FILESTORAGE else 'absent'}}"
+    tags:
+      - deployment
+
   - name: Filestorage server service
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
