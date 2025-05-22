@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: filestorage-server-deployment
+  name: file-storage-deployment
   namespace: {{ NAMESPACE }}
 {% if ANNOTATIONS is defined and ANNOTATIONS|bool %}
   annotations:
@@ -10,16 +10,16 @@ metadata:
 {% endif %}
 {% endif %}
   labels:
-    app: filestorage-server
+    app: file-storage
     app.kubernetes.io/part-of: schulcloud-verbund
-    app.kubernetes.io/version: {{ FILESTORAGE_SERVER_IMAGE_TAG }}
-    app.kubernetes.io/name: filestorage-server
+    app.kubernetes.io/version: {{ FILE_STORAGE_IMAGE_TAG }}
+    app.kubernetes.io/name: file-storage
     app.kubernetes.io/component: filestorage
     app.kubernetes.io/managed-by: ansible
-    git.branch: {{ FILESTORAGE_SERVER_BRANCH_NAME }}
-    git.repo: {{ FILESTORAGE_SERVER_REPO_NAME }}
+    git.branch: {{ FILE_STORAGE_BRANCH_NAME }}
+    git.repo: {{ FILE_STORAGE_REPO_NAME }}
 spec:
-  replicas: {{ FILESTORAGE_SERVER_REPLICAS|default("1", true) }}
+  replicas: {{ FILE_STORAGE_REPLICAS|default("1", true) }}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -29,18 +29,18 @@ spec:
   paused: false
   selector:
     matchLabels:
-      app: filestorage-server
+      app: file-storage
   template:
     metadata:
       labels:
-        app: filestorage-server
+        app: file-storage
         app.kubernetes.io/part-of: schulcloud-verbund
-        app.kubernetes.io/version: {{ FILESTORAGE_SERVER_IMAGE_TAG }}
-        app.kubernetes.io/name: filestorage-server
+        app.kubernetes.io/version: {{ FILE_STORAGE_IMAGE_TAG }}
+        app.kubernetes.io/name: file-storage
         app.kubernetes.io/component: filestorage
         app.kubernetes.io/managed-by: ansible
-        git.branch: {{ FILESTORAGE_SERVER_BRANCH_NAME }}
-        git.repo: {{ FILESTORAGE_SERVER_REPO_NAME }}
+        git.branch: {{ FILE_STORAGE_BRANCH_NAME }}
+        git.repo: {{ FILE_STORAGE_REPO_NAME }}
     spec:
       securityContext:
         runAsUser: 1000
@@ -51,7 +51,7 @@ spec:
         name: linux
       containers:
       - name: filestorage
-        image: {{ FILESTORAGE_SERVER_IMAGE }}:{{ FILESTORAGE_SERVER_IMAGE_TAG }}
+        image: {{ FILE_STORAGE_IMAGE }}:{{ FILE_STORAGE_IMAGE_TAG }}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 4444
@@ -62,16 +62,16 @@ spec:
           protocol: TCP
         envFrom:
         - configMapRef:
-            name: filestorage-server-configmap
+            name: file-storage-configmap
         - secretRef:
-            name: filestorage-server-secret
+            name: file-storage-secret
         resources:
           limits:
-            cpu: {{ FILESTORAGE_SERVER_CPU_LIMITS|default("2000m", true) }}
-            memory: {{ FILESTORAGE_SERVER_MEMORY_LIMITS|default("2Gi", true) }}
+            cpu: {{ FILE_STORAGE_CPU_LIMITS|default("2000m", true) }}
+            memory: {{ FILE_STORAGE_MEMORY_LIMITS|default("2Gi", true) }}
           requests:
-            cpu: {{ FILESTORAGE_SERVER_CPU_REQUESTS|default("100m", true) }}
-            memory: {{ FILESTORAGE_SERVER_MEMORY_REQUESTS|default("150Mi", true) }}
+            cpu: {{ FILE_STORAGE_CPU_REQUESTS|default("100m", true) }}
+            memory: {{ FILE_STORAGE_MEMORY_REQUESTS|default("150Mi", true) }}
 {% if AFFINITY_ENABLE is defined and AFFINITY_ENABLE|bool %}
       affinity:
         podAffinity:
@@ -96,7 +96,7 @@ spec:
                 - key: app.kubernetes.io/name
                   operator: In
                   values:
-                  - filestorage-server
+                  - file-storage
               topologyKey: {{ ANIT_AFFINITY_NODEPOOL_TOPOLOGY_KEY }}
 {% endif %}
           - weight: 20
@@ -106,6 +106,6 @@ spec:
                 - key: app.kubernetes.io/name
                   operator: In
                   values:
-                  - filestorage-server
+                  - file-storage
               topologyKey: "topology.kubernetes.io/zone"
 {% endif %}

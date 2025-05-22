@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: filestorage-server-configmap
+  name: file-storage-configmap
   namespace: "{{ NAMESPACE }}"
   labels:
-    app: filestorage-server
+    app: file-storage
 data:
   LOGGER_LOG_LEVEL: "{{ FILESTORAGE_LOG_LEVEL }}"
   METRICS_COLLECT_DEFAULT: "{{ FILESTORAGE_METRICS_COLLECT_DEFAULT }}"
