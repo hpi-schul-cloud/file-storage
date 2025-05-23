@@ -11,7 +11,6 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { loadEsm } from 'load-esm';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
@@ -21,6 +20,7 @@ import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
+import { fileTypeStream } from './file-type.helper';
 
 @Injectable()
 export class FilesStorageService {
@@ -127,8 +127,6 @@ export class FilesStorageService {
 	}
 
 	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
-
 		const stream = await fileTypeStream(file);
 
 		return { mime: stream.fileType?.mime, stream };

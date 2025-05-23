@@ -278,6 +278,7 @@ describe('FileRecord', () => {
 			const maxSize = 4096;
 
 			// Call the function
+			// @ts-expect-error test only
 			fileRecord.setSizeInByte(newSize, maxSize);
 
 			// Assert the size is updated
@@ -290,7 +291,10 @@ describe('FileRecord', () => {
 			const maxSize = 4096;
 
 			// Assert exception is thrown
+			// @ts-expect-error test only
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
+			// @ts-expect-error test only
+
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrowError(ErrorType.FILE_IS_EMPTY);
 		});
 
@@ -300,7 +304,9 @@ describe('FileRecord', () => {
 			const maxSize = 4096;
 
 			// Assert exception is thrown
+			// @ts-expect-error test only
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
+			// @ts-expect-error test only
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrowError(ErrorType.FILE_TOO_BIG);
 		});
 	});

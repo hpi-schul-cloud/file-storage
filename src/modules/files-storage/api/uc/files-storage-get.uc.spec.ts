@@ -7,7 +7,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
+import { FileRecord, FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
 import { fileRecordTestFactory } from '../../testing';
 import { FileRecordParams } from '../dto';
 import { FilesStorageUC, FileStorageAuthorizationContext } from './files-storage.uc';
@@ -154,7 +154,7 @@ describe('FilesStorageUC', () => {
 		describe('when user is authorised but no files exist', () => {
 			const setup = () => {
 				const { params } = buildFileRecordsWithParams();
-				const fileRecords = [];
+				const fileRecords: FileRecord[] = [];
 
 				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
 				authorizationClientAdapter.checkPermissionsByReference.mockResolvedValueOnce();

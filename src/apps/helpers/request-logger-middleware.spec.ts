@@ -44,6 +44,7 @@ describe('RequestLoggerMiddleware', () => {
 		jest.spyOn(mockResponse, 'get').mockImplementation().mockReturnValue('100');
 
 		let finishCallback: Function | undefined;
+		//@ts-expect-error
 		jest.spyOn(mockResponse, 'on').mockImplementation((_event: string, callback: Function) => {
 			finishCallback = callback;
 		});
@@ -65,6 +66,7 @@ describe('RequestLoggerMiddleware', () => {
 	});
 
 	it('should handle errors during logging', () => {
+		//@ts-expect-error
 		jest.spyOn(mockResponse, 'on').mockImplementation((event: string, callback: Function) => {
 			callback();
 		});

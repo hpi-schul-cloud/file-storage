@@ -12,22 +12,17 @@ import { cleanupCollections } from '@testing/database';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import FileType from 'file-type';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
+import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { FileRecordResponse } from '../../dto';
 
-jest.mock('file-type', () => {
-	return {
-		fileTypeStream: jest.fn(),
-	};
-});
-
-const createRndInt = (max) => Math.floor(Math.random() * max);
+const createRndInt = (max: number) => Math.floor(Math.random() * max);
+jest.mock('../../../domain/service/file-type.helper');
 
 const defaultQueryParameters = {
 	width: PreviewWidth.WIDTH_500,
@@ -194,7 +189,7 @@ describe('File Controller (API) - preview', () => {
 						.query(defaultQueryParameters);
 					const result = response.body as ApiValidationError;
 
-					expect(result.message).toEqual('The requested FileRecordEntity: [object Object] has not been found.');
+					expect(result.message).toEqual('The requested params are not been found.');
 					expect(response.status).toEqual(404);
 				});
 			});

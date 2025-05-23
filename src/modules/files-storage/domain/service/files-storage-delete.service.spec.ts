@@ -188,7 +188,7 @@ describe('FilesStorageService delete methods', () => {
 			});
 
 			const setup = () => {
-				const fileRecords = [];
+				const fileRecords: FileRecord[] = [];
 				const parentId = new ObjectId().toHexString();
 
 				spy = jest.spyOn(service, 'delete');

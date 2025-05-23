@@ -9,21 +9,17 @@ import { ApiValidationError } from '@shared/error';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import FileType from 'file-type-cjs/file-type-cjs-index';
 import { ErrorType } from '../../../domain';
+import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { availableParentTypes } from './mocks';
 
-jest.mock('file-type-cjs/file-type-cjs-index', () => {
-	return {
-		fileTypeStream: jest.fn(),
-	};
-});
+jest.mock('../../../domain/service/file-type.helper');
 
-const createRndInt = (max) => Math.floor(Math.random() * max);
+const createRndInt = (max: number) => Math.floor(Math.random() * max);
 
 describe('files-storage controller (API)', () => {
 	let module: TestingModule;

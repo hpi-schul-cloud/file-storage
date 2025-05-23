@@ -5,10 +5,7 @@ import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import FileType from 'file-type';
-import { loadEsm } from 'load-esm';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory, readableStreamWithFileTypeFactory } from '../../testing';
@@ -17,14 +14,10 @@ import { ErrorType } from '../error';
 import { FileRecord, FileRecordSecurityCheck, ScanStatus } from '../file-record.do';
 import { FileRecordFactory } from '../file-record.factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import FileType from './file-type.helper';
 import { FilesStorageService } from './files-storage.service';
-const FileType = await loadEsm<typeof import('file-type')>('file-type');
-// @ts-ignore
-jest.unstable_mockModule('file-type', () => {
-	return {
-		fileTypeStream: jest.fn(),
-	};
-});
+
+jest.mock('./file-type.helper');
 
 describe('FilesStorageService upload methods', () => {
 	let module: TestingModule;
@@ -32,10 +25,9 @@ describe('FilesStorageService upload methods', () => {
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
-	let configService: DeepMocked<ConfigService>;
-	//let FileType: typeof import('file-type');
+	let config: DeepMocked<FileStorageConfig>;
 
-	beforeAll(async () => {
+	beforeEach(async () => {
 		module = await Test.createTestingModule({
 			providers: [
 				FilesStorageService,
@@ -57,7 +49,11 @@ describe('FilesStorageService upload methods', () => {
 				},
 				{
 					provide: FileStorageConfig,
-					useValue: createMock<FileStorageConfig>(),
+					useValue: createMock<FileStorageConfig>({
+						FILES_STORAGE_MAX_FILE_SIZE: 10,
+						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10,
+						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
+					}),
 				},
 				{
 					provide: DomainErrorHandler,
@@ -70,7 +66,13 @@ describe('FilesStorageService upload methods', () => {
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
-		FileType = await loadEsm<typeof import('file-type')>('file-type');
+		config = module.get(FileStorageConfig);
+	});
+
+	afterEach(() => {
+		jest.clearAllMocks();
+		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
 
 	afterAll(async () => {
@@ -144,7 +146,6 @@ describe('FilesStorageService upload methods', () => {
 					.spyOn(service, 'getFileRecordsOfParent')
 					.mockResolvedValue([[fileRecord], 1]);
 
-				// @ts-expect-error - fileTypeStream is mocked
 				const getMimeTypeSpy = jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
@@ -233,6 +234,8 @@ describe('FilesStorageService upload methods', () => {
 					expectedSecurityCheck,
 				} = setup();
 
+				jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
 				const result = await service.uploadFile(userId, params, file);
 				expectedFileRecord.id = result.id;
 
@@ -278,7 +281,8 @@ describe('FilesStorageService upload methods', () => {
 				describe('when useStreamToAntivirus is true', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const { params, file, userId } = setup();
-						configService.get.mockReturnValueOnce(true);
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
 						await service.uploadFile(userId, params, file);
 
 						expect(antivirusService.checkStream).toHaveBeenCalledWith(file);
@@ -288,7 +292,7 @@ describe('FilesStorageService upload methods', () => {
 				describe('when useStreamToAntivirus is false', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const { params, file, userId } = setup();
-						configService.get.mockReturnValueOnce(false);
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
 						const fileRecord = await service.uploadFile(userId, params, file);
 
@@ -305,7 +309,6 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
-				// @ts-expect-error - fileTypeStream is mocked
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				fileRecordRepo.save.mockRejectedValueOnce(error);
@@ -328,7 +331,6 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
-				// @ts-expect-error - fileTypeStream is mocked
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
@@ -363,7 +365,6 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
-				// @ts-expect-error - fileTypeStream is mocked
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
@@ -378,8 +379,7 @@ describe('FilesStorageService upload methods', () => {
 					return Promise.resolve();
 				});
 
-				configService.get.mockReturnValueOnce(true);
-				configService.get.mockReturnValueOnce(2);
+				jest.replaceProperty(config, 'FILES_STORAGE_MAX_FILE_SIZE', 2);
 				const error = new BadRequestException(ErrorType.FILE_TOO_BIG);
 
 				return { params, file, userId, error };
@@ -400,14 +400,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
-				// Mock for useStreamToAntivirus
-				configService.get.mockReturnValueOnce(false);
-
-				// Mock for max file size
-				configService.get.mockReturnValueOnce(10);
-
-				// Mock for max security check file size
-				configService.get.mockReturnValueOnce(2);
+				jest.replaceProperty(config, 'FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE', 2);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -421,7 +414,6 @@ describe('FilesStorageService upload methods', () => {
 					return Promise.resolve();
 				});
 
-				// @ts-expect-error - fileTypeStream is mocked
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				return { params, file, userId };
@@ -455,10 +447,9 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
-				// @ts-expect-error - fileTypeStream is mocked
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
-				configService.get.mockReturnValueOnce(false);
+				//configService.get.mockReturnValueOnce(false);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -493,7 +484,6 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
 				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ fileType: undefined });
-				// @ts-expect-error - fileTypeStream is mocked
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.

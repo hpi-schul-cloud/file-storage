@@ -1,4 +1,5 @@
-import { EntityManager, NotFoundError, ObjectId } from '@mikro-orm/mongodb';
+import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { cleanupCollections, MongoMemoryDatabaseModule } from '@testing/database';
 import { FileRecord, FileRecordParentType, StorageLocation } from '../domain';
@@ -149,7 +150,7 @@ describe('FileRecordRepo', () => {
 
 			await repo.delete(fileRecord);
 
-			await expect(em.findOneOrFail(FileRecordEntity, fileRecord.id)).rejects.toThrow(NotFoundError);
+			await expect(em.findOneOrFail(FileRecordEntity, fileRecord.id)).rejects.toThrow(NotFoundException);
 		});
 
 		it('should remove multiple FileRecords', async () => {
