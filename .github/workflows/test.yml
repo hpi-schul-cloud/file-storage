@@ -15,6 +15,11 @@ env:
 jobs:
   tests_cov:
     runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+        image: rabbitmq:4
+        ports:
+          - 5672:5672
     strategy:
       matrix:
         shard: [1]

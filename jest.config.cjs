@@ -1,11 +1,14 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 module.exports = {
 	extensionsToTreatAsEsm: ['.ts'],
+	transformIgnorePatterns: [],
 	moduleNameMapper: {
 		'^(\\.{1,2}/.*)\\.js$': '$1',
 	},
 	transform: {
-		'^.+\\.tsx?$': ['@swc/jest'],
+		'^.+\\.tsx?$': [
+			'ts-jest',
+		],
 	},
 	moduleFileExtensions: ['js', 'json', 'ts'],
 	rootDir: 'src',

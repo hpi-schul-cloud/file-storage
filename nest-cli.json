@@ -3,6 +3,7 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "builder": "swc",
+  "typeCheck": true,
   "monorepo": true,
   "compilerOptions": {
     "deleteOutDir": true
