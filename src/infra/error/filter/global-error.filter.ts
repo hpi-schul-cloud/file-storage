@@ -1,5 +1,6 @@
 import { IError, RpcMessage } from '@infra/rabbitmq';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, InternalServerErrorException } from '@nestjs/common';
+import { ApiValidationError, ApiValidationErrorResponse, BusinessError } from '@shared/error';
 import { Response } from 'express';
 import _ from 'lodash';
 import { DomainErrorHandler } from '../domain';
@@ -53,10 +54,24 @@ export class GlobalErrorFilter<E extends IError> implements ExceptionFilter<E> {
 	private createErrorResponse(error: unknown): ErrorResponse {
 		let response: ErrorResponse;
 
-		if (ErrorUtils.isNestHttpException(error)) {
+		if (ErrorUtils.isBusinessError(error)) {
+			response = this.createErrorResponseForBusinessError(error);
+		} else if (ErrorUtils.isNestHttpException(error)) {
 			response = this.createErrorResponseForNestHttpException(error);
 		} else {
 			response = this.createErrorResponseForUnknownError();
+		}
+
+		return response;
+	}
+
+		private createErrorResponseForBusinessError(error: BusinessError): ErrorResponse {
+		let response: ErrorResponse;
+
+		if (error instanceof ApiValidationError) {
+			response = new ApiValidationErrorResponse(error);
+		} else {
+			response = error.getResponse();
 		}
 
 		return response;

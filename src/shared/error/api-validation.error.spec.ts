@@ -13,6 +13,7 @@ describe('API Validation Error', () => {
 				message: 'API validation failed, see validationErrors for details',
 				title: 'API Validation Error',
 				type: 'API_VALIDATION_ERROR',
+				code: 400,
 			});
 		});
 

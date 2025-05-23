@@ -1,6 +1,7 @@
-import { HttpException, HttpStatus, ValidationError } from '@nestjs/common';
+import { HttpStatus, ValidationError } from '@nestjs/common';
+import { BusinessError } from './business.error';
 
-export class ApiValidationError extends HttpException {
+export class ApiValidationError extends BusinessError  {
 	constructor(readonly validationErrors: ValidationError[] = []) {
 		super(
 			{

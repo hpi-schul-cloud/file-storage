@@ -2,12 +2,26 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ErrorLogMessage, Loggable } from '@infra/logger';
 import { ArgumentsHost, BadRequestException, HttpStatus, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { BusinessError } from '@shared/error';
 import { AxiosError } from 'axios';
 import { Response } from 'express';
 import { DomainErrorHandler } from '../domain';
 import { ErrorResponse } from '../dto';
 import { ErrorUtils } from '../utils';
 import { GlobalErrorFilter, UseableContextType } from './global-error.filter';
+
+class SampleBusinessError extends BusinessError {
+	constructor() {
+		super(
+			{
+				type: 'SAMPLE_ERROR',
+				title: 'Sample Error',
+				message: 'sample error message',
+			},
+			HttpStatus.NOT_IMPLEMENTED,
+		);
+	}
+}
 
 class SampleLoggableExceptionWithCause extends InternalServerErrorException implements Loggable {
 	constructor(
@@ -32,7 +46,7 @@ class SampleLoggableExceptionWithCause extends InternalServerErrorException impl
 
 describe('GlobalErrorFilter', () => {
 	let module: TestingModule;
-	let service: GlobalErrorFilter<Error>;
+	let service: GlobalErrorFilter<any>;
 	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
 
 	beforeAll(async () => {
@@ -68,7 +82,7 @@ describe('GlobalErrorFilter', () => {
 				const allContextTypes = Object.keys(UseableContextType);
 				const contextTypes = [...allContextTypes];
 				const argumentsHost = createMock<ArgumentsHost>({
-					getType: () => contextTypes.pop() ?? '',
+					getType: () => contextTypes.pop() || '',
 				});
 				const error = new Error('test');
 
@@ -82,10 +96,10 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 				});
 
-				expect(domainErrorHandler.exec).toBeCalledWith(error);
-				expect(domainErrorHandler.exec).toBeCalledTimes(allContextTypes.length - 1);
-				expect(domainErrorHandler.execHttpContext).toBeCalledWith(error, expect.anything());
-				expect(domainErrorHandler.execHttpContext).toBeCalledTimes(1);
+				expect(domainErrorHandler.exec).toHaveBeenCalledWith(error);
+				expect(domainErrorHandler.exec).toHaveBeenCalledTimes(allContextTypes.length - 1);
+				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledWith(error, {});
+				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledTimes(1);
 			});
 		});
 
@@ -104,8 +118,8 @@ describe('GlobalErrorFilter', () => {
 
 				service.catch(error, argumentsHost);
 
-				expect(domainErrorHandler.execHttpContext).toBeCalledWith(error, expect.anything());
-				expect(domainErrorHandler.execHttpContext).toBeCalledTimes(1);
+				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledWith(error, {});
+				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledTimes(1);
 			});
 		});
 
@@ -116,6 +130,41 @@ describe('GlobalErrorFilter', () => {
 
 				return argumentsHost;
 			};
+
+			describe('when error is a BusinessError', () => {
+				const setup = () => {
+					const argumentsHost = mockHttpArgumentsHost();
+					const error = new SampleBusinessError();
+					const expectedResponse = new ErrorResponse(
+						'SAMPLE_ERROR',
+						'Sample Error',
+						'sample error message',
+						HttpStatus.NOT_IMPLEMENTED,
+					);
+
+					return { error, argumentsHost, expectedResponse };
+				};
+
+				it('should set response status appropriately', () => {
+					const { error, argumentsHost } = setup();
+
+					service.catch(error, argumentsHost);
+
+					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
+						HttpStatus.NOT_IMPLEMENTED,
+					);
+				});
+
+				it('should send appropriate error response', () => {
+					const { error, argumentsHost, expectedResponse } = setup();
+
+					service.catch(error, argumentsHost);
+
+					expect(
+						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.NOT_IMPLEMENTED).json,
+					).toHaveBeenCalledWith(expectedResponse);
+				});
+			});
 
 			describe('when error is a NestHttpException', () => {
 				const setup = () => {
@@ -136,7 +185,9 @@ describe('GlobalErrorFilter', () => {
 
 					service.catch(error, argumentsHost);
 
-					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toBeCalledWith(HttpStatus.BAD_REQUEST);
+					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
+						HttpStatus.BAD_REQUEST,
+					);
 				});
 
 				it('should send appropriate error response', () => {
@@ -146,7 +197,7 @@ describe('GlobalErrorFilter', () => {
 
 					expect(
 						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.BAD_REQUEST).json,
-					).toBeCalledWith(expectedResponse);
+					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
 
@@ -169,7 +220,7 @@ describe('GlobalErrorFilter', () => {
 
 					service.catch(error, argumentsHost);
 
-					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toBeCalledWith(
+					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
 						HttpStatus.INTERNAL_SERVER_ERROR,
 					);
 				});
@@ -181,14 +232,14 @@ describe('GlobalErrorFilter', () => {
 
 					expect(
 						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json,
-					).toBeCalledWith(expectedResponse);
+					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
 
 			describe('when error is some random object', () => {
 				const setup = () => {
 					const argumentsHost = mockHttpArgumentsHost();
-					const error = new Error('Not Found');
+					const error = { foo: 'bar' };
 					const expectedResponse = new ErrorResponse(
 						'INTERNAL_SERVER_ERROR',
 						'Internal Server Error',
@@ -204,7 +255,7 @@ describe('GlobalErrorFilter', () => {
 
 					service.catch(error, argumentsHost);
 
-					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toBeCalledWith(
+					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
 						HttpStatus.INTERNAL_SERVER_ERROR,
 					);
 				});
@@ -216,7 +267,7 @@ describe('GlobalErrorFilter', () => {
 
 					expect(
 						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json,
-					).toBeCalledWith(expectedResponse);
+					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
 
@@ -241,7 +292,7 @@ describe('GlobalErrorFilter', () => {
 
 					service.catch(error, argumentsHost);
 
-					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toBeCalledWith(
+					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
 						HttpStatus.INTERNAL_SERVER_ERROR,
 					);
 				});
@@ -253,7 +304,7 @@ describe('GlobalErrorFilter', () => {
 
 					expect(
 						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json,
-					).toBeCalledWith(expectedResponse);
+					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
 		});
