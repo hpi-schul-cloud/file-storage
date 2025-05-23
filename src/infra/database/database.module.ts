@@ -1,13 +1,9 @@
 import { ConfigurationModule } from '@infra/configuration';
-import { defineConfig, Dictionary, EntityClass, IPrimaryKey } from '@mikro-orm/mongodb';
-import { MikroOrmModule, MikroOrmModuleSyncOptions } from '@mikro-orm/nestjs';
-import { DynamicModule, Module, NotFoundException } from '@nestjs/common';
+import { defineConfig, EntityClass } from '@mikro-orm/mongodb';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { DynamicModule, Module } from '@nestjs/common';
+import { findOneOrFailHandler } from '@shared/error';
 import { DatabaseConfig } from './database.config';
-
-const defaultMikroOrmOptions: MikroOrmModuleSyncOptions = {
-	findOneOrFailHandler: (entityName: string, where: Dictionary | IPrimaryKey) =>
-		new NotFoundException(`The requested ${entityName}: ${JSON.stringify(where)} has not been found.`),
-};
 
 @Module({})
 export class DatabaseModule {
@@ -18,7 +14,7 @@ export class DatabaseModule {
 				MikroOrmModule.forRootAsync({
 					useFactory: (config: DatabaseConfig) => {
 						return defineConfig({
-							findOneOrFailHandler: defaultMikroOrmOptions.findOneOrFailHandler,
+							findOneOrFailHandler,
 							clientUrl: config.DB_URL,
 							password: config.DB_PASSWORD,
 							user: config.DB_USERNAME,
