@@ -21,7 +21,7 @@ export class FilesStorageAdminController {
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@Delete('storage-location/:storageLocation/:storageLocationId')
 	public async deleteByStorageLocation(
-		@Param() params: StorageLocationParamsDto,
+		@Param() params: StorageLocationParamsDto
 	): Promise<DeleteByStorageLocationResponse> {
 		const result = await this.filesStorageAdminUC.deleteByStorageLocation(params);
 

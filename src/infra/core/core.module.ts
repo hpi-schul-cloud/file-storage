@@ -27,6 +27,4 @@ import { GlobalValidationPipe } from './pipe';
 	],
 	exports: [LoggerModule, ErrorModule],
 })
-export class CoreModule {
-	static registerAsync() {}
-}
+export class CoreModule {}

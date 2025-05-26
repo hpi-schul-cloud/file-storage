@@ -35,7 +35,7 @@ export class JwtTestFactory {
 			privateKey,
 			{
 				algorithm: 'RS256',
-			},
+			}
 		);
 
 		return validJwt;
@@ -59,7 +59,7 @@ export class JwtTestFactory {
 			{
 				algorithm: 'RS256',
 				...options,
-			},
+			}
 		);
 
 		return validJwt;

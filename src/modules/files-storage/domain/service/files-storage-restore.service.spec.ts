@@ -105,7 +105,7 @@ describe('FilesStorageService restore methods', () => {
 				expect(fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete).toHaveBeenCalledWith(
 					params.storageLocation,
 					params.storageLocationId,
-					params.parentId,
+					params.parentId
 				);
 			});
 
@@ -220,7 +220,7 @@ describe('FilesStorageService restore methods', () => {
 					// Recreate the FileRecord instance with copied properties
 					const copiedFileRecord = new FileRecord(
 						{ ...fileRecordProps },
-						new FileRecordSecurityCheck(securityCheckProps),
+						new FileRecordSecurityCheck(securityCheckProps)
 					);
 
 					return copiedFileRecord;
@@ -298,8 +298,8 @@ describe('FilesStorageService restore methods', () => {
 									deletedSince: expect.any(Date),
 								},
 								securityCheck: props.securityCheck,
-							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps },
-					),
+							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps }
+					)
 				);
 			});
 		});

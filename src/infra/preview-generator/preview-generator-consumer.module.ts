@@ -9,7 +9,7 @@ import { FILE_STORAGE_CLIENT, PreviewGeneratorService } from './preview-generato
 
 @Module({})
 export class PreviewGeneratorConsumerModule {
-	static register(storageClient: S3ClientAdapter): DynamicModule {
+	public static register(storageClient: S3ClientAdapter): DynamicModule {
 		const providers = [
 			PreviewGeneratorService,
 			PreviewGeneratorConsumer,
@@ -31,7 +31,7 @@ export class PreviewGeneratorConsumerModule {
 
 		return {
 			module: PreviewGeneratorConsumerModule,
-			imports: [LoggerModule, RabbitMQWrapperModule.forRoot([FilesPreviewExchange]), ...(options.imports || [])],
+			imports: [LoggerModule, RabbitMQWrapperModule.forRoot([FilesPreviewExchange]), ...(options.imports ?? [])],
 			providers: [...providers],
 			exports: providers,
 		};

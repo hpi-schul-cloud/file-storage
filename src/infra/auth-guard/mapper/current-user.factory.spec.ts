@@ -1,5 +1,5 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import { ICurrentUser } from '../interface';
+import { CurrentUserInterface } from '../interface';
 import { CurrentUserBuilder } from './current-user.factory';
 
 describe('CurrentUserBuilder', () => {
@@ -25,7 +25,7 @@ describe('CurrentUserBuilder', () => {
 
 			const currentUser = new CurrentUserBuilder(requiredProps).build();
 
-			expect(currentUser).toMatchObject<ICurrentUser>({
+			expect(currentUser).toMatchObject<CurrentUserInterface>({
 				userId: requiredProps.userId,
 				schoolId: requiredProps.schoolId,
 				accountId: requiredProps.accountId,
@@ -43,7 +43,7 @@ describe('CurrentUserBuilder', () => {
 
 				const currentUser = new CurrentUserBuilder(requiredProps).asUserSupporter(true).build();
 
-				expect(currentUser).toMatchObject<ICurrentUser>({
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
 					userId: requiredProps.userId,
 					schoolId: requiredProps.schoolId,
 					accountId: requiredProps.accountId,
@@ -62,7 +62,7 @@ describe('CurrentUserBuilder', () => {
 
 				const currentUser = new CurrentUserBuilder(requiredProps).asExternalUser(true).build();
 
-				expect(currentUser).toMatchObject<ICurrentUser>({
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
 					userId: requiredProps.userId,
 					schoolId: requiredProps.schoolId,
 					accountId: requiredProps.accountId,
@@ -82,7 +82,7 @@ describe('CurrentUserBuilder', () => {
 
 				const currentUser = new CurrentUserBuilder(requiredProps).withExternalSystem(systemId).build();
 
-				expect(currentUser).toMatchObject<ICurrentUser>({
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
 					userId: requiredProps.userId,
 					schoolId: requiredProps.schoolId,
 					accountId: requiredProps.accountId,
@@ -102,7 +102,7 @@ describe('CurrentUserBuilder', () => {
 
 				const currentUser = new CurrentUserBuilder(requiredProps).asExternalUserWithToken(externalIdToken).build();
 
-				expect(currentUser).toMatchObject<ICurrentUser>({
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
 					userId: requiredProps.userId,
 					schoolId: requiredProps.schoolId,
 					accountId: requiredProps.accountId,

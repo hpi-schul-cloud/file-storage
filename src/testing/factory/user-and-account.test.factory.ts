@@ -28,7 +28,7 @@ export class UserAndAccountTestFactory {
 
 	public static buildStudent(
 		params: UserAndAccountParams = {},
-		additionalPermissions: Permission[] = [],
+		additionalPermissions: Permission[] = []
 	): {
 		studentAccount: AccountEntity;
 		studentUser: UserEntity;
@@ -43,7 +43,7 @@ export class UserAndAccountTestFactory {
 
 	public static buildTeacher(
 		params: UserAndAccountParams = {},
-		additionalPermissions: Permission[] = [],
+		additionalPermissions: Permission[] = []
 	): { teacherAccount: AccountEntity; teacherUser: UserEntity } {
 		const user = userFactory
 			.asTeacher(additionalPermissions)
@@ -55,7 +55,7 @@ export class UserAndAccountTestFactory {
 
 	public static buildAdmin(
 		params: UserAndAccountParams = {},
-		additionalPermissions: Permission[] = [],
+		additionalPermissions: Permission[] = []
 	): { adminAccount: AccountEntity; adminUser: UserEntity } {
 		const user = userFactory
 			.asAdmin(additionalPermissions)
@@ -67,7 +67,7 @@ export class UserAndAccountTestFactory {
 
 	public static buildSuperhero(
 		params: UserAndAccountParams = {},
-		additionalPermissions: Permission[] = [],
+		additionalPermissions: Permission[] = []
 	): { superheroAccount: AccountEntity; superheroUser: UserEntity } {
 		const user = userFactory
 			.asSuperhero(additionalPermissions)
@@ -80,17 +80,18 @@ export class UserAndAccountTestFactory {
 	public static buildByRole(
 		roleName: 'administrator' | 'teacher' | 'student',
 		params: UserAndAccountParams = {},
-		additionalPermissions: Permission[] = [],
+		additionalPermissions: Permission[] = []
 	): { account: AccountEntity; user: UserEntity } {
 		const user = UserAndAccountTestFactory.buildUser(roleName, params, additionalPermissions);
 		const account = UserAndAccountTestFactory.buildAccount(user, params);
+
 		return { account, user };
 	}
 
 	private static buildUser(
 		roleName: 'administrator' | 'teacher' | 'student',
 		params: UserAndAccountParams = {},
-		additionalPermissions: Permission[] = [],
+		additionalPermissions: Permission[] = []
 	): UserEntity {
 		switch (roleName) {
 			case 'administrator':

@@ -9,10 +9,10 @@ interface S3ActionsLoggableParams {
 export class S3ClientActionLoggable implements Loggable {
 	constructor(
 		private readonly message: string,
-		private readonly payload: S3ActionsLoggableParams,
+		private readonly payload: S3ActionsLoggableParams
 	) {}
 
-	getLogMessage(): LogMessage {
+	public getLogMessage(): LogMessage {
 		return {
 			message: this.message,
 			data: {

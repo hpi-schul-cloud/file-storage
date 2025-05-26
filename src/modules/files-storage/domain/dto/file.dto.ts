@@ -8,9 +8,9 @@ export class FileDto implements File {
 		this.mimeType = file.mimeType;
 	}
 
-	public name: string;
+	name: string;
 
-	public data: Readable;
+	data: Readable;
 
-	public mimeType: string;
+	mimeType: string;
 }

@@ -5,51 +5,51 @@ import { StorageLocation } from '../../domain';
 import { FileRecordEntity } from '../file-record.entity';
 
 export class FileRecordScope extends Scope<FileRecordEntity> {
-	public byParentId(parentId: EntityId): FileRecordScope {
+	public byParentId(parentId: EntityId): this {
 		this.addQuery({ parentId: parentId });
 
 		return this;
 	}
 
-	public byFileRecordId(fileRecordId: EntityId): FileRecordScope {
+	public byFileRecordId(fileRecordId: EntityId): this {
 		this.addQuery({ id: fileRecordId });
 
 		return this;
 	}
 
-	public byFileRecordIds(fileRecordIds: EntityId[]): FileRecordScope {
+	public byFileRecordIds(fileRecordIds: EntityId[]): this {
 		this.addQuery({ id: { $in: fileRecordIds } });
 
 		return this;
 	}
 
-	public byStorageLocation(storageLocation: StorageLocation): FileRecordScope {
+	public byStorageLocation(storageLocation: StorageLocation): this {
 		this.addQuery({ storageLocation });
 
 		return this;
 	}
 
-	public byStorageLocationId(storageLocationId: EntityId): FileRecordScope {
+	public byStorageLocationId(storageLocationId: EntityId): this {
 		//@ts-expect-error @TODO FIXME
 		this.addQuery({ storageLocationId: new ObjectId(storageLocationId) });
 
 		return this;
 	}
 
-	public bySecurityCheckRequestToken(token: string): FileRecordScope {
+	public bySecurityCheckRequestToken(token: string): this {
 		this.addQuery({ securityCheck: { requestToken: token } });
 
 		return this;
 	}
 
-	public byMarkedForDelete(isMarked = true): FileRecordScope {
+	public byMarkedForDelete(isMarked = true): this {
 		const query = isMarked ? { deletedSince: { $ne: null } } : { deletedSince: null };
 		this.addQuery(query);
 
 		return this;
 	}
 
-	public byCreatorId(creatorId: EntityId): FileRecordScope {
+	public byCreatorId(creatorId: EntityId): this {
 		this.addQuery({ creatorId: creatorId });
 
 		return this;

@@ -108,7 +108,7 @@ describe(`${baseRouteName} (api)`, () => {
 				loggedInClient: TestApiClient,
 				schoolId: string,
 				parentId: string,
-				fileName: string,
+				fileName: string
 			) => {
 				const response = await loggedInClient
 					.post(`file/upload/school/${schoolId}/schools/${parentId}`)

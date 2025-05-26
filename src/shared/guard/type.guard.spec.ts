@@ -598,21 +598,21 @@ describe('TypeGuard', () => {
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
 				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, undefined)).toThrowError(
-					'Type is not an array with elements.',
+					'Type is not an array with elements.'
 				);
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
 				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, null)).toThrowError(
-					'Type is not an array with elements.',
+					'Type is not an array with elements.'
 				);
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
 				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, 1)).toThrowError(
-					'Type is not an array with elements.',
+					'Type is not an array with elements.'
 				);
 			});
 		});
@@ -729,7 +729,7 @@ describe('TypeGuard', () => {
 				const example: ExampleObjectType = { id: 1, name: 'John Doe' };
 
 				expect(() => TypeGuard.checkKeysInInstance(example, ['email'])).toThrowError(
-					'Object lacks these properties: email.',
+					'Object lacks these properties: email.'
 				);
 			});
 
@@ -737,7 +737,7 @@ describe('TypeGuard', () => {
 				const example: ExampleObjectType = { id: 1, name: 'John Doe' };
 
 				expect(() => TypeGuard.checkKeysInInstance(example, ['email'])).toThrowError(
-					'Object lacks these properties: email.',
+					'Object lacks these properties: email.'
 				);
 			});
 		});

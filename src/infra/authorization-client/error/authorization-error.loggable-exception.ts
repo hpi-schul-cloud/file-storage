@@ -6,12 +6,12 @@ import { AuthorizationBodyParams } from '../authorization-api-client';
 export class AuthorizationErrorLoggableException extends ForbiddenException implements Loggable {
 	constructor(
 		private readonly error: unknown,
-		private readonly params: AuthorizationBodyParams,
+		private readonly params: AuthorizationBodyParams
 	) {
 		super();
 	}
 
-	getLogMessage(): ErrorLogMessage {
+	public getLogMessage(): ErrorLogMessage {
 		const error = this.error instanceof Error ? this.error : new Error(JSON.stringify(this.error));
 		const message: ErrorLogMessage = {
 			type: 'INTERNAL_SERVER_ERROR',

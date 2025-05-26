@@ -16,7 +16,7 @@ export class LoggingUtils {
 		return stringifiedMessage;
 	}
 
-	public static isInstanceOfLoggable(object: any): object is Loggable {
-		return 'getLogMessage' in object;
+	public static isInstanceOfLoggable(object: unknown): object is Loggable {
+		return typeof object === 'object' && object !== null && 'getLogMessage' in object;
 	}
 }

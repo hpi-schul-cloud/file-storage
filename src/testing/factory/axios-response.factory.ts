@@ -1,25 +1,25 @@
 import { AxiosHeaderValue, AxiosHeaders, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { BaseFactory } from './base.factory';
 
-export type AxiosHeadersKeyValue = { [key: string]: AxiosHeaderValue };
-type AxiosResponseProps<T> = {
+export type AxiosHeadersKeyValue = Record<string, AxiosHeaderValue>;
+interface AxiosResponseProps<T> {
 	data: T;
 	status: number;
 	statusText: string;
 	headers: AxiosHeadersKeyValue;
 	config: InternalAxiosRequestConfig<unknown>;
-};
+}
 
 class AxiosResponseImp<T> implements AxiosResponse {
-	data: T;
+	public data: T;
 
-	status: number;
+	public status: number;
 
-	statusText: string;
+	public statusText: string;
 
-	headers: any;
+	public headers: AxiosHeaders;
 
-	config: InternalAxiosRequestConfig<unknown>;
+	public config: InternalAxiosRequestConfig<unknown>;
 
 	constructor(props: AxiosResponseProps<T>) {
 		this.data = props.data;
@@ -41,5 +41,5 @@ export const axiosResponseFactory = BaseFactory.define<AxiosResponseImp<any>, Ax
 			headers: new AxiosHeaders(),
 			config: { headers: new AxiosHeaders() },
 		};
-	},
+	}
 );

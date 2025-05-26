@@ -1,3 +1,4 @@
+// eslint-disable-next-line max-classes-per-file
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { ErrorLogger, ErrorLogMessage, Loggable, LogMessage, ValidationErrorLogMessage } from '@infra/logger';
 import { BadRequestException, HttpException, HttpStatus, InternalServerErrorException } from '@nestjs/common';
@@ -13,7 +14,7 @@ class SampleLoggableException extends BadRequestException implements Loggable {
 		super();
 	}
 
-	getLogMessage(): LogMessage | ErrorLogMessage | ValidationErrorLogMessage {
+	public getLogMessage(): LogMessage | ErrorLogMessage | ValidationErrorLogMessage {
 		const message = {
 			type: 'BAD_REQUEST_EXCEPTION',
 			stack: this.stack,
@@ -29,12 +30,12 @@ class SampleLoggableException extends BadRequestException implements Loggable {
 class SampleLoggableExceptionWithCause extends InternalServerErrorException implements Loggable {
 	constructor(
 		private readonly testValue: string,
-		error?: unknown,
+		error?: unknown
 	) {
 		super(ErrorUtils.createHttpExceptionOptions(error));
 	}
 
-	getLogMessage(): ErrorLogMessage {
+	public getLogMessage(): ErrorLogMessage {
 		const message: ErrorLogMessage = {
 			type: 'WITH_CAUSE',
 			stack: this.stack,
@@ -55,11 +56,11 @@ class SampleLoggableFromBusinessException extends HttpException implements Logga
 				title: 'test_title',
 				defaultMessage: 'test_defaultMessage',
 			},
-			HttpStatus.INTERNAL_SERVER_ERROR,
+			HttpStatus.INTERNAL_SERVER_ERROR
 		);
 	}
 
-	getLogMessage(): ErrorLogMessage {
+	public getLogMessage(): ErrorLogMessage {
 		const message: ErrorLogMessage = {
 			type: 'WITH_CAUSE',
 			stack: this.stack,

@@ -63,7 +63,7 @@ describe('FileRecordRepo', () => {
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id]);
 
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord),
+				FileRecordEntityMapper.mapEntityToDo(fileRecord)
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -81,7 +81,7 @@ describe('FileRecordRepo', () => {
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id, fileRecord3.id]);
 
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord),
+				FileRecordEntityMapper.mapEntityToDo(fileRecord)
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -228,7 +228,7 @@ describe('FileRecordRepo', () => {
 					const props = o.getProps();
 
 					return props.parentId;
-				}),
+				})
 			).toEqual([parentId1, parentId1, parentId1]);
 		});
 
@@ -243,7 +243,7 @@ describe('FileRecordRepo', () => {
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction),
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
 			);
 		});
 	});
@@ -329,7 +329,7 @@ describe('FileRecordRepo', () => {
 				parentId1,
 				{
 					pagination,
-				},
+				}
 			);
 
 			expect(count).toEqual(3);
@@ -347,7 +347,7 @@ describe('FileRecordRepo', () => {
 				parentId1,
 				{
 					pagination,
-				},
+				}
 			);
 
 			expect(count).toEqual(3);
@@ -368,7 +368,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentId(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1,
+				parentId1
 			);
 
 			expect(count).toEqual(3);
@@ -378,7 +378,7 @@ describe('FileRecordRepo', () => {
 					const props = o.getProps();
 
 					return props.parentId;
-				}),
+				})
 			).toEqual([parentId1, parentId1, parentId1]);
 		});
 
@@ -396,7 +396,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentId(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1,
+				parentId1
 			);
 
 			expect(count).toEqual(3);
@@ -406,7 +406,7 @@ describe('FileRecordRepo', () => {
 					const parentInfo = o.getParentInfo();
 
 					return parentInfo.storageLocationId;
-				}),
+				})
 			).toEqual([storageLocationId1, storageLocationId1, storageLocationId1]);
 		});
 
@@ -423,13 +423,13 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentId(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1,
+				parentId1
 			);
 
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction),
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
 			);
 		});
 	});
@@ -462,7 +462,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1,
+				parentId1
 			);
 
 			expect(count).toEqual(3);
@@ -472,7 +472,7 @@ describe('FileRecordRepo', () => {
 					const props = o.getProps();
 
 					return props.parentId;
-				}),
+				})
 			).toEqual([parentId1, parentId1, parentId1]);
 		});
 
@@ -491,7 +491,7 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1,
+				parentId1
 			);
 
 			expect(count).toEqual(3);
@@ -501,7 +501,7 @@ describe('FileRecordRepo', () => {
 					const parentInfo = o.getParentInfo();
 
 					return parentInfo.storageLocationId;
-				}),
+				})
 			).toEqual([storageLocationId1, storageLocationId1, storageLocationId1]);
 		});
 
@@ -518,13 +518,13 @@ describe('FileRecordRepo', () => {
 			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 				StorageLocation.SCHOOL,
 				storageLocationId1,
-				parentId1,
+				parentId1
 			);
 
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction),
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
 			);
 		});
 	});
@@ -544,7 +544,7 @@ describe('FileRecordRepo', () => {
 		});
 
 		it('should find an entity by its requestToken', async () => {
-			const token = fileRecord.securityCheck.requestToken || '';
+			const token = fileRecord.securityCheck.requestToken ?? '';
 
 			await em.persistAndFlush(fileRecord);
 			em.clear();
@@ -594,7 +594,7 @@ describe('FileRecordRepo', () => {
 					const props = o.getProps();
 
 					return props.creatorId;
-				}),
+				})
 			).toEqual([creator1, creator1, creator1, creator1]);
 		});
 	});

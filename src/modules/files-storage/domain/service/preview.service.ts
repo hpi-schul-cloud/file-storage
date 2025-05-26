@@ -13,8 +13,8 @@ import { FileResponseBuilder, PreviewFileOptionsMapper } from '../mapper';
 export class PreviewService {
 	constructor(
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
-		private logger: Logger,
-		private readonly previewProducer: PreviewProducer,
+		private readonly logger: Logger,
+		private readonly previewProducer: PreviewProducer
 	) {
 		this.logger.setContext(PreviewService.name);
 	}
@@ -41,7 +41,7 @@ export class PreviewService {
 				new FileStorageActionsLoggable(`could not generate preview for mime type: ${fileRecord.mimeType}`, {
 					action: 'checkIfPreviewPossible',
 					sourcePayload: fileRecord,
-				}),
+				})
 			);
 			throw new UnprocessableEntityException(ErrorType.PREVIEW_NOT_POSSIBLE);
 		}

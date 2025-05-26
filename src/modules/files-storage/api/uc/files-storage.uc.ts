@@ -64,7 +64,7 @@ export class FilesStorageUC {
 		private readonly previewService: PreviewService,
 		// maybe better to pass the request context from controller and avoid em at this place
 		private readonly em: EntityManager,
-		private readonly domainErrorHandler: DomainErrorHandler,
+		private readonly domainErrorHandler: DomainErrorHandler
 	) {
 		this.logger.setContext(FilesStorageUC.name);
 	}
@@ -72,7 +72,7 @@ export class FilesStorageUC {
 	private async checkPermission(
 		parentType: FileRecordParentType,
 		parentId: EntityId,
-		context: AuthorizationContextParams,
+		context: AuthorizationContextParams
 	): Promise<void> {
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
@@ -113,7 +113,7 @@ export class FilesStorageUC {
 			await this.authorizationClientAdapter.checkPermissionsByReference(
 				AuthorizationBodyParamsReferenceType.INSTANCES,
 				storageLocationId,
-				AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.INSTANCE_VIEW]),
+				AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.INSTANCE_VIEW])
 			);
 		}
 
@@ -121,7 +121,7 @@ export class FilesStorageUC {
 			await this.authorizationClientAdapter.checkPermissionsByReference(
 				AuthorizationBodyParamsReferenceType.SCHOOLS,
 				storageLocationId,
-				AuthorizationContextBuilder.write([]),
+				AuthorizationContextBuilder.write([])
 			);
 		}
 	}
@@ -146,7 +146,7 @@ export class FilesStorageUC {
 					.then((result) => resolve(result))
 					.catch((error) => {
 						req.unpipe(bb);
-						reject(error);
+						reject(new Error('Error by stream uploading', { cause: error }));
 					});
 			});
 
@@ -171,7 +171,7 @@ export class FilesStorageUC {
 	}
 
 	private async getResponse(
-		params: FileRecordParams & FileUrlParams,
+		params: FileRecordParams & FileUrlParams
 	): Promise<AxiosResponse<internal.Readable, unknown>> {
 		const config: AxiosRequestConfig = {
 			headers: params.headers,
@@ -215,7 +215,7 @@ export class FilesStorageUC {
 		userId: EntityId,
 		params: DownloadFileParams,
 		previewParams: PreviewParams,
-		bytesRange?: string,
+		bytesRange?: string
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const { parentType, parentId } = fileRecord.getParentInfo();
@@ -289,20 +289,20 @@ export class FilesStorageUC {
 	public async copyFilesOfParent(
 		userId: string,
 		params: FileRecordParams,
-		copyFilesParams: CopyFilesOfParentParams,
+		copyFilesParams: CopyFilesOfParentParams
 	): Promise<Counted<CopyFileResponse[]>> {
 		await Promise.all([
 			this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create),
 			this.checkPermission(
 				copyFilesParams.target.parentType,
 				copyFilesParams.target.parentId,
-				FileStorageAuthorizationContext.create,
+				FileStorageAuthorizationContext.create
 			),
 		]);
 
 		const copyFileResults = await this.filesStorageService.copyFilesOfParent(userId, params, copyFilesParams.target);
 		const copyFileResponses = copyFileResults[0].map((copyFileResult) =>
-			CopyFileResponseBuilder.build(copyFileResult.id, copyFileResult.sourceId, copyFileResult.name),
+			CopyFileResponseBuilder.build(copyFileResult.id, copyFileResult.sourceId, copyFileResult.name)
 		);
 		const countedFileResponses: Counted<CopyFileResponse[]> = [copyFileResponses, copyFileResults[1]];
 
@@ -312,7 +312,7 @@ export class FilesStorageUC {
 	public async copyOneFile(
 		userId: string,
 		params: SingleFileParams,
-		copyFileParams: CopyFileParams,
+		copyFileParams: CopyFileParams
 	): Promise<CopyFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const { parentType, parentId } = fileRecord.getParentInfo();
@@ -322,7 +322,7 @@ export class FilesStorageUC {
 			this.checkPermission(
 				copyFileParams.target.parentType,
 				copyFileParams.target.parentId,
-				FileStorageAuthorizationContext.create,
+				FileStorageAuthorizationContext.create
 			),
 		]);
 

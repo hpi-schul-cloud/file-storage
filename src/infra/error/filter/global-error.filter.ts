@@ -1,4 +1,4 @@
-import { IError, RpcMessage } from '@infra/rabbitmq';
+import { RpcError, RpcMessage } from '@infra/rabbitmq';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, InternalServerErrorException } from '@nestjs/common';
 import { ApiValidationError, ApiValidationErrorResponse, BusinessError } from '@shared/error';
 import { Response } from 'express';
@@ -16,10 +16,10 @@ export enum UseableContextType {
 }
 
 @Catch()
-export class GlobalErrorFilter<E extends IError> implements ExceptionFilter<E> {
+export class GlobalErrorFilter<E extends RpcError> implements ExceptionFilter<E> {
 	constructor(private readonly domainErrorHandler: DomainErrorHandler) {}
 
-	catch(error: E, host: ArgumentsHost): void | RpcMessage<undefined> {
+	public catch(error: E, host: ArgumentsHost): void | RpcMessage<undefined> {
 		const contextType = host.getType<UseableContextType>();
 		switch (contextType) {
 			case UseableContextType.http:
@@ -65,7 +65,7 @@ export class GlobalErrorFilter<E extends IError> implements ExceptionFilter<E> {
 		return response;
 	}
 
-		private createErrorResponseForBusinessError(error: BusinessError): ErrorResponse {
+	private createErrorResponseForBusinessError(error: BusinessError): ErrorResponse {
 		let response: ErrorResponse;
 
 		if (error instanceof ApiValidationError) {
@@ -79,7 +79,7 @@ export class GlobalErrorFilter<E extends IError> implements ExceptionFilter<E> {
 
 	private createErrorResponseForNestHttpException(exception: HttpException): ErrorResponse {
 		const code = exception.getStatus();
-		const msg = exception.message || 'Some error occurred';
+		const msg = exception.message ?? 'Some error occurred';
 		const exceptionName = exception.constructor.name.replace('Loggable', '').replace('Exception', '');
 		const type = _.snakeCase(exceptionName).toUpperCase();
 		const title = _.startCase(exceptionName);

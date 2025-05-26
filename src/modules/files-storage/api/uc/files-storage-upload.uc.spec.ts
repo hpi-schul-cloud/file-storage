@@ -176,7 +176,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toBeCalledWith(
 					uploadFromUrlParams.parentType,
 					uploadFromUrlParams.parentId,
-					{ action: 'write', requiredPermissions: [Permission.FILESTORAGE_CREATE] },
+					{ action: 'write', requiredPermissions: [Permission.FILESTORAGE_CREATE] }
 				);
 			});
 
@@ -188,7 +188,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					'schools',
 					uploadFromUrlParams.storageLocationId,
-					AuthorizationContextBuilder.write([]),
+					AuthorizationContextBuilder.write([])
 				);
 			});
 
@@ -214,7 +214,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(filesStorageService.uploadFile).toHaveBeenCalledWith(
 					userId,
 					uploadFromUrlParams,
-					expectedFileDescription,
+					expectedFileDescription
 				);
 			});
 
@@ -325,7 +325,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					allowedType,
 					params.parentId,
-					FileStorageAuthorizationContext.create,
+					FileStorageAuthorizationContext.create
 				);
 			});
 
@@ -337,7 +337,7 @@ describe('FilesStorageUC upload methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					'instances',
 					params.storageLocationId,
-					AuthorizationContextBuilder.write([Permission.INSTANCE_VIEW]),
+					AuthorizationContextBuilder.write([Permission.INSTANCE_VIEW])
 				);
 			});
 
@@ -394,7 +394,9 @@ describe('FilesStorageUC upload methods', () => {
 			it('should pass error', async () => {
 				const { params, userId, request, error } = setup();
 
-				await expect(filesStorageUC.upload(userId, params, request)).rejects.toThrowError(error);
+				await expect(filesStorageUC.upload(userId, params, request)).rejects.toThrow(
+					new Error('Error by stream uploading', { cause: error })
+				);
 			});
 		});
 

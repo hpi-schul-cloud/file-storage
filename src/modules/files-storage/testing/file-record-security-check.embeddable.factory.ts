@@ -1,7 +1,7 @@
 import { EntityFactory } from '@testing/factory/entity.factory';
 import { randomUUID } from 'node:crypto';
 import { FileRecordSecurityCheckProps, ScanStatus } from '../domain';
-import { FileRecordSecurityCheckEmbeddable } from '../repo/file-record.entity';
+import { FileRecordSecurityCheckEmbeddable } from '../repo/security-check.embeddable';
 
 export const fileRecordSecurityCheckEmbeddableFactory = EntityFactory.define<
 	FileRecordSecurityCheckEmbeddable,

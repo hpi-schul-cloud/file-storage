@@ -7,7 +7,7 @@ export class JwtExtractor {
 	public static fromCookie(name: string): JwtFromRequestFunction {
 		return (request: Request) => {
 			let token: string | null = null;
-			const cookies = cookie.parse(request.headers.cookie || '');
+			const cookies = cookie.parse(request.headers.cookie ?? '');
 			if (cookies?.[name]) {
 				token = cookies[name];
 			}
@@ -26,7 +26,7 @@ export class JwtExtractor {
 		return jwt;
 	}
 
-	public static extractJwtFromRequest = ExtractJwt.fromExtractors([
+	public static readonly extractJwtFromRequest = ExtractJwt.fromExtractors([
 		ExtractJwt.fromAuthHeaderAsBearerToken(),
 		JwtExtractor.fromCookie('jwt'),
 	]);

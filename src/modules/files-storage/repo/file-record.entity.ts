@@ -1,27 +1,10 @@
-import { Embeddable, Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
+import { Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
 import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
-import { FileRecord, FileRecordProps, FileRecordSecurityCheckProps, ScanStatus } from '../domain';
+import { FileRecord, FileRecordProps } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
-
-@Embeddable()
-export class FileRecordSecurityCheckEmbeddable implements FileRecordSecurityCheckProps {
-	@Enum(() => ScanStatus)
-	status!: ScanStatus;
-
-	@Property()
-	reason!: string;
-
-	@Property({ nullable: true })
-	requestToken?: string;
-
-	@Property()
-	createdAt = new Date();
-
-	@Property()
-	updatedAt!: Date;
-}
+import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 
 /**
  * Note: The file record entity will not manage any entity relations by itself.

@@ -4,6 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtValidationAdapter } from './adapter';
 import { AuthGuardConfig } from './auth-guard.config';
 import { JwtStrategy, XApiKeyStrategy } from './strategy';
+import { XApiKeyConfig } from './x-api-key.config';
 
 export enum AuthGuardOptions {
 	JWT = 'jwt',
@@ -12,7 +13,7 @@ export enum AuthGuardOptions {
 
 @Module({})
 export class AuthGuardModule {
-	static register(options: AuthGuardOptions[]): DynamicModule {
+	public static register(options: AuthGuardOptions[]): DynamicModule {
 		const providers: Provider[] = [JwtValidationAdapter];
 
 		if (options.includes(AuthGuardOptions.JWT)) providers.push(JwtStrategy);
@@ -21,7 +22,11 @@ export class AuthGuardModule {
 
 		return {
 			module: AuthGuardModule,
-			imports: [PassportModule, ConfigurationModule.register(AuthGuardConfig)],
+			imports: [
+				PassportModule,
+				ConfigurationModule.register(AuthGuardConfig),
+				ConfigurationModule.register(XApiKeyConfig),
+			],
 			providers,
 			exports: [JwtValidationAdapter],
 		};

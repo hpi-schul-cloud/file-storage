@@ -1,10 +1,9 @@
 import { Entity, OptionalProps, PrimaryKey, Property, SerializedPrimaryKey } from '@mikro-orm/core';
 import { ObjectId } from '@mikro-orm/mongodb';
 import type { AuthorizableObject } from '../domain-object';
-import type { IEntity } from '../interface';
 
 @Entity({ abstract: true })
-export abstract class BaseEntity implements IEntity, AuthorizableObject {
+export abstract class BaseEntity implements AuthorizableObject {
 	@PrimaryKey()
 	_id!: ObjectId;
 
@@ -17,18 +16,9 @@ export abstract class BaseEntity implements IEntity, AuthorizableObject {
  */
 export type BaseEntityReference = 'id' | '_id';
 
-// NOTE we have to include BaseEntityWithTimestamps in the entity discovery if we inherit from BaseEntity.
-// that can be cumbersome e.g. in tests. that's why we define it as a root class here.
-// TODO check if we can use EntitySchema to prevent code duplication (decorators don't work for defining properties btw.)
 @Entity({ abstract: true })
-export abstract class BaseEntityWithTimestamps<Optional = never> implements AuthorizableObject {
+export abstract class BaseEntityWithTimestamps<Optional = never> extends BaseEntity {
 	[OptionalProps]?: Optional | 'createdAt' | 'updatedAt';
-
-	@PrimaryKey()
-	_id!: ObjectId;
-
-	@SerializedPrimaryKey()
-	id!: string;
 
 	@Property({ type: Date })
 	createdAt = new Date();

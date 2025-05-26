@@ -46,17 +46,8 @@ export default [
 			'newline-before-return': 'error',
 			'require-await': 'error',
 			'no-return-assign': 'error',
-			'max-classes-per-file': [
-				'error',
-				{
-					files: [
-						'apps/server/src/**/*.repo.ts',
-						'apps/server/src/**/*.service.ts',
-						'apps/server/src/**/*.controller.ts',
-						'apps/server/src/**/*.uc.ts',
-					],
-				},
-			],
+			'max-classes-per-file': 'error',
+			'no-console': 'error',
 			'@typescript-eslint/explicit-member-accessibility': [
 				'error',
 				{
@@ -112,12 +103,41 @@ export default [
 
 		rules: {
 			'@typescript-eslint/unbound-method': 'off',
-			'@typescript-eslint/explicit-function-return-type': 'off',
 			'jest/unbound-method': 'error',
 			'jest/prefer-spy-on': 'error',
 			'@typescript-eslint/explicit-function-return-type': 'off',
 			'@typescript-eslint/explicit-member-accessibility': 'off',
 			'max-classes-per-file': 'off',
+		},
+	},
+	{
+		files: ['**/*.entity.ts', '**/*.embeddable.ts', '**/*.config.ts', '**/dto/*.ts', '**/testing/*.ts'],
+		rules: {
+			'@typescript-eslint/explicit-member-accessibility': [
+				'error',
+				{
+					accessibility: 'explicit',
+					overrides: {
+						accessors: 'no-public',
+						constructors: 'no-public',
+						methods: 'explicit',
+						properties: 'no-public',
+						parameterProperties: 'explicit',
+					},
+				},
+			],
+		},
+	},
+	{
+		files: [
+			'src/**/*.repo.ts',
+			'src/**/*.service.ts',
+			'src/**/*.controller.ts',
+			'src/**/*.uc.ts',
+			'!src/**/dto/*.ts'
+		],
+		rules: {
+			'max-classes-per-file': ['error', 2],
 		},
 	},
 ];

@@ -8,7 +8,7 @@ import { UserEntity } from '@testing/entity/user.entity';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import { AuthGuardModule, AuthGuardOptions } from '../auth-guard.module';
-import { ICurrentUser } from '../interface';
+import { CurrentUserInterface } from '../interface';
 import { CurrentUser, JWT, JwtAuthentication } from './jwt-auth.decorator';
 
 const baseRouteName = '/test-decorator';
@@ -16,7 +16,7 @@ const baseRouteName = '/test-decorator';
 @Controller(baseRouteName)
 export class TestDecoratorCurrentUserController {
 	@Get('currentUser')
-	test(@CurrentUser() currentUser: ICurrentUser): ICurrentUser {
+	test(@CurrentUser() currentUser: CurrentUserInterface): CurrentUserInterface {
 		return currentUser;
 	}
 }

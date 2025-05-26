@@ -1,16 +1,5 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import {
-	Controller,
-	Delete,
-	Get,
-	Headers,
-	HttpStatus,
-	INestApplication,
-	Patch,
-	Post,
-	Put,
-	UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Patch, Post, Put } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from './factory/user-and-account.test.factory';
 import { TestApiClient } from './test-api-client';
@@ -18,58 +7,50 @@ import { TestApiClient } from './test-api-client';
 @Controller('')
 class TestController {
 	@Delete(':id')
-	delete(@Headers('authorization') authorization: string) {
+	public delete(@Headers('authorization') authorization: string) {
 		return Promise.resolve({ method: 'delete', authorization });
 	}
 
 	@Post()
-	post(@Headers('authorization') authorization: string) {
+	public post(@Headers('authorization') authorization: string) {
 		return Promise.resolve({ method: 'post', authorization });
 	}
 
 	@Get(':id')
-	get(@Headers('authorization') authorization: string) {
+	public get(@Headers('authorization') authorization: string) {
 		return Promise.resolve({ method: 'get', authorization });
 	}
 
 	@Put()
-	put(@Headers('authorization') authorization: string) {
+	public put(@Headers('authorization') authorization: string) {
 		return Promise.resolve({ method: 'put', authorization });
 	}
 
 	@Patch(':id')
-	patch(@Headers('authorization') authorization: string) {
+	public patch(@Headers('authorization') authorization: string) {
 		return Promise.resolve({ method: 'patch', authorization });
 	}
 
 	@Post('/authentication/local')
-	jwt() {
+	public jwt() {
 		return Promise.resolve({ accessToken: '123' });
-	}
-}
-
-@Controller('')
-class TestErrorController {
-	@Post('/authentication/local')
-	jwt() {
-		return Promise.reject(new UnauthorizedException());
 	}
 }
 
 @Controller('')
 class TestXApiKeyController {
 	@Delete(':id')
-	delete(@Headers('X-API-KEY') authorization: string) {
+	public delete(@Headers('X-API-KEY') authorization: string) {
 		return Promise.resolve({ method: 'delete', authorization });
 	}
 
 	@Post()
-	post(@Headers('X-API-KEY') authorization: string) {
+	public post(@Headers('X-API-KEY') authorization: string) {
 		return Promise.resolve({ method: 'post', authorization });
 	}
 
 	@Get(':id')
-	get(@Headers('X-API-KEY') authorization: string) {
+	public get(@Headers('X-API-KEY') authorization: string) {
 		return Promise.resolve({ method: 'get', authorization });
 	}
 }

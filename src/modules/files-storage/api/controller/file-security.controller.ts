@@ -27,7 +27,7 @@ export class FileSecurityController {
 	@Put('/update-status/:token')
 	public async updateSecurityStatus(
 		@Body() scanResultDto: ScanResultParams,
-		@Param('token') token: string,
+		@Param('token') token: string
 	): Promise<{ status: string }> {
 		await this.filesStorageUC.updateSecurityStatus(token, scanResultDto);
 

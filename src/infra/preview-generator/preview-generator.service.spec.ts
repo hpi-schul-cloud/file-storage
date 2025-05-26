@@ -50,7 +50,7 @@ const createMockStream = (err: Error | null = null) => {
 		.mockImplementation(
 			(_format: string, callback: (err: Error | null, stdout: PassThrough, stderr: PassThrough) => void) => {
 				callback(err, stdout, stderr);
-			},
+			}
 		);
 
 	return { stdout, stderr };

@@ -14,13 +14,13 @@ export enum LoggerLogLevel {
 
 export class LoggerConfig {
 	@IsEnum(LoggerLogLevel)
-	public LOGGER_LOG_LEVEL!: LoggerLogLevel;
+	LOGGER_LOG_LEVEL!: LoggerLogLevel;
 
 	@IsBoolean()
 	@StringToBoolean()
-	public LOGGER_EXIT_ON_ERROR = true;
+	LOGGER_EXIT_ON_ERROR = true;
 
 	@IsBoolean()
 	@StringToBoolean()
-	public LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED = false;
+	LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED = false;
 }

@@ -10,7 +10,7 @@ export class ErrorLoggable implements Loggable {
 
 	constructor(
 		private readonly error: unknown,
-		private readonly data?: LogMessageDataObject,
+		private readonly data?: LogMessageDataObject
 	) {
 		if (this.error instanceof Error) {
 			this.actualError = error as Error;
@@ -69,12 +69,12 @@ export class ErrorLoggable implements Loggable {
 			target.constructor,
 			'',
 			true,
-			true,
+			true
 		);
 
 		const privacyProtected = metadatas.some(
 			(validationMetadata) =>
-				validationMetadata.propertyName === property && validationMetadata.context?.privacyProtected,
+				validationMetadata.propertyName === property && validationMetadata.context?.privacyProtected
 		);
 
 		return privacyProtected;

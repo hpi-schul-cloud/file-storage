@@ -138,11 +138,11 @@ export interface FileRecordProps extends AuthorizableObject {
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
-	private securityCheck: FileRecordSecurityCheck;
-
-	constructor(props: FileRecordProps, securityCheck: FileRecordSecurityCheck) {
+	constructor(
+		props: FileRecordProps,
+		private readonly securityCheck: FileRecordSecurityCheck
+	) {
 		super(props);
-		this.securityCheck = securityCheck;
 	}
 
 	// --- should be part of a aggregate that contain a file-record array ---

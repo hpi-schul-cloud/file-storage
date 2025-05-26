@@ -3,6 +3,7 @@ import { Logger, LoggerModule } from '@infra/logger';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { S3Config } from './interface';
 import { S3_CLIENT_OPTIONS, S3ClientModuleAsyncOptions } from './interface/module-options.type';
+import { S3ClientAdapter } from './s3-client.adapter';
 import { S3ClientFactory } from './s3-client.factory';
 
 @Module({})
@@ -11,8 +12,11 @@ export class S3ClientModule {
 		const providers = [
 			{
 				provide: injectionToken,
-				useFactory: (clientFactory: S3ClientFactory, logger: Logger, domainErrorHandler: DomainErrorHandler) =>
-					clientFactory.build(config, logger, domainErrorHandler),
+				useFactory: (
+					clientFactory: S3ClientFactory,
+					logger: Logger,
+					domainErrorHandler: DomainErrorHandler
+				): S3ClientAdapter => clientFactory.build(config, logger, domainErrorHandler),
 				inject: [S3ClientFactory, Logger, DomainErrorHandler],
 			},
 		];
@@ -33,8 +37,8 @@ export class S3ClientModule {
 					clientFactory: S3ClientFactory,
 					logger: Logger,
 					domainErrorHandler: DomainErrorHandler,
-					config: S3Config,
-				) => clientFactory.build(config, logger, domainErrorHandler),
+					config: S3Config
+				): S3ClientAdapter => clientFactory.build(config, logger, domainErrorHandler),
 				inject: [S3ClientFactory, Logger, DomainErrorHandler, S3_CLIENT_OPTIONS],
 			},
 			S3ClientModule.createAsyncProviders(options),
@@ -42,7 +46,7 @@ export class S3ClientModule {
 
 		return {
 			module: S3ClientModule,
-			imports: [LoggerModule, ErrorModule, ...(options.imports || [])],
+			imports: [LoggerModule, ErrorModule, ...(options.imports ?? [])],
 			providers: [...providers, S3ClientFactory],
 			exports: providers,
 		};
@@ -53,7 +57,7 @@ export class S3ClientModule {
 			return {
 				provide: S3_CLIENT_OPTIONS,
 				useFactory: options.useFactory,
-				inject: options.inject || [],
+				inject: options.inject ?? [],
 			};
 		} else {
 			throw new Error('S3ClientModule: useFactory is required');

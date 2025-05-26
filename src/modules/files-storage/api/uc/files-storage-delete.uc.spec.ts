@@ -139,7 +139,7 @@ describe('FilesStorageUC delete methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toBeCalledWith(
 					allowedType,
 					requestParams.parentId,
-					FileStorageAuthorizationContext.delete,
+					FileStorageAuthorizationContext.delete
 				);
 			});
 
@@ -235,7 +235,7 @@ describe('FilesStorageUC delete methods', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toBeCalledWith(
 					allowedType,
 					parentInfo.parentId,
-					FileStorageAuthorizationContext.delete,
+					FileStorageAuthorizationContext.delete
 				);
 			});
 

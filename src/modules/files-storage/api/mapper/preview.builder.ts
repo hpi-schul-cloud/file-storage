@@ -8,7 +8,7 @@ export class PreviewBuilder {
 	public static buildParams(
 		fileRecord: FileRecord,
 		previewParams: PreviewParams,
-		bytesRange: string | undefined,
+		bytesRange: string | undefined
 	): PreviewFileParams {
 		const { id, mimeType } = fileRecord;
 		const originFilePath = fileRecord.createPath();

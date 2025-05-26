@@ -29,8 +29,8 @@ export class FilesStorageService {
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
 		private readonly antivirusService: AntivirusService,
 		private readonly config: FileStorageConfig,
-		private logger: Logger,
-		private readonly domainErrorHandler: DomainErrorHandler,
+		private readonly logger: Logger,
+		private readonly domainErrorHandler: DomainErrorHandler
 	) {
 		this.logger.setContext(FilesStorageService.name);
 	}
@@ -88,7 +88,7 @@ export class FilesStorageService {
 	private async createFileRecord(
 		file: FileDto,
 		parentInfo: ParentInfo,
-		userId: EntityId,
+		userId: EntityId
 	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file);
@@ -245,7 +245,7 @@ export class FilesStorageService {
 				new FileStorageActionsLoggable(`could not find file by filename`, {
 					action: 'checkFileName',
 					sourcePayload: fileRecord,
-				}),
+				})
 			);
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		}
@@ -254,7 +254,7 @@ export class FilesStorageService {
 	private checkScanStatus(fileRecord: FileRecord): void | NotAcceptableException {
 		if (fileRecord.isBlocked()) {
 			this.logger.warning(
-				new FileStorageActionsLoggable(`file is blocked`, { action: 'checkScanStatus', sourcePayload: fileRecord }),
+				new FileStorageActionsLoggable(`file is blocked`, { action: 'checkScanStatus', sourcePayload: fileRecord })
 			);
 			throw new NotAcceptableException(ErrorType.FILE_IS_BLOCKED);
 		}
@@ -295,7 +295,7 @@ export class FilesStorageService {
 
 	public async delete(fileRecords: FileRecord[]): Promise<void> {
 		this.logger.debug(
-			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords }),
+			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
 		);
 
 		FileRecord.markForDelete(fileRecords);
@@ -321,7 +321,7 @@ export class FilesStorageService {
 
 		this.storageClient.moveDirectoryToTrash(storageLocationId).catch((error) => {
 			this.domainErrorHandler.exec(
-				new InternalServerErrorException('Error while moving directory to trash', { cause: error }),
+				new InternalServerErrorException('Error while moving directory to trash', { cause: error })
 			);
 		});
 
@@ -349,7 +349,7 @@ export class FilesStorageService {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 			parentInfo.storageLocation,
 			parentInfo.storageLocationId,
-			parentInfo.parentId,
+			parentInfo.parentId
 		);
 
 		if (count > 0) {
@@ -361,7 +361,7 @@ export class FilesStorageService {
 
 	public async restore(fileRecords: FileRecord[]): Promise<void> {
 		this.logger.debug(
-			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords }),
+			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
 		);
 
 		FileRecord.unmarkForDelete(fileRecords);
@@ -374,12 +374,12 @@ export class FilesStorageService {
 	public async copyFilesOfParent(
 		userId: string,
 		sourceParentInfo: ParentInfo,
-		targetParentInfo: ParentInfo,
+		targetParentInfo: ParentInfo
 	): Promise<Counted<CopyFileResult[]>> {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentId(
 			sourceParentInfo.storageLocation,
 			sourceParentInfo.storageLocationId,
-			sourceParentInfo.parentId,
+			sourceParentInfo.parentId
 		);
 
 		if (count === 0) {
@@ -394,7 +394,7 @@ export class FilesStorageService {
 	private async copyFileRecord(
 		sourceFile: FileRecord,
 		targetParentInfo: ParentInfo,
-		userId: EntityId,
+		userId: EntityId
 	): Promise<FileRecord> {
 		const fileRecord = FileRecordFactory.copy(sourceFile, userId, targetParentInfo);
 		await this.fileRecordRepo.save(fileRecord);
@@ -430,14 +430,14 @@ export class FilesStorageService {
 	public async copy(
 		userId: EntityId,
 		sourceFileRecords: FileRecord[],
-		targetParentInfo: ParentInfo,
+		targetParentInfo: ParentInfo
 	): Promise<CopyFileResult[]> {
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start copy of FileRecords', {
 				action: 'copy',
 				sourcePayload: sourceFileRecords,
 				targetPayload: targetParentInfo,
-			}),
+			})
 		);
 
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
@@ -452,7 +452,7 @@ export class FilesStorageService {
 				this.domainErrorHandler.exec(
 					new InternalServerErrorException(`copy file failed for source fileRecordId ${sourceFile.id}`, {
 						cause: error,
-					}),
+					})
 				);
 
 				const copyFileResult: CopyFileResult = { id: undefined, sourceId: sourceFile.id, name: sourceFile.getName() };

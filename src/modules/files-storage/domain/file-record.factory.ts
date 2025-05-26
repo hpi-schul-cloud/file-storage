@@ -14,7 +14,7 @@ export class FileRecordFactory {
 		size: number,
 		mimeType: string,
 		params: ParentInfo,
-		userId: string,
+		userId: string
 	): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 

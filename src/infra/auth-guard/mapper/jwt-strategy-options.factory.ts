@@ -2,7 +2,7 @@ import { JwtFromRequestFunction, StrategyOptions } from 'passport-jwt';
 import { AuthGuardConfig } from '../auth-guard.config';
 
 export class JwtStrategyOptionsFactory {
-	static build(jwtFromRequestFunction: JwtFromRequestFunction, config: AuthGuardConfig): StrategyOptions {
+	public static build(jwtFromRequestFunction: JwtFromRequestFunction, config: AuthGuardConfig): StrategyOptions {
 		const publicKey = config.JWT_PUBLIC_KEY;
 		const algorithm = config.JWT_SIGNING_ALGORITHM;
 

@@ -2,13 +2,13 @@ import { BaseFactory } from '@testing/factory/base.factory';
 import { FileTypeResult, ReadableStreamWithFileType } from 'file-type';
 import { Readable } from 'stream';
 
-type ReadableStreamWithFileTypeProps = {
+interface ReadableStreamWithFileTypeProps {
 	fileType?: FileTypeResult;
 	readable: Readable;
-};
+}
 
 class ReadableStreamWithFileTypeImp extends Readable implements ReadableStreamWithFileType {
-	public fileType?: FileTypeResult;
+	fileType?: FileTypeResult;
 
 	constructor(props: ReadableStreamWithFileTypeProps) {
 		super();

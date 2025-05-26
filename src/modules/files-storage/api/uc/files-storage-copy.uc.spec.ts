@@ -153,7 +153,7 @@ describe('FilesStorageUC', () => {
 					1,
 					sourceParams.parentType,
 					sourceParams.parentId,
-					FileStorageAuthorizationContext.create,
+					FileStorageAuthorizationContext.create
 				);
 			});
 
@@ -166,7 +166,7 @@ describe('FilesStorageUC', () => {
 					2,
 					targetParams.target.parentType,
 					targetParams.target.parentId,
-					FileStorageAuthorizationContext.create,
+					FileStorageAuthorizationContext.create
 				);
 			});
 
@@ -289,7 +289,7 @@ describe('FilesStorageUC', () => {
 				const fileResponse = CopyFileResponseBuilder.build(
 					fileRecord.id,
 					singleFileParams.fileRecordId,
-					fileRecord.getName(),
+					fileRecord.getName()
 				);
 
 				filesStorageService.getFileRecord.mockResolvedValue(fileRecord);
@@ -317,7 +317,7 @@ describe('FilesStorageUC', () => {
 					1,
 					parentInfo.parentType,
 					parentInfo.parentId,
-					FileStorageAuthorizationContext.create,
+					FileStorageAuthorizationContext.create
 				);
 			});
 
@@ -330,7 +330,7 @@ describe('FilesStorageUC', () => {
 					2,
 					copyFileParams.target.parentType,
 					copyFileParams.target.parentId,
-					FileStorageAuthorizationContext.create,
+					FileStorageAuthorizationContext.create
 				);
 			});
 

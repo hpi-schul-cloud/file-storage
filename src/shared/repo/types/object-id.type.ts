@@ -2,13 +2,13 @@ import { MongoPlatform, ObjectId, Platform, Type } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
 
 export class ObjectIdType extends Type<EntityId, ObjectId> {
-	convertToDatabaseValue(value: EntityId, platform: Platform): ObjectId {
+	public convertToDatabaseValue(value: EntityId, platform: Platform): ObjectId {
 		this.validatePlatformSupport(platform);
 
 		return new ObjectId(value);
 	}
 
-	convertToJSValue(value: ObjectId, platform: Platform): EntityId {
+	public convertToJSValue(value: ObjectId, platform: Platform): EntityId {
 		this.validatePlatformSupport(platform);
 
 		return value.toHexString();

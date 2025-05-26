@@ -13,7 +13,7 @@ import { FileRecordFactory } from '../domain/file-record.factory';
 export class FileRecordTestFactory {
 	private sequence = 0;
 
-	public props: FileRecordProps = {
+	props: FileRecordProps = {
 		id: new ObjectId().toHexString(),
 		size: 100,
 		name: `file-record-name #${this.sequence}`,
@@ -31,7 +31,7 @@ export class FileRecordTestFactory {
 	private securityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
 	public build(params: DeepPartial<FileRecordProps> = {}): FileRecord {
-		const props = Object.assign({ ...this.props }, params);
+		const props = { ...this.props, ...params };
 		props.id = params.id ?? new ObjectId().toHexString();
 
 		const fileRecord = FileRecordFactory.buildFromFileRecordProps(props, this.securityCheck);
@@ -53,7 +53,7 @@ export class FileRecordTestFactory {
 
 	public withDeletedSince(date?: Date): this {
 		const dateNow = new Date(Date.now() - 1000);
-		this.props.deletedSince = date || dateNow;
+		this.props.deletedSince = date ?? dateNow;
 
 		return this;
 	}

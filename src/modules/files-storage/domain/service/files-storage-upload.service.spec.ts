@@ -255,7 +255,7 @@ describe('FilesStorageService upload methods', () => {
 							...expectedSecurityCheck,
 							updatedAt: expect.any(Date),
 						},
-					}),
+					})
 				);
 			});
 
@@ -427,7 +427,7 @@ describe('FilesStorageService upload methods', () => {
 				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(
 					1,
 
-					expect.objectContaining({ securityCheck: expect.objectContaining({ status: 'wont_check' }) }),
+					expect.objectContaining({ securityCheck: expect.objectContaining({ status: 'wont_check' }) })
 				);
 			});
 
@@ -448,8 +448,6 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValue([[fileRecord], 1]);
 
 				jest.spyOn(FileType, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
-
-				//configService.get.mockReturnValueOnce(false);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 

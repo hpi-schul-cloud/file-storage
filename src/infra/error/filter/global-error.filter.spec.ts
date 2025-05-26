@@ -18,7 +18,7 @@ class SampleBusinessError extends BusinessError {
 				title: 'Sample Error',
 				message: 'sample error message',
 			},
-			HttpStatus.NOT_IMPLEMENTED,
+			HttpStatus.NOT_IMPLEMENTED
 		);
 	}
 }
@@ -26,12 +26,12 @@ class SampleBusinessError extends BusinessError {
 class SampleLoggableExceptionWithCause extends InternalServerErrorException implements Loggable {
 	constructor(
 		private readonly testValue: string,
-		error?: unknown,
+		error?: unknown
 	) {
 		super(ErrorUtils.createHttpExceptionOptions(error));
 	}
 
-	getLogMessage(): ErrorLogMessage {
+	public getLogMessage(): ErrorLogMessage {
 		const message: ErrorLogMessage = {
 			type: 'WITH_CAUSE',
 			stack: this.stack,
@@ -46,7 +46,7 @@ class SampleLoggableExceptionWithCause extends InternalServerErrorException impl
 
 describe('GlobalErrorFilter', () => {
 	let module: TestingModule;
-	let service: GlobalErrorFilter<any>;
+	let service: GlobalErrorFilter<Error>;
 	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
 
 	beforeAll(async () => {
@@ -82,7 +82,7 @@ describe('GlobalErrorFilter', () => {
 				const allContextTypes = Object.keys(UseableContextType);
 				const contextTypes = [...allContextTypes];
 				const argumentsHost = createMock<ArgumentsHost>({
-					getType: () => contextTypes.pop() || '',
+					getType: () => contextTypes.pop() ?? '',
 				});
 				const error = new Error('test');
 
@@ -139,7 +139,7 @@ describe('GlobalErrorFilter', () => {
 						'SAMPLE_ERROR',
 						'Sample Error',
 						'sample error message',
-						HttpStatus.NOT_IMPLEMENTED,
+						HttpStatus.NOT_IMPLEMENTED
 					);
 
 					return { error, argumentsHost, expectedResponse };
@@ -151,7 +151,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
-						HttpStatus.NOT_IMPLEMENTED,
+						HttpStatus.NOT_IMPLEMENTED
 					);
 				});
 
@@ -161,7 +161,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(
-						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.NOT_IMPLEMENTED).json,
+						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.NOT_IMPLEMENTED).json
 					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
@@ -174,7 +174,7 @@ describe('GlobalErrorFilter', () => {
 						'BAD_REQUEST',
 						'Bad Request',
 						'Bad Request',
-						HttpStatus.BAD_REQUEST,
+						HttpStatus.BAD_REQUEST
 					);
 
 					return { error, argumentsHost, expectedResponse };
@@ -186,7 +186,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
-						HttpStatus.BAD_REQUEST,
+						HttpStatus.BAD_REQUEST
 					);
 				});
 
@@ -196,7 +196,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(
-						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.BAD_REQUEST).json,
+						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.BAD_REQUEST).json
 					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
@@ -209,7 +209,7 @@ describe('GlobalErrorFilter', () => {
 						'INTERNAL_SERVER_ERROR',
 						'Internal Server Error',
 						'Internal Server Error',
-						HttpStatus.INTERNAL_SERVER_ERROR,
+						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 
 					return { error, argumentsHost, expectedResponse };
@@ -221,7 +221,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
-						HttpStatus.INTERNAL_SERVER_ERROR,
+						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 				});
 
@@ -231,7 +231,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(
-						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json,
+						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json
 					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
@@ -244,7 +244,7 @@ describe('GlobalErrorFilter', () => {
 						'INTERNAL_SERVER_ERROR',
 						'Internal Server Error',
 						'Internal Server Error',
-						HttpStatus.INTERNAL_SERVER_ERROR,
+						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 
 					return { error, argumentsHost, expectedResponse };
@@ -252,21 +252,21 @@ describe('GlobalErrorFilter', () => {
 
 				it('should set response status appropriately', () => {
 					const { error, argumentsHost } = setup();
-
+					// @ts-expect-error
 					service.catch(error, argumentsHost);
 
 					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
-						HttpStatus.INTERNAL_SERVER_ERROR,
+						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 				});
 
 				it('should send appropriate error response', () => {
 					const { error, argumentsHost, expectedResponse } = setup();
-
+					// @ts-expect-error
 					service.catch(error, argumentsHost);
 
 					expect(
-						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json,
+						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json
 					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});
@@ -279,7 +279,7 @@ describe('GlobalErrorFilter', () => {
 						'SAMPLE_WITH_CAUSE',
 						'Sample With Cause',
 						'Sample Loggable Exception With Cause',
-						HttpStatus.INTERNAL_SERVER_ERROR,
+						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 
 					const argumentsHost = mockHttpArgumentsHost();
@@ -293,7 +293,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(argumentsHost.switchToHttp().getResponse<Response>().status).toHaveBeenCalledWith(
-						HttpStatus.INTERNAL_SERVER_ERROR,
+						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 				});
 
@@ -303,7 +303,7 @@ describe('GlobalErrorFilter', () => {
 					service.catch(error, argumentsHost);
 
 					expect(
-						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json,
+						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json
 					).toHaveBeenCalledWith(expectedResponse);
 				});
 			});

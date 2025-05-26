@@ -62,7 +62,7 @@ export class RabbitMQWrapperTestModule implements OnModuleDestroy {
 	// In tests, we need to close connections when the module is destroyed.
 	public async onModuleDestroy(): Promise<void> {
 		await Promise.all(
-			this.amqpConnectionManager.getConnections().map((connection) => connection.managedConnection.close()),
+			this.amqpConnectionManager.getConnections().map((connection) => connection.managedConnection.close())
 		);
 	}
 }

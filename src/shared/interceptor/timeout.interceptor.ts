@@ -12,11 +12,11 @@ import { InterceptorConfig } from './interfaces';
  */
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
-	defaultConfigKey: keyof InterceptorConfig = 'INCOMING_REQUEST_TIMEOUT';
+	private readonly defaultConfigKey: keyof InterceptorConfig = 'INCOMING_REQUEST_TIMEOUT';
 
 	constructor(private readonly configService: ConfigService) {}
 
-	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		const reflector = new Reflector();
 		const requestTimeoutEnvironmentName =
 			reflector.get<string>('requestTimeoutEnvironmentName', context.getHandler()) ||
@@ -37,7 +37,7 @@ export class TimeoutInterceptor implements NestInterceptor {
 				}
 
 				return throwError(() => err);
-			}),
+			})
 		);
 	}
 }

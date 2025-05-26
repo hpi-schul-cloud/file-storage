@@ -11,7 +11,7 @@ describe('BusinessError', () => {
 						title: 'Sample Error',
 						message: message ?? 'default sample error message',
 					},
-					HttpStatus.NOT_IMPLEMENTED,
+					HttpStatus.NOT_IMPLEMENTED
 				);
 			}
 		}
@@ -40,7 +40,7 @@ describe('BusinessError', () => {
 					},
 					code,
 					details,
-					cause,
+					cause
 				);
 			}
 		}

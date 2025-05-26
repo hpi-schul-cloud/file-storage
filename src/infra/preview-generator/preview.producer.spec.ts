@@ -2,11 +2,11 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ErrorMapper } from '../rabbitmq';
 import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
 import { PreviewFileOptions } from './interface';
+import { PreviewGeneratorConfig } from './preview-generator.config';
 import { PreviewProducer } from './preview.producer';
 
 describe('PreviewProducer', () => {
@@ -29,14 +29,9 @@ describe('PreviewProducer', () => {
 					useValue: createMock<AmqpConnection>(),
 				},
 				{
-					provide: ConfigService,
-					useValue: createMock<ConfigService>({
-						get: jest.fn().mockImplementation((key: string) => {
-							if (key === 'INCOMING_REQUEST_TIMEOUT') {
-								return timeout;
-							}
-							throw new Error('Config key not found');
-						}),
+					provide: PreviewGeneratorConfig,
+					useValue: createMock<PreviewGeneratorConfig>({
+						PREVIEW_PRODUCER_INCOMING_REQUEST_TIMEOUT: timeout,
 					}),
 				},
 			],
@@ -124,7 +119,7 @@ describe('PreviewProducer', () => {
 				const { params, spy, error } = setup();
 
 				await expect(service.generate(params)).rejects.toThrowError(
-					new InternalServerErrorException(null, { cause: error }),
+					new InternalServerErrorException(null, { cause: error })
 				);
 				expect(spy).toBeCalled();
 			});

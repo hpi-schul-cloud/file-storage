@@ -36,7 +36,7 @@ class JwtPayloadImpl implements JwtPayload {
 		this.userId = data.userId;
 		this.schoolId = data.schoolId;
 		this.roles = data.roles;
-		this.systemId = data.systemId || '';
+		this.systemId = data.systemId ?? '';
 		this.support = data.support || false;
 		this.isExternalUser = data.isExternalUser;
 		this.supportUserId = data.supportUserId;

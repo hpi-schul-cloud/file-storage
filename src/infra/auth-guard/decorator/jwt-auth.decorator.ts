@@ -14,6 +14,7 @@ import { JwtExtractor } from '../utils/jwt';
 /**
  * Authentication Decorator taking care of require authentication header to be present, setting up the user context and extending openAPI spec.
  */
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
 export const JwtAuthentication = () => {
 	const decorators = [
 		// apply jwt authentication
@@ -35,7 +36,7 @@ export const CurrentUser = createParamDecorator((_, ctx: ExecutionContext) => {
 
 	if (!requestUser || !isCurrentUser(requestUser)) {
 		throw new UnauthorizedException(
-			'CurrentUser missing in request context. This route requires jwt authentication guard enabled.',
+			'CurrentUser missing in request context. This route requires jwt authentication guard enabled.'
 		);
 	}
 

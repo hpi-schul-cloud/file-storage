@@ -31,7 +31,7 @@ export class FileRecordParamsTestFactory {
 			parentType: FileRecordParentType.User,
 		};
 
-		const parentInfo = Object.assign({}, defaultParamsInfo, params);
+		const parentInfo = { ...defaultParamsInfo, ...params };
 
 		return parentInfo;
 	}

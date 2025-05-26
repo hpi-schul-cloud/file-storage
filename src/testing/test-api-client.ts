@@ -34,10 +34,9 @@ export class TestApiClient {
 	private readonly kindOfAuth: string;
 
 	constructor(app: INestApplication, baseRoute: string, authValue?: string, useAsApiKey = false) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.app = app;
 		this.baseRoute = this.checkAndAddPrefix(baseRoute);
-		this.authHeader = useAsApiKey ? `${authValue || ''}` : `${testReqestConst.prefix} ${authValue || ''}`;
+		this.authHeader = useAsApiKey ? `${authValue ?? ''}` : `${testReqestConst.prefix} ${authValue ?? ''}`;
 		this.kindOfAuth = useAsApiKey ? 'X-API-KEY' : 'authorization';
 	}
 
@@ -97,7 +96,7 @@ export class TestApiClient {
 		subPath: string | undefined,
 		fieldName: string,
 		data: Buffer,
-		fileName: string,
+		fileName: string
 	): supertest.Test {
 		const path = this.getPath(subPath);
 		const testRequestInstance = supertest(this.app.getHttpServer())
@@ -121,7 +120,7 @@ export class TestApiClient {
 		return new (this.constructor as new (app: INestApplication, baseRoute: string, authValue: string) => this)(
 			this.app,
 			this.baseRoute,
-			jwt,
+			jwt
 		);
 	}
 

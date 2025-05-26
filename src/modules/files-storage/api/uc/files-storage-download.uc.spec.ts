@@ -126,7 +126,7 @@ describe('FilesStorageUC', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					allowedType,
 					parentInfo.parentId,
-					FileStorageAuthorizationContext.read,
+					FileStorageAuthorizationContext.read
 				);
 			});
 

@@ -113,7 +113,7 @@ describe('FilesStorageMapper', () => {
 					total: fileRecords.length,
 					skip: 0,
 					limit: 5,
-				}),
+				})
 			);
 		});
 

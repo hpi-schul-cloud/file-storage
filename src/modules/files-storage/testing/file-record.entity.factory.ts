@@ -32,5 +32,5 @@ export const fileRecordEntityFactory = FileRecordEntityFactory.define(
 		};
 
 		return props;
-	},
+	}
 );

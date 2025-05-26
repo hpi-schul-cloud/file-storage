@@ -92,7 +92,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				expect(authorizationApi.authorizationReferenceControllerAuthorizeByReference).toHaveBeenCalledWith(
 					params,
-					expectedOptions,
+					expectedOptions
 				);
 			});
 
@@ -101,7 +101,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					const { params } = setup({ isAuthorized: true });
 
 					await expect(
-						service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context),
+						service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context)
 					).resolves.toBeUndefined();
 				});
 			});
@@ -113,7 +113,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					const expectedError = new AuthorizationForbiddenLoggableException(params);
 
 					await expect(
-						service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context),
+						service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context)
 					).rejects.toThrowError(expectedError);
 				});
 			});
@@ -142,7 +142,7 @@ describe(AuthorizationClientAdapter.name, () => {
 				const expectedError = new AuthorizationErrorLoggableException(error, params);
 
 				await expect(
-					service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context),
+					service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context)
 				).rejects.toThrowError(expectedError);
 			});
 		});
@@ -180,7 +180,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				expect(authorizationApi.authorizationReferenceControllerAuthorizeByReference).toHaveBeenCalledWith(
 					params,
-					expectedOptions,
+					expectedOptions
 				);
 			});
 
@@ -190,7 +190,7 @@ describe(AuthorizationClientAdapter.name, () => {
 				const result = await service.hasPermissionsByReference(
 					params.referenceType,
 					params.referenceId,
-					params.context,
+					params.context
 				);
 
 				expect(result).toEqual(response.data.isAuthorized);
@@ -235,7 +235,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				expect(authorizationApi.authorizationReferenceControllerAuthorizeByReference).toHaveBeenCalledWith(
 					params,
-					expectedOptions,
+					expectedOptions
 				);
 			});
 		});
@@ -267,7 +267,7 @@ describe(AuthorizationClientAdapter.name, () => {
 				const expectedError = new AuthorizationErrorLoggableException(error, params);
 
 				await expect(
-					adapter.hasPermissionsByReference(params.referenceType, params.referenceId, params.context),
+					adapter.hasPermissionsByReference(params.referenceType, params.referenceId, params.context)
 				).rejects.toThrowError(expectedError);
 			});
 		});
@@ -295,7 +295,7 @@ describe(AuthorizationClientAdapter.name, () => {
 				const expectedError = new AuthorizationErrorLoggableException(error, params);
 
 				await expect(
-					service.hasPermissionsByReference(params.referenceType, params.referenceId, params.context),
+					service.hasPermissionsByReference(params.referenceType, params.referenceId, params.context)
 				).rejects.toThrowError(expectedError);
 			});
 		});

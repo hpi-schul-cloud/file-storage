@@ -11,11 +11,11 @@ import { PreviewGeneratorBuilder } from './preview-generator.builder';
 export const FILE_STORAGE_CLIENT = 'FILE_STORAGE_CLIENT';
 @Injectable()
 export class PreviewGeneratorService {
-	private imageMagick = subClass({ imageMagick: '7+' });
+	private readonly imageMagick = subClass({ imageMagick: '7+' });
 
 	constructor(
 		@Inject(FILE_STORAGE_CLIENT) private readonly storageClient: S3ClientAdapter,
-		private logger: Logger,
+		private readonly logger: Logger
 	) {
 		this.logger.setContext(PreviewGeneratorService.name);
 	}
@@ -61,7 +61,7 @@ export class PreviewGeneratorService {
 		return file;
 	}
 
-	private async resizeAndConvert(original: GetFile, previewParams: PreviewOptions): Promise<PassThrough> {
+	private resizeAndConvert(original: GetFile, previewParams: PreviewOptions): Promise<PassThrough> {
 		const { format, width } = previewParams;
 
 		const preview = this.imageMagick(original.data);
@@ -85,7 +85,7 @@ export class PreviewGeneratorService {
 		const promise = new Promise<PassThrough>((resolve, reject) => {
 			preview.stream(format, (err, stdout, stderr) => {
 				if (err) {
-					reject(err);
+					reject(new Error('Convert not possible', { cause: err }));
 				}
 
 				const throughStream = new PassThrough();

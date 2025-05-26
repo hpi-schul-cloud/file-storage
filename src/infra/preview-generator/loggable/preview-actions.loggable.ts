@@ -4,10 +4,10 @@ import { PreviewFileOptions } from '../interface';
 export class PreviewActionsLoggable implements Loggable {
 	constructor(
 		private readonly message: string,
-		private readonly payload: PreviewFileOptions,
+		private readonly payload: PreviewFileOptions
 	) {}
 
-	getLogMessage(): LogMessage {
+	public getLogMessage(): LogMessage {
 		const { originFilePath, previewFilePath, previewOptions } = this.payload;
 
 		return {

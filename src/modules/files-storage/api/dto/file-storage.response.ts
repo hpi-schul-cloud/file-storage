@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
 import { DecodeHtmlEntities } from '@shared/transformer';
@@ -26,47 +27,47 @@ export class FileRecordResponse {
 	}
 
 	@ApiProperty()
-	public id: string;
+	id: string;
 
 	@ApiProperty()
 	@DecodeHtmlEntities()
-	public name: string;
+	name: string;
 
 	@ApiProperty()
-	public parentId: string;
+	parentId: string;
 
 	@ApiProperty()
-	public url: string;
+	url: string;
 
 	@ApiProperty({ enum: ScanStatus, enumName: 'FileRecordScanStatus' })
-	public securityCheckStatus: ScanStatus;
+	securityCheckStatus: ScanStatus;
 
 	@ApiProperty()
-	public size: number;
+	size: number;
 
 	@ApiProperty()
-	public creatorId?: string;
+	creatorId?: string;
 
 	@ApiProperty()
-	public mimeType: string;
+	mimeType: string;
 
 	@ApiProperty({ enum: FileRecordParentType, enumName: 'FileRecordParentType' })
-	public parentType: FileRecordParentType;
+	parentType: FileRecordParentType;
 
 	@ApiPropertyOptional()
-	public isUploading?: boolean;
+	isUploading?: boolean;
 
 	@ApiProperty({ enum: PreviewStatus, enumName: 'PreviewStatus' })
-	public previewStatus: PreviewStatus;
+	previewStatus: PreviewStatus;
 
 	@ApiPropertyOptional()
-	public deletedSince?: Date;
+	deletedSince?: Date;
 
 	@ApiPropertyOptional()
-	public createdAt?: Date;
+	createdAt?: Date;
 
 	@ApiPropertyOptional()
-	public updatedAt?: Date;
+	updatedAt?: Date;
 }
 
 export class FileRecordListResponse extends PaginationResponse<FileRecordResponse[]> {
@@ -76,7 +77,7 @@ export class FileRecordListResponse extends PaginationResponse<FileRecordRespons
 	}
 
 	@ApiProperty({ type: [FileRecordResponse] })
-	public data: FileRecordResponse[];
+	data: FileRecordResponse[];
 }
 
 export class CopyFileResponse {
@@ -87,14 +88,14 @@ export class CopyFileResponse {
 	}
 
 	@ApiPropertyOptional()
-	public id?: string;
+	id?: string;
 
 	@ApiProperty()
-	public sourceId: string;
+	sourceId: string;
 
 	@ApiProperty()
 	@DecodeHtmlEntities()
-	public name: string;
+	name: string;
 }
 
 export class CopyFileListResponse extends PaginationResponse<CopyFileResponse[]> {
@@ -104,7 +105,7 @@ export class CopyFileListResponse extends PaginationResponse<CopyFileResponse[]>
 	}
 
 	@ApiProperty({ type: [CopyFileResponse] })
-	public data: CopyFileResponse[];
+	data: CopyFileResponse[];
 }
 
 export class DeleteByStorageLocationResponse {
@@ -115,11 +116,11 @@ export class DeleteByStorageLocationResponse {
 	}
 
 	@ApiProperty()
-	public storageLocationId: EntityId;
+	storageLocationId: EntityId;
 
 	@ApiProperty({ enum: StorageLocation, enumName: 'StorageLocation' })
-	public storageLocation: StorageLocation;
+	storageLocation: StorageLocation;
 
 	@ApiProperty()
-	public deletedFiles: number;
+	deletedFiles: number;
 }

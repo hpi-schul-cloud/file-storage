@@ -13,7 +13,7 @@ export class S3ClientFactory {
 		const { region, accessKeyId, secretAccessKey, endpoint } = config;
 		const retryStrategy = new ConfiguredRetryStrategy(
 			MAXIMUM_ATTEMPTS,
-			(attempt: number) => attempt * BACKOFF_DELAY_TIME_MS,
+			(attempt: number) => attempt * BACKOFF_DELAY_TIME_MS
 		);
 
 		const s3Client = new S3Client({

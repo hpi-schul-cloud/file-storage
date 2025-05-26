@@ -6,7 +6,7 @@ import { ErrorLogMessage, Loggable, LogMessage, ValidationErrorLogMessage } from
 import { Logger } from './logger';
 
 class SampleLoggable implements Loggable {
-	getLogMessage(): LogMessage | ErrorLogMessage | ValidationErrorLogMessage {
+	public getLogMessage(): LogMessage | ErrorLogMessage | ValidationErrorLogMessage {
 		const message = {
 			message: 'test message',
 			data: 'test data',

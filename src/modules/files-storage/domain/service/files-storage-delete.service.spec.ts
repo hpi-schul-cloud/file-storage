@@ -104,8 +104,8 @@ describe('FilesStorageService delete methods', () => {
 									deletedSince: expect.any(Date),
 								},
 								securityCheck: props.securityCheck,
-							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps },
-					),
+							}) as { props: FileRecordProps; securityCheck: FileRecordSecurityCheckProps }
+					)
 				);
 			});
 
@@ -281,7 +281,7 @@ describe('FilesStorageService delete methods', () => {
 				const expectedProps = [
 					new InternalServerErrorException(
 						'Error while moving directory to trash',
-						ErrorUtils.createHttpExceptionOptions(error),
+						ErrorUtils.createHttpExceptionOptions(error)
 					),
 				];
 

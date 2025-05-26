@@ -19,7 +19,7 @@
   },
   "scripts": {
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\"",
     "nest:start:files-storage": "nest start files-storage & nest start files-storage-amqp & nest start preview-generator-amqp",
     "nest:start:files-storage:dev": "nest start files-storage --watch & nest start files-storage-amqp --watch & nest start preview-generator-amqp --watch",
     "nest:start:files-storage:debug": "nest start files-storage --debug --watch & nest start files-storage-amqp --debug --watch  & nest start preview-generator-amqp --debug --watch",

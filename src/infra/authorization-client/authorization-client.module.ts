@@ -10,12 +10,12 @@ export interface AuthorizationClientConfig extends ConfigurationParameters {
 
 @Module({})
 export class AuthorizationClientModule {
-	static register(): DynamicModule {
+	public static register(): DynamicModule {
 		const providers = [
 			AuthorizationClientAdapter,
 			{
 				provide: AuthorizationApi,
-				useFactory: (config: AuthorizationConfig) => {
+				useFactory: (config: AuthorizationConfig): AuthorizationApi => {
 					const configuration = new Configuration({ basePath: config.AUTHORIZATION_API_URL });
 
 					return new AuthorizationApi(configuration);

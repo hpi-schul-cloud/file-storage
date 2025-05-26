@@ -162,7 +162,7 @@ describe('FilesStorageUC', () => {
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					props.parentType,
 					props.parentId,
-					FileStorageAuthorizationContext.update,
+					FileStorageAuthorizationContext.update
 				);
 			});
 

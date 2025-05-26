@@ -11,10 +11,10 @@ interface FileStorageActionsLoggableParams {
 export class FileStorageActionsLoggable implements Loggable {
 	constructor(
 		private readonly message: string,
-		private readonly payload: FileStorageActionsLoggableParams,
+		private readonly payload: FileStorageActionsLoggableParams
 	) {}
 
-	getLogMessage(): LogMessage {
+	public getLogMessage(): LogMessage {
 		return {
 			message: this.message,
 			data: {

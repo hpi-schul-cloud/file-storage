@@ -1,9 +1,9 @@
 import { ScanStatus } from '../file-record.do';
 
 export class ScanResultDto {
-	public status: ScanStatus;
+	status: ScanStatus;
 
-	public reason: string;
+	reason: string;
 
 	constructor(props: ScanResultDto) {
 		this.status = props.status;

@@ -1,4 +1,4 @@
-import { IFindOptions } from '@shared/domain/interface';
+import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { FileRecord } from '../file-record.do';
 import { StorageLocation } from './storage-location.enum';
@@ -6,11 +6,11 @@ import { StorageLocation } from './storage-location.enum';
 export interface FileRecordRepo {
 	findOneById(id: EntityId): Promise<FileRecord>;
 
-	findMultipleById(ids: EntityId[], options?: IFindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
+	findMultipleById(ids: EntityId[], options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
 
 	findOneByIdMarkedForDelete(id: EntityId): Promise<FileRecord>;
 
-	findByParentId(parentId: EntityId, options?: IFindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
+	findByParentId(parentId: EntityId, options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
 
 	markForDeleteByStorageLocation(storageLocation: StorageLocation, storageLocationId: EntityId): Promise<number>;
 
@@ -18,14 +18,14 @@ export interface FileRecordRepo {
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
 		parentId: EntityId,
-		options?: IFindOptions<FileRecord>,
+		options?: FindOptions<FileRecord>
 	): Promise<Counted<FileRecord[]>>;
 
 	findByStorageLocationIdAndParentIdAndMarkedForDelete(
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
 		parentId: EntityId,
-		options?: IFindOptions<FileRecord>,
+		options?: FindOptions<FileRecord>
 	): Promise<Counted<FileRecord[]>>;
 
 	findBySecurityCheckRequestToken(token: string): Promise<FileRecord>;

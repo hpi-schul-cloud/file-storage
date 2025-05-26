@@ -1,12 +1,12 @@
 import { EntityId } from '@shared/domain/types';
-import { CreateJwtPayload, ICurrentUser } from '../interface';
+import { CreateJwtPayload, CurrentUserInterface } from '../interface';
 
 export class JwtPayloadFactory {
 	private static build(data: CreateJwtPayload): CreateJwtPayload {
 		return data;
 	}
 
-	public static buildFromCurrentUser(currentUser: ICurrentUser): CreateJwtPayload {
+	public static buildFromCurrentUser(currentUser: CurrentUserInterface): CreateJwtPayload {
 		const data = {
 			accountId: currentUser.accountId,
 			userId: currentUser.userId,
@@ -23,7 +23,7 @@ export class JwtPayloadFactory {
 		return createJwtPayload;
 	}
 
-	public static buildFromSupportUser(currentUser: ICurrentUser, supportUserId: EntityId): CreateJwtPayload {
+	public static buildFromSupportUser(currentUser: CurrentUserInterface, supportUserId: EntityId): CreateJwtPayload {
 		const data = {
 			accountId: currentUser.accountId,
 			userId: currentUser.userId,

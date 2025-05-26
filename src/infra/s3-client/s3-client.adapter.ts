@@ -23,14 +23,14 @@ import { CopyFiles, File, GetFile, ListFiles, ObjectKeysRecursive, S3Config } fr
 import { S3ClientActionLoggable } from './loggable';
 
 export class S3ClientAdapter {
-	private deletedFolderName = 'trash';
-	private S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
+	private readonly deletedFolderName = 'trash';
+	private readonly S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
 
 	constructor(
 		private readonly client: S3Client,
 		private readonly config: S3Config,
-		private logger: Logger,
-		private errorHandler: DomainErrorHandler,
+		private readonly logger: Logger,
+		private readonly errorHandler: DomainErrorHandler
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${config.connectionName}`);
 	}
@@ -39,7 +39,7 @@ export class S3ClientAdapter {
 	public async createBucket(): Promise<void> {
 		try {
 			this.logger.debug(
-				new S3ClientActionLoggable('Start create bucket', { action: 'get', bucket: this.config.bucket }),
+				new S3ClientActionLoggable('Start create bucket', { action: 'get', bucket: this.config.bucket })
 			);
 
 			const req = new CreateBucketCommand({ Bucket: this.config.bucket });
@@ -50,7 +50,7 @@ export class S3ClientAdapter {
 			}
 			throw new InternalServerErrorException(
 				'S3ClientAdapter:createBucket',
-				ErrorUtils.createHttpExceptionOptions(err),
+				ErrorUtils.createHttpExceptionOptions(err)
 			);
 		}
 	}
@@ -58,7 +58,7 @@ export class S3ClientAdapter {
 	public async get(path: string, bytesRange?: string): Promise<GetFile> {
 		try {
 			this.logger.debug(
-				new S3ClientActionLoggable('Start get file', { action: 'get', objectPath: path, bucket: this.config.bucket }),
+				new S3ClientActionLoggable('Start get file', { action: 'get', objectPath: path, bucket: this.config.bucket })
 			);
 
 			const req = new GetObjectCommand({
@@ -86,7 +86,7 @@ export class S3ClientAdapter {
 						action: 'get',
 						objectPath: path,
 						bucket: this.config.bucket,
-					}),
+					})
 				);
 				throw new NotFoundException('NoSuchKey', ErrorUtils.createHttpExceptionOptions(err));
 			} else {
@@ -102,7 +102,7 @@ export class S3ClientAdapter {
 					action: 'create',
 					objectPath: path,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			const req: PutObjectCommandInput = {
@@ -156,7 +156,7 @@ export class S3ClientAdapter {
 					action: 'moveDirectoryToTrash',
 					objectPath: path,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			const data = await this.listObjects(path, nextMarker);
@@ -170,7 +170,7 @@ export class S3ClientAdapter {
 		} catch (err) {
 			throw new InternalServerErrorException(
 				'S3ClientAdapter:moveDirectoryToTrash',
-				ErrorUtils.createHttpExceptionOptions(err),
+				ErrorUtils.createHttpExceptionOptions(err)
 			);
 		}
 	}
@@ -182,7 +182,7 @@ export class S3ClientAdapter {
 					action: 'restore',
 					objectPath: paths,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			const copyPaths = paths.map((path) => {
@@ -205,7 +205,7 @@ export class S3ClientAdapter {
 	public async copy(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
 		try {
 			this.logger.debug(
-				new S3ClientActionLoggable('Start copy of files', { action: 'copy', bucket: this.config.bucket }),
+				new S3ClientActionLoggable('Start copy of files', { action: 'copy', bucket: this.config.bucket })
 			);
 
 			const copyRequests = paths.map(async (path) => {
@@ -248,7 +248,7 @@ export class S3ClientAdapter {
 					action: 'delete',
 					objectPath: paths,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			if (paths.length === 0) return;
@@ -274,7 +274,7 @@ export class S3ClientAdapter {
 					action: 'list',
 					objectPath: params.path,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			const result = await this.listObjectKeysRecursive(params);
@@ -287,14 +287,14 @@ export class S3ClientAdapter {
 
 	private async listObjectKeysRecursive(params: ListFiles): Promise<ObjectKeysRecursive> {
 		const { path, maxKeys, nextMarker } = params;
-		let files: string[] = params.files ? params.files : [];
+		let files: string[] = params.files ?? [];
 		const MaxKeys = maxKeys && maxKeys - files.length;
 
 		const data = await this.listObjects(path, nextMarker, MaxKeys);
 
 		const returnedFiles =
-			data?.Contents?.filter((o) => o.Key)
-				.map((o) => o.Key!) // Can not be undefined because of filter above
+			data?.Contents?.filter((o): o is { Key: string } => typeof o.Key === 'string')
+				.map((o) => o.Key)
 				.map((key) => key.substring(path.length)) ?? [];
 
 		files = files.concat(returnedFiles);
@@ -315,7 +315,7 @@ export class S3ClientAdapter {
 					action: 'head',
 					objectPath: path,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			const req = new HeadObjectCommand({
@@ -333,7 +333,7 @@ export class S3ClientAdapter {
 						action: 'head',
 						objectPath: path,
 						bucket: this.config.bucket,
-					}),
+					})
 				);
 				throw new NotFoundException(null, ErrorUtils.createHttpExceptionOptions(err, 'NoSuchKey'));
 			}
@@ -348,7 +348,7 @@ export class S3ClientAdapter {
 					action: 'deleteDirectory',
 					objectPath: path,
 					bucket: this.config.bucket,
-				}),
+				})
 			);
 
 			const data = await this.listObjects(path, nextMarker);
@@ -362,7 +362,7 @@ export class S3ClientAdapter {
 		} catch (err) {
 			throw new InternalServerErrorException(
 				'S3ClientAdapter:deleteDirectory',
-				ErrorUtils.createHttpExceptionOptions(err),
+				ErrorUtils.createHttpExceptionOptions(err)
 			);
 		}
 	}
@@ -370,7 +370,7 @@ export class S3ClientAdapter {
 	private async listObjects(
 		path: string,
 		nextMarker?: string,
-		maxKeys = this.S3_MAX_DEFAULT_VALUE_FOR_KEYS,
+		maxKeys = this.S3_MAX_DEFAULT_VALUE_FOR_KEYS
 	): Promise<ListObjectsV2CommandOutput> {
 		const req = new ListObjectsV2Command({
 			Bucket: this.config.bucket,
@@ -407,7 +407,7 @@ export class S3ClientAdapter {
 						action: 'checkStreamResponsive',
 						objectPath: context,
 						bucket: this.config.bucket,
-					}),
+					})
 				);
 				stream.destroy();
 			}, 60 * 1000);

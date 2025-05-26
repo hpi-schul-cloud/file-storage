@@ -22,7 +22,7 @@ import { LoggerConfig } from './logger.config';
 							format: winston.format.combine(
 								winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
 								winston.format.ms(),
-								utilities.format.nestLike(),
+								utilities.format.nestLike()
 							),
 						}),
 					],

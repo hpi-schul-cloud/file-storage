@@ -1,6 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import { TypeGuard } from '@shared/guard';
-import { ICurrentUser } from '../interface';
+import { CurrentUserInterface } from '../interface';
 
 interface RequiredCurrentUserProps {
 	userId: EntityId;
@@ -9,7 +9,7 @@ interface RequiredCurrentUserProps {
 	roles: EntityId[];
 }
 
-export function isCurrentUser(input: unknown): input is ICurrentUser {
+export function isCurrentUser(input: unknown): input is CurrentUserInterface {
 	const requiredInterfaceKeysMatch =
 		TypeGuard.isEachKeyInObject(input, ['userId', 'roles', 'accountId', 'schoolId']) &&
 		TypeGuard.isString(input.userId) &&
@@ -22,14 +22,14 @@ export function isCurrentUser(input: unknown): input is ICurrentUser {
 }
 
 export class CurrentUserBuilder {
-	private props!: ICurrentUser;
+	private props!: CurrentUserInterface;
 
-	constructor(requiredProps: RequiredCurrentUserProps) {
+	constructor(private readonly requiredProps: RequiredCurrentUserProps) {
 		this.props = {
-			userId: requiredProps.userId,
-			schoolId: requiredProps.schoolId,
-			accountId: requiredProps.accountId,
-			roles: requiredProps.roles,
+			userId: this.requiredProps.userId,
+			schoolId: this.requiredProps.schoolId,
+			accountId: this.requiredProps.accountId,
+			roles: this.requiredProps.roles,
 			support: false,
 			isExternalUser: false,
 			systemId: undefined,
@@ -39,11 +39,11 @@ export class CurrentUserBuilder {
 
 	// creating a do representation of currentUser as class make sense
 	// Please add validations to this type into this method
-	public build(): ICurrentUser {
+	public build(): CurrentUserInterface {
 		return this.props;
 	}
 
-	public asUserSupporter(asUserSupporter?: boolean) {
+	public asUserSupporter(asUserSupporter?: boolean): this {
 		if (asUserSupporter === true) {
 			this.props.support = asUserSupporter;
 		}
@@ -53,7 +53,7 @@ export class CurrentUserBuilder {
 
 	// I expect that external user should always bound to external system, but the existing code give no feedback about it
 	// Add isExternalUser modification to withExternalSystem if you can validate it.
-	public asExternalUser(isExternalUser?: boolean) {
+	public asExternalUser(isExternalUser?: boolean): this {
 		if (isExternalUser === true) {
 			this.props.isExternalUser = isExternalUser;
 		}
@@ -61,13 +61,13 @@ export class CurrentUserBuilder {
 		return this;
 	}
 
-	public withExternalSystem(systemId?: EntityId) {
+	public withExternalSystem(systemId?: EntityId): this {
 		this.props.systemId = systemId;
 
 		return this;
 	}
 
-	public asExternalUserWithToken(externalIdToken: string) {
+	public asExternalUserWithToken(externalIdToken: string): this {
 		this.props.externalIdToken = externalIdToken;
 		this.props.isExternalUser = true;
 

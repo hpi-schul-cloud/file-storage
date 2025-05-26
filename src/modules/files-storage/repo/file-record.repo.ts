@@ -1,6 +1,6 @@
 import { EntityManager, EntityName, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
-import { IFindOptions, SortOrder } from '@shared/domain/interface';
+import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { StorageLocation } from '../domain';
 import { FileRecord } from '../domain/file-record.do';
@@ -26,7 +26,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 
 	public async findMultipleById(
 		ids: EntityId[],
-		options?: IFindOptions<FileRecordEntity>,
+		options?: FindOptions<FileRecordEntity>
 	): Promise<Counted<FileRecord[]>> {
 		const scope = new FileRecordScope().byFileRecordIds(ids).byMarkedForDelete(false);
 		const result = await this.findAndCount(scope, options);
@@ -43,7 +43,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 
 	public async findByParentId(
 		parentId: EntityId,
-		options?: IFindOptions<FileRecordEntity>,
+		options?: FindOptions<FileRecordEntity>
 	): Promise<Counted<FileRecord[]>> {
 		const scope = new FileRecordScope().byParentId(parentId).byMarkedForDelete(false);
 		const result = await this.findAndCount(scope, options);
@@ -53,7 +53,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 
 	public async markForDeleteByStorageLocation(
 		storageLocation: StorageLocation,
-		storageLocationId: EntityId,
+		storageLocationId: EntityId
 	): Promise<number> {
 		const scope = new FileRecordScope()
 			.byStorageLocation(storageLocation)
@@ -68,7 +68,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
 		parentId: EntityId,
-		options?: IFindOptions<FileRecordEntity>,
+		options?: FindOptions<FileRecordEntity>
 	): Promise<Counted<FileRecord[]>> {
 		const scope = new FileRecordScope()
 			.byStorageLocation(storageLocation)
@@ -84,7 +84,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId,
 		parentId: EntityId,
-		options?: IFindOptions<FileRecordEntity>,
+		options?: FindOptions<FileRecordEntity>
 	): Promise<Counted<FileRecord[]>> {
 		const scope = new FileRecordScope()
 			.byStorageLocation(storageLocation)
@@ -136,9 +136,9 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 
 	private async findAndCount(
 		scope: FileRecordScope,
-		options?: IFindOptions<FileRecordEntity>,
+		options?: FindOptions<FileRecordEntity>
 	): Promise<Counted<FileRecord[]>> {
-		const { pagination } = options || {};
+		const { pagination } = options ?? {};
 		const order = { createdAt: SortOrder.desc, id: SortOrder.asc };
 
 		const [entities, count] = await this.em.findAndCount(FileRecordEntity, scope.query, {

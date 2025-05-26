@@ -109,7 +109,7 @@ describe('FilesStorageService copy methods', () => {
 					1,
 					sourceParentInfo.storageLocation,
 					sourceParentInfo.storageLocationId,
-					sourceParentInfo.parentId,
+					sourceParentInfo.parentId
 				);
 			});
 

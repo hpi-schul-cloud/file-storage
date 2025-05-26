@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { ScanResult } from '@infra/antivirus';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
@@ -16,133 +17,133 @@ import {
 export class StorageLocationParamsDto implements StorageLocationParams {
 	@ApiProperty()
 	@IsMongoId()
-	public storageLocationId!: EntityId;
+	storageLocationId!: EntityId;
 
 	@ApiProperty({ enum: StorageLocation, enumName: 'StorageLocation' })
 	@IsEnum(StorageLocation)
-	public storageLocation!: StorageLocation;
+	storageLocation!: StorageLocation;
 }
 
 export class FileRecordParams implements ParentInfo {
 	@ApiProperty()
 	@IsMongoId()
-	public storageLocationId!: EntityId;
+	storageLocationId!: EntityId;
 
 	@ApiProperty({ enum: StorageLocation, enumName: 'StorageLocation' })
 	@IsEnum(StorageLocation)
-	public storageLocation!: StorageLocation;
+	storageLocation!: StorageLocation;
 
 	@ApiProperty()
 	@IsMongoId()
-	public parentId!: EntityId;
+	parentId!: EntityId;
 
 	@ApiProperty({ enum: FileRecordParentType, enumName: 'FileRecordParentType' })
 	@IsEnum(FileRecordParentType)
-	public parentType!: FileRecordParentType;
+	parentType!: FileRecordParentType;
 }
 
 export class FileUrlParams {
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
-	public url!: string;
+	url!: string;
 
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
-	public fileName!: string;
+	fileName!: string;
 
 	@ApiPropertyOptional()
 	@Allow()
-	public headers?: Record<string, string>;
+	headers?: Record<string, string>;
 }
 
 export class FileParams {
 	@ApiProperty({ type: 'string', format: 'binary' })
 	@Allow()
-	public file!: string;
+	file!: string;
 }
 
 export class DownloadFileParams {
 	@ApiProperty()
 	@IsMongoId()
-	public fileRecordId!: EntityId;
+	fileRecordId!: EntityId;
 
 	@ApiProperty()
 	@IsString()
-	public fileName!: string;
+	fileName!: string;
 }
 
 export class ScanResultParams implements ScanResult {
 	@ApiProperty()
 	@Allow()
-	public virus_detected?: boolean;
+	virus_detected?: boolean;
 
 	@ApiProperty()
 	@Allow()
-	public virus_signature?: string;
+	virus_signature?: string;
 
 	@ApiProperty()
 	@Allow()
-	public error?: string;
+	error?: string;
 }
 
 export class SingleFileParams {
 	@ApiProperty()
 	@IsMongoId()
-	public fileRecordId!: EntityId;
+	fileRecordId!: EntityId;
 }
 
 export class MultiFileParams {
 	@ApiProperty()
 	@IsMongoId({ each: true })
-	public fileRecordIds!: EntityId[];
+	fileRecordIds!: EntityId[];
 }
 
 export class RenameFileParams {
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
-	public fileName!: string;
+	fileName!: string;
 }
 
 export class CopyFilesOfParentParams {
 	@ApiProperty()
 	@ValidateNested()
-	public target!: FileRecordParams;
+	target!: FileRecordParams;
 }
 
 export class CopyFileParams {
 	@ApiProperty()
 	@ValidateNested()
-	public target!: FileRecordParams;
+	target!: FileRecordParams;
 
 	@ApiProperty()
 	@IsString()
-	public fileNamePrefix!: string;
+	fileNamePrefix!: string;
 }
 
 export class CopyFilesOfParentPayload {
 	@IsMongoId()
-	public userId!: EntityId;
+	userId!: EntityId;
 
 	@ValidateNested()
-	public source!: FileRecordParams;
+	source!: FileRecordParams;
 
 	@ValidateNested()
-	public target!: FileRecordParams;
+	target!: FileRecordParams;
 }
 
 export class PreviewParams implements PreviewInfo {
 	@ApiPropertyOptional({ enum: PreviewOutputMimeTypes, enumName: 'PreviewOutputMimeTypes' })
 	@IsOptional()
 	@IsEnum(PreviewOutputMimeTypes)
-	public outputFormat?: PreviewOutputMimeTypes;
+	outputFormat?: PreviewOutputMimeTypes;
 
 	@ApiPropertyOptional({ enum: PreviewWidth, enumName: 'PreviewWidth' })
 	@IsOptional()
 	@IsEnum(PreviewWidth)
-	public width?: PreviewWidth;
+	width?: PreviewWidth;
 
 	@IsOptional()
 	@IsBoolean()
@@ -150,5 +151,5 @@ export class PreviewParams implements PreviewInfo {
 	@ApiPropertyOptional({
 		description: 'If true, the preview will be generated again.',
 	})
-	public forceUpdate?: boolean;
+	forceUpdate?: boolean;
 }

@@ -286,7 +286,7 @@ describe('FilesStorageConsumer', () => {
 
 				expect(result.message).toHaveLength(fileRecords.length);
 				expect(Object.keys(result.message[0])).toEqual(
-					expect.arrayContaining(['id', 'name', 'parentId', 'securityCheckStatus', 'size', 'mimeType', 'parentType']),
+					expect.arrayContaining(['id', 'name', 'parentId', 'securityCheckStatus', 'size', 'mimeType', 'parentType'])
 				);
 			});
 		});

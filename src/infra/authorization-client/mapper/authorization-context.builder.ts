@@ -5,9 +5,9 @@ import {
 } from '../authorization-api-client';
 
 export class AuthorizationContextBuilder {
-	static build(
+	public static build(
 		requiredPermissions: AuthorizationContextParamsRequiredPermissions[],
-		action: AuthorizationContextParamsAction,
+		action: AuthorizationContextParamsAction
 	): AuthorizationContextParams {
 		return {
 			action,
@@ -15,13 +15,15 @@ export class AuthorizationContextBuilder {
 		};
 	}
 
-	static write(requiredPermissions: AuthorizationContextParamsRequiredPermissions[]): AuthorizationContextParams {
+	public static write(
+		requiredPermissions: AuthorizationContextParamsRequiredPermissions[]
+	): AuthorizationContextParams {
 		const context = this.build(requiredPermissions, AuthorizationContextParamsAction.WRITE);
 
 		return context;
 	}
 
-	static read(requiredPermissions: AuthorizationContextParamsRequiredPermissions[]): AuthorizationContextParams {
+	public static read(requiredPermissions: AuthorizationContextParamsRequiredPermissions[]): AuthorizationContextParams {
 		const context = this.build(requiredPermissions, AuthorizationContextParamsAction.READ);
 
 		return context;

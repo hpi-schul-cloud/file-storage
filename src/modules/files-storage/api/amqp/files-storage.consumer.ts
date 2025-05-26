@@ -15,8 +15,8 @@ export class FilesStorageConsumer {
 	constructor(
 		private readonly filesStorageService: FilesStorageService,
 		private readonly previewService: PreviewService,
-		private logger: Logger,
-		private readonly orm: MikroORM, // don't remove it, we need it for @CreateRequestContext
+		private readonly logger: Logger,
+		private readonly orm: MikroORM // don't remove it, we need it for @CreateRequestContext
 	) {
 		this.logger.setContext(FilesStorageConsumer.name);
 	}
@@ -28,7 +28,7 @@ export class FilesStorageConsumer {
 	})
 	@CreateRequestContext()
 	public async copyFilesOfParent(
-		@RabbitPayload() payload: CopyFilesOfParentPayload,
+		@RabbitPayload() payload: CopyFilesOfParentPayload
 	): Promise<RpcMessage<CopyFileResponse[]>> {
 		this.logger.debug(new FileStorageActionsLoggable('Start copy files of parent', { action: 'copyFilesOfParent' }));
 		const { userId, source, target } = payload;
@@ -64,7 +64,7 @@ export class FilesStorageConsumer {
 			new FileStorageActionsLoggable('Start delete files of parent', {
 				action: 'deleteFilesOfParent',
 				sourcePayload: fileRecords,
-			}),
+			})
 		);
 
 		await this.previewService.deletePreviews(fileRecords);
@@ -85,7 +85,7 @@ export class FilesStorageConsumer {
 		const promise = payload.map((fileRecordId) => this.filesStorageService.getFileRecord(fileRecordId));
 		const fileRecords = await Promise.all(promise);
 		this.logger.debug(
-			new FileStorageActionsLoggable('Start delete of files', { action: 'deleteFiles', sourcePayload: fileRecords }),
+			new FileStorageActionsLoggable('Start delete of files', { action: 'deleteFiles', sourcePayload: fileRecords })
 		);
 
 		await this.previewService.deletePreviews(fileRecords);
@@ -103,14 +103,14 @@ export class FilesStorageConsumer {
 	})
 	@CreateRequestContext()
 	public async removeCreatorIdFromFileRecords(
-		@RabbitPayload() payload: EntityId,
+		@RabbitPayload() payload: EntityId
 	): Promise<RpcMessage<FileRecordResponse[]>> {
 		const [fileRecords] = await this.filesStorageService.getFileRecordsByCreatorId(payload);
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start remove creator for files', {
 				action: 'removeCreatorIdFromFileRecords',
 				sourcePayload: fileRecords,
-			}),
+			})
 		);
 
 		await this.filesStorageService.removeCreatorIdFromFileRecords(fileRecords);

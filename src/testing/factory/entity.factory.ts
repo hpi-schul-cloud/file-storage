@@ -25,7 +25,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 
 	constructor(
 		private readonly EntityClass: new () => T,
-		propsFactory: Factory<U, I, C>,
+		propsFactory: Factory<U, I, C>
 	) {
 		this.propsFactory = propsFactory;
 	}
@@ -44,7 +44,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	public static define<T extends U, U extends object, I = any, C = U, F = EntityFactory<T, U, I, C>>(
 		this: new (EntityClass: new () => T, propsFactory: Factory<U, I, C>) => F,
 		EntityClass: new () => T,
-		generator: GeneratorFn<U, I, C>,
+		generator: GeneratorFn<U, I, C>
 	): F {
 		const propsFactory = Factory.define<U, I, C>(generator);
 		const factory = new this(EntityClass, propsFactory);
@@ -161,7 +161,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	protected clone<F extends EntityFactory<T, U, I, C>>(this: F, propsFactory: Factory<U, I, C>): F {
 		const copy = new (this.constructor as new (EntityClass: new () => T, propsFactory: Factory<U, I, C>) => F)(
 			this.EntityClass,
-			propsFactory,
+			propsFactory
 		);
 
 		return copy;

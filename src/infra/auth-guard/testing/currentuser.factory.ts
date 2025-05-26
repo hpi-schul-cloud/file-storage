@@ -1,8 +1,8 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { BaseFactory } from '@testing/factory/base.factory';
-import { ICurrentUser } from '../interface';
+import { CurrentUserInterface } from '../interface';
 
-class CurrentUser implements ICurrentUser {
+class CurrentUser implements CurrentUserInterface {
 	userId: string;
 
 	roles: string[];
@@ -19,33 +19,34 @@ class CurrentUser implements ICurrentUser {
 
 	supportUserId?: string;
 
-	constructor(data: ICurrentUser) {
+	constructor(data: CurrentUserInterface) {
 		this.userId = data.userId;
 		this.roles = data.roles;
 		this.schoolId = data.schoolId;
 		this.accountId = data.accountId;
-		this.systemId = data.systemId || '';
+		this.systemId = data.systemId ?? '';
 		this.isExternalUser = data.isExternalUser;
 		this.support = false;
 		this.supportUserId = data.supportUserId;
 	}
 }
 
-class CurrentUserFactory extends BaseFactory<CurrentUser, ICurrentUser> {
+class CurrentUserFactory extends BaseFactory<CurrentUser, CurrentUserInterface> {
 	public withRole(role: string): this {
 		const params = { roles: [role] };
+
 		return this.params(params);
 	}
 
-	public withRoleAdmin() {
+	public withRoleAdmin(): this {
 		return this.withRole('admin');
 	}
 
-	public withRoleStudent() {
+	public withRoleStudent(): this {
 		return this.withRole('student');
 	}
 
-	public withRoleTeacher() {
+	public withRoleTeacher(): this {
 		return this.withRole('teacher');
 	}
 }

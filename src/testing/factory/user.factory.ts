@@ -65,7 +65,7 @@ class UserFactory extends EntityFactory<UserEntity, UserProperties> {
 	}
 }
 
-export const userFactory = UserFactory.define(UserEntity, ({ sequence }) => {
+export const userFactory = UserFactory.define(UserEntity, ({}) => {
 	const result = {
 		roles: [],
 		school: new ObjectId(),

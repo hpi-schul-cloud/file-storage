@@ -21,7 +21,7 @@ export class JwtAuthenticationFactory {
 			privateKey.replace(/\\n/g, '\n'),
 			{
 				algorithm: 'RS256',
-			},
+			}
 		);
 
 		return validJwt;

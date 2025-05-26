@@ -1,7 +1,8 @@
 import { EntityManager } from '@mikro-orm/mongodb';
 import { FileRecord, FileRecordSecurityCheck } from '../../domain';
 import { FileRecordFactory } from '../../domain/file-record.factory';
-import { FileRecordEntity, FileRecordSecurityCheckEmbeddable } from '../file-record.entity';
+import { FileRecordEntity } from '../file-record.entity';
+import { FileRecordSecurityCheckEmbeddable } from '../security-check.embeddable';
 
 export class FileRecordEntityMapper {
 	public static mapEntityToDo(fileRecordEntity: FileRecordEntity): FileRecord {
@@ -10,7 +11,7 @@ export class FileRecordEntityMapper {
 			return fileRecordEntity.domainObject;
 		}
 
-		const { securityCheck: securityCheckEmbeddable, domainObject, ...fileRecordProps } = fileRecordEntity;
+		const { securityCheck: securityCheckEmbeddable, ...fileRecordProps } = fileRecordEntity;
 		// we need to "copy" the "id" property manually, as otherwise the "id" will get lost
 		fileRecordProps.id = fileRecordEntity.id;
 		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
@@ -27,7 +28,7 @@ export class FileRecordEntityMapper {
 		const props = fileRecord.getProps();
 
 		const entity =
-			em.getUnitOfWork().getById<FileRecordEntity>(FileRecordEntity.name, props.id) || new FileRecordEntity();
+			em.getUnitOfWork().getById<FileRecordEntity>(FileRecordEntity.name, props.id) ?? new FileRecordEntity();
 		em.assign(entity, props);
 
 		entity.securityCheck = FileRecordEntityMapper.mapDoToEmbeddable(em, fileRecord);

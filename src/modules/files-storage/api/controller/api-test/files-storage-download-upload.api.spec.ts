@@ -161,7 +161,7 @@ describe('files-storage controller (API)', () => {
 						parentType: 'schools',
 						securityCheckStatus: 'pending',
 						size: expect.any(Number),
-					}),
+					})
 				);
 			});
 
@@ -338,7 +338,7 @@ describe('files-storage controller (API)', () => {
 							mimeType: 'application/octet-stream',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
-						}),
+						})
 					);
 				});
 			});
@@ -606,7 +606,7 @@ describe('files-storage controller (API)', () => {
 				const { newRecord, fileApiClient } = await setup();
 
 				const response = await fileApiClient.get(
-					`/file-security/download/${newRecord.securityCheck.requestToken || ''}`,
+					`/file-security/download/${newRecord.securityCheck.requestToken ?? ''}`
 				);
 
 				expect(response.status).toEqual(200);

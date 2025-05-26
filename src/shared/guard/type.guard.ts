@@ -156,7 +156,7 @@ export class TypeGuard {
 	public static checkKeysInObject<T extends Record<string, unknown>>(
 		value: unknown,
 		keys: (keyof T)[],
-		toThrow?: Error,
+		toThrow?: Error
 	): T {
 		const object = TypeGuard.checkDefinedObject(value);
 
@@ -165,8 +165,8 @@ export class TypeGuard {
 				toThrow ??
 				new Error(
 					`Object has missing key. Required are: ${JSON.stringify(keys)}. Get object keys: ${JSON.stringify(
-						Object.keys(object),
-					)}`,
+						Object.keys(object)
+					)}`
 				)
 			);
 		}
@@ -177,7 +177,7 @@ export class TypeGuard {
 	public static checkKeysInInstance<T extends object, K extends keyof T>(
 		obj: T,
 		keys: K[],
-		toThrow?: Error,
+		toThrow?: Error
 	): EnsureKeysAreSet<T, K> {
 		const missingKeys: K[] = [];
 		for (const key of keys) {
@@ -187,7 +187,7 @@ export class TypeGuard {
 		}
 
 		if (missingKeys.length > 0) {
-			throw toThrow || new Error(`Object lacks these properties: ${String(keys)}.`);
+			throw toThrow ?? new Error(`Object lacks these properties: ${String(keys)}.`);
 		}
 
 		return obj as EnsureKeysAreSet<T, K>;
@@ -196,7 +196,7 @@ export class TypeGuard {
 	public static requireKeys<T extends object, K extends keyof T>(
 		obj: T,
 		keys: K[],
-		toThrow?: Error,
+		toThrow?: Error
 	): asserts obj is EnsureKeysAreSet<T, K> {
 		this.checkKeysInInstance(obj, keys, toThrow);
 	}

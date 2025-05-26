@@ -7,7 +7,7 @@ import { ValidationErrorDetailResponse } from './validation-error-detail.respons
  * HTTP response definition for api validation errors.
  */
 export class ApiValidationErrorResponse extends ErrorResponse {
-	validationErrors: ValidationErrorDetailResponse[] = [];
+	readonly validationErrors: ValidationErrorDetailResponse[] = [];
 
 	constructor(apiValidationError: ApiValidationError) {
 		const { type, title, message, code } = apiValidationError;

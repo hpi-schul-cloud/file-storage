@@ -12,7 +12,7 @@ export class FileRecordMapper {
 		fileRecords: FileRecord[],
 		total: number,
 		skip?: number,
-		limit?: number,
+		limit?: number
 	): FileRecordListResponse {
 		const responseFileRecords = fileRecords.map((fileRecord) => FileRecordMapper.mapToFileRecordResponse(fileRecord));
 		const response = new FileRecordListResponse(responseFileRecords, total, skip, limit);
@@ -22,7 +22,7 @@ export class FileRecordMapper {
 
 	public static mapToDeleteByStorageLocationResponse(
 		params: StorageLocationParams,
-		deletedFiles: number,
+		deletedFiles: number
 	): DeleteByStorageLocationResponse {
 		const response = new DeleteByStorageLocationResponse({ ...params, deletedFiles });
 

@@ -72,7 +72,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: config.bucket },
-					}),
+					})
 				);
 			});
 		});
@@ -118,7 +118,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: config.bucket, Key: pathToFile },
-					}),
+					})
 				);
 			});
 
@@ -130,7 +130,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: config.bucket, Key: pathToFile, Range: bytesRange },
-					}),
+					})
 				);
 			});
 
@@ -147,7 +147,7 @@ describe(S3ClientAdapter.name, () => {
 						contentLength: 'data.ContentLength',
 						contentRange: 'data.ContentRange',
 						etag: 'data.ETag',
-					}),
+					})
 				);
 			});
 		});
@@ -284,7 +284,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: bucket, CopySource: `${bucket}/test/text.txt`, Key: 'trash/test/text.txt' },
-					}),
+					})
 				);
 			});
 
@@ -296,7 +296,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: bucket, Delete: { Objects: [{ Key: 'test/text.txt' }] } },
-					}),
+					})
 				);
 			});
 		});
@@ -339,7 +339,7 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: 'test/text.txt', MaxKeys: 1000 },
-						}),
+						})
 					);
 				});
 
@@ -393,13 +393,13 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
-						}),
+						})
 					);
 					expect(client.send).toHaveBeenNthCalledWith(
 						2,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, ContinuationToken: nextFilePath, MaxKeys: 1000 },
-						}),
+						})
 					);
 				});
 
@@ -446,7 +446,7 @@ describe(S3ClientAdapter.name, () => {
 
 					const expectedError = new InternalServerErrorException(
 						'S3ClientAdapter:moveDirectoryToTrash',
-						ErrorUtils.createHttpExceptionOptions(error),
+						ErrorUtils.createHttpExceptionOptions(error)
 					);
 
 					return { pathToFile, expectedError };
@@ -485,7 +485,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: bucket, Delete: { Objects: [{ Key: 'test/text.txt' }] } },
-					}),
+					})
 				);
 			});
 		});
@@ -548,7 +548,7 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
-						}),
+						})
 					);
 				});
 
@@ -561,7 +561,7 @@ describe(S3ClientAdapter.name, () => {
 						2,
 						expect.objectContaining({
 							input: { Bucket: bucket, Delete: { Objects: [{ Key: pathToFile }] } },
-						}),
+						})
 					);
 				});
 			});
@@ -606,13 +606,13 @@ describe(S3ClientAdapter.name, () => {
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
-						}),
+						})
 					);
 					expect(client.send).toHaveBeenNthCalledWith(
 						2,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, ContinuationToken: nextFilePath, MaxKeys: 1000 },
-						}),
+						})
 					);
 				});
 
@@ -675,7 +675,7 @@ describe(S3ClientAdapter.name, () => {
 
 				const expectedError = new InternalServerErrorException(
 					'S3ClientAdapter:deleteDirectory',
-					ErrorUtils.createHttpExceptionOptions(error),
+					ErrorUtils.createHttpExceptionOptions(error)
 				);
 
 				return { pathToFile, filePath, expectedError };
@@ -707,7 +707,7 @@ describe(S3ClientAdapter.name, () => {
 
 				const expectedError = new InternalServerErrorException(
 					'S3ClientAdapter:deleteDirectory',
-					ErrorUtils.createHttpExceptionOptions(error),
+					ErrorUtils.createHttpExceptionOptions(error)
 				);
 
 				return { pathToFile, filePath, expectedError };
@@ -740,7 +740,7 @@ describe(S3ClientAdapter.name, () => {
 						CopySource: `${bucket}/trash/test/text.txt`,
 						Key: 'test/text.txt',
 					},
-				}),
+				})
 			);
 		});
 
@@ -752,7 +752,7 @@ describe(S3ClientAdapter.name, () => {
 			expect(client.send).toBeCalledWith(
 				expect.objectContaining({
 					input: { Bucket: bucket, Delete: { Objects: [{ Key: 'trash/test/text.txt' }] } },
-				}),
+				})
 			);
 		});
 
@@ -787,7 +787,7 @@ describe(S3ClientAdapter.name, () => {
 						CopySource: `${bucket}/trash/test/text.txt`,
 						Key: 'test/text.txt',
 					},
-				}),
+				})
 			);
 		});
 
@@ -813,7 +813,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(client.send).toBeCalledWith(
 					expect.objectContaining({
 						input: { Bucket: 'test-bucket', Key: pathToFile },
-					}),
+					})
 				);
 			});
 		});
@@ -882,7 +882,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: undefined,
 							MaxKeys: 500,
 						},
-					}),
+					})
 				);
 			});
 
@@ -916,7 +916,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: undefined,
 							MaxKeys: 1200,
 						},
-					}),
+					})
 				);
 
 				expect(client.send).toHaveBeenNthCalledWith(
@@ -928,7 +928,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: 'KEY-1000',
 							MaxKeys: 200,
 						},
-					}),
+					})
 				);
 
 				expect(client.send).toHaveBeenCalledTimes(2);
@@ -970,7 +970,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: undefined,
 							MaxKeys: 1000,
 						},
-					}),
+					})
 				);
 
 				expect(client.send).toHaveBeenNthCalledWith(
@@ -982,7 +982,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: '1',
 							MaxKeys: 1000,
 						},
-					}),
+					})
 				);
 
 				expect(client.send).toHaveBeenNthCalledWith(
@@ -994,7 +994,7 @@ describe(S3ClientAdapter.name, () => {
 							ContinuationToken: '2',
 							MaxKeys: 1000,
 						},
-					}),
+					})
 				);
 			});
 		});

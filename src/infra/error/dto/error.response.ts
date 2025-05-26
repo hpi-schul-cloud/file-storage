@@ -34,7 +34,7 @@ export class ErrorResponse {
 		title: string,
 		message: string,
 		code: number = HttpStatus.CONFLICT,
-		details?: Record<string, unknown>,
+		details?: Record<string, unknown>
 	) {
 		this.type = type;
 		this.title = title;
