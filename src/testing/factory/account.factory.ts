@@ -4,9 +4,6 @@ import { DeepPartial } from 'fishery';
 import { AccountEntity } from '../entity/account.entity';
 import { UserEntity } from '../entity/user.entity';
 import { BaseFactory } from './base.factory';
-
-export const defaultTestPassword = 'DummyPasswd!1';
-export const defaultTestPasswordHash = '$2a$10$/DsztV5o6P5piW2eWJsxw.4nHovmJGBA.QNwiTmuZ/uvUc40b.Uhu';
 class AccountFactory extends BaseFactory<AccountEntity, AccountEntity> {
 	public withUser(user: UserEntity): this {
 		if (!user.id) {
@@ -27,7 +24,6 @@ export const accountFactory = AccountFactory.define(AccountEntity, ({ sequence }
 		_id,
 		id: _id.toHexString(),
 		username: `account#${sequence}@example.tld`,
-		password: defaultTestPasswordHash,
 		userId: new ObjectId(),
 	};
 });

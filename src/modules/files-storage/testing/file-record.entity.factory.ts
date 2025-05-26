@@ -1,5 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityFactory } from '@testing/factory/entity.factory';
+import { randomInt } from 'node:crypto';
 import { FileRecordProps } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
 import { FileRecordEntity } from '../repo/file-record.entity';
@@ -18,7 +19,7 @@ export const fileRecordEntityFactory = FileRecordEntityFactory.define(
 	({ sequence }: { sequence: number }) => {
 		const props = {
 			id: new ObjectId().toHexString(),
-			size: Math.round(Math.random() * 100000),
+			size: randomInt(6),
 			name: `file-record #${sequence}`,
 			mimeType: 'application/octet-stream',
 			securityCheck: fileRecordSecurityCheckEmbeddableFactory.build(),

@@ -19,11 +19,11 @@ export class TimeoutInterceptor implements NestInterceptor {
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		const reflector = new Reflector();
 		const requestTimeoutEnvironmentName =
-			reflector.get<string>('requestTimeoutEnvironmentName', context.getHandler()) ||
+			reflector.get<string>('requestTimeoutEnvironmentName', context.getHandler()) ??
 			reflector.get<string>('requestTimeoutEnvironmentName', context.getClass());
 
 		// type of requestTimeoutEnvironmentName is always invalid and can be different
-		const timeoutMS = this.configService.getOrThrow<number>(requestTimeoutEnvironmentName || this.defaultConfigKey);
+		const timeoutMS = this.configService.getOrThrow<number>(requestTimeoutEnvironmentName ?? this.defaultConfigKey);
 
 		TypeGuard.checkNumber(timeoutMS);
 

@@ -50,9 +50,6 @@ export class JwtTestFactory {
 				jti: 'jti',
 				iat: Date.now(),
 				exp: Date.now() + 100000,
-				events: {
-					'http://schemas.openid.net/event/backchannel-logout': {},
-				},
 				...payload,
 			},
 			privateKey,

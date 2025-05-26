@@ -1,6 +1,7 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
+import { randomBytes } from 'node:crypto';
 import { JwtFromRequestFunction } from 'passport-jwt';
 import { JwtExtractor } from './jwt';
 
@@ -49,7 +50,7 @@ describe('JwtExtractor', () => {
 	describe('extractJwtFromRequest', () => {
 		describe('when jwt is present in the request', () => {
 			const setup = () => {
-				const token = '08154711';
+				const token = randomBytes(32).toString('hex');
 
 				request.headers.authorization = `Bearer ${token}`;
 

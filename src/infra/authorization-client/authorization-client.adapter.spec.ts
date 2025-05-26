@@ -3,6 +3,7 @@ import { REQUEST } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AxiosResponse } from 'axios';
 import { Request } from 'express';
+import { randomBytes } from 'node:crypto';
 import {
 	AuthorizationApi,
 	AuthorizationBodyParams,
@@ -14,7 +15,7 @@ import {
 import { AuthorizationClientAdapter } from './authorization-client.adapter';
 import { AuthorizationErrorLoggableException, AuthorizationForbiddenLoggableException } from './error';
 
-const jwtToken = 'someJwtToken';
+const jwtToken = randomBytes(32).toString('hex');
 const requiredPermissions: AuthorizationContextParamsRequiredPermissions[] = [
 	AuthorizationContextParamsRequiredPermissions.ACCOUNT_CREATE,
 	AuthorizationContextParamsRequiredPermissions.ACCOUNT_DELETE,

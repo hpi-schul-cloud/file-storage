@@ -22,7 +22,7 @@ export function isCurrentUser(input: unknown): input is CurrentUserInterface {
 }
 
 export class CurrentUserBuilder {
-	private props!: CurrentUserInterface;
+	private readonly props!: CurrentUserInterface;
 
 	constructor(private readonly requiredProps: RequiredCurrentUserProps) {
 		this.props = {

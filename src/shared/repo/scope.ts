@@ -6,9 +6,9 @@ type EmptyResultQueryType = typeof EmptyResultQuery;
 type ScopeOperator = '$and' | '$or';
 
 export class Scope<T> {
-	private _queries: (FilterQuery<T> | EmptyResultQueryType)[] = [];
+	private readonly _queries: (FilterQuery<T> | EmptyResultQueryType)[] = [];
 
-	private _operator: ScopeOperator;
+	private readonly _operator: ScopeOperator;
 
 	private _allowEmptyQuery: boolean;
 
