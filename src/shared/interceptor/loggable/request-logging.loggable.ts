@@ -1,6 +1,5 @@
 import { Loggable, LogMessage } from '@infra/logger';
 import { Request } from 'express';
-import { RequestLoggingInterceptor } from '../request-logging.interceptor';
 
 export class RequestLoggingLoggable implements Loggable {
 	constructor(
@@ -10,7 +9,7 @@ export class RequestLoggingLoggable implements Loggable {
 
 	public getLogMessage(): LogMessage {
 		return {
-			message: RequestLoggingInterceptor.name,
+			message: RequestLoggingLoggable.name,
 			data: {
 				userId: this.userId,
 				url: this.request.url,
