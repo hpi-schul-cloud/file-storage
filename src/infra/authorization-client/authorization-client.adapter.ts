@@ -1,7 +1,8 @@
 import { JwtExtractor } from '@infra/auth-guard/utils/jwt';
+import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { AxiosRequestConfig } from 'axios';
+import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { Request } from 'express';
 import {
 	AuthorizationApi,
@@ -51,6 +52,10 @@ export class AuthorizationClientAdapter {
 
 			return hasPermission;
 		} catch (error) {
+			if (isAxiosError(error)) {
+				error = new AxiosErrorLoggable(error, 'AUTHORIZATION_BY_REFERENCE_FAILED');
+			}
+
 			throw new AuthorizationErrorLoggableException(error, params);
 		}
 	}
