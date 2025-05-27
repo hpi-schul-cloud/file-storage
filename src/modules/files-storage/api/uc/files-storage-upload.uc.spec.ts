@@ -12,6 +12,7 @@ import { Permission } from '@testing/entity/user-role-permissions';
 import { AxiosHeadersKeyValue, axiosResponseFactory } from '@testing/factory/axios-response.factory';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Request } from 'express';
+import { randomBytes } from 'node:crypto';
 import { of } from 'rxjs';
 import { Readable } from 'stream';
 import { FileRecord, FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
@@ -142,7 +143,7 @@ describe('FilesStorageUC upload methods', () => {
 				url: 'http://localhost/test.jpg',
 				fileName: 'test.jpg',
 				headers: {
-					authorization: 'custom jwt',
+					authorization: `Bearer ${randomBytes(16).toString('hex')}`,
 				},
 			};
 
