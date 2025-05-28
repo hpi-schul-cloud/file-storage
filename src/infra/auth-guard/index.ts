@@ -1,4 +1,3 @@
-export { JwtValidationAdapter } from './adapter';
 export { AuthGuardModule, AuthGuardOptions } from './auth-guard.module';
 export { JwtAuthGuardConfig, XApiKeyAuthGuardConfig } from './config';
 export { CurrentUser, JWT, JwtAuthentication, XApiKeyAuthentication } from './decorator';
