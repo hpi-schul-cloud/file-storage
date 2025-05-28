@@ -1,4 +1,5 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
+import { RequestLoggingInterceptor } from '@infra/core/interceptor';
 import {
 	BadRequestException,
 	Body,
@@ -23,8 +24,8 @@ import {
 	UseInterceptors,
 } from '@nestjs/common';
 import { ApiConsumes, ApiHeader, ApiOperation, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RequestTimeout } from '@shared/decorator';
 import { ApiValidationError } from '@shared/error';
-import { RequestLoggingInterceptor } from '@shared/interceptor';
 import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
 import {
@@ -309,6 +310,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@RequestTimeout('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
 	@Post('/copy/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async copy(
 		@Param() params: FileRecordParams,

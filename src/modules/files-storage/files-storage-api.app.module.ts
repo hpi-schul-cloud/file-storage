@@ -15,7 +15,7 @@ import {
 	FilesStorageController,
 	FilesStorageUC,
 } from './api';
-import { FileStorageConfig } from './files-storage.config';
+import { FileStorageConfig, RequestTimeoutConfig } from './files-storage.config';
 import { ENTITIES } from './files-storage.entity.imports';
 import { FilesStorageModule } from './files-storage.module';
 
@@ -27,7 +27,7 @@ import { FilesStorageModule } from './files-storage.module';
 		AuthorizationClientModule.register(),
 		ConfigurationModule.register(FileStorageConfig),
 		HttpModule,
-		CoreModule,
+		CoreModule.register(RequestTimeoutConfig),
 		AuthGuardModule.register([AuthGuardOptions.JWT]),
 		DatabaseModule.forRoot(ENTITIES),
 	],

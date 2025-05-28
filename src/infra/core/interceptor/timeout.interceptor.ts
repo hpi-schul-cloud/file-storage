@@ -1,10 +1,9 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor, RequestTimeoutException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
+import { TypeGuard } from '@shared/guard';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
-import { TypeGuard } from '../guard';
-import { InterceptorConfig } from './interfaces';
+import { TimeoutInterceptorConfig } from './interfaces';
 
 /**
  * This interceptor leaves the request execution after a given timeout in ms.
@@ -12,9 +11,9 @@ import { InterceptorConfig } from './interfaces';
  */
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
-	private readonly defaultConfigKey: keyof InterceptorConfig = 'INCOMING_REQUEST_TIMEOUT';
+	private readonly defaultConfigKey: keyof TimeoutInterceptorConfig = 'CORE_INCOMING_REQUEST_TIMEOUT_MS';
 
-	constructor(private readonly configService: ConfigService) {}
+	constructor(private readonly config: TimeoutInterceptorConfig) {}
 
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		const reflector = new Reflector();
@@ -23,7 +22,7 @@ export class TimeoutInterceptor implements NestInterceptor {
 			reflector.get<string>('requestTimeoutEnvironmentName', context.getClass());
 
 		// type of requestTimeoutEnvironmentName is always invalid and can be different
-		const timeoutMS = this.configService.getOrThrow<number>(requestTimeoutEnvironmentName ?? this.defaultConfigKey);
+		const timeoutMS = this.config[requestTimeoutEnvironmentName] ?? this.config[this.defaultConfigKey];
 
 		TypeGuard.checkNumber(timeoutMS);
 

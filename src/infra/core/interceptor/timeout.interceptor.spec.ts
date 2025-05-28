@@ -1,11 +1,11 @@
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-jest';
 import { Controller, Get, HttpStatus, INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { RequestTimeout } from '@shared/decorator';
-import { TimeoutInterceptor } from '@shared/interceptor';
 import { TestApiClient } from '@testing/test-api-client';
+import { TimeoutInterceptor } from './timeout.interceptor';
 
 const delay = (ms: number) =>
 	new Promise((resolve) => {
@@ -30,9 +30,13 @@ class TestController {
 	}
 }
 
+const createMockConfig = {
+	CORE_INCOMING_REQUEST_TIMEOUT_MS: 1000,
+	MY_CONFIG_NAME: 1000,
+};
+
 describe('TimeoutInterceptor', () => {
 	let app: INestApplication;
-	let configServiceMock: DeepMocked<ConfigService>;
 	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
@@ -44,15 +48,13 @@ describe('TimeoutInterceptor', () => {
 				},
 				{
 					provide: APP_INTERCEPTOR,
-					useFactory: (configService: ConfigService) => new TimeoutInterceptor(configService),
-					inject: [ConfigService],
+					useFactory: () => new TimeoutInterceptor(createMockConfig),
 				},
 			],
 			controllers: [TestController],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
-		configServiceMock = app.get(ConfigService);
 		await app.init();
 
 		testApiClient = new TestApiClient(app, '');
@@ -63,13 +65,7 @@ describe('TimeoutInterceptor', () => {
 	});
 
 	describe('when response is faster then the request timeout', () => {
-		const setup = () => {
-			configServiceMock.getOrThrow.mockReturnValueOnce(1000);
-		};
-
 		it('should respond with status code 200', async () => {
-			setup();
-
 			const response = await testApiClient.get();
 
 			expect(response.status).toEqual(HttpStatus.OK);
@@ -79,7 +75,7 @@ describe('TimeoutInterceptor', () => {
 
 	describe('when response is slower then the request timeout', () => {
 		const setup = () => {
-			configServiceMock.getOrThrow.mockReturnValueOnce(1);
+			createMockConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 1;
 		};
 
 		it('should respond with status request timeout', async () => {
@@ -93,11 +89,7 @@ describe('TimeoutInterceptor', () => {
 
 	describe('when override the default timeout ', () => {
 		const setup = () => {
-			configServiceMock.getOrThrow.mockImplementationOnce((key: string) => {
-				const result = key === 'MY_CONFIG_NAME' ? 1000 : 1;
-
-				return result;
-			});
+			createMockConfig;
 		};
 
 		it('should respond with status code 200', async () => {
@@ -112,11 +104,8 @@ describe('TimeoutInterceptor', () => {
 
 	describe('when override the default timeout', () => {
 		const setup = () => {
-			configServiceMock.getOrThrow.mockImplementationOnce((key: string) => {
-				const result = key === 'MY_CONFIG_NAME' ? 1 : 1000;
-
-				return result;
-			});
+			createMockConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 1000;
+			createMockConfig.MY_CONFIG_NAME = 1;
 		};
 
 		it('should respond with status request timeout', async () => {
@@ -130,7 +119,8 @@ describe('TimeoutInterceptor', () => {
 
 	describe('when requested config is not a number', () => {
 		const setup = () => {
-			configServiceMock.getOrThrow.mockReturnValueOnce('string');
+			//@ts-expect-error test only
+			createMockConfig.MY_CONFIG_NAME = '1';
 		};
 
 		it('should respond with status request timeout', async () => {
