@@ -58,7 +58,7 @@ spec:
             name: file-storage-configmap
         - secretRef:
             name: file-storage-secret
-        command: ['npm', 'run', 'nest:start:files-storage-amqp:prod']
+        command: ['npm', 'run', 'start:files-storage-amqp:prod']
         resources:
           limits:
             cpu: {{ AMQP_FILE_STORAGE_CPU_LIMITS|default("2000m", true) }}
