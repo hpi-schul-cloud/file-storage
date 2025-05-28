@@ -1,4 +1,3 @@
-import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
 import { Scope } from '@shared/repo/scope';
 import { StorageLocation } from '../../domain';
@@ -30,8 +29,7 @@ export class FileRecordScope extends Scope<FileRecordEntity> {
 	}
 
 	public byStorageLocationId(storageLocationId: EntityId): this {
-		//@ts-expect-error @TODO FIXME
-		this.addQuery({ storageLocationId: new ObjectId(storageLocationId) });
+		this.addQuery({ storageLocationId });
 
 		return this;
 	}

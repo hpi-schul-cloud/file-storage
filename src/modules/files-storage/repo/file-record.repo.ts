@@ -1,4 +1,4 @@
-import { EntityManager, EntityName, Utils } from '@mikro-orm/mongodb';
+import { EntityManager, EntityName, ObjectId, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
@@ -57,7 +57,8 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 	): Promise<number> {
 		const scope = new FileRecordScope()
 			.byStorageLocation(storageLocation)
-			.byStorageLocationId(storageLocationId)
+			//@ts-ignore check issue https://github.com/mikro-orm/mikro-orm/issues/6690
+			.byStorageLocationId(new ObjectId(storageLocationId))
 			.byMarkedForDelete(false);
 		const result = await this.em.nativeUpdate(this.entityName, scope.query, { deletedSince: new Date() });
 
