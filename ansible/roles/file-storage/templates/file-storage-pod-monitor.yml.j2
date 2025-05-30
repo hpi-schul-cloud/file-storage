@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: file-storage-pod-monitor
+  namespace: {{ NAMESPACE }}
+  labels:
+    app: file-storage
+spec:
+  selector:
+    matchLabels:
+      app: file-storage
+  podMetricsEndpoints:
+  - port: metrics

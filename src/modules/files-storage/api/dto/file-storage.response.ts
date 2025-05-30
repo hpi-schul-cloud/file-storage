@@ -1,0 +1,126 @@
+/* eslint-disable max-classes-per-file */
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EntityId } from '@shared/domain/types';
+import { DecodeHtmlEntities } from '@shared/transformer';
+import { FileRecord, PreviewStatus, ScanStatus } from '../../domain';
+import { FileRecordParentType, StorageLocation } from '../../domain/interface';
+import { PaginationResponse } from './pagination.response';
+
+export class FileRecordResponse {
+	constructor(fileRecord: FileRecord) {
+		const props = fileRecord.getProps();
+
+		this.id = props.id;
+		this.name = props.name;
+		this.url = `/api/v3/file/download/${props.id}/${encodeURIComponent(props.name)}`;
+		this.size = props.size;
+		this.securityCheckStatus = fileRecord.scanStatus;
+		this.parentId = props.parentId;
+		this.creatorId = props.creatorId;
+		this.mimeType = props.mimeType;
+		this.parentType = props.parentType;
+		this.isUploading = props.isUploading;
+		this.deletedSince = props.deletedSince;
+		this.previewStatus = fileRecord.getPreviewStatus();
+		this.createdAt = props.createdAt;
+		this.updatedAt = props.updatedAt;
+	}
+
+	@ApiProperty()
+	id: string;
+
+	@ApiProperty()
+	@DecodeHtmlEntities()
+	name: string;
+
+	@ApiProperty()
+	parentId: string;
+
+	@ApiProperty()
+	url: string;
+
+	@ApiProperty({ enum: ScanStatus, enumName: 'FileRecordScanStatus' })
+	securityCheckStatus: ScanStatus;
+
+	@ApiProperty()
+	size: number;
+
+	@ApiProperty()
+	creatorId?: string;
+
+	@ApiProperty()
+	mimeType: string;
+
+	@ApiProperty({ enum: FileRecordParentType, enumName: 'FileRecordParentType' })
+	parentType: FileRecordParentType;
+
+	@ApiPropertyOptional()
+	isUploading?: boolean;
+
+	@ApiProperty({ enum: PreviewStatus, enumName: 'PreviewStatus' })
+	previewStatus: PreviewStatus;
+
+	@ApiPropertyOptional()
+	deletedSince?: Date;
+
+	@ApiPropertyOptional()
+	createdAt?: Date;
+
+	@ApiPropertyOptional()
+	updatedAt?: Date;
+}
+
+export class FileRecordListResponse extends PaginationResponse<FileRecordResponse[]> {
+	constructor(data: FileRecordResponse[], total: number, skip?: number, limit?: number) {
+		super(total, skip, limit);
+		this.data = data;
+	}
+
+	@ApiProperty({ type: [FileRecordResponse] })
+	data: FileRecordResponse[];
+}
+
+export class CopyFileResponse {
+	constructor(data: CopyFileResponse) {
+		this.id = data.id;
+		this.sourceId = data.sourceId;
+		this.name = data.name;
+	}
+
+	@ApiPropertyOptional()
+	id?: string;
+
+	@ApiProperty()
+	sourceId: string;
+
+	@ApiProperty()
+	@DecodeHtmlEntities()
+	name: string;
+}
+
+export class CopyFileListResponse extends PaginationResponse<CopyFileResponse[]> {
+	constructor(data: CopyFileResponse[], total: number, skip?: number, limit?: number) {
+		super(total, skip, limit);
+		this.data = data;
+	}
+
+	@ApiProperty({ type: [CopyFileResponse] })
+	data: CopyFileResponse[];
+}
+
+export class DeleteByStorageLocationResponse {
+	constructor(data: DeleteByStorageLocationResponse) {
+		this.storageLocationId = data.storageLocationId;
+		this.storageLocation = data.storageLocation;
+		this.deletedFiles = data.deletedFiles;
+	}
+
+	@ApiProperty()
+	storageLocationId: EntityId;
+
+	@ApiProperty({ enum: StorageLocation, enumName: 'StorageLocation' })
+	storageLocation: StorageLocation;
+
+	@ApiProperty()
+	deletedFiles: number;
+}
