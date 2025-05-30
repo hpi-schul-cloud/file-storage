@@ -1,0 +1,14 @@
+.gitignore
+.npmignore
+.openapi-generator-ignore
+api.ts
+api/authorization-api.ts
+base.ts
+common.ts
+configuration.ts
+git_push.sh
+index.ts
+models/authorization-body-params.ts
+models/authorization-context-params.ts
+models/authorized-reponse.ts
+models/index.ts

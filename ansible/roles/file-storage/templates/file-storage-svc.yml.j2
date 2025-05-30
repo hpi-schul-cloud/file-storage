@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: file-storage-svc
+  namespace: {{ NAMESPACE }}
+  labels:
+    app: file-storage
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4444
+      targetPort: 4444
+      protocol: TCP
+      name: file-storage
+  selector:
+    app: file-storage
