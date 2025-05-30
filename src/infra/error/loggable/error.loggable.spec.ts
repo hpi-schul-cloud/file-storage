@@ -1,7 +1,7 @@
+import { ApiValidationError } from '@infra/error';
 import { ErrorLogMessage } from '@infra/logger';
 import { BadRequestException, ValidationError } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { ApiValidationError } from '@shared/error';
 import { PrivacyProtect } from '@shared/validator';
 import { ErrorLoggable } from './error.loggable';
 

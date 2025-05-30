@@ -1,7 +1,7 @@
 import { JwtAuthentication } from '@infra/auth-guard';
+import { ApiValidationError } from '@infra/error';
 import { Controller, Delete, ForbiddenException, InternalServerErrorException, Param } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiValidationError } from '@shared/error';
 import { DeleteByStorageLocationResponse, StorageLocationParamsDto } from '../dto';
 import { FileRecordMapper } from '../mapper';
 import { FilesStorageAdminUC } from '../uc';

@@ -1,6 +1,6 @@
 import { HttpStatus, ValidationError } from '@nestjs/common';
+import { ApiValidationError } from '../domain/api-validation.error';
 import { ApiValidationErrorResponse } from './api-validation-error.response';
-import { ApiValidationError } from '../api-validation.error';
 
 describe('ApiValidationErrorResponse', () => {
 	describe('when creating an api validation error response', () => {

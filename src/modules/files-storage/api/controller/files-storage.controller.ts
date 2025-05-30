@@ -1,5 +1,6 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
 import { RequestLoggingInterceptor } from '@infra/core/interceptor';
+import { ApiValidationError } from '@infra/error';
 import {
 	BadRequestException,
 	Body,
@@ -25,7 +26,6 @@ import {
 } from '@nestjs/common';
 import { ApiConsumes, ApiHeader, ApiOperation, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestTimeout } from '@shared/decorator';
-import { ApiValidationError } from '@shared/error';
 import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
 import {

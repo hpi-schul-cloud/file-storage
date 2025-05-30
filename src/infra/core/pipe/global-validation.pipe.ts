@@ -1,5 +1,5 @@
+import { ApiValidationError } from '@infra/error';
 import { ValidationError, ValidationPipe } from '@nestjs/common';
-import { ApiValidationError } from '@shared/error';
 
 /** *********************************************
  * Global Pipe setup

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ErrorResponse } from './dto';
+import { ErrorResponse } from '../dto';
 
 export interface ErrorType {
 	readonly type: string;

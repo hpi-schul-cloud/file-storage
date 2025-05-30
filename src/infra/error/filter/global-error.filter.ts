@@ -1,10 +1,9 @@
 import { RpcError, RpcMessage } from '@infra/rabbitmq';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, InternalServerErrorException } from '@nestjs/common';
-import { ApiValidationError, ApiValidationErrorResponse, BusinessError } from '@shared/error';
 import { Response } from 'express';
 import _ from 'lodash';
-import { DomainErrorHandler } from '../domain';
-import { ErrorResponse } from '../dto';
+import { ApiValidationError, BusinessError, DomainErrorHandler } from '../domain';
+import { ApiValidationErrorResponse, ErrorResponse } from '../dto';
 import { ErrorUtils } from '../utils';
 
 // We are receiving rmq instead of rpc and rmq is missing in context type.

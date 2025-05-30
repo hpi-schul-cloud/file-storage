@@ -1,7 +1,7 @@
+import { findOneOrFailHandler } from '@infra/database/database.not-found.error';
 import { defineConfig, EntityClass, EntityManager } from '@mikro-orm/mongodb';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Module, OnModuleDestroy } from '@nestjs/common';
-import { findOneOrFailHandler } from '@shared/error';
 import _ from 'lodash';
 
 const getDbName = (): string => _.times(20, () => _.random(35).toString(36)).join('');

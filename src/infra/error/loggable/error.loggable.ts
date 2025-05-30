@@ -1,6 +1,6 @@
+import { ApiValidationError } from '@infra/error';
 import { ErrorLogMessage, Loggable, LogMessageDataObject, ValidationErrorLogMessage } from '@infra/logger';
 import { ValidationError } from '@nestjs/common';
-import { ApiValidationError } from '@shared/error';
 import { getMetadataStorage } from 'class-validator';
 import util from 'util';
 import { ErrorUtils } from '../utils/error.utils';
