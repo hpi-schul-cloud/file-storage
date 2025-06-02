@@ -37,7 +37,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.617.0",
     "@aws-sdk/lib-storage": "3.617.0",
-    "@aws-sdk/util-retry": "3.347.0",
+    "@aws-sdk/util-retry": "3.370.0",
     "@golevelup/nestjs-rabbitmq": "^6.0.1",
     "@golevelup/ts-jest": "0.5.0",
     "@mikro-orm/core": "^6.4.15",
