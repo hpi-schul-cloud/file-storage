@@ -76,7 +76,7 @@ npm run test
 ## Project Structure
 
 - `src/` - Main source code
-  - tests/ - Unit and integration tests
+  - `testing/` - Testing utilities and mocks
   - `shared/` - Shared utilities and types
   - `modules/` - Domain modules (file storage, etc.)
   - `infra/` - Infrastructure (S3 client, authorization, configuration, antivirus client)
