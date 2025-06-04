@@ -6,4 +6,4 @@ export enum FilesStorageEvents {
 	'DELETE_FILES' = 'delete-files',
 }
 
-export const FilesStorageExchange = 'FILES_STORAGE_EXCHANGE';
+export const FilesStorageExchange = 'files-storage';
