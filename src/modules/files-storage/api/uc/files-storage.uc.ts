@@ -45,6 +45,7 @@ import {
 	FilesStorageMapper,
 	PreviewBuilder,
 } from '../mapper';
+import { FileStatsResponse } from '../dto/file-storage.response';
 
 export const FileStorageAuthorizationContext = {
 	create: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_CREATE]),
@@ -348,5 +349,12 @@ export class FilesStorageUC {
 		const countedFileRecords = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 
 		return countedFileRecords;
+	}
+
+	public async getStatsOfParent(params: FileRecordParams): Promise<FileStatsResponse> {
+		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.read);
+		const { count, totalSize } = await this.filesStorageService.getStatsOfParent(params.parentId);
+
+		return { count, totalSize };
 	}
 }

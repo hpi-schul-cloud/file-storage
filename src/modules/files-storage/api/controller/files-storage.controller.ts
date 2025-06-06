@@ -44,6 +44,7 @@ import {
 	PreviewParams,
 	RenameFileParams,
 	SingleFileParams,
+	FileStatsResponse,
 } from '../dto';
 import { FileRecordMapper, FilesStorageMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
@@ -337,5 +338,16 @@ export class FilesStorageController {
 		const response = await this.filesStorageUC.copyOneFile(currentUser.userId, params, copyFileParam);
 
 		return response;
+	}
+
+	@ApiOperation({ summary: 'Get stats (count and total size) of all files for a parent entityId.' })
+	@ApiResponse({ status: 200, type: FileStatsResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@Get('/stats/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async getStatsByParent(@Param() params: FileRecordParams): Promise<FileStatsResponse> {
+		const fileStatsResponse = await this.filesStorageUC.getStatsOfParent(params);
+
+		return fileStatsResponse;
 	}
 }
