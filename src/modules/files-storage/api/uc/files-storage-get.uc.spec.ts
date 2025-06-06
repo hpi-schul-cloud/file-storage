@@ -211,4 +211,83 @@ describe('FilesStorageUC', () => {
 			});
 		});
 	});
+
+	describe('getStatsOfParent is called', () => {
+		describe('when user is authorised and valid files exist', () => {
+			const setup = () => {
+				const { params } = buildFileRecordsWithParams();
+				const stats = { count: 3, totalSize: 600 };
+
+				filesStorageService.getStatsOfParent.mockResolvedValueOnce(stats);
+				authorizationClientAdapter.checkPermissionsByReference.mockResolvedValueOnce();
+
+				return { params, stats };
+			};
+
+			it('should call authorisation with right parameters', async () => {
+				const { params } = setup();
+
+				await filesStorageUC.getStatsOfParent(params);
+
+				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
+					params.parentType,
+					params.parentId,
+					FileStorageAuthorizationContext.read
+				);
+			});
+
+			it('should call service method getStatsOfParent with right parameters', async () => {
+				const { params } = setup();
+
+				await filesStorageUC.getStatsOfParent(params);
+
+				expect(filesStorageService.getStatsOfParent).toHaveBeenCalledWith(params.parentId);
+			});
+
+			it('should return stats', async () => {
+				const { params, stats } = setup();
+
+				const result = await filesStorageUC.getStatsOfParent(params);
+
+				expect(result).toEqual(stats);
+			});
+		});
+
+		describe('when user is not authorised', () => {
+			const setup = () => {
+				const { params } = buildFileRecordsWithParams();
+
+				filesStorageService.getStatsOfParent.mockResolvedValueOnce({ count: 0, totalSize: 0 });
+				authorizationClientAdapter.checkPermissionsByReference.mockRejectedValueOnce(new Error('Bla'));
+
+				return { params };
+			};
+
+			it('should pass the error', async () => {
+				const { params } = setup();
+
+				await expect(filesStorageUC.getStatsOfParent(params)).rejects.toThrowError(new Error('Bla'));
+			});
+		});
+
+		describe('when user is authorised but no files exist', () => {
+			const setup = () => {
+				const { params } = buildFileRecordsWithParams();
+				const stats = { count: 0, totalSize: 0 };
+
+				filesStorageService.getStatsOfParent.mockResolvedValueOnce(stats);
+				authorizationClientAdapter.checkPermissionsByReference.mockResolvedValueOnce();
+
+				return { params, stats };
+			};
+
+			it('should return empty stats', async () => {
+				const { params, stats } = setup();
+
+				const result = await filesStorageUC.getStatsOfParent(params);
+
+				expect(result).toEqual(stats);
+			});
+		});
+	});
 });

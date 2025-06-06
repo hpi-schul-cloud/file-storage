@@ -465,4 +465,11 @@ export class FilesStorageService {
 
 		return settledPromises;
 	}
+
+	public async getStatsOfParent(parentId: EntityId): Promise<{ count: number; totalSize: number }> {
+		const [fileRecords, count] = await this.getFileRecordsOfParent(parentId);
+		const totalSize = fileRecords.reduce((sum, file) => sum + (file.getProps().size || 0), 0);
+
+		return { count, totalSize };
+	}
 }
