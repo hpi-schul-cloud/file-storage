@@ -70,8 +70,6 @@ export class S3ClientAdapter {
 			const data = await this.client.send(req);
 			const stream = data.Body as Readable;
 
-			this.checkStreamResponsive(stream, path);
-
 			return {
 				data: stream,
 				contentType: data.ContentType,
@@ -394,27 +392,5 @@ export class S3ClientAdapter {
 		}
 
 		return filteredPathObjects;
-	}
-
-	/* istanbul ignore next */
-	private checkStreamResponsive(stream: Readable, context: string): void {
-		let timer: NodeJS.Timeout;
-		const refreshTimeout = (): void => {
-			if (timer) clearTimeout(timer);
-			timer = setTimeout(() => {
-				this.logger.info(
-					new S3ClientActionLoggable('Stream unresponsive: S3 object key', {
-						action: 'checkStreamResponsive',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
-				stream.destroy();
-			}, 60 * 1000);
-		};
-
-		stream.on('data', () => {
-			refreshTimeout();
-		});
 	}
 }
