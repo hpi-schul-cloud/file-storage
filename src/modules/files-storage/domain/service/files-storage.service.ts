@@ -11,6 +11,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
+import archiver from 'archiver';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
@@ -275,6 +276,55 @@ export class FilesStorageService {
 		const response = await this.downloadFile(fileRecord, bytesRange);
 
 		return response;
+	}
+
+	public async downloadMultipleFiles(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
+		const archiveType = 'zip';
+		const archive = archiver(archiveType);
+
+		archive.on('warning', function (err) {
+			if (err.code === 'ENOENT') {
+				this.logger.warning(
+					new FileStorageActionsLoggable('Warning while creating archive', {
+						action: 'downloadMultipleFiles',
+						sourcePayload: fileRecords,
+					})
+				);
+			} else {
+				this.domainErrorHandler.exec(new InternalServerErrorException('Error while creating archive', { cause: err }));
+			}
+		});
+
+		archive.on('error', function (err) {
+			this.domainErrorHandler.exec(new InternalServerErrorException('Error while creating archive', { cause: err }));
+		});
+
+		archive.on('close', () => {
+			this.logger.debug(
+				new FileStorageActionsLoggable(`Archive created with ${archive.pointer()} total bytes`, {
+					action: 'downloadMultipleFiles',
+					sourcePayload: fileRecords,
+				})
+			);
+		});
+
+		for (const file of files) {
+			const passthrough = new PassThrough();
+			file.data.pipe(passthrough);
+			archive.append(passthrough, { name: file.name });
+		}
+		archive.finalize();
+
+		const fileResponse = FileResponseBuilder.build(
+			{
+				data: archive,
+				contentType: 'application/zip',
+			},
+			`${archiveName}.${archiveType}`
+		);
+
+		return fileResponse;
 	}
 
 	// delete

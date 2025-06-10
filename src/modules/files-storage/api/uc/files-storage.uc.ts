@@ -25,6 +25,7 @@ import {
 	StorageLocation,
 } from '../../domain';
 import {
+	ArchiveFileParams,
 	CopyFileParams,
 	CopyFileResponse,
 	CopyFilesOfParentParams,
@@ -220,6 +221,15 @@ export class FilesStorageUC {
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
 
 		const result = this.previewService.download(fileRecord, previewFileParams);
+
+		return result;
+	}
+
+	public async downloadMultipleFiles(params: ArchiveFileParams): Promise<GetFileResponse> {
+		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
+		await this.checkPermissions(fileRecords, FileStorageAuthorizationContext.read);
+
+		const result = await this.filesStorageService.downloadMultipleFiles(fileRecords, params.archiveName);
 
 		return result;
 	}
