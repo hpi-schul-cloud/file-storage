@@ -283,7 +283,7 @@ export class FilesStorageService {
 		const archiveType = 'zip';
 		const archive = archiver(archiveType);
 
-		archive.on('warning', function (err) {
+		archive.on('warning', (err) => {
 			if (err.code === 'ENOENT') {
 				this.logger.warning(
 					new FileStorageActionsLoggable('Warning while creating archive', {
@@ -296,7 +296,7 @@ export class FilesStorageService {
 			}
 		});
 
-		archive.on('error', function (err) {
+		archive.on('error', (err) => {
 			this.domainErrorHandler.exec(new InternalServerErrorException('Error while creating archive', { cause: err }));
 		});
 
