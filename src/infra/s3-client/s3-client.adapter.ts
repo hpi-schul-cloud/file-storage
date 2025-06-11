@@ -18,7 +18,7 @@ import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'stream';
 import { CopyFiles, File, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
@@ -69,9 +69,12 @@ export class S3ClientAdapter {
 
 			const data = await this.client.send(req);
 			const stream = data.Body as Readable;
+			const passthrough = stream.pipe(new PassThrough());
+
+			this.checkStreamResponsive(stream, path);
 
 			return {
-				data: stream,
+				data: passthrough,
 				contentType: data.ContentType,
 				contentLength: data.ContentLength,
 				contentRange: data.ContentRange,
@@ -392,5 +395,29 @@ export class S3ClientAdapter {
 		}
 
 		return filteredPathObjects;
+	}
+
+	/* istanbul ignore next */
+	private checkStreamResponsive(stream: Readable, context: string): void {
+		let timer: NodeJS.Timeout;
+		const refreshTimeout = (): void => {
+			if (timer) clearTimeout(timer);
+			timer = setTimeout(() => {
+				if (stream.destroyed) return;
+
+				this.logger.info(
+					new S3ClientActionLoggable('Stream unresponsive: S3 object key', {
+						action: 'checkStreamResponsive',
+						objectPath: context,
+						bucket: this.config.bucket,
+					})
+				);
+				stream.destroy();
+			}, 60 * 1000);
+		};
+
+		stream.on('data', () => {
+			refreshTimeout();
+		});
 	}
 }

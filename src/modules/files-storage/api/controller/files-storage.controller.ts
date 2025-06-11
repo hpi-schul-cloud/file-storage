@@ -217,12 +217,6 @@ export class FilesStorageController {
 			httpResponse.status(HttpStatus.OK);
 		}
 
-		fileResponse.data.on('end', () => {
-			console.log('File stream ended');
-			//fileResponse.data.destroy();
-			//httpResponse.destroy();
-		});
-
 		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 
 		return streamableFile;
