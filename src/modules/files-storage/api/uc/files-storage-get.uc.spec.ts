@@ -8,7 +8,7 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FileRecord, FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
-import { fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, parentStatisticTestFactory } from '../../testing';
 import { FileRecordParams } from '../dto';
 import { FilesStorageUC, FileStorageAuthorizationContext } from './files-storage.uc';
 
@@ -212,13 +212,13 @@ describe('FilesStorageUC', () => {
 		});
 	});
 
-	describe('getStatsOfParent is called', () => {
+	describe('getParentStatistic is called', () => {
 		describe('when user is authorised and valid files exist', () => {
 			const setup = () => {
 				const { params } = buildFileRecordsWithParams();
-				const stats = { count: 3, totalSize: 600 };
+				const stats = parentStatisticTestFactory().build();
 
-				filesStorageService.getStatsOfParent.mockResolvedValueOnce(stats);
+				filesStorageService.getParentStatistic.mockResolvedValueOnce(stats);
 				authorizationClientAdapter.checkPermissionsByReference.mockResolvedValueOnce();
 
 				return { params, stats };
@@ -227,7 +227,7 @@ describe('FilesStorageUC', () => {
 			it('should call authorisation with right parameters', async () => {
 				const { params } = setup();
 
-				await filesStorageUC.getStatsOfParent(params);
+				await filesStorageUC.getParentStatistic(params);
 
 				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledWith(
 					params.parentType,
@@ -239,15 +239,15 @@ describe('FilesStorageUC', () => {
 			it('should call service method getStatsOfParent with right parameters', async () => {
 				const { params } = setup();
 
-				await filesStorageUC.getStatsOfParent(params);
+				await filesStorageUC.getParentStatistic(params);
 
-				expect(filesStorageService.getStatsOfParent).toHaveBeenCalledWith(params.parentId);
+				expect(filesStorageService.getParentStatistic).toHaveBeenCalledWith(params.parentId);
 			});
 
 			it('should return stats', async () => {
 				const { params, stats } = setup();
 
-				const result = await filesStorageUC.getStatsOfParent(params);
+				const result = await filesStorageUC.getParentStatistic(params);
 
 				expect(result).toEqual(stats);
 			});
@@ -256,8 +256,9 @@ describe('FilesStorageUC', () => {
 		describe('when user is not authorised', () => {
 			const setup = () => {
 				const { params } = buildFileRecordsWithParams();
+				const stats = parentStatisticTestFactory().build();
 
-				filesStorageService.getStatsOfParent.mockResolvedValueOnce({ count: 0, totalSize: 0 });
+				filesStorageService.getParentStatistic.mockResolvedValueOnce(stats);
 				authorizationClientAdapter.checkPermissionsByReference.mockRejectedValueOnce(new Error('Bla'));
 
 				return { params };
@@ -266,16 +267,16 @@ describe('FilesStorageUC', () => {
 			it('should pass the error', async () => {
 				const { params } = setup();
 
-				await expect(filesStorageUC.getStatsOfParent(params)).rejects.toThrowError(new Error('Bla'));
+				await expect(filesStorageUC.getParentStatistic(params)).rejects.toThrowError(new Error('Bla'));
 			});
 		});
 
 		describe('when user is authorised but no files exist', () => {
 			const setup = () => {
 				const { params } = buildFileRecordsWithParams();
-				const stats = { count: 0, totalSize: 0 };
+				const stats = { fileCount: 0, totalSizeInBytes: 0 };
 
-				filesStorageService.getStatsOfParent.mockResolvedValueOnce(stats);
+				filesStorageService.getParentStatistic.mockResolvedValueOnce(stats);
 				authorizationClientAdapter.checkPermissionsByReference.mockResolvedValueOnce();
 
 				return { params, stats };
@@ -284,7 +285,7 @@ describe('FilesStorageUC', () => {
 			it('should return empty stats', async () => {
 				const { params, stats } = setup();
 
-				const result = await filesStorageUC.getStatsOfParent(params);
+				const result = await filesStorageUC.getParentStatistic(params);
 
 				expect(result).toEqual(stats);
 			});

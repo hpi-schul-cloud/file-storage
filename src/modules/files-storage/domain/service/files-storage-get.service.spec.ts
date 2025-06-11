@@ -6,7 +6,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, parentStatisticTestFactory } from '../../testing';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FilesStorageService } from './files-storage.service';
 
@@ -346,41 +346,39 @@ describe('FilesStorageService get methods', () => {
 		});
 	});
 
-	describe('getStatsOfParent is called', () => {
+	describe('getParentStatistic is called', () => {
 		describe('WHEN valid files exist for the parent', () => {
 			const setup = () => {
 				const parentId = new ObjectId().toHexString();
 				const fileRecords = fileRecordTestFactory().buildList(3, { parentId });
+				const parentStatistic = parentStatisticTestFactory().build();
 
-				fileRecordRepo.findByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				fileRecordRepo.getStatisticByParentId.mockResolvedValueOnce(parentStatistic);
 
-				return { parentId, fileRecords };
+				return { parentId, fileRecords, parentStatistic };
 			};
 
 			it('should call findByParentId with the correct parentId', async () => {
 				const { parentId } = setup();
 
-				await service.getStatsOfParent(parentId);
+				await service.getParentStatistic(parentId);
 
-				expect(fileRecordRepo.findByParentId).toHaveBeenCalledWith(parentId);
+				expect(fileRecordRepo.getStatisticByParentId).toHaveBeenCalledWith(parentId);
 			});
 
 			it('should return the correct count and totalSize', async () => {
-				const { parentId, fileRecords } = setup();
+				const { parentId, parentStatistic } = setup();
 
-				const statsResult = await service.getStatsOfParent(parentId);
+				const statsResult = await service.getParentStatistic(parentId);
 
-				const expectedTotalSize =
-					fileRecords[0].getProps().size + fileRecords[1].getProps().size + fileRecords[2].getProps().size;
-
-				expect(statsResult).toEqual({ count: fileRecords.length, totalSize: expectedTotalSize });
+				expect(statsResult).toEqual(parentStatistic);
 			});
 		});
 
 		describe('WHEN repository throws an error', () => {
 			const setup = () => {
 				const parentId = new ObjectId().toHexString();
-				fileRecordRepo.findByParentId.mockRejectedValueOnce(new Error('stats error'));
+				fileRecordRepo.getStatisticByParentId.mockRejectedValueOnce(new Error('stats error'));
 
 				return { parentId };
 			};
@@ -388,7 +386,7 @@ describe('FilesStorageService get methods', () => {
 			it('should pass the error', async () => {
 				const { parentId } = setup();
 
-				await expect(service.getStatsOfParent(parentId)).rejects.toThrow(new Error('stats error'));
+				await expect(service.getParentStatistic(parentId)).rejects.toThrow(new Error('stats error'));
 			});
 		});
 	});

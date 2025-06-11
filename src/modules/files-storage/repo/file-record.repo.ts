@@ -2,7 +2,7 @@ import { EntityManager, EntityName, ObjectId, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
-import { StorageLocation } from '../domain';
+import { ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
 import { FileRecord } from '../domain/file-record.do';
 import { FileRecordRepo } from '../domain/interface/file-record.repo.interface';
 import { FileRecordEntity } from './file-record.entity';
@@ -133,6 +133,34 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		});
 
 		await this.em.flush();
+	}
+
+	public async getStatisticByParentId(parentId: EntityId): Promise<ParentStatistic> {
+		const aggregationPipeline = [
+			{
+				$match: {
+					parent: new ObjectId(parentId),
+					deletedSince: { $eq: null },
+				},
+			},
+			{
+				$group: {
+					_id: null,
+					totalSizeInBytes: { $sum: '$size' },
+					fileCount: { $sum: 1 },
+				},
+			},
+		];
+
+		const result = await this.em.aggregate(FileRecordEntity, aggregationPipeline);
+
+		if (result.length > 0) {
+			const { totalSizeInBytes, fileCount } = result[0];
+
+			return ParentStatisticFactory.build({ fileCount, totalSizeInBytes });
+		}
+
+		return ParentStatisticFactory.build({ fileCount: 0, totalSizeInBytes: 0 });
 	}
 
 	private async findAndCount(

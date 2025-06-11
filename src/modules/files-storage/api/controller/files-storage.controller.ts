@@ -41,10 +41,11 @@ import {
 	FileUrlParams,
 	MultiFileParams,
 	PaginationParams,
+	ParentParams,
+	ParentStatsiticResponse,
 	PreviewParams,
 	RenameFileParams,
 	SingleFileParams,
-	FileStatsResponse,
 } from '../dto';
 import { FileRecordMapper, FilesStorageMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
@@ -341,12 +342,12 @@ export class FilesStorageController {
 	}
 
 	@ApiOperation({ summary: 'Get stats (count and total size) of all files for a parent entityId.' })
-	@ApiResponse({ status: 200, type: FileStatsResponse })
+	@ApiResponse({ status: 200, type: ParentStatsiticResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
-	@Get('/stats/:storageLocation/:storageLocationId/:parentType/:parentId')
-	public async getStatsByParent(@Param() params: FileRecordParams): Promise<FileStatsResponse> {
-		const fileStatsResponse = await this.filesStorageUC.getStatsOfParent(params);
+	@Get('/stats/:parentType/:parentId')
+	public async getParentStatistic(@Param() params: ParentParams): Promise<ParentStatsiticResponse> {
+		const fileStatsResponse = await this.filesStorageUC.getParentStatistic(params);
 
 		return fileStatsResponse;
 	}

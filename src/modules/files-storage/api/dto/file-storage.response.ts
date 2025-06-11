@@ -125,10 +125,10 @@ export class DeleteByStorageLocationResponse {
 	deletedFiles: number;
 }
 
-export class FileStatsResponse {
+export class ParentStatsiticResponse {
 	@ApiProperty({ description: 'The number of files for the parent entity.' })
-	count!: number;
+	fileCount!: number;
 
 	@ApiProperty({ description: 'The total size in bytes of all files for the parent entity.' })
-	totalSize!: number;
+	totalSizeInBytes!: number;
 }

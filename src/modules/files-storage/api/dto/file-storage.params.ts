@@ -153,3 +153,13 @@ export class PreviewParams implements PreviewInfo {
 	})
 	forceUpdate?: boolean;
 }
+
+export class ParentParams {
+	@ApiProperty()
+	@IsMongoId()
+	parentId!: EntityId;
+
+	@ApiProperty({ enum: FileRecordParentType, enumName: 'FileRecordParentType' })
+	@IsEnum(FileRecordParentType)
+	parentType!: FileRecordParentType;
+}

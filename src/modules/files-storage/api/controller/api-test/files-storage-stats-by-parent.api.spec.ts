@@ -48,7 +48,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with not authenticated user', () => {
 		it('should return status 401', async () => {
-			const response = await testApiClient.get(`/school/123/users/123`);
+			const response = await testApiClient.get(`/users/123`);
 
 			expect(response.status).toEqual(401);
 		});
@@ -65,23 +65,9 @@ describe(`${baseRouteName} (api)`, () => {
 			return { loggedInClient, validId };
 		};
 
-		it('should return status 400 for invalid storageLocationId', async () => {
-			const { loggedInClient, validId } = setup();
-			const response = await loggedInClient.get(`/school/123/users/${validId}`);
-			const { validationErrors } = response.body as ApiValidationError;
-
-			expect(response.status).toEqual(400);
-			expect(validationErrors).toEqual([
-				{
-					errors: ['storageLocationId must be a mongodb id'],
-					field: ['storageLocationId'],
-				},
-			]);
-		});
-
 		it('should return status 400 for invalid parentId', async () => {
-			const { loggedInClient, validId } = setup();
-			const response = await loggedInClient.get(`/school/${validId}/users/123`);
+			const { loggedInClient } = setup();
+			const response = await loggedInClient.get(`/users/123`);
 			const { validationErrors } = response.body as ApiValidationError;
 
 			expect(response.status).toEqual(400);
@@ -95,7 +81,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		it('should return status 400 for invalid parentType', async () => {
 			const { loggedInClient, validId } = setup();
-			const response = await loggedInClient.get(`/school/${validId}/cookies/${validId}`);
+			const response = await loggedInClient.get(`/cookies/${validId}`);
 			const { validationErrors } = response.body as ApiValidationError;
 
 			expect(response.status).toEqual(400);
@@ -135,13 +121,13 @@ describe(`${baseRouteName} (api)`, () => {
 		it('should return status 200 and stats for successful request', async () => {
 			const { loggedInClient, validId, fileRecords } = await setup();
 
-			const response = await loggedInClient.get(`/school/${validId}/schools/${validId}`);
+			const response = await loggedInClient.get(`/schools/${validId}`);
 
 			const expectedCount = fileRecords.length;
 			const expectedTotalSize = fileRecords.reduce((sum, f) => sum + f.size, 0);
 
 			expect(response.status).toEqual(HttpStatus.OK);
-			expect(response.body).toEqual({ count: expectedCount, totalSize: expectedTotalSize });
+			expect(response.body).toEqual({ fileCount: expectedCount, totalSizeInBytes: expectedTotalSize });
 		});
 	});
 });

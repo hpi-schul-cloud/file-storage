@@ -20,6 +20,7 @@ import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
+import { ParentStatistic } from '../ParentStatistic';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()
@@ -466,10 +467,10 @@ export class FilesStorageService {
 		return settledPromises;
 	}
 
-	public async getStatsOfParent(parentId: EntityId): Promise<{ count: number; totalSize: number }> {
-		const [fileRecords, count] = await this.getFileRecordsOfParent(parentId);
-		const totalSize = fileRecords.reduce((sum, file) => sum + (file.getProps().size || 0), 0);
+	// statistics
+	public async getParentStatistic(parentId: EntityId): Promise<ParentStatistic> {
+		const statistics = await this.fileRecordRepo.getStatisticByParentId(parentId);
 
-		return { count, totalSize };
+		return statistics;
 	}
 }
