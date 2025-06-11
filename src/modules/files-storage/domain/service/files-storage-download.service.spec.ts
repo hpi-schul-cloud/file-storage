@@ -1,18 +1,21 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { NotAcceptableException, NotFoundException } from '@nestjs/common';
+import { InternalServerErrorException, NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import archiver from 'archiver';
+import { Readable } from 'node:stream';
 import { ScanStatus } from '../../domain';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
-import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();
@@ -27,6 +30,8 @@ describe('FilesStorageService download methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let storageClient: DeepMocked<S3ClientAdapter>;
+	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
+	let logger: DeepMocked<Logger>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -61,10 +66,13 @@ describe('FilesStorageService download methods', () => {
 
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
+		domainErrorHandler = module.get(DomainErrorHandler);
+		logger = module.get(Logger);
 	});
 
 	beforeEach(() => {
 		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
 
 	afterAll(async () => {
@@ -224,6 +232,118 @@ describe('FilesStorageService download methods', () => {
 
 				await expect(service.downloadFile(fileRecord)).rejects.toThrowError(error);
 			});
+		});
+	});
+
+	describe('downloadMultipleFiles is called', () => {
+		const setup = () => {
+			const { fileRecords, parentId } = buildFileRecordsWithParams();
+			const archiveName = 'test';
+			const fileResponse = createMock<GetFile>({
+				data: Readable.from('test data'),
+			});
+
+			const fileResponses = fileRecords.map((fileRecord) => {
+				return FileResponseBuilder.build(fileResponse, fileRecord.getName());
+			});
+
+			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[0]);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[1]);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[2]);
+
+			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile };
+		};
+
+		it('calls service.downloadFile with correct params', async () => {
+			const { fileRecords, archiveName, spyDownloadFile } = setup();
+
+			await service.downloadMultipleFiles(fileRecords, archiveName);
+
+			expect(spyDownloadFile).toHaveBeenNthCalledWith(1, expect.objectContaining(fileRecords[0]));
+			expect(spyDownloadFile).toHaveBeenNthCalledWith(2, expect.objectContaining(fileRecords[1]));
+			expect(spyDownloadFile).toHaveBeenNthCalledWith(3, expect.objectContaining(fileRecords[2]));
+		});
+
+		it('calls archiver with correct params', async () => {
+			const { fileRecords, archiveName } = setup();
+
+			const archiveSpy = jest.spyOn(archiver, 'create').mockReturnValueOnce(createMock<archiver.Archiver>());
+
+			await service.downloadMultipleFiles(fileRecords, archiveName);
+
+			expect(archiveSpy).toHaveBeenCalledWith('zip', undefined);
+		});
+
+		it('should calls domainErrorHandler on error', async () => {
+			const { fileRecords, archiveName } = setup();
+			const error = new Error('test error');
+
+			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
+
+			result.data.emit('error', error);
+
+			expect(domainErrorHandler.exec).toHaveBeenCalledWith(
+				new InternalServerErrorException('Error while creating archive', { cause: error })
+			);
+		});
+
+		it('should calls logger.debug on stream warning with ENOENT error', async () => {
+			const { fileRecords, archiveName } = setup();
+			const error = { code: 'ENOENT', message: 'File not found' };
+
+			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
+
+			result.data.emit('close', error);
+
+			expect(logger.debug).toHaveBeenCalledWith(
+				new FileStorageActionsLoggable('Archive created with 49 total bytes', {
+					action: 'downloadMultipleFiles',
+					sourcePayload: fileRecords,
+				})
+			);
+		});
+
+		it('should calls logger.warning on stream warning with ENOENT error', async () => {
+			const { fileRecords, archiveName } = setup();
+			const error = { code: 'ENOENT', message: 'File not found' };
+
+			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
+
+			result.data.emit('warning', error);
+
+			expect(logger.warning).toHaveBeenCalledWith(
+				new FileStorageActionsLoggable('Warning while creating archive', {
+					action: 'downloadMultipleFiles',
+					sourcePayload: fileRecords,
+				})
+			);
+		});
+
+		it('should calls domainErrorHandler on stream warning with unknown error', async () => {
+			const { fileRecords, archiveName } = setup();
+			const error = new Error('test error');
+
+			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
+
+			result.data.emit('warning', error);
+
+			expect(domainErrorHandler.exec).toHaveBeenCalledWith(
+				new InternalServerErrorException('Error while creating archive', { cause: error })
+			);
+		});
+
+		it('returns correct response', async () => {
+			const { fileRecords, archiveName } = setup();
+
+			const response = await service.downloadMultipleFiles(fileRecords, archiveName);
+			expect(response).toEqual(
+				expect.objectContaining({
+					contentType: 'application/zip',
+					name: 'test.zip',
+				})
+			);
+			expect(response.data.constructor.name === 'Archiver').toBeTruthy();
 		});
 	});
 });
