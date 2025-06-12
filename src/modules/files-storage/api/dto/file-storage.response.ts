@@ -125,7 +125,7 @@ export class DeleteByStorageLocationResponse {
 	deletedFiles: number;
 }
 
-export class ParentStatsiticResponse {
+export class ParentStatisticResponse {
 	@ApiProperty({ description: 'The number of files for the parent entity.' })
 	fileCount!: number;
 

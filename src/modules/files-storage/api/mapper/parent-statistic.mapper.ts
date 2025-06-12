@@ -1,9 +1,9 @@
 import { ParentStatistic } from '../../domain';
-import { ParentStatsiticResponse } from '../dto';
+import { ParentStatisticResponse } from '../dto';
 
 export class ParentStatisticMapper {
-	public static toParentStatisticResponse(parentStatistic: ParentStatistic): ParentStatsiticResponse {
-		const fileStatsResponse: ParentStatsiticResponse = {
+	public static toParentStatisticResponse(parentStatistic: ParentStatistic): ParentStatisticResponse {
+		const fileStatsResponse: ParentStatisticResponse = {
 			fileCount: parentStatistic.fileCount,
 			totalSizeInBytes: parentStatistic.totalSizeInBytes,
 		};

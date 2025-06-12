@@ -34,12 +34,12 @@ import {
 	FileUrlParams,
 	MultiFileParams,
 	ParentParams,
+	ParentStatisticResponse,
 	PreviewParams,
 	RenameFileParams,
 	ScanResultParams,
 	SingleFileParams,
 } from '../dto';
-import { ParentStatsiticResponse } from '../dto/file-storage.response';
 import {
 	ConfigResponseMapper,
 	CopyFileResponseBuilder,
@@ -354,7 +354,7 @@ export class FilesStorageUC {
 	}
 
 	// statistics
-	public async getParentStatistic(params: ParentParams): Promise<ParentStatsiticResponse> {
+	public async getParentStatistic(params: ParentParams): Promise<ParentStatisticResponse> {
 		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.read);
 
 		const parentStatistic = await this.filesStorageService.getParentStatistic(params.parentId);
