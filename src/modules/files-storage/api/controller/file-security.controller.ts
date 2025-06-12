@@ -23,7 +23,7 @@ export class FileSecurityController {
 		});
 	}
 
-	//@ApiExcludeEndpoint()
+	@ApiExcludeEndpoint()
 	@Put('/update-status/:token')
 	public async updateSecurityStatus(
 		@Body() scanResultDto: ScanResultParams,
