@@ -696,7 +696,6 @@ describe('files-storage controller (API)', () => {
 					archiveName: 'test',
 				});
 
-				console.log(response);
 				const headers = response.headers as Record<string, string>;
 
 				expect(headers['content-type']).toMatch('application/zip');
