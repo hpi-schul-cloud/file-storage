@@ -10,7 +10,7 @@ import {
 } from '../domain';
 import { FileRecordFactory } from '../domain/file-record.factory';
 
-export class FileRecordTestFactory {
+class FileRecordTestFactory {
 	private sequence = 0;
 
 	props: FileRecordProps = {
