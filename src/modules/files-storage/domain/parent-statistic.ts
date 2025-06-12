@@ -1,4 +1,4 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { IsNumber, IsPositive } from 'class-validator';
 
 export interface ParentStatisticProps {
 	fileCount: number;
@@ -6,15 +6,16 @@ export interface ParentStatisticProps {
 }
 
 export class ParentStatistic {
+	@IsNumber()
+	@IsPositive()
 	public readonly fileCount: number;
+	@IsNumber()
+	@IsPositive()
 	public readonly totalSizeInBytes: number;
 
 	constructor(props: ParentStatisticProps) {
 		const { fileCount, totalSizeInBytes } = props;
 
-		if (fileCount < 0 || totalSizeInBytes < 0) {
-			throw new InternalServerErrorException('File count or totalSize cannot be negative');
-		}
 		this.fileCount = fileCount;
 		this.totalSizeInBytes = totalSizeInBytes;
 	}
