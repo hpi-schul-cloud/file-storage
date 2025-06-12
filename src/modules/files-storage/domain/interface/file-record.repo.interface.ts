@@ -1,8 +1,8 @@
 import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { FileRecord } from '../file-record.do';
-import { ParentStatistic } from '../ParentStatistic';
 import { StorageLocation } from './storage-location.enum';
+import { ParentStatistic } from '../parent-statistic';
 
 export interface FileRecordRepo {
 	findOneById(id: EntityId): Promise<FileRecord>;

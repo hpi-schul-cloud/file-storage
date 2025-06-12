@@ -20,7 +20,7 @@ import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-import { ParentStatistic } from '../ParentStatistic';
+import { ParentStatistic } from '../parent-statistic';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()

@@ -1,4 +1,4 @@
-import { ParentStatistic, ParentStatisticProps } from './ParentStatistic';
+import { ParentStatistic, ParentStatisticProps } from './parent-statistic';
 
 export class ParentStatisticFactory {
 	public static build(props: ParentStatisticProps): ParentStatistic {
