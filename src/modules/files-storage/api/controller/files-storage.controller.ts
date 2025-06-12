@@ -185,12 +185,11 @@ export class FilesStorageController {
 	public async downloadFiles(
 		@Body() params: ArchiveFileParams,
 		@Req() req: Request,
-		@Res({ passthrough: true }) response: Response,
-		@Headers('Range') bytesRange?: string
+		@Res({ passthrough: true }) response: Response
 	): Promise<StreamableFile | void> {
 		const data = await this.filesStorageUC.downloadMultipleFiles(params);
 
-		const streamableFile = this.streamFileToClient(req, data, response, bytesRange);
+		const streamableFile = this.streamFileToClient(req, data, response);
 
 		return streamableFile;
 	}

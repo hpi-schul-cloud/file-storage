@@ -279,6 +279,10 @@ export class FilesStorageService {
 	}
 
 	public async downloadMultipleFiles(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+		if (fileRecords.length === 0) {
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
+		}
+
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
 		const archiveType = 'zip';
 		const archive = archiver(archiveType);
