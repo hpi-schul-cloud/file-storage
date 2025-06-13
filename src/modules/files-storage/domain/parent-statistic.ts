@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive, validateSync } from 'class-validator';
+import { IsInt, IsNumber, Min, validateSync } from 'class-validator';
 
 export interface ParentStatisticProps {
 	fileCount: number;
@@ -6,11 +6,11 @@ export interface ParentStatisticProps {
 }
 
 export class ParentStatistic {
-	@IsNumber()
-	@IsPositive()
+	@IsInt()
+	@Min(0)
 	public readonly fileCount: number;
 	@IsNumber()
-	@IsPositive()
+	@Min(0)
 	public readonly totalSizeInBytes: number;
 
 	constructor(props: ParentStatisticProps) {
