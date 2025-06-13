@@ -61,9 +61,12 @@ describe('files-storage controller (API)', () => {
 		await module.close();
 	});
 
+	afterEach(() => {
+		jest.resetAllMocks();
+	});
+
 	describe('upload action', () => {
 		const setup = () => {
-			jest.resetAllMocks();
 			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -200,7 +203,6 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -285,7 +287,6 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe(`with new file`, () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -345,7 +346,6 @@ describe('files-storage controller (API)', () => {
 
 			describe(`with already existing file`, () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -401,7 +401,6 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -458,7 +457,6 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe('when mimetype is not application/pdf', () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -515,7 +513,6 @@ describe('files-storage controller (API)', () => {
 
 			describe('when mimetype is application/pdf', () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -567,7 +564,6 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -619,7 +615,6 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -706,7 +701,6 @@ describe('files-storage controller (API)', () => {
 	describe('file-security.download()', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -727,7 +721,6 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
