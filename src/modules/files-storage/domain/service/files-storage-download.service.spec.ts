@@ -1,18 +1,20 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Readable } from 'node:stream';
 import { ScanStatus } from '../../domain';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileResponseBuilder } from '../mapper';
+import { ArchiveFactory } from './archive.factory';
 import { FilesStorageService } from './files-storage.service';
-import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();
@@ -27,6 +29,8 @@ describe('FilesStorageService download methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let storageClient: DeepMocked<S3ClientAdapter>;
+	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
+	let logger: DeepMocked<Logger>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -61,10 +65,13 @@ describe('FilesStorageService download methods', () => {
 
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
+		domainErrorHandler = module.get(DomainErrorHandler);
+		logger = module.get(Logger);
 	});
 
 	beforeEach(() => {
 		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
 
 	afterAll(async () => {
@@ -224,6 +231,65 @@ describe('FilesStorageService download methods', () => {
 
 				await expect(service.downloadFile(fileRecord)).rejects.toThrowError(error);
 			});
+		});
+	});
+
+	describe('downloadMultipleFiles is called', () => {
+		const setup = () => {
+			const { fileRecords, parentId } = buildFileRecordsWithParams();
+			const archiveName = 'test';
+			const fileResponse = createMock<GetFile>({
+				data: Readable.from('test data'),
+			});
+
+			const fileResponses = fileRecords.map((fileRecord) => {
+				return FileResponseBuilder.build(fileResponse, fileRecord.getName());
+			});
+
+			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[0]);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[1]);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[2]);
+
+			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse };
+		};
+
+		it('calls service.downloadFile with correct params', async () => {
+			const { fileRecords, archiveName, spyDownloadFile } = setup();
+
+			await service.downloadFilesAsArchive(fileRecords, archiveName);
+
+			expect(spyDownloadFile).toHaveBeenNthCalledWith(1, expect.objectContaining(fileRecords[0]));
+			expect(spyDownloadFile).toHaveBeenNthCalledWith(2, expect.objectContaining(fileRecords[1]));
+			expect(spyDownloadFile).toHaveBeenNthCalledWith(3, expect.objectContaining(fileRecords[2]));
+		});
+
+		it('calls archiveFactory with correct params', async () => {
+			const { fileRecords, archiveName, fileResponses } = setup();
+			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'createArchive');
+			await service.downloadFilesAsArchive(fileRecords, archiveName);
+			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger, domainErrorHandler, 'zip');
+			expect(archiveFactorySpy).toHaveBeenCalledTimes(1);
+		});
+
+		it('throws error if fileRecords empty array', async () => {
+			const { archiveName } = setup();
+			await expect(service.downloadFilesAsArchive([], archiveName)).rejects.toThrowError(
+				new NotFoundException(ErrorType.FILE_NOT_FOUND)
+			);
+		});
+
+		it('returns correct response', async () => {
+			const { fileRecords, archiveName } = setup();
+
+			const response = await service.downloadFilesAsArchive(fileRecords, archiveName);
+			expect(response).toEqual(
+				expect.objectContaining({
+					contentType: 'application/zip',
+					name: 'test.zip',
+				})
+			);
+			expect(response.data.constructor.name === 'Archiver').toBeTruthy();
 		});
 	});
 });

@@ -16,6 +16,7 @@ export class FilesStorageAdminController {
 		summary:
 			'Mark all files of a storage location entityId for deletion. The files are permanently deleted after a certain time.',
 	})
+	@ApiResponse({ status: 200, type: DeleteByStorageLocationResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })

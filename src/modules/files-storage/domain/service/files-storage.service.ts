@@ -20,6 +20,7 @@ import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
+import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()
@@ -275,6 +276,27 @@ export class FilesStorageService {
 		const response = await this.downloadFile(fileRecord, bytesRange);
 
 		return response;
+	}
+
+	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+		if (fileRecords.length === 0) {
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
+		}
+
+		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
+
+		const archiveType = 'zip';
+		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, this.domainErrorHandler, archiveType);
+
+		const fileResponse = FileResponseBuilder.build(
+			{
+				data: archive,
+				contentType: `application/${archiveType}`,
+			},
+			`${archiveName}.${archiveType}`
+		);
+
+		return fileResponse;
 	}
 
 	// delete

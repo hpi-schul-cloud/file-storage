@@ -2,7 +2,7 @@
 import { ScanResult } from '@infra/antivirus';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
-import { StringToBoolean } from '@shared/transformer';
+import { StringToBoolean, StringToObject } from '@shared/transformer';
 import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ParentInfo, PreviewOutputMimeTypes } from '../../domain/file-record.do';
 import {
@@ -98,6 +98,17 @@ export class MultiFileParams {
 	@ApiProperty()
 	@IsMongoId({ each: true })
 	fileRecordIds!: EntityId[];
+}
+
+export class ArchiveFileParams {
+	@ApiProperty()
+	@IsMongoId({ each: true })
+	@StringToObject(ArchiveFileParams)
+	fileRecordIds!: EntityId[];
+
+	@ApiProperty()
+	@IsString()
+	archiveName!: string;
 }
 
 export class RenameFileParams {
