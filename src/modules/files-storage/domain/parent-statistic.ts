@@ -1,4 +1,4 @@
-import { IsNumber, IsPositive } from 'class-validator';
+import { IsNumber, IsPositive, validateSync } from 'class-validator';
 
 export interface ParentStatisticProps {
 	fileCount: number;
@@ -18,5 +18,12 @@ export class ParentStatistic {
 
 		this.fileCount = fileCount;
 		this.totalSizeInBytes = totalSizeInBytes;
+
+		// Should be replaced by value object decorator for the class in the future
+		const errors = validateSync(this, { skipMissingProperties: false });
+
+		if (errors.length > 0) {
+			throw new Error(errors.toString());
+		}
 	}
 }
