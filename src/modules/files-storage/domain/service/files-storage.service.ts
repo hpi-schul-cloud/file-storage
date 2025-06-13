@@ -11,7 +11,6 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import archiver from 'archiver';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
@@ -21,6 +20,7 @@ import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
+import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()
@@ -284,46 +284,14 @@ export class FilesStorageService {
 		}
 
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
+
 		const archiveType = 'zip';
-		const archive = archiver(archiveType);
-
-		archive.on('warning', (err) => {
-			if (err.code === 'ENOENT') {
-				this.logger.warning(
-					new FileStorageActionsLoggable('Warning while creating archive', {
-						action: 'downloadMultipleFiles',
-						sourcePayload: fileRecords,
-					})
-				);
-			} else {
-				this.domainErrorHandler.exec(new InternalServerErrorException('Error while creating archive', { cause: err }));
-			}
-		});
-
-		archive.on('error', (err) => {
-			this.domainErrorHandler.exec(new InternalServerErrorException('Error while creating archive', { cause: err }));
-		});
-
-		archive.on('close', () => {
-			this.logger.debug(
-				new FileStorageActionsLoggable(`Archive created with ${archive.pointer()} total bytes`, {
-					action: 'downloadMultipleFiles',
-					sourcePayload: fileRecords,
-				})
-			);
-		});
-
-		for (const file of files) {
-			const passthrough = new PassThrough();
-			file.data.pipe(passthrough);
-			archive.append(passthrough, { name: file.name });
-		}
-		archive.finalize();
+		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, this.domainErrorHandler, archiveType);
 
 		const fileResponse = FileResponseBuilder.build(
 			{
 				data: archive,
-				contentType: 'application/zip',
+				contentType: `application/${archiveType}`,
 			},
 			`${archiveName}.${archiveType}`
 		);

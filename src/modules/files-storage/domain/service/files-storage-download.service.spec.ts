@@ -4,17 +4,16 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { InternalServerErrorException, NotAcceptableException, NotFoundException } from '@nestjs/common';
+import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import archiver from 'archiver';
 import { Readable } from 'node:stream';
 import { ScanStatus } from '../../domain';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder } from '../mapper';
+import { ArchiveFactory } from './archive.factory';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {
@@ -252,7 +251,7 @@ describe('FilesStorageService download methods', () => {
 			spyDownloadFile.mockResolvedValueOnce(fileResponses[1]);
 			spyDownloadFile.mockResolvedValueOnce(fileResponses[2]);
 
-			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile };
+			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse };
 		};
 
 		it('calls service.downloadFile with correct params', async () => {
@@ -265,71 +264,18 @@ describe('FilesStorageService download methods', () => {
 			expect(spyDownloadFile).toHaveBeenNthCalledWith(3, expect.objectContaining(fileRecords[2]));
 		});
 
-		it('calls archiver with correct params', async () => {
-			const { fileRecords, archiveName } = setup();
-
-			const archiveSpy = jest.spyOn(archiver, 'create').mockReturnValueOnce(createMock<archiver.Archiver>());
-
+		it('calls archiveFactory with correct params', async () => {
+			const { fileRecords, archiveName, fileResponses } = setup();
+			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'createArchive');
 			await service.downloadMultipleFiles(fileRecords, archiveName);
-
-			expect(archiveSpy).toHaveBeenCalledWith('zip', undefined);
+			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger, domainErrorHandler, 'zip');
+			expect(archiveFactorySpy).toHaveBeenCalledTimes(1);
 		});
 
-		it('should calls domainErrorHandler on error', async () => {
-			const { fileRecords, archiveName } = setup();
-			const error = new Error('test error');
-
-			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
-
-			result.data.emit('error', error);
-
-			expect(domainErrorHandler.exec).toHaveBeenCalledWith(
-				new InternalServerErrorException('Error while creating archive', { cause: error })
-			);
-		});
-
-		it('should calls logger.debug on stream warning with ENOENT error', async () => {
-			const { fileRecords, archiveName } = setup();
-			const error = { code: 'ENOENT', message: 'File not found' };
-
-			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
-
-			result.data.emit('close', error);
-
-			expect(logger.debug).toHaveBeenCalledWith(
-				new FileStorageActionsLoggable('Archive created with 49 total bytes', {
-					action: 'downloadMultipleFiles',
-					sourcePayload: fileRecords,
-				})
-			);
-		});
-
-		it('should calls logger.warning on stream warning with ENOENT error', async () => {
-			const { fileRecords, archiveName } = setup();
-			const error = { code: 'ENOENT', message: 'File not found' };
-
-			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
-
-			result.data.emit('warning', error);
-
-			expect(logger.warning).toHaveBeenCalledWith(
-				new FileStorageActionsLoggable('Warning while creating archive', {
-					action: 'downloadMultipleFiles',
-					sourcePayload: fileRecords,
-				})
-			);
-		});
-
-		it('should calls domainErrorHandler on stream warning with unknown error', async () => {
-			const { fileRecords, archiveName } = setup();
-			const error = new Error('test error');
-
-			const result = await service.downloadMultipleFiles(fileRecords, archiveName);
-
-			result.data.emit('warning', error);
-
-			expect(domainErrorHandler.exec).toHaveBeenCalledWith(
-				new InternalServerErrorException('Error while creating archive', { cause: error })
+		it('throws error if fileRecords empty array', async () => {
+			const { archiveName } = setup();
+			await expect(service.downloadMultipleFiles([], archiveName)).rejects.toThrowError(
+				new NotFoundException(ErrorType.FILE_NOT_FOUND)
 			);
 		});
 
