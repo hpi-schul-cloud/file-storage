@@ -2,6 +2,7 @@ import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { FileRecord } from '../file-record.do';
 import { StorageLocation } from './storage-location.enum';
+import { ParentStatistic } from '../parent-statistic';
 
 export interface FileRecordRepo {
 	findOneById(id: EntityId): Promise<FileRecord>;
@@ -35,6 +36,8 @@ export interface FileRecordRepo {
 	save(fileRecord: FileRecord | FileRecord[]): Promise<void>;
 
 	delete(fileRecord: FileRecord | FileRecord[]): Promise<void>;
+
+	getStatisticByParentId(parentId: EntityId): Promise<ParentStatistic>;
 }
 
 export const FILE_RECORD_REPO = 'FILE_RECORD_REPO';

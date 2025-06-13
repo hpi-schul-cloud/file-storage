@@ -598,4 +598,38 @@ describe('FileRecordRepo', () => {
 			).toEqual([creator1, creator1, creator1, creator1]);
 		});
 	});
+
+	describe('getStatisticByParentId', () => {
+		const setup = () => {
+			const parentId = new ObjectId().toHexString();
+			const fileRecords = fileRecordEntityFactory.buildList(3, {
+				parentType: FileRecordParentType.Task,
+				parentId,
+				size: 100,
+			});
+
+			return { fileRecords, parentId };
+		};
+
+		it('should return correct statistics for a parent', async () => {
+			const { fileRecords, parentId } = setup();
+
+			await em.persistAndFlush(fileRecords);
+			em.clear();
+
+			const statistic = await repo.getStatisticByParentId(parentId);
+
+			expect(statistic.fileCount).toBe(3);
+			expect(statistic.totalSizeInBytes).toBe(300);
+		});
+
+		it('should return zero statistics if no records exist for parent', async () => {
+			const parentId = new ObjectId().toHexString();
+
+			const statistic = await repo.getStatisticByParentId(parentId);
+
+			expect(statistic.fileCount).toBe(0);
+			expect(statistic.totalSizeInBytes).toBe(0);
+		});
+	});
 });

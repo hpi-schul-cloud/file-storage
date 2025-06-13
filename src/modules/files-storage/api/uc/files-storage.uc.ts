@@ -33,6 +33,8 @@ import {
 	FilesStorageConfigResponse,
 	FileUrlParams,
 	MultiFileParams,
+	ParentParams,
+	ParentStatisticResponse,
 	PreviewParams,
 	RenameFileParams,
 	ScanResultParams,
@@ -45,6 +47,7 @@ import {
 	FilesStorageMapper,
 	PreviewBuilder,
 } from '../mapper';
+import { ParentStatisticMapper } from '../mapper/parent-statistic.mapper';
 
 export const FileStorageAuthorizationContext = {
 	create: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_CREATE]),
@@ -348,5 +351,16 @@ export class FilesStorageUC {
 		const countedFileRecords = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 
 		return countedFileRecords;
+	}
+
+	// statistics
+	public async getParentStatistic(params: ParentParams): Promise<ParentStatisticResponse> {
+		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.read);
+
+		const parentStatistic = await this.filesStorageService.getParentStatistic(params.parentId);
+
+		const response = ParentStatisticMapper.toParentStatisticResponse(parentStatistic);
+
+		return response;
 	}
 }
