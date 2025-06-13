@@ -553,7 +553,7 @@ describe('files-storage controller (API)', () => {
 	describe('download multiple files action', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const result = await testApiClient.post('/download', {
+				const result = await testApiClient.post('/download-files-as-archive', {
 					fileRecordIds: ['123'],
 					archiveName: 'test',
 				});
@@ -585,7 +585,7 @@ describe('files-storage controller (API)', () => {
 			it('should return status 400 for invalid recordId', async () => {
 				const { loggedInClient } = await setup();
 
-				const result = await loggedInClient.post('/download', {
+				const result = await loggedInClient.post('/download-files-as-archive', {
 					fileRecordIds: ['123'],
 					archiveName: 'test',
 				});
@@ -604,7 +604,7 @@ describe('files-storage controller (API)', () => {
 				const { loggedInClient } = await setup();
 				const notExistingId = new ObjectId().toHexString();
 
-				const response = await loggedInClient.post('/download', {
+				const response = await loggedInClient.post('/download-files-as-archive', {
 					fileRecordIds: [notExistingId],
 					archiveName: 'test',
 				});
@@ -649,7 +649,7 @@ describe('files-storage controller (API)', () => {
 			it('should return status 200 for successful download', async () => {
 				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/download', {
+				const response = await loggedInClient.post('/download-files-as-archive', {
 					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
 					archiveName: 'test',
 				});
@@ -660,7 +660,7 @@ describe('files-storage controller (API)', () => {
 			it('should set content-disposition header to attachment', async () => {
 				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/download', {
+				const response = await loggedInClient.post('/download-files-as-archive', {
 					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
 					archiveName: 'test',
 				});
@@ -673,7 +673,7 @@ describe('files-storage controller (API)', () => {
 			it('should set content-disposition header has file name', async () => {
 				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/download', {
+				const response = await loggedInClient.post('/download-files-as-archive', {
 					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
 					archiveName: 'test',
 				});
@@ -686,7 +686,7 @@ describe('files-storage controller (API)', () => {
 			it('should set content type header to attachment', async () => {
 				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/download', {
+				const response = await loggedInClient.post('/download-files-as-archive', {
 					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
 					archiveName: 'test',
 				});

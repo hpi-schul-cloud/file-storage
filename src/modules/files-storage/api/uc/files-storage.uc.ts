@@ -225,11 +225,11 @@ export class FilesStorageUC {
 		return result;
 	}
 
-	public async downloadMultipleFiles(params: ArchiveFileParams): Promise<GetFileResponse> {
+	public async downloadFilesAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 		await this.checkPermissions(fileRecords, FileStorageAuthorizationContext.read);
 
-		const result = await this.filesStorageService.downloadMultipleFiles(fileRecords, params.archiveName);
+		const result = await this.filesStorageService.downloadFilesAsArchive(fileRecords, params.archiveName);
 
 		return result;
 	}

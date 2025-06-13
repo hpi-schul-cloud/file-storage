@@ -180,14 +180,14 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiHeader({ name: 'Range', required: false })
-	@Post('/download')
+	@Post('/download-files-as-archive')
 	@UseInterceptors(RequestLoggingInterceptor)
-	public async downloadFiles(
+	public async downloadFilesAsArchive(
 		@Body() params: ArchiveFileParams,
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response
 	): Promise<StreamableFile | void> {
-		const data = await this.filesStorageUC.downloadMultipleFiles(params);
+		const data = await this.filesStorageUC.downloadFilesAsArchive(params);
 
 		const streamableFile = this.streamFileToClient(req, data, response);
 

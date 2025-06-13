@@ -278,7 +278,7 @@ export class FilesStorageService {
 		return response;
 	}
 
-	public async downloadMultipleFiles(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
 		if (fileRecords.length === 0) {
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		}

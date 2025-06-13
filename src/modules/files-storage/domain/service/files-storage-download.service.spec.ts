@@ -257,7 +257,7 @@ describe('FilesStorageService download methods', () => {
 		it('calls service.downloadFile with correct params', async () => {
 			const { fileRecords, archiveName, spyDownloadFile } = setup();
 
-			await service.downloadMultipleFiles(fileRecords, archiveName);
+			await service.downloadFilesAsArchive(fileRecords, archiveName);
 
 			expect(spyDownloadFile).toHaveBeenNthCalledWith(1, expect.objectContaining(fileRecords[0]));
 			expect(spyDownloadFile).toHaveBeenNthCalledWith(2, expect.objectContaining(fileRecords[1]));
@@ -267,14 +267,14 @@ describe('FilesStorageService download methods', () => {
 		it('calls archiveFactory with correct params', async () => {
 			const { fileRecords, archiveName, fileResponses } = setup();
 			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'createArchive');
-			await service.downloadMultipleFiles(fileRecords, archiveName);
+			await service.downloadFilesAsArchive(fileRecords, archiveName);
 			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger, domainErrorHandler, 'zip');
 			expect(archiveFactorySpy).toHaveBeenCalledTimes(1);
 		});
 
 		it('throws error if fileRecords empty array', async () => {
 			const { archiveName } = setup();
-			await expect(service.downloadMultipleFiles([], archiveName)).rejects.toThrowError(
+			await expect(service.downloadFilesAsArchive([], archiveName)).rejects.toThrowError(
 				new NotFoundException(ErrorType.FILE_NOT_FOUND)
 			);
 		});
@@ -282,7 +282,7 @@ describe('FilesStorageService download methods', () => {
 		it('returns correct response', async () => {
 			const { fileRecords, archiveName } = setup();
 
-			const response = await service.downloadMultipleFiles(fileRecords, archiveName);
+			const response = await service.downloadFilesAsArchive(fileRecords, archiveName);
 			expect(response).toEqual(
 				expect.objectContaining({
 					contentType: 'application/zip',
