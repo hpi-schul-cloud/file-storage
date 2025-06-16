@@ -27,6 +27,7 @@ describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
 	let testApiClient: TestApiClient;
+	let authorizationClientAdapter: AuthorizationClientAdapter;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -46,10 +47,15 @@ describe(`${baseRouteName} (api)`, () => {
 		await app.init();
 		em = module.get(EntityManager);
 		testApiClient = new TestApiClient(app, baseRouteName);
+		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
 	});
 
 	afterAll(async () => {
 		await app.close();
+	});
+
+	beforeEach(() => {
+		jest.resetAllMocks();
 	});
 
 	describe('delete files of parent', () => {
@@ -242,6 +248,8 @@ describe(`${baseRouteName} (api)`, () => {
 
 				const validId = new ObjectId().toHexString();
 
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
 				const result = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
 					.attach('file', Buffer.from('abcd'), 'test1.txt')
@@ -345,6 +353,8 @@ describe(`${baseRouteName} (api)`, () => {
 
 				const validId1 = new ObjectId().toHexString();
 
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
 				const result1 = await loggedInClient
 					.post(`/upload/school/${validId1}/schools/${validId1}`)
 					.attach('file', Buffer.from('abcd'), 'test1.txt')
@@ -362,7 +372,16 @@ describe(`${baseRouteName} (api)`, () => {
 					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
 				const response2 = result2.body as FileRecordResponse;
 				const fileRecordId2 = response2.id;
-				const fileRecordIds = { fileRecordIds: [fileRecordId1, fileRecordId2] };
+
+				const result3 = await loggedInClient
+					.post(`/upload/school/${validId2}/schools/${validId2}`)
+					.attach('file', Buffer.from('abcd'), 'test1.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+				const response3 = result3.body as FileRecordResponse;
+				const fileRecordId3 = response3.id;
+
+				const fileRecordIds = { fileRecordIds: [fileRecordId1, fileRecordId2, fileRecordId3] };
 
 				return { loggedInClient, fileRecordIds };
 			};
@@ -413,9 +432,34 @@ describe(`${baseRouteName} (api)`, () => {
 							size: expect.any(Number),
 							previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 						},
+						{
+							creatorId: expect.any(String),
+							id: expect.any(String),
+							name: expect.any(String),
+							url: expect.any(String),
+							parentId: expect.any(String),
+							createdAt: expect.any(String),
+							updatedAt: expect.any(String),
+							parentType: 'schools',
+							mimeType: 'text/plain',
+							deletedSince: expect.any(String),
+							securityCheckStatus: 'pending',
+							size: expect.any(Number),
+							previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+						},
 					],
-					total: 2,
+					total: 3,
 				});
+			});
+
+			it('should call checkPermissionsByReference only once for two filerecords with same parent', async () => {
+				const { loggedInClient, fileRecordIds } = await setup();
+				jest.clearAllMocks();
+
+				await loggedInClient.delete(`/delete`, fileRecordIds);
+
+				// We expect two calls because we have two different parents in three file records
+				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledTimes(2);
 			});
 		});
 	});
