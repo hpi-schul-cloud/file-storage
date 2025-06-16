@@ -1,5 +1,4 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { PassThrough } from 'stream';
 import { FileRecord } from '../file-record.do';
@@ -8,11 +7,9 @@ import { ArchiveFactory } from './archive.factory';
 
 describe('ArchiveFactory', () => {
 	let logger: DeepMocked<Logger>;
-	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
 
 	beforeEach(() => {
 		logger = createMock<Logger>();
-		domainErrorHandler = createMock<DomainErrorHandler>();
 	});
 
 	const createFileResponse = (name: string, content: string) => {
@@ -26,7 +23,7 @@ describe('ArchiveFactory', () => {
 		const files = [createFileResponse('file1.txt', 'hello'), createFileResponse('file2.txt', 'world')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, domainErrorHandler, 'zip');
+		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
 
 		const chunks: Buffer[] = [];
 		archive.on('data', (chunk) => chunks.push(chunk));
@@ -42,7 +39,7 @@ describe('ArchiveFactory', () => {
 		const files = [createFileResponse('file.txt', 'test')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, domainErrorHandler, 'zip');
+		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
 
 		const warning = { code: 'ENOENT' };
 		archive.emit('warning', warning);
@@ -50,23 +47,22 @@ describe('ArchiveFactory', () => {
 		expect(logger.warning).toHaveBeenCalledWith(expect.any(FileStorageActionsLoggable));
 	});
 
-	it('should call domainErrorHandler.exec on non-ENOENT warning', () => {
+	it('should throw an Error on non-ENOENT warning', () => {
 		const files = [createFileResponse('file.txt', 'test')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, domainErrorHandler, 'zip');
+		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
 
-		const warning = { code: 'OTHER', message: 'Some error' };
-		archive.emit('warning', warning);
-
-		expect(domainErrorHandler.exec).toHaveBeenCalled();
+		expect(() => {
+			archive.emit('warning', { code: 'OTHER', message: 'Some error' });
+		}).toThrow('Error while creating archive on warning event');
 	});
 
 	it('should throw on error event', () => {
 		const files = [createFileResponse('file.txt', 'test')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, domainErrorHandler, 'zip');
+		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
 
 		expect(() => {
 			archive.emit('error', new Error('archive error'));

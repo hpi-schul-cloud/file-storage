@@ -1,4 +1,3 @@
-import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { InternalServerErrorException } from '@nestjs/common';
 import archiver from 'archiver';
@@ -12,7 +11,6 @@ export class ArchiveFactory {
 		files: GetFileResponse[],
 		fileRecords: FileRecord[],
 		logger: Logger,
-		domainErrorHandler: DomainErrorHandler,
 		archiveType: archiver.Format = 'zip'
 	): archiver.Archiver {
 		const archive = archiver(archiveType);
@@ -26,7 +24,7 @@ export class ArchiveFactory {
 					})
 				);
 			} else {
-				domainErrorHandler.exec(new InternalServerErrorException('Error while creating archive', { cause: err }));
+				throw new InternalServerErrorException('Error while creating archive on warning event', { cause: err });
 			}
 		});
 

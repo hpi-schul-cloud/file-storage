@@ -287,7 +287,7 @@ export class FilesStorageService {
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
 
 		const archiveType = 'zip';
-		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, this.domainErrorHandler, archiveType);
+		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, archiveType);
 
 		const fileResponse = FileResponseBuilder.build(
 			{

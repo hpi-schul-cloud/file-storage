@@ -29,7 +29,6 @@ describe('FilesStorageService download methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let storageClient: DeepMocked<S3ClientAdapter>;
-	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
 	let logger: DeepMocked<Logger>;
 
 	beforeAll(async () => {
@@ -65,7 +64,6 @@ describe('FilesStorageService download methods', () => {
 
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
-		domainErrorHandler = module.get(DomainErrorHandler);
 		logger = module.get(Logger);
 	});
 
@@ -159,7 +157,7 @@ describe('FilesStorageService download methods', () => {
 				const error = new NotAcceptableException(ErrorType.FILE_IS_BLOCKED);
 
 				await expect(service.download(fileRecord, fileName)).rejects.toThrow(error);
-				expect(service.downloadFile).toBeCalledTimes(0);
+				expect(service.downloadFile).toHaveBeenCalledTimes(0);
 			});
 		});
 
@@ -174,10 +172,11 @@ describe('FilesStorageService download methods', () => {
 
 				return { fileRecord, fileName, error };
 			};
+
 			it('passes error', async () => {
 				const { fileRecord, fileName, error } = setup();
 
-				await expect(service.download(fileRecord, fileName)).rejects.toThrowError(error);
+				await expect(service.download(fileRecord, fileName)).rejects.toThrow(error);
 			});
 		});
 	});
@@ -229,12 +228,12 @@ describe('FilesStorageService download methods', () => {
 			it('passes error', async () => {
 				const { fileRecord, error } = setup();
 
-				await expect(service.downloadFile(fileRecord)).rejects.toThrowError(error);
+				await expect(service.downloadFile(fileRecord)).rejects.toThrow(error);
 			});
 		});
 	});
 
-	describe('downloadMultipleFiles is called', () => {
+	describe('downloadFilesAsArchive is called', () => {
 		const setup = () => {
 			const { fileRecords, parentId } = buildFileRecordsWithParams();
 			const archiveName = 'test';
@@ -267,14 +266,17 @@ describe('FilesStorageService download methods', () => {
 		it('calls archiveFactory with correct params', async () => {
 			const { fileRecords, archiveName, fileResponses } = setup();
 			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'createArchive');
+
 			await service.downloadFilesAsArchive(fileRecords, archiveName);
-			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger, domainErrorHandler, 'zip');
+
+			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger, 'zip');
 			expect(archiveFactorySpy).toHaveBeenCalledTimes(1);
 		});
 
 		it('throws error if fileRecords empty array', async () => {
 			const { archiveName } = setup();
-			await expect(service.downloadFilesAsArchive([], archiveName)).rejects.toThrowError(
+
+			await expect(service.downloadFilesAsArchive([], archiveName)).rejects.toThrow(
 				new NotFoundException(ErrorType.FILE_NOT_FOUND)
 			);
 		});
@@ -283,6 +285,7 @@ describe('FilesStorageService download methods', () => {
 			const { fileRecords, archiveName } = setup();
 
 			const response = await service.downloadFilesAsArchive(fileRecords, archiveName);
+
 			expect(response).toEqual(
 				expect.objectContaining({
 					contentType: 'application/zip',
