@@ -320,28 +320,57 @@ describe(`${baseRouteName} (api)`, () => {
 		});
 
 		describe('with bad request data', () => {
-			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+			describe('with invalid fileRecordId', () => {
+				const setup = () => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 
-				return { loggedInClient };
-			};
+					return { loggedInClient };
+				};
 
-			it('should return status 400 for invalid fileRecordId', async () => {
-				const { loggedInClient } = setup();
+				it('should return status 400 for invalid fileRecordId', async () => {
+					const { loggedInClient } = setup();
 
-				const fileRecordIds = { fileRecordIds: ['123'] };
-				const response = await loggedInClient.delete(`/delete`, fileRecordIds);
-				const { validationErrors } = response.body as ApiValidationError;
+					const fileRecordIds = { fileRecordIds: ['123'] };
+					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
+					const { validationErrors } = response.body as ApiValidationError;
 
-				expect(validationErrors).toEqual([
-					{
-						errors: ['each value in fileRecordIds must be a mongodb id'],
-						field: ['fileRecordIds'],
-					},
-				]);
-				expect(response.status).toEqual(400);
+					expect(validationErrors).toEqual([
+						{
+							errors: ['each value in fileRecordIds must be a mongodb id'],
+							field: ['fileRecordIds'],
+						},
+					]);
+					expect(response.status).toEqual(400);
+				});
+			});
+
+			describe('with too many fileRecordIds', () => {
+				const setup = () => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+					const fileRecordIds = { fileRecordIds: new Array(51).fill(new ObjectId().toHexString()) };
+
+					return { loggedInClient, fileRecordIds };
+				};
+
+				it('should return status 400 for too many fileRecordIds', async () => {
+					const { loggedInClient, fileRecordIds } = setup();
+
+					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
+					const { validationErrors } = response.body as ApiValidationError;
+
+					expect(validationErrors).toEqual([
+						{
+							errors: ['fileRecordIds must contain no more than 50 elements'],
+							field: ['fileRecordIds'],
+						},
+					]);
+					expect(response.status).toEqual(400);
+				});
 			});
 		});
 

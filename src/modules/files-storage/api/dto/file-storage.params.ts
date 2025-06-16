@@ -3,7 +3,17 @@ import { ScanResult } from '@infra/antivirus';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
 import { StringToBoolean } from '@shared/transformer';
-import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+	Allow,
+	ArrayMaxSize,
+	IsBoolean,
+	IsEnum,
+	IsMongoId,
+	IsNotEmpty,
+	IsOptional,
+	IsString,
+	ValidateNested,
+} from 'class-validator';
 import { ParentInfo, PreviewOutputMimeTypes } from '../../domain/file-record.do';
 import {
 	FileRecordParentType,
@@ -97,6 +107,7 @@ export class SingleFileParams {
 export class MultiFileParams {
 	@ApiProperty()
 	@IsMongoId({ each: true })
+	@ArrayMaxSize(50)
 	fileRecordIds!: EntityId[];
 }
 
