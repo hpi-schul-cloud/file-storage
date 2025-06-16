@@ -84,9 +84,12 @@ export class FilesStorageUC {
 	private async checkPermissions(fileRecords: FileRecord[], context: AuthorizationContextParams): Promise<void> {
 		const uniqueParents = FileRecord.getUniqueParents(fileRecords);
 
-		for (const [parentId, parentType] of uniqueParents) {
-			await this.checkPermission(parentType, parentId, context);
-		}
+		const checkPermission = ([parentId, parentType]: [EntityId, FileRecordParentType]): Promise<void> =>
+			this.checkPermission(parentType, parentId, context);
+
+		const permissionChecks = Array.from(uniqueParents, checkPermission);
+
+		await Promise.all(permissionChecks);
 	}
 
 	public getPublicConfig(): FilesStorageConfigResponse {
