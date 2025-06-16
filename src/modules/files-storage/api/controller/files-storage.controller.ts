@@ -42,6 +42,8 @@ import {
 	FileUrlParams,
 	MultiFileParams,
 	PaginationParams,
+	ParentParams,
+	ParentStatisticResponse,
 	PreviewParams,
 	RenameFileParams,
 	SingleFileParams,
@@ -365,5 +367,16 @@ export class FilesStorageController {
 		const response = await this.filesStorageUC.copyOneFile(currentUser.userId, params, copyFileParam);
 
 		return response;
+	}
+
+	@ApiOperation({ summary: 'Get stats (count and total size) of all files for a parent entityId.' })
+	@ApiResponse({ status: 200, type: ParentStatisticResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@Get('/stats/:parentType/:parentId')
+	public async getParentStatistic(@Param() params: ParentParams): Promise<ParentStatisticResponse> {
+		const fileStatsResponse = await this.filesStorageUC.getParentStatistic(params);
+
+		return fileStatsResponse;
 	}
 }

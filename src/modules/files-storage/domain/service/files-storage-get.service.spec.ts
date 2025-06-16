@@ -1,14 +1,14 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, parentStatisticTestFactory } from '../../testing';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FilesStorageService } from './files-storage.service';
-import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecordsWithParams = () => {
 	const creatorId = new ObjectId().toHexString();
@@ -342,6 +342,51 @@ describe('FilesStorageService get methods', () => {
 				const { creatorId } = setup();
 
 				await expect(service.getFileRecordsByCreatorId(creatorId)).rejects.toThrow(new Error('bla'));
+			});
+		});
+	});
+
+	describe('getParentStatistic is called', () => {
+		describe('WHEN valid files exist for the parent', () => {
+			const setup = () => {
+				const parentId = new ObjectId().toHexString();
+				const fileRecords = fileRecordTestFactory().buildList(3, { parentId });
+				const parentStatistic = parentStatisticTestFactory().build();
+
+				fileRecordRepo.getStatisticByParentId.mockResolvedValueOnce(parentStatistic);
+
+				return { parentId, fileRecords, parentStatistic };
+			};
+
+			it('should call findByParentId with the correct parentId', async () => {
+				const { parentId } = setup();
+
+				await service.getParentStatistic(parentId);
+
+				expect(fileRecordRepo.getStatisticByParentId).toHaveBeenCalledWith(parentId);
+			});
+
+			it('should return the correct count and totalSize', async () => {
+				const { parentId, parentStatistic } = setup();
+
+				const statsResult = await service.getParentStatistic(parentId);
+
+				expect(statsResult).toEqual(parentStatistic);
+			});
+		});
+
+		describe('WHEN repository throws an error', () => {
+			const setup = () => {
+				const parentId = new ObjectId().toHexString();
+				fileRecordRepo.getStatisticByParentId.mockRejectedValueOnce(new Error('stats error'));
+
+				return { parentId };
+			};
+
+			it('should pass the error', async () => {
+				const { parentId } = setup();
+
+				await expect(service.getParentStatistic(parentId)).rejects.toThrow(new Error('stats error'));
 			});
 		});
 	});
