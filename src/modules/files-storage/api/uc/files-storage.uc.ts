@@ -24,6 +24,7 @@ import {
 	PreviewService,
 	StorageLocation,
 } from '../../domain';
+import { TwoManyDifferentParentsException } from '../../loggable';
 import {
 	CopyFileParams,
 	CopyFileResponse,
@@ -84,12 +85,23 @@ export class FilesStorageUC {
 	private async checkPermissions(fileRecords: FileRecord[], context: AuthorizationContextParams): Promise<void> {
 		const uniqueParents = FileRecord.getUniqueParents(fileRecords);
 
+		this.checkMaximumDifferentParents(uniqueParents);
+
 		const checkPermission = ([parentId, parentType]: [EntityId, FileRecordParentType]): Promise<void> =>
 			this.checkPermission(parentType, parentId, context);
 
 		const permissionChecks = Array.from(uniqueParents, checkPermission);
 
 		await Promise.all(permissionChecks);
+	}
+
+	private checkMaximumDifferentParents(parents: Map<EntityId, FileRecordParentType>): void {
+		const maximumOfDifferentParents = 1;
+		const parentIds = Array.from(parents.keys());
+
+		if (parentIds.length > maximumOfDifferentParents) {
+			throw new TwoManyDifferentParentsException(parentIds, maximumOfDifferentParents);
+		}
 	}
 
 	public getPublicConfig(): FilesStorageConfigResponse {

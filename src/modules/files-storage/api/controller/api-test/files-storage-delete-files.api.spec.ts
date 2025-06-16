@@ -11,7 +11,7 @@ import { EntityId } from '@shared/domain/types';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FileRecordParentType, PreviewStatus } from '../../../domain';
+import { ErrorType, FileRecordParentType, PreviewStatus } from '../../../domain';
 import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
@@ -320,175 +320,168 @@ describe(`${baseRouteName} (api)`, () => {
 		});
 
 		describe('with bad request data', () => {
-			describe('with invalid fileRecordId', () => {
-				const setup = () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-
-					return { loggedInClient };
-				};
-
-				it('should return status 400 for invalid fileRecordId', async () => {
-					const { loggedInClient } = setup();
-
-					const fileRecordIds = { fileRecordIds: ['123'] };
-					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
-					const { validationErrors } = response.body as ApiValidationError;
-
-					expect(validationErrors).toEqual([
-						{
-							errors: ['each value in fileRecordIds must be a mongodb id'],
-							field: ['fileRecordIds'],
-						},
-					]);
-					expect(response.status).toEqual(400);
-				});
-			});
-
-			describe('with too many fileRecordIds', () => {
-				const setup = () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-
-					const fileRecordIds = { fileRecordIds: new Array(51).fill(new ObjectId().toHexString()) };
-
-					return { loggedInClient, fileRecordIds };
-				};
-
-				it('should return status 400 for too many fileRecordIds', async () => {
-					const { loggedInClient, fileRecordIds } = setup();
-
-					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
-					const { validationErrors } = response.body as ApiValidationError;
-
-					expect(validationErrors).toEqual([
-						{
-							errors: ['fileRecordIds must contain no more than 50 elements'],
-							field: ['fileRecordIds'],
-						},
-					]);
-					expect(response.status).toEqual(400);
-				});
-			});
-		});
-
-		describe(`with valid request data`, () => {
-			const setup = async () => {
+			const setup = () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 
-				const validId1 = new ObjectId().toHexString();
-
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
-
-				const result1 = await loggedInClient
-					.post(`/upload/school/${validId1}/schools/${validId1}`)
-					.attach('file', Buffer.from('abcd'), 'test1.txt')
-					.set('connection', 'keep-alive')
-					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
-				const response1 = result1.body as FileRecordResponse;
-				const fileRecordId1 = response1.id;
-
-				const validId2 = new ObjectId().toHexString();
-
-				const result2 = await loggedInClient
-					.post(`/upload/school/${validId2}/schools/${validId2}`)
-					.attach('file', Buffer.from('abcd'), 'test1.txt')
-					.set('connection', 'keep-alive')
-					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
-				const response2 = result2.body as FileRecordResponse;
-				const fileRecordId2 = response2.id;
-
-				const result3 = await loggedInClient
-					.post(`/upload/school/${validId2}/schools/${validId2}`)
-					.attach('file', Buffer.from('abcd'), 'test1.txt')
-					.set('connection', 'keep-alive')
-					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
-				const response3 = result3.body as FileRecordResponse;
-				const fileRecordId3 = response3.id;
-
-				const fileRecordIds = { fileRecordIds: [fileRecordId1, fileRecordId2, fileRecordId3] };
-
-				return { loggedInClient, fileRecordIds };
+				return { loggedInClient };
 			};
 
-			it('should return status 200 for successful request', async () => {
-				const { loggedInClient, fileRecordIds } = await setup();
+			it('should return status 400 for invalid fileRecordId', async () => {
+				const { loggedInClient } = setup();
 
+				const fileRecordIds = { fileRecordIds: ['123'] };
 				const response = await loggedInClient.delete(`/delete`, fileRecordIds);
+				const { validationErrors } = response.body as ApiValidationError;
 
-				expect(response.status).toEqual(200);
+				expect(validationErrors).toEqual([
+					{
+						errors: ['each value in fileRecordIds must be a mongodb id'],
+						field: ['fileRecordIds'],
+					},
+				]);
+				expect(response.status).toEqual(400);
 			});
+		});
+		describe(`with valid request data`, () => {
+			describe(`with single parent`, () => {
+				const setup = async () => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
-			it('should return right type of data', async () => {
-				const { loggedInClient, fileRecordIds } = await setup();
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 
-				const result = await loggedInClient.delete(`/delete`, fileRecordIds);
-				const response = result.body as FileRecordResponse;
+					const validId1 = new ObjectId().toHexString();
 
-				expect(response).toStrictEqual({
-					data: [
-						{
-							creatorId: expect.any(String),
-							id: expect.any(String),
-							name: expect.any(String),
-							url: expect.any(String),
-							parentId: expect.any(String),
-							createdAt: expect.any(String),
-							updatedAt: expect.any(String),
-							parentType: 'schools',
-							mimeType: 'text/plain',
-							deletedSince: expect.any(String),
-							securityCheckStatus: 'pending',
-							size: expect.any(Number),
-							previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
-						},
-						{
-							creatorId: expect.any(String),
-							id: expect.any(String),
-							name: expect.any(String),
-							url: expect.any(String),
-							parentId: expect.any(String),
-							createdAt: expect.any(String),
-							updatedAt: expect.any(String),
-							parentType: 'schools',
-							mimeType: 'text/plain',
-							deletedSince: expect.any(String),
-							securityCheckStatus: 'pending',
-							size: expect.any(Number),
-							previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
-						},
-						{
-							creatorId: expect.any(String),
-							id: expect.any(String),
-							name: expect.any(String),
-							url: expect.any(String),
-							parentId: expect.any(String),
-							createdAt: expect.any(String),
-							updatedAt: expect.any(String),
-							parentType: 'schools',
-							mimeType: 'text/plain',
-							deletedSince: expect.any(String),
-							securityCheckStatus: 'pending',
-							size: expect.any(Number),
-							previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
-						},
-					],
-					total: 3,
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+					const result1 = await loggedInClient
+						.post(`/upload/school/${validId1}/schools/${validId1}`)
+						.attach('file', Buffer.from('abcd'), 'test1.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response1 = result1.body as FileRecordResponse;
+					const fileRecordId1 = response1.id;
+
+					const result2 = await loggedInClient
+						.post(`/upload/school/${validId1}/schools/${validId1}`)
+						.attach('file', Buffer.from('abcd'), 'test1.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response2 = result2.body as FileRecordResponse;
+					const fileRecordId2 = response2.id;
+
+					const fileRecordIds = { fileRecordIds: [fileRecordId1, fileRecordId2] };
+
+					return { loggedInClient, fileRecordIds };
+				};
+
+				it('should return status 200 for successful request', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
+
+					expect(response.status).toEqual(200);
+				});
+
+				it('should return right type of data', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					const result = await loggedInClient.delete(`/delete`, fileRecordIds);
+					const response = result.body as FileRecordResponse;
+
+					expect(response).toStrictEqual({
+						data: [
+							{
+								creatorId: expect.any(String),
+								id: expect.any(String),
+								name: expect.any(String),
+								url: expect.any(String),
+								parentId: expect.any(String),
+								createdAt: expect.any(String),
+								updatedAt: expect.any(String),
+								parentType: 'schools',
+								mimeType: 'text/plain',
+								deletedSince: expect.any(String),
+								securityCheckStatus: 'pending',
+								size: expect.any(Number),
+								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+							},
+							{
+								creatorId: expect.any(String),
+								id: expect.any(String),
+								name: expect.any(String),
+								url: expect.any(String),
+								parentId: expect.any(String),
+								createdAt: expect.any(String),
+								updatedAt: expect.any(String),
+								parentType: 'schools',
+								mimeType: 'text/plain',
+								deletedSince: expect.any(String),
+								securityCheckStatus: 'pending',
+								size: expect.any(Number),
+								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+							},
+						],
+						total: 2,
+					});
+				});
+
+				it('should call checkPermissionsByReference only once for two filerecords with same parent', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+					jest.clearAllMocks();
+
+					await loggedInClient.delete(`/delete`, fileRecordIds);
+
+					expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledTimes(1);
 				});
 			});
 
-			it('should call checkPermissionsByReference only once for two filerecords with same parent', async () => {
-				const { loggedInClient, fileRecordIds } = await setup();
-				jest.clearAllMocks();
+			describe(`with two different parents`, () => {
+				const setup = async () => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
-				await loggedInClient.delete(`/delete`, fileRecordIds);
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 
-				// We expect two calls because we have two different parents in three file records
-				expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledTimes(2);
+					const validId1 = new ObjectId().toHexString();
+
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+					const result1 = await loggedInClient
+						.post(`/upload/school/${validId1}/schools/${validId1}`)
+						.attach('file', Buffer.from('abcd'), 'test1.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response1 = result1.body as FileRecordResponse;
+					const fileRecordId1 = response1.id;
+
+					const validId2 = new ObjectId().toHexString();
+
+					const result2 = await loggedInClient
+						.post(`/upload/school/${validId2}/schools/${validId2}`)
+						.attach('file', Buffer.from('abcd'), 'test1.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response2 = result2.body as FileRecordResponse;
+					const fileRecordId2 = response2.id;
+
+					const fileRecordIds = { fileRecordIds: [fileRecordId1, fileRecordId2] };
+
+					return { loggedInClient, fileRecordIds };
+				};
+
+				it('should return error status', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
+
+					expect(response.body).toEqual({
+						code: 400,
+						message: 'Bad Request',
+						title: 'Two Many Different Parents',
+						type: ErrorType.TO_MANY_DIFFERENT_PARENTS,
+					});
+				});
 			});
 		});
 	});
