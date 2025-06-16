@@ -82,25 +82,11 @@ export class FilesStorageUC {
 	}
 
 	private async checkPermissions(fileRecords: FileRecord[], context: AuthorizationContextParams): Promise<void> {
-		const uniqueParents = this.getUniqueParents(fileRecords);
+		const uniqueParents = FileRecord.getUniqueParents(fileRecords);
 
 		for (const [parentId, parentType] of uniqueParents) {
 			await this.checkPermission(parentType, parentId, context);
 		}
-	}
-
-	private getUniqueParents(fileRecords: FileRecord[]): Map<EntityId, FileRecordParentType> {
-		const parentMap = new Map<EntityId, FileRecordParentType>();
-
-		for (const fileRecord of fileRecords) {
-			const { parentType, parentId } = fileRecord.getParentInfo();
-
-			if (!parentMap.has(parentId)) {
-				parentMap.set(parentId, parentType);
-			}
-		}
-
-		return parentMap;
 	}
 
 	public getPublicConfig(): FilesStorageConfigResponse {
