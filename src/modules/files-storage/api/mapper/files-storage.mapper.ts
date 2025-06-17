@@ -69,9 +69,11 @@ export class FilesStorageMapper {
 			disposition = `attachment;`;
 		}
 
+		const encodedFileName = encodeURIComponent(fileResponse.name);
+
 		const streamableFile = new StreamableFile(fileResponse.data, {
 			type: fileResponse.contentType,
-			disposition: `${disposition} filename="${encodeURI(fileResponse.name)}"`,
+			disposition: `${disposition}; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`,
 			length: fileResponse.contentLength,
 		});
 

@@ -1,8 +1,8 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
-import { NotImplementedException } from '@nestjs/common';
+import { NotImplementedException, StreamableFile } from '@nestjs/common';
 import { PreviewStatus, StorageLocation } from '../../domain';
 import { FileRecordParentType } from '../../domain/interface';
-import { fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, GetFileResponseTestFactory } from '../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../dto';
 import { FilesStorageMapper } from './files-storage.mapper';
 
@@ -124,6 +124,82 @@ describe('FilesStorageMapper', () => {
 
 			expect(result.data).toBeInstanceOf(Array);
 			expect(result.data[0]).toBeInstanceOf(FileRecordResponse);
+		});
+	});
+
+	describe('mapToStreamableFile', () => {
+		describe('when file is a PDF', () => {
+			const setup = () => {
+				const fileResponse = GetFileResponseTestFactory.build({
+					name: 'test.pdf',
+					mimeType: 'application/pdf',
+				});
+
+				return { fileResponse };
+			};
+
+			it('should return StreamableFile with inline disposition', () => {
+				const { fileResponse } = setup();
+
+				const result = FilesStorageMapper.mapToStreamableFile(fileResponse);
+
+				expect(result).toBeInstanceOf(StreamableFile);
+
+				const options = result.options;
+				expect(options.type).toBe('application/pdf');
+				expect(options.length).toBe(8);
+				expect(options.disposition).toContain('inline;');
+				expect(options.disposition).toContain('filename="test.pdf"');
+				expect(options.disposition).toContain("filename*=UTF-8''test.pdf");
+			});
+		});
+
+		describe('when file is not a PDF', () => {
+			const setup = () => {
+				const fileResponse = GetFileResponseTestFactory.build({
+					name: 'test.txt',
+					mimeType: 'text/plain',
+				});
+
+				return { fileResponse };
+			};
+
+			it('should return StreamableFile with attachment disposition', () => {
+				const { fileResponse } = setup();
+
+				const result = FilesStorageMapper.mapToStreamableFile(fileResponse);
+
+				expect(result).toBeInstanceOf(StreamableFile);
+
+				const options = result.options;
+				expect(options.type).toBe('text/plain');
+				expect(options.length).toBe(8);
+				expect(options.disposition).toContain('attachment;');
+				expect(options.disposition).toContain('filename="test.txt"');
+				expect(options.disposition).toContain("filename*=UTF-8''test.txt");
+			});
+		});
+
+		describe('when file has special characters in name', () => {
+			const setup = () => {
+				const fileResponse = GetFileResponseTestFactory.build({
+					name: 'ü bär.pdf',
+					mimeType: 'application/pdf',
+				});
+
+				return { fileResponse };
+			};
+
+			it('should encode special characters in filename', () => {
+				const { fileResponse } = setup();
+
+				const result = FilesStorageMapper.mapToStreamableFile(fileResponse);
+
+				const options = result.options;
+				const encoded = encodeURIComponent('ü bär.pdf');
+				expect(options.disposition).toContain(`filename="${encoded}"`);
+				expect(options.disposition).toContain(`filename*=UTF-8''${encoded}`);
+			});
 		});
 	});
 });
