@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { ErrorType } from '../domain';
 
-export class TwoManyDifferentParentsException extends BadRequestException implements Loggable {
+export class ToManyDifferentParentsException extends BadRequestException implements Loggable {
 	constructor(
 		private readonly parentIds: EntityId[],
 		private readonly numberOfAllowedParents: number

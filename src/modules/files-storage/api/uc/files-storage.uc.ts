@@ -24,7 +24,7 @@ import {
 	PreviewService,
 	StorageLocation,
 } from '../../domain';
-import { TwoManyDifferentParentsException } from '../../loggable';
+import { ToManyDifferentParentsException } from '../../loggable';
 import {
 	CopyFileParams,
 	CopyFileResponse,
@@ -100,7 +100,7 @@ export class FilesStorageUC {
 		const parentIds = Array.from(parents.keys());
 
 		if (parentIds.length > maximumOfDifferentParents) {
-			throw new TwoManyDifferentParentsException(parentIds, maximumOfDifferentParents);
+			throw new ToManyDifferentParentsException(parentIds, maximumOfDifferentParents);
 		}
 	}
 

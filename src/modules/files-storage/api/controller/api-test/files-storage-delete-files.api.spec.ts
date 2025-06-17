@@ -478,7 +478,7 @@ describe(`${baseRouteName} (api)`, () => {
 					expect(response.body).toEqual({
 						code: 400,
 						message: 'Bad Request',
-						title: 'Two Many Different Parents',
+						title: 'To Many Different Parents',
 						type: ErrorType.TO_MANY_DIFFERENT_PARENTS,
 					});
 				});
