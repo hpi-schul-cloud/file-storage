@@ -3,6 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
 import { FileRecord, PreviewOutputMimeTypes, PreviewStatus, ScanStatus } from './file-record.do';
+import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
 
 describe('FileRecord', () => {
 	describe('hasDuplicateName', () => {
@@ -345,6 +346,32 @@ describe('FileRecord', () => {
 			const path = fileRecord.createPreviewDirectoryPath();
 
 			expect(path).toBe(expectedPath);
+		});
+	});
+
+	describe('getUniqueParents', () => {
+		describe('WHEN filerRecords has parent duplicates', () => {
+			it('should return a map with unique parentId as key and parentType as value', () => {
+				const fileRecords = [
+					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
+					fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' }),
+					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
+				];
+
+				const result = FileRecord.getUniqueParents(fileRecords);
+
+				expect(result.size).toBe(2);
+				expect(result.get('id1')).toBe(FileRecordParentType.User);
+				expect(result.get('id2')).toBe(FileRecordParentType.School);
+			});
+		});
+
+		describe('WHEN fileRecords is empty', () => {
+			it('should return an empty map if fileRecords is empty', () => {
+				const result = FileRecord.getUniqueParents([]);
+
+				expect(result.size).toBe(0);
+			});
 		});
 	});
 });
