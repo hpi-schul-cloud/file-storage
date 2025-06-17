@@ -26,6 +26,7 @@ import {
 } from '../../domain';
 import { ToManyDifferentParentsException } from '../../loggable';
 import {
+	ArchiveFileParams,
 	CopyFileParams,
 	CopyFileResponse,
 	CopyFilesOfParentParams,
@@ -236,6 +237,15 @@ export class FilesStorageUC {
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
 
 		const result = this.previewService.download(fileRecord, previewFileParams);
+
+		return result;
+	}
+
+	public async downloadFilesAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
+		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
+		await this.checkPermissions(fileRecords, FileStorageAuthorizationContext.read);
+
+		const result = await this.filesStorageService.downloadFilesAsArchive(fileRecords, params.archiveName);
 
 		return result;
 	}

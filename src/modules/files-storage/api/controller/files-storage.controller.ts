@@ -29,6 +29,7 @@ import { RequestTimeout } from '@shared/decorator';
 import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
 import {
+	ArchiveFileParams,
 	CopyFileListResponse,
 	CopyFileParams,
 	CopyFileResponse,
@@ -164,6 +165,33 @@ export class FilesStorageController {
 		}
 
 		const streamableFile = this.streamFileToClient(req, fileResponse, response, bytesRange);
+
+		return streamableFile;
+	}
+
+	@ApiOperation({ summary: 'Download multiple files as a zip' })
+	@ApiResponse({
+		status: 200,
+		schema: { type: 'string', format: 'binary' },
+	})
+	@ApiResponse({
+		status: 206,
+		schema: { type: 'string', format: 'binary' },
+	})
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@ApiHeader({ name: 'Range', required: false })
+	@Post('/download-files-as-archive')
+	@UseInterceptors(RequestLoggingInterceptor)
+	public async downloadFilesAsArchive(
+		@Body() params: ArchiveFileParams,
+		@Req() req: Request,
+		@Res({ passthrough: true }) response: Response
+	): Promise<StreamableFile | void> {
+		const data = await this.filesStorageUC.downloadFilesAsArchive(params);
+
+		const streamableFile = this.streamFileToClient(req, data, response);
 
 		return streamableFile;
 	}

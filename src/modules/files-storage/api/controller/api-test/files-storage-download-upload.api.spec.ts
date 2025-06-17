@@ -61,9 +61,12 @@ describe('files-storage controller (API)', () => {
 		await module.close();
 	});
 
+	afterEach(() => {
+		jest.resetAllMocks();
+	});
+
 	describe('upload action', () => {
 		const setup = () => {
-			jest.resetAllMocks();
 			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -200,7 +203,6 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -285,7 +287,6 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe(`with new file`, () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -345,7 +346,6 @@ describe('files-storage controller (API)', () => {
 
 			describe(`with already existing file`, () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -401,7 +401,6 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -458,7 +457,6 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe('when mimetype is not application/pdf', () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -515,7 +513,6 @@ describe('files-storage controller (API)', () => {
 
 			describe('when mimetype is application/pdf', () => {
 				const setup = async () => {
-					jest.resetAllMocks();
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -553,10 +550,157 @@ describe('files-storage controller (API)', () => {
 		});
 	});
 
+	describe('download multiple files action', () => {
+		describe('with not authenticated user', () => {
+			it('should return status 401', async () => {
+				const result = await testApiClient.post('/download-files-as-archive', {
+					fileRecordIds: ['123'],
+					archiveName: 'test',
+				});
+
+				expect(result.status).toEqual(401);
+			});
+		});
+
+		describe('with bad request data', () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+				const validId = new ObjectId().toHexString();
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				const result = await loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.attach('file', Buffer.from('abcd'), 'test.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+				const fileRecord = result.body as FileRecordEntity;
+
+				return { validId, loggedInClient, fileRecord };
+			};
+
+			it('should return status 400 for invalid recordId', async () => {
+				const { loggedInClient } = await setup();
+
+				const result = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: ['123'],
+					archiveName: 'test',
+				});
+				const { validationErrors } = result.body as ApiValidationError;
+
+				expect(validationErrors).toEqual([
+					{
+						errors: ['each value in fileRecordIds must be a mongodb id'],
+						field: ['fileRecordIds'],
+					},
+				]);
+				expect(result.status).toEqual(400);
+			});
+
+			it('should return status 404 for file not found', async () => {
+				const { loggedInClient } = await setup();
+				const notExistingId = new ObjectId().toHexString();
+
+				const response = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: [notExistingId],
+					archiveName: 'test',
+				});
+
+				expect(response.status).toEqual(404);
+			});
+		});
+
+		describe(`with valid request data`, () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+				const validId = new ObjectId().toHexString();
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				const result1 = await loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.attach('file', Buffer.from('abcd'), 'test.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+				const uploadedFile1 = result1.body as FileRecordEntity;
+
+				const result2 = await loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.attach('file', Buffer.from('abcd'), 'test.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+				const uploadedFile2 = result2.body as FileRecordEntity;
+
+				const expectedResponse1 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4', mimeType: 'image/webp' });
+				s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse1);
+
+				const expectedResponse2 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4', mimeType: 'plain/text' });
+				s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse2);
+
+				return { uploadedFile1, uploadedFile2, loggedInClient };
+			};
+
+			it('should return status 200 for successful download', async () => {
+				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
+
+				const response = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
+					archiveName: 'test',
+				});
+
+				expect(response.status).toEqual(200);
+			});
+
+			it('should set content-disposition header to attachment', async () => {
+				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
+
+				const response = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
+					archiveName: 'test',
+				});
+
+				const headers = response.headers as Record<string, string>;
+
+				expect(headers['content-disposition']).toMatch('attachment');
+			});
+
+			it('should set content-disposition header has file name', async () => {
+				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
+
+				const response = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
+					archiveName: 'test',
+				});
+
+				const headers = response.headers as Record<string, string>;
+
+				expect(headers['content-disposition']).toMatch('test.zip');
+			});
+
+			it('should set content type header to attachment', async () => {
+				const { uploadedFile1, uploadedFile2, loggedInClient } = await setup();
+
+				const response = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: [uploadedFile1.id, uploadedFile2.id],
+					archiveName: 'test',
+				});
+
+				const headers = response.headers as Record<string, string>;
+
+				expect(headers['content-type']).toMatch('application/zip');
+			});
+		});
+	});
+
 	describe('file-security.download()', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -577,7 +721,6 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				jest.resetAllMocks();
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
