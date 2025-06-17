@@ -20,9 +20,9 @@ export class GetFileTestFactory {
 }
 
 export class GetFileResponseTestFactory {
-	public static build(contentRange?: string): GetFileResponse {
-		const name = 'testName';
-		const file = GetFileTestFactory.build({ contentRange });
+	public static build(props: { contentRange?: string; mimeType?: string; name?: string } = {}): GetFileResponse {
+		const name = props.name ?? 'testName';
+		const file = GetFileTestFactory.build(props);
 		const fileResponse = { ...file, name };
 
 		return fileResponse;
