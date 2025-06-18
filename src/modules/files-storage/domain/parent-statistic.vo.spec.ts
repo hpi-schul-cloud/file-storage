@@ -1,4 +1,4 @@
-import { ParentStatistic } from './parent-statistic';
+import { ParentStatistic } from './parent-statistic.vo';
 
 describe('ParentStatistic', () => {
 	it('should create an instance with positive values', () => {

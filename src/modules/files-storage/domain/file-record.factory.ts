@@ -1,6 +1,7 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
-import { FileRecord, FileRecordProps, FileRecordSecurityCheck, ParentInfo } from './file-record.do';
+import { FileRecord, FileRecordProps, ParentInfo } from './file-record.do';
+import { FileRecordSecurityCheck } from './security-check.vo';
 
 export class FileRecordFactory {
 	private static build(fileRecordProps: FileRecordProps, securityCheck: FileRecordSecurityCheck): FileRecord {

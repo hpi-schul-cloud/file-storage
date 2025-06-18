@@ -1,6 +1,6 @@
 import { ScanResult } from '@infra/antivirus';
 import { ScanResultDto } from '../dto';
-import { ScanStatus } from '../file-record.do';
+import { ScanStatus } from '../security-check.vo';
 
 export class ScanResultDtoMapper {
 	public static fromScanResult(scanResult: ScanResult): ScanResultDto {
