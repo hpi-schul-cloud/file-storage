@@ -274,7 +274,7 @@ describe('FilesStorageUC', () => {
 		describe('when user is authorised but no files exist', () => {
 			const setup = () => {
 				const { params } = buildFileRecordsWithParams();
-				const stats = { fileCount: 0, totalSizeInBytes: 0 };
+				const stats = parentStatisticTestFactory().build({ fileCount: 0, totalSizeInBytes: 0 });
 
 				filesStorageService.getParentStatistic.mockResolvedValueOnce(stats);
 				authorizationClientAdapter.checkPermissionsByReference.mockResolvedValueOnce();

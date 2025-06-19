@@ -8,7 +8,7 @@ class TestObject {
 
 	boolean!: boolean;
 
-	array!: Array<unknown>;
+	array!: unknown[];
 }
 
 class Dto {

@@ -15,12 +15,13 @@ import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileRecord, ParentInfo, ScanStatus } from '../file-record.do';
+import { FileRecord, ParentInfo } from '../file-record.do';
 import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-import { ParentStatistic } from '../parent-statistic';
+import { ParentStatistic } from '../parent-statistic.vo';
+import { ScanStatus } from '../security-check.vo';
 import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 

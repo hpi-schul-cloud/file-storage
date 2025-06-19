@@ -1,15 +1,16 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
-import { FileRecord, FileRecordProps, FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../file-record.do';
+import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../security-check.vo';
 import { FilesStorageService } from './files-storage.service';
-import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();

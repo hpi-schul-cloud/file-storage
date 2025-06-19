@@ -1,10 +1,16 @@
-import { IsInt, IsNumber, Min, validateSync } from 'class-validator';
+import { ValueObject } from '@shared/domain/value-object.decorator';
+import { IsInt, IsNumber, Min } from 'class-validator';
+
+declare module './parent-statistic.vo' {
+	interface ParentStatistic extends ValueObject {}
+}
 
 export interface ParentStatisticProps {
 	fileCount: number;
 	totalSizeInBytes: number;
 }
 
+@ValueObject
 export class ParentStatistic {
 	@IsInt()
 	@Min(0)
@@ -18,12 +24,5 @@ export class ParentStatistic {
 
 		this.fileCount = fileCount;
 		this.totalSizeInBytes = totalSizeInBytes;
-
-		// Should be replaced by value object decorator for the class in the future
-		const errors = validateSync(this, { skipMissingProperties: false });
-
-		if (errors.length > 0) {
-			throw new Error(errors.toString());
-		}
 	}
 }
