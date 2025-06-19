@@ -27,7 +27,7 @@ function ValueObjectHelpers<TBase extends Constructor>(Base: TBase): TBase {
 	} as TBase;
 }
 
-export function ValueObject<T extends new (...args: any[]) => {}>(constructor: T): T {
+export function ValueObject<T extends Constructor>(constructor: T): T {
 	const Mixed = ValueObjectHelpers(constructor);
 
 	return class extends Mixed {
