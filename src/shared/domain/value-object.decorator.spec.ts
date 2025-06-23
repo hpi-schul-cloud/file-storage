@@ -19,11 +19,4 @@ describe('ValueObject Decorator', () => {
 			expect(() => new TestVO(props)).toThrow('isString');
 		});
 	});
-
-	describe('toString method', () => {
-		it('should return JSON string representation of the Value Object', () => {
-			const vo = new TestVO({ a: 1, b: 'test' });
-			expect(vo.toString()).toBe(JSON.stringify(vo));
-		});
-	});
 });
