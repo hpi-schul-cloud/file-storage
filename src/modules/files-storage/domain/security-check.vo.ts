@@ -2,10 +2,6 @@ import { ValueObject } from '@shared/domain/value-object.decorator';
 import { IsDate, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { randomUUID } from 'node:crypto';
 
-declare module './security-check.vo' {
-	interface FileRecordSecurityCheck extends ValueObject {}
-}
-
 export enum ScanStatus {
 	PENDING = 'pending',
 	VERIFIED = 'verified',
@@ -21,7 +17,7 @@ export interface FileRecordSecurityCheckProps {
 	requestToken?: string;
 }
 
-@ValueObject
+@ValueObject()
 export class FileRecordSecurityCheck implements FileRecordSecurityCheckProps {
 	@IsEnum(ScanStatus)
 	public readonly status: ScanStatus;

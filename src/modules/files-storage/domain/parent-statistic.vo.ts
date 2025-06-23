@@ -1,16 +1,12 @@
 import { ValueObject } from '@shared/domain/value-object.decorator';
 import { IsInt, IsNumber, Min } from 'class-validator';
 
-declare module './parent-statistic.vo' {
-	interface ParentStatistic extends ValueObject {}
-}
-
 export interface ParentStatisticProps {
 	fileCount: number;
 	totalSizeInBytes: number;
 }
 
-@ValueObject
+@ValueObject()
 export class ParentStatistic {
 	@IsInt()
 	@Min(0)

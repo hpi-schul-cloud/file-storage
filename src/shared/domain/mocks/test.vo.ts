@@ -1,16 +1,12 @@
 import { IsInt, IsString } from 'class-validator';
 import { ValueObject } from '../value-object.decorator';
 
-declare module './test.vo' {
-	interface TestVO extends ValueObject {}
-}
-
 interface TestVOProps {
 	a: number;
 	b: string;
 }
 
-@ValueObject
+@ValueObject()
 export class TestVO {
 	@IsInt()
 	public readonly integer: number;
