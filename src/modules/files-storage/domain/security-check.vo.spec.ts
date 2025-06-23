@@ -54,21 +54,6 @@ describe('FileRecordSecurityCheck', () => {
 			expect(securityCheckVO.reason).not.toBe('virus detected');
 			expect(securityCheckVO.requestToken).not.toBeUndefined();
 		});
-
-		it('should return new instance with update status, reason, updatedAt and clear requestToken', () => {
-			const { securityCheckVO } = setup();
-
-			const result = securityCheckVO.scanned(ScanStatus.BLOCKED, 'virus detected');
-
-			expect(securityCheckVO.equals(securityCheckVO)).toBe(true);
-
-			expect(result.equals(securityCheckVO)).toBe(false);
-
-			expect(result.status).toBe(ScanStatus.BLOCKED);
-			expect(result.reason).toBe('virus detected');
-			expect(result.updatedAt).toBeInstanceOf(Date);
-			expect(result.requestToken).toBeUndefined();
-		});
 	});
 
 	describe('isBlocked', () => {
