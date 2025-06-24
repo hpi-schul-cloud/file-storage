@@ -1,6 +1,8 @@
+import { Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
+@Configuration()
 export class AntivirusConfig {
 	// the antivirus service is enabled
 	@IsBoolean()

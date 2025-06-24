@@ -1,7 +1,9 @@
+import { Configuration } from '@infra/configuration';
 import { Transform } from 'class-transformer';
 import { IsString } from 'class-validator';
 import { Algorithm } from 'jsonwebtoken';
 
+@Configuration()
 export class AuthGuardConfig {
 	@IsString()
 	@Transform(({ value }) => value.replace(/\\n/g, '\n'))

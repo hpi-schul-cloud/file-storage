@@ -1,11 +1,12 @@
+import { Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
 import { S3Config } from '@infra/s3-client';
-import { Injectable } from '@nestjs/common';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
 
 export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
-@Injectable()
+
+@Configuration()
 export class FileStorageConfig {
 	@IsNumber()
 	@StringToNumber()
@@ -35,6 +36,7 @@ export class FileStorageConfig {
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
 }
 
+@Configuration()
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	[key: string]: number;
 
