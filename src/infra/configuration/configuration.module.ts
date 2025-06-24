@@ -1,6 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigModuleOptions } from '@nestjs/config';
-import { Configuration } from './configuration.service';
+import { ConfigurationService } from './configuration.service';
 
 const getEnvConfig = (): ConfigModuleOptions => {
 	const envConfig = {
@@ -27,14 +27,14 @@ export class ConfigurationModule {
 		return {
 			imports: [ConfigModule.forRoot(getEnvConfig())],
 			providers: [
-				Configuration,
+				ConfigurationService,
 				{
 					provide: Constructor,
-					useFactory: (config: Configuration): T => config.getAllValidConfigsByType(Constructor),
-					inject: [Configuration],
+					useFactory: (config: ConfigurationService): T => config.loadAndValidateConfigs(Constructor),
+					inject: [ConfigurationService],
 				},
 			],
-			exports: [Configuration, Constructor],
+			exports: [ConfigurationService, Constructor],
 			module: ConfigurationModule,
 		};
 	}

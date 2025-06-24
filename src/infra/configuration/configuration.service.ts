@@ -2,28 +2,39 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClassFromExist } from 'class-transformer';
 import { validateSync } from 'class-validator';
+import { WithConfigurationDecorator } from './configuration.decorator';
 
 @Injectable()
-export class Configuration {
+export class ConfigurationService {
 	constructor(private readonly configService: ConfigService) {}
 
-	public getAllValidConfigsByType<T extends object>(Constructor: new () => T): T {
-		const configInstance = new Constructor();
-		const configKeys = Object.keys(configInstance);
-		const configValues = configKeys.reduce((acc: Record<string, unknown>, key) => {
-			const value = this.configService.get(key);
+	public loadAndValidateConfigs<T extends object>(Constructor: new () => T): T {
+		const configInstance = this.initializeAndLoadConfig<T>(Constructor);
 
-			if (value) {
-				acc[key] = value;
-			}
-
-			return acc;
-		}, {});
-
-		const config = plainToClassFromExist(configInstance, configValues, { enableImplicitConversion: false });
-		const validatedConfig = this.validate(config);
+		const validatedConfig = this.validate(configInstance);
 
 		return validatedConfig;
+	}
+
+	private initializeAndLoadConfig<T>(Constructor: new () => T): T {
+		let configInstance = new Constructor() as T & WithConfigurationDecorator;
+
+		if (!configInstance.getConfigKeys || typeof configInstance.getConfigKeys !== 'function') {
+			throw new Error(`The class ${Constructor.name} is not decorated with @Configuration()`);
+		}
+
+		const configKeys = configInstance.getConfigKeys();
+
+		configKeys.forEach((key) => {
+			const value = this.configService.get(String(key));
+			if (value !== undefined && value !== null) {
+				(configInstance as WithConfigurationDecorator)[key] = value;
+			}
+		});
+
+		configInstance = plainToClassFromExist(configInstance, { ...configInstance });
+
+		return configInstance;
 	}
 
 	private validate<T extends object>(validatedConfig: T): T {
