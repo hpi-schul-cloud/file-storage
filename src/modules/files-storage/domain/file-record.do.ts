@@ -143,7 +143,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public updateSecurityCheckStatus(status: ScanStatus, reason: string): void {
-		this.securityCheck = this.securityCheck.scanned(status, reason);
+		this.securityCheck = FileRecordSecurityCheck.scanned(status, reason);
 	}
 
 	public getSecurityToken(): string | undefined {

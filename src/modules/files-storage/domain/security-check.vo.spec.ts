@@ -48,7 +48,7 @@ describe('FileRecordSecurityCheck', () => {
 		it('should NOT update status, reason, updatedAt and clear requestToken', () => {
 			const { securityCheckVO } = setup();
 
-			securityCheckVO.scanned(ScanStatus.BLOCKED, 'virus detected');
+			FileRecordSecurityCheck.scanned(ScanStatus.BLOCKED, 'virus detected');
 
 			expect(securityCheckVO.status).not.toBe(ScanStatus.BLOCKED);
 			expect(securityCheckVO.reason).not.toBe('virus detected');

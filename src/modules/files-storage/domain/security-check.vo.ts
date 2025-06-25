@@ -52,7 +52,7 @@ export class FileRecordSecurityCheck implements FileRecordSecurityCheckProps {
 		return securityCheck;
 	}
 
-	public scanned(status: ScanStatus, reason: string): FileRecordSecurityCheck {
+	public static scanned(status: ScanStatus, reason: string): FileRecordSecurityCheck {
 		const scanned = new FileRecordSecurityCheck({
 			status,
 			reason,
