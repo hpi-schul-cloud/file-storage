@@ -1,7 +1,8 @@
 import { ConfigurationModule } from '@infra/configuration';
+import { RabbitMQWrapperModule } from '@infra/rabbitmq';
 import { DynamicModule, Module } from '@nestjs/common';
 import NodeClam from 'clamscan';
-import { AntivirusConfig } from './antivirus.config';
+import { AntivirusConfig, AntivirusExchange } from './antivirus.config';
 import { AntivirusService } from './antivirus.service';
 import { AntivirusServiceOptions } from './interfaces';
 
@@ -10,7 +11,7 @@ export class AntivirusModule {
 	public static forRoot(): DynamicModule {
 		return {
 			module: AntivirusModule,
-			imports: [ConfigurationModule.register(AntivirusConfig)],
+			imports: [ConfigurationModule.register(AntivirusConfig), RabbitMQWrapperModule.forRoot([AntivirusExchange])],
 			providers: [
 				AntivirusService,
 				{
@@ -19,7 +20,7 @@ export class AntivirusModule {
 						return {
 							enabled: config.ENABLE_FILE_SECURITY_CHECK,
 							filesServiceBaseUrl: config.FILE_STORAGE_SERVICE_URL,
-							exchange: config.ANTIVIRUS_EXCHANGE,
+							exchange: AntivirusExchange,
 							routingKey: config.ANTIVIRUS_ROUTING_KEY,
 						};
 					},
