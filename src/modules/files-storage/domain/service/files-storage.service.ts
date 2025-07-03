@@ -312,9 +312,15 @@ export class FilesStorageService {
 		try {
 			await this.deleteFilesInFilesStorageClient(fileRecords);
 		} catch (error) {
-			await this.fileRecordRepo.save(fileRecords);
+			this.rollbackFileRecords(fileRecords);
+
 			throw error;
 		}
+	}
+
+	private async rollbackFileRecords(fileRecords: FileRecord[]): Promise<void> {
+		FileRecord.unmarkForDelete(fileRecords);
+		await this.fileRecordRepo.save(fileRecords);
 	}
 
 	public async delete(fileRecords: FileRecord[]): Promise<void> {
