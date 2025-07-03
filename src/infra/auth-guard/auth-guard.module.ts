@@ -14,18 +14,21 @@ export enum AuthGuardOptions {
 export class AuthGuardModule {
 	public static register(options: AuthGuardOptions[]): DynamicModule {
 		const providers: Provider[] = [];
+		const imports: DynamicModule[] = [];
 
-		if (options.includes(AuthGuardOptions.JWT)) providers.push(JwtStrategy);
+		if (options.includes(AuthGuardOptions.JWT)) {
+			providers.push(JwtStrategy);
+			imports.push(ConfigurationModule.register(AuthGuardConfig));
+		}
 
-		if (options.includes(AuthGuardOptions.X_API_KEY)) providers.push(XApiKeyStrategy);
+		if (options.includes(AuthGuardOptions.X_API_KEY)) {
+			providers.push(XApiKeyStrategy);
+			imports.push(ConfigurationModule.register(XApiKeyConfig));
+		}
 
 		return {
 			module: AuthGuardModule,
-			imports: [
-				PassportModule,
-				ConfigurationModule.register(AuthGuardConfig),
-				ConfigurationModule.register(XApiKeyConfig),
-			],
+			imports: [PassportModule, ...imports],
 			providers,
 			exports: [],
 		};

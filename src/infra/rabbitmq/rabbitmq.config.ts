@@ -1,6 +1,8 @@
+import { Configuration } from '@infra/configuration';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber, IsString } from 'class-validator';
 
+@Configuration()
 export class RabbitMqConfig {
 	@IsNumber()
 	@StringToNumber()
