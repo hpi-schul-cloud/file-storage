@@ -14,6 +14,8 @@ import {
 	FilesStorageConfigController,
 	FilesStorageController,
 	FilesStorageUC,
+	WopiController,
+	WopiUc,
 } from './api';
 import { FileStorageConfig, RequestTimeoutConfig } from './files-storage.config';
 import { ENTITIES } from './files-storage.entity.imports';
@@ -36,7 +38,8 @@ import { FilesStorageModule } from './files-storage.module';
 		FilesStorageConfigController,
 		FileSecurityController,
 		FilesStorageAdminController,
+		WopiController,
 	],
-	providers: [FilesStorageUC, FilesStorageAdminUC],
+	providers: [FilesStorageUC, FilesStorageAdminUC, WopiUc],
 })
 export class FilesStorageApiModule {}
