@@ -50,6 +50,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.2",
     "@nestjs/swagger": "^11.2.0",
+    "@xmldom/xmldom": "^0.9.8",
     "archiver": "^7.0.1",
     "axios": "^1.9.0",
     "busboy": "^1.6.0",
@@ -71,7 +72,8 @@
     "response-time": "^2.3.3",
     "rxjs": "^7.8.2",
     "sanitize-html": "^2.17.0",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "xpath": "^0.0.34"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
