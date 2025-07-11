@@ -70,19 +70,18 @@ export class FilesStorageController {
 		@JWT() jwt: string,
 		@CurrentUser() currentUser: ICurrentUser,
 	): Promise<FileRecordResponse> {
-		const headers = { ...body.headers, Authorization: `Bearer ${jwt}` };
-		const urlparams = { ...body, headers };
+		const urlParams = this.ensureAuthorisationHeader(body, jwt);
 
-		const fileRecord = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...urlparams, ...params });
+		const fileRecord = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...urlParams, ...params });
 
 		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
 
 		return response;
 	}
 
-	private ensureAuthorisationInHeader(body: FileUrlParams, jwt: string) {
+	private ensureAuthorisationHeader(body: FileUrlParams, jwt: string): FileUrlParams {
 		const headers = { ...body.headers, Authorization: `Bearer ${jwt}` };
-		const urlparams = { ...body, headers };
+		const urlParams = { ...body, headers };
 		return urlParams;
 	}
 
