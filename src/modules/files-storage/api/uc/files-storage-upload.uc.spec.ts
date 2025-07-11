@@ -21,6 +21,8 @@ import { fileRecordTestFactory } from '../../testing';
 import { FileRecordParams } from '../dto';
 import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
 import { FilesStorageUC, FileStorageAuthorizationContext } from './files-storage.uc';
+import { REQUEST } from '@nestjs/core';
+import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
 
 const createAxiosResponse = <T>(data: T, headers?: AxiosHeadersKeyValue) =>
 	axiosResponseFactory.build({
@@ -71,6 +73,7 @@ describe('FilesStorageUC upload methods', () => {
 	let filesStorageService: DeepMocked<FilesStorageService>;
 	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 	let httpService: DeepMocked<HttpService>;
+	const jwtToken = randomBytes(16).toString('hex');
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -112,6 +115,20 @@ describe('FilesStorageUC upload methods', () => {
 					provide: EntityManager,
 					useValue: createMock<EntityManager>(),
 				},
+				{
+					provide: REQUEST,
+					useValue: createMock<Request>({
+						headers: {
+							authorization: `Bearer ${jwtToken}`,
+						},
+					}),
+				},
+				{
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>({
+						JWT_DOMAIN: 'localhost',
+					}),
+				},
 			],
 		}).compile();
 
@@ -134,26 +151,32 @@ describe('FilesStorageUC upload methods', () => {
 	});
 
 	describe('uploadFromUrl is called', () => {
-		const createUploadFromUrlParams = (storageLocation: StorageLocation = StorageLocation.SCHOOL) => {
+		const createUploadFromUrlParams = (storageLocation: StorageLocation = StorageLocation.SCHOOL, internalUrl = true, passAuthHeader = true) => {
 			const { params, userId, fileRecords } = buildFileRecordsWithParams(storageLocation);
 			const fileRecord = fileRecords[0];
 
+			const url = internalUrl
+				? 'http://localhost/test.jpg'
+				: `http://example.com/test.jpg`;
+
+			const headers = passAuthHeader
+				? { Authorization: `Bearer ${jwtToken}` }
+				: undefined;
+
 			const uploadFromUrlParams = {
 				...params,
-				url: 'http://localhost/test.jpg',
+				url,
 				fileName: 'test.jpg',
-				headers: {
-					authorization: `Bearer ${randomBytes(16).toString('hex')}`,
-				},
+				headers
 			};
 
-			const headers = {
+			const responseHeaders = {
 				connection: 'keep-alive',
 				'content-length': '10699',
 				'content-type': 'image/jpeg',
 			};
 			const readable = Readable.from('abc');
-			const response = createAxiosResponse(readable, headers);
+			const response = createAxiosResponse(readable, responseHeaders);
 
 			return { fileRecord, userId, uploadFromUrlParams, response };
 		};
@@ -225,6 +248,31 @@ describe('FilesStorageUC upload methods', () => {
 				const result = await filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams);
 
 				expect(result).toEqual(fileRecord);
+			});
+		});
+
+		describe('WHEN user is authorised, url is external', () => {
+			const setup = () => {
+				const { fileRecord, userId, uploadFromUrlParams, response } = createUploadFromUrlParams(StorageLocation.SCHOOL, false, false);
+
+				httpService.get.mockReturnValueOnce(of(response));
+
+				filesStorageService.uploadFile.mockResolvedValueOnce(fileRecord);
+
+				return { uploadFromUrlParams, userId, response, fileRecord };
+			};
+
+			it('should call uploadFile without an Authorisation Header', async () => {
+				const { uploadFromUrlParams, userId, response } = setup();
+
+				await filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams);
+
+				const expectedFileDescription = FileDtoBuilder.buildFromAxiosResponse(uploadFromUrlParams.fileName, response);
+				expect(filesStorageService.uploadFile).toHaveBeenCalledWith(
+					userId,
+					expect.not.objectContaining({headers: {Authorization: expect.anything()}}),
+					expectedFileDescription
+				);
 			});
 		});
 

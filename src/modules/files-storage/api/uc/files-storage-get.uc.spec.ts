@@ -11,6 +11,10 @@ import { FileRecord, FileRecordParentType, FilesStorageService, PreviewService, 
 import { fileRecordTestFactory, parentStatisticTestFactory } from '../../testing';
 import { FileRecordParams } from '../dto';
 import { FilesStorageUC, FileStorageAuthorizationContext } from './files-storage.uc';
+import { Request } from 'express';
+import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
+import { randomBytes } from 'node:crypto';
+import { REQUEST } from '@nestjs/core';
 
 const buildFileRecordsWithParams = () => {
 	const userId = new ObjectId().toHexString();
@@ -73,6 +77,20 @@ describe('FilesStorageUC', () => {
 				{
 					provide: EntityManager,
 					useValue: createMock<EntityManager>(),
+				},
+				{
+					provide: REQUEST,
+					useValue: createMock<Request>({
+						headers: {
+							authorization: `Bearer ${randomBytes(16).toString('hex')}`,
+						},
+					}),
+				},
+				{
+					provide: FileStorageConfig,
+					useValue: createMock<FileStorageConfig>({
+						JWT_DOMAIN: 'localhost',
+					}),
 				},
 			],
 		}).compile();
