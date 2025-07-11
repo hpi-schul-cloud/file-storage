@@ -67,8 +67,8 @@ export class FilesStorageController {
 	public async uploadFromUrl(
 		@Body() body: FileUrlParams,
 		@Param() params: FileRecordParams,
-		@CurrentUser() currentUser: ICurrentUser,
 		@JWT() jwt: string,
+		@CurrentUser() currentUser: ICurrentUser,
 	): Promise<FileRecordResponse> {
 		const headers = { ...body.headers, Authorization: `Bearer ${jwt}` };
 		const urlparams = { ...body, headers };
@@ -78,6 +78,12 @@ export class FilesStorageController {
 		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
 
 		return response;
+	}
+
+	private ensureAuthorisationInHeader(body: FileUrlParams, jwt: string) {
+		const headers = { ...body.headers, Authorization: `Bearer ${jwt}` };
+		const urlparams = { ...body, headers };
+		return urlParams;
 	}
 
 	@ApiOperation({ summary: 'Streamable upload of a binary file.' })
