@@ -22,11 +22,17 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { AccessTokenPayloadResponse } from '../models';
+// @ts-ignore
+import type { AccessTokenResponse } from '../models';
+// @ts-ignore
 import type { ApiValidationError } from '../models';
 // @ts-ignore
 import type { AuthorizationBodyParams } from '../models';
 // @ts-ignore
-import type { AuthorizedReponse } from '../models';
+import type { AuthorizedResponse } from '../models';
+// @ts-ignore
+import type { CreateAccessTokenParams } from '../models';
 /**
  * AuthorizationApi - axios parameter creator
  * @export
@@ -73,6 +79,78 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {CreateAccessTokenParams} createAccessTokenParams 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authorizationReferenceControllerCreateToken: async (createAccessTokenParams: CreateAccessTokenParams, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'createAccessTokenParams' is not null or undefined
+            assertParamExists('authorizationReferenceControllerCreateToken', 'createAccessTokenParams', createAccessTokenParams)
+            const localVarPath = `/authorization/createToken`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(createAccessTokenParams, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {string} token The access token to be resolved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authorizationReferenceControllerResolveToken: async (token: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'token' is not null or undefined
+            assertParamExists('authorizationReferenceControllerResolveToken', 'token', token)
+            const localVarPath = `/authorization/resolveToken/{token}`
+                .replace(`{${"token"}}`, encodeURIComponent(String(token)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -90,10 +168,34 @@ export const AuthorizationApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthorizedReponse>> {
+        async authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthorizedResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthorizationApi.authorizationReferenceControllerAuthorizeByReference']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {CreateAccessTokenParams} createAccessTokenParams 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AccessTokenResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authorizationReferenceControllerCreateToken(createAccessTokenParams, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthorizationApi.authorizationReferenceControllerCreateToken']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {string} token The access token to be resolved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authorizationReferenceControllerResolveToken(token: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AccessTokenPayloadResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authorizationReferenceControllerResolveToken(token, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthorizationApi.authorizationReferenceControllerResolveToken']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -113,8 +215,26 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: any): AxiosPromise<AuthorizedReponse> {
+        authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: any): AxiosPromise<AuthorizedResponse> {
             return localVarFp.authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {CreateAccessTokenParams} createAccessTokenParams 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: any): AxiosPromise<AccessTokenResponse> {
+            return localVarFp.authorizationReferenceControllerCreateToken(createAccessTokenParams, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {string} token The access token to be resolved.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authorizationReferenceControllerResolveToken(token: string, options?: any): AxiosPromise<AccessTokenPayloadResponse> {
+            return localVarFp.authorizationReferenceControllerResolveToken(token, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -133,7 +253,25 @@ export interface AuthorizationApiInterface {
      * @throws {RequiredError}
      * @memberof AuthorizationApiInterface
      */
-    authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<AuthorizedReponse>;
+    authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<AuthorizedResponse>;
+
+    /**
+     * 
+     * @param {CreateAccessTokenParams} createAccessTokenParams 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthorizationApiInterface
+     */
+    authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: RawAxiosRequestConfig): AxiosPromise<AccessTokenResponse>;
+
+    /**
+     * 
+     * @param {string} token The access token to be resolved.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthorizationApiInterface
+     */
+    authorizationReferenceControllerResolveToken(token: string, options?: RawAxiosRequestConfig): AxiosPromise<AccessTokenPayloadResponse>;
 
 }
 
@@ -154,6 +292,28 @@ export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterfa
      */
     public authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig) {
         return AuthorizationApiFp(this.configuration).authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {CreateAccessTokenParams} createAccessTokenParams 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthorizationApi
+     */
+    public authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: RawAxiosRequestConfig) {
+        return AuthorizationApiFp(this.configuration).authorizationReferenceControllerCreateToken(createAccessTokenParams, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {string} token The access token to be resolved.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthorizationApi
+     */
+    public authorizationReferenceControllerResolveToken(token: string, options?: RawAxiosRequestConfig) {
+        return AuthorizationApiFp(this.configuration).authorizationReferenceControllerResolveToken(token, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

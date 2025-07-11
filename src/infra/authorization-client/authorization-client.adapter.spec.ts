@@ -6,15 +6,21 @@ import { AxiosResponse } from 'axios';
 import { Request } from 'express';
 import { randomBytes } from 'node:crypto';
 import {
+	AccessTokenPayloadResponse,
+	AccessTokenResponse,
 	AuthorizationApi,
 	AuthorizationBodyParams,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParamsAction,
 	AuthorizationContextParamsRequiredPermissions,
-	AuthorizedReponse,
+	AuthorizedResponse,
 } from './authorization-api-client';
 import { AuthorizationClientAdapter } from './authorization-client.adapter';
-import { AuthorizationErrorLoggableException, AuthorizationForbiddenLoggableException } from './error';
+import {
+	AuthorizationErrorLoggableException,
+	AuthorizationForbiddenLoggableException,
+	ResolveTokenErrorLoggableException,
+} from './error';
 
 jest.mock('@infra/error/loggable');
 
@@ -76,7 +82,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					referenceId: 'someReferenceId',
 				};
 
-				const response = createMock<AxiosResponse<AuthorizedReponse>>({
+				const response = createMock<AxiosResponse<AuthorizedResponse>>({
 					data: {
 						isAuthorized: props.isAuthorized,
 						userId: 'userId',
@@ -118,7 +124,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 					await expect(
 						service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context)
-					).rejects.toThrowError(expectedError);
+					).rejects.toThrow(expectedError);
 				});
 			});
 		});
@@ -147,7 +153,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				await expect(
 					service.checkPermissionsByReference(params.referenceType, params.referenceId, params.context)
-				).rejects.toThrowError(expectedError);
+				).rejects.toThrow(expectedError);
 			});
 		});
 	});
@@ -164,7 +170,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					referenceId: 'someReferenceId',
 				};
 
-				const response = createMock<AxiosResponse<AuthorizedReponse>>({
+				const response = createMock<AxiosResponse<AuthorizedResponse>>({
 					data: {
 						isAuthorized: true,
 						userId: 'userId',
@@ -212,7 +218,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					referenceId: 'someReferenceId',
 				};
 
-				const response = createMock<AxiosResponse<AuthorizedReponse>>({
+				const response = createMock<AxiosResponse<AuthorizedResponse>>({
 					data: {
 						isAuthorized: true,
 						userId: 'userId',
@@ -272,7 +278,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				await expect(
 					adapter.hasPermissionsByReference(params.referenceType, params.referenceId, params.context)
-				).rejects.toThrowError(expectedError);
+				).rejects.toThrow(expectedError);
 			});
 		});
 
@@ -300,7 +306,7 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				await expect(
 					service.hasPermissionsByReference(params.referenceType, params.referenceId, params.context)
-				).rejects.toThrowError(expectedError);
+				).rejects.toThrow(expectedError);
 			});
 		});
 
@@ -332,6 +338,154 @@ describe(AuthorizationClientAdapter.name, () => {
 
 				expect(spyIsAxiosError).toHaveBeenCalledWith(axiosError);
 				expect(AxiosErrorLoggable).toHaveBeenCalledWith(axiosError, 'AUTHORIZATION_BY_REFERENCE_FAILED');
+			});
+		});
+	});
+
+	describe('createToken', () => {
+		describe('when createToken resolves', () => {
+			const setup = () => {
+				const params = {
+					context: {
+						action: AuthorizationContextParamsAction.READ,
+						requiredPermissions,
+					},
+					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
+					referenceId: 'someReferenceId',
+					payload: {},
+				};
+				const expectedResponse = createMock<AxiosResponse<AccessTokenResponse>>({
+					data: { token: 'abc' },
+				});
+
+				authorizationApi.authorizationReferenceControllerCreateToken.mockResolvedValueOnce(expectedResponse);
+
+				return { params, expectedResponse };
+			};
+
+			it('should return the token response', async () => {
+				const { params, expectedResponse } = setup();
+
+				const result = await service.createToken(params);
+
+				expect(result).toEqual(expectedResponse.data);
+			});
+		});
+
+		describe('when createToken rejects', () => {
+			const setup = () => {
+				const params = {
+					context: {
+						action: AuthorizationContextParamsAction.READ,
+						requiredPermissions,
+					},
+					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
+					referenceId: 'someReferenceId',
+					payload: {},
+				};
+				const error = new Error('fail');
+
+				authorizationApi.authorizationReferenceControllerCreateToken.mockRejectedValueOnce(error);
+
+				return { params, error };
+			};
+
+			it('should throw AuthorizationErrorLoggableException', async () => {
+				const { params } = setup();
+
+				await expect(service.createToken(params)).rejects.toBeInstanceOf(AuthorizationErrorLoggableException);
+			});
+		});
+
+		describe('when isAxiosError returns true', () => {
+			const setup = () => {
+				const params = {
+					context: {
+						action: AuthorizationContextParamsAction.READ,
+						requiredPermissions,
+					},
+					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
+					referenceId: 'someReferenceId',
+					payload: {},
+				};
+
+				const axiosError = new Error('axios error');
+				const spyIsAxiosError = jest.spyOn(require('axios'), 'isAxiosError').mockReturnValue(true);
+
+				authorizationApi.authorizationReferenceControllerCreateToken.mockRejectedValueOnce(axiosError);
+
+				return { params, axiosError, spyIsAxiosError };
+			};
+
+			it('should wrap the error with AxiosErrorLoggable and throw AuthorizationErrorLoggableException', async () => {
+				const { params, axiosError, spyIsAxiosError } = setup();
+
+				await expect(service.createToken(params)).rejects.toThrow(AuthorizationErrorLoggableException);
+
+				expect(spyIsAxiosError).toHaveBeenCalledWith(axiosError);
+				expect(AxiosErrorLoggable).toHaveBeenCalledWith(axiosError, 'CREATE_ACCESS_TOKEN_FAILED');
+			});
+		});
+	});
+
+	describe('resolveToken', () => {
+		describe('when resolveToken resolves', () => {
+			const setup = () => {
+				const token = 'abc';
+				const expectedResponse = createMock<AxiosResponse<AccessTokenPayloadResponse>>({
+					data: { payload: { test: 'abc' } },
+				});
+
+				authorizationApi.authorizationReferenceControllerResolveToken.mockResolvedValueOnce(expectedResponse);
+
+				return { token, expectedResponse };
+			};
+
+			it('should return the payload response', async () => {
+				const { token, expectedResponse } = setup();
+
+				const result = await service.resolveToken(token);
+
+				expect(result).toEqual(expectedResponse.data);
+			});
+		});
+
+		describe('when resolveToken rejects', () => {
+			const setup = () => {
+				const token = 'abc';
+				const error = new Error('fail');
+
+				authorizationApi.authorizationReferenceControllerResolveToken.mockRejectedValueOnce(error);
+
+				return { token, error };
+			};
+
+			it('should throw ResolveTokenErrorLoggableException', async () => {
+				const { token } = setup();
+
+				await expect(service.resolveToken(token)).rejects.toBeInstanceOf(ResolveTokenErrorLoggableException);
+			});
+		});
+
+		describe('when isAxiosError returns true', () => {
+			const setup = () => {
+				const token = 'abc';
+
+				const axiosError = new Error('axios error');
+				const spyIsAxiosError = jest.spyOn(require('axios'), 'isAxiosError').mockReturnValue(true);
+
+				authorizationApi.authorizationReferenceControllerResolveToken.mockRejectedValueOnce(axiosError);
+
+				return { token, axiosError, spyIsAxiosError };
+			};
+
+			it('should wrap the error with AxiosErrorLoggable and throw AuthorizationErrorLoggableException', async () => {
+				const { token, axiosError, spyIsAxiosError } = setup();
+
+				await expect(service.resolveToken(token)).rejects.toThrow(ResolveTokenErrorLoggableException);
+
+				expect(spyIsAxiosError).toHaveBeenCalledWith(axiosError);
+				expect(AxiosErrorLoggable).toHaveBeenCalledWith(axiosError, 'RESOLVE_ACCESS_TOKEN_FAILED');
 			});
 		});
 	});
