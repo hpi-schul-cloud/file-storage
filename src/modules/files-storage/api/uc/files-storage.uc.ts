@@ -8,7 +8,7 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -50,6 +50,9 @@ import {
 	PreviewBuilder,
 } from '../mapper';
 import { ParentStatisticMapper } from '../mapper/parent-statistic.mapper';
+import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
+import { JwtExtractor } from '@infra/auth-guard/utils/jwt';
+import { REQUEST } from '@nestjs/core';
 
 export const FileStorageAuthorizationContext = {
 	create: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_CREATE]),
@@ -61,7 +64,9 @@ export const FileStorageAuthorizationContext = {
 @Injectable()
 export class FilesStorageUC {
 	constructor(
+		@Inject(REQUEST) private readonly request: Request,
 		private readonly logger: Logger,
+		private readonly config: FileStorageConfig,
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
 		private readonly httpService: HttpService,
 		private readonly filesStorageService: FilesStorageService,
@@ -188,6 +193,12 @@ export class FilesStorageUC {
 			responseType: 'stream',
 		};
 
+		const domain = new URL(params.url).hostname;
+		if(domain === this.config.JWT_DOMAIN) {
+			const jwt = this.getJwt();
+			config.headers = this.ensureAuthorisationHeader(jwt, params.headers,);
+		}
+
 		try {
 			const responseStream = this.httpService.get<internal.Readable>(encodeURI(params.url), config);
 
@@ -203,6 +214,15 @@ export class FilesStorageUC {
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND, { cause: error });
 		}
 	}
+
+	private ensureAuthorisationHeader(jwt: string, headers?: Record<string, string>): Record<string, string> {
+		const resultHeaders = { Authorization: `Bearer ${jwt}`, ...headers, };
+		return resultHeaders;
+	}
+
+	private getJwt(): string {
+			return JwtExtractor.extractJwtFromRequestOrFail(this.request);
+		}
 
 	// download
 	public async download(params: DownloadFileParams, bytesRange?: string): Promise<GetFileResponse> {
