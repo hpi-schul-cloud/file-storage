@@ -196,7 +196,7 @@ export class FilesStorageUC {
 		const domain = new URL(params.url).hostname;
 		if(domain === this.config.JWT_DOMAIN) {
 			const jwt = this.getJwt();
-			config.headers = this.ensureAuthorisationHeader(jwt, params.headers,);
+			config.headers = this.ensureAuthorisationHeader(jwt, params.headers);
 		}
 
 		try {
