@@ -5,13 +5,18 @@ import { REQUEST } from '@nestjs/core';
 import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { Request } from 'express';
 import {
+	AccessTokenPayloadResponse,
 	AccessTokenResponse,
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParams,
 	CreateAccessTokenParams,
 } from './authorization-api-client';
-import { AuthorizationErrorLoggableException, AuthorizationForbiddenLoggableException } from './error';
+import {
+	AuthorizationErrorLoggableException,
+	AuthorizationForbiddenLoggableException,
+	ResolveTokenErrorLoggableException,
+} from './error';
 
 @Injectable()
 export class AuthorizationClientAdapter {
@@ -78,22 +83,23 @@ export class AuthorizationClientAdapter {
 		}
 	}
 
-	public async resolveToken<T>(token: string, tokenTtl: number): Promise<T> {
+	public async resolveToken(token: string, tokenTtl: number): Promise<AccessTokenPayloadResponse> {
 		try {
 			const options = this.createOptionParams();
+
 			const response = await this.authorizationApi.authorizationReferenceControllerResolveToken(
 				token,
 				tokenTtl,
 				options
 			);
 
-			return response.data.payload as T;
+			return response.data;
 		} catch (error) {
 			if (isAxiosError(error)) {
 				error = new AxiosErrorLoggable(error, 'RESOLVE_ACCESS_TOKEN_FAILED');
 			}
 
-			throw error;
+			throw new ResolveTokenErrorLoggableException(error, token);
 		}
 	}
 
