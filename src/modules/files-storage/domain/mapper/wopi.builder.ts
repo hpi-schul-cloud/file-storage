@@ -35,6 +35,12 @@ export class WopiBuilder {
 		return payload;
 	}
 
+	public static buildWopiPayloadFromResponse(props: unknown): WopiPayload {
+		const payload = new WopiPayload(props as WopiPayload);
+
+		return payload;
+	}
+
 	public static buildAccessToken(token: string): WoipAccessToken {
 		const accessToken = new WoipAccessToken(token);
 

@@ -78,11 +78,11 @@ export class WopiUc {
 	}
 
 	private async getWopiPayload(params: SingleFileParams, wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
-		const result = await this.authorizationClientAdapter.resolveToken<WopiPayload>(
+		const result = await this.authorizationClientAdapter.resolveToken(
 			wopiToken.access_token,
 			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
 		);
-		const payload = new WopiPayload(result);
+		const payload = WopiBuilder.buildWopiPayloadFromResponse(result.payload);
 
 		if (!payload.isSameFileRecordId(params.fileRecordId)) {
 			throw new ForbiddenException('File record ID does not match the token');
