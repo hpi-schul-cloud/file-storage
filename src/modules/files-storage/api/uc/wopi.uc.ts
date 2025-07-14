@@ -83,7 +83,7 @@ export class WopiUc {
 			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
 		);
 		const payload = WopiBuilder.buildWopiPayloadFromResponse(result.payload);
-
+		//@TODO prüfen ob wir das brauchen
 		if (!payload.isSameFileRecordId(params.fileRecordId)) {
 			throw new ForbiddenException('File record ID does not match the token');
 		}
