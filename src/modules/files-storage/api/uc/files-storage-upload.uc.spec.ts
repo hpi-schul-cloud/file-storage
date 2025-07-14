@@ -126,7 +126,7 @@ describe('FilesStorageUC upload methods', () => {
 				{
 					provide: FileStorageConfig,
 					useValue: createMock<FileStorageConfig>({
-						JWT_DOMAIN: 'localhost',
+						FILES_STORAGE_OWN_DOMAIN: 'localhost',
 					}),
 				},
 			],
@@ -151,23 +151,23 @@ describe('FilesStorageUC upload methods', () => {
 	});
 
 	describe('uploadFromUrl is called', () => {
-		const createUploadFromUrlParams = (storageLocation: StorageLocation = StorageLocation.SCHOOL, internalUrl = true, passAuthHeader = true) => {
+		const createUploadFromUrlParams = (
+			storageLocation: StorageLocation = StorageLocation.SCHOOL,
+			internalUrl = true,
+			passAuthHeader = true
+		) => {
 			const { params, userId, fileRecords } = buildFileRecordsWithParams(storageLocation);
 			const fileRecord = fileRecords[0];
 
-			const url = internalUrl
-				? 'http://localhost/test.jpg'
-				: `http://example.com/test.jpg`;
+			const url = internalUrl ? 'http://localhost/test.jpg' : `http://example.com/test.jpg`;
 
-			const headers = passAuthHeader
-				? { Authorization: `Bearer ${jwtToken}` }
-				: undefined;
+			const headers = passAuthHeader ? { Authorization: `Bearer ${jwtToken}` } : undefined;
 
 			const uploadFromUrlParams = {
 				...params,
 				url,
 				fileName: 'test.jpg',
-				headers
+				headers,
 			};
 
 			const responseHeaders = {
@@ -253,7 +253,11 @@ describe('FilesStorageUC upload methods', () => {
 
 		describe('WHEN user is authorised, url is external', () => {
 			const setup = () => {
-				const { fileRecord, userId, uploadFromUrlParams, response } = createUploadFromUrlParams(StorageLocation.SCHOOL, false, false);
+				const { fileRecord, userId, uploadFromUrlParams, response } = createUploadFromUrlParams(
+					StorageLocation.SCHOOL,
+					false,
+					false
+				);
 
 				httpService.get.mockReturnValueOnce(of(response));
 
@@ -270,7 +274,7 @@ describe('FilesStorageUC upload methods', () => {
 				const expectedFileDescription = FileDtoBuilder.buildFromAxiosResponse(uploadFromUrlParams.fileName, response);
 				expect(filesStorageService.uploadFile).toHaveBeenCalledWith(
 					userId,
-					expect.not.objectContaining({headers: {Authorization: expect.anything()}}),
+					expect.not.objectContaining({ headers: { Authorization: expect.anything() } }),
 					expectedFileDescription
 				);
 			});

@@ -194,7 +194,7 @@ export class FilesStorageUC {
 		};
 
 		const domain = new URL(params.url).hostname;
-		if(domain === this.config.JWT_DOMAIN) {
+		if (domain === this.config.FILES_STORAGE_OWN_DOMAIN) {
 			const jwt = this.getJwt();
 			config.headers = this.ensureAuthorisationHeader(jwt, params.headers);
 		}
@@ -216,13 +216,14 @@ export class FilesStorageUC {
 	}
 
 	private ensureAuthorisationHeader(jwt: string, headers?: Record<string, string>): Record<string, string> {
-		const resultHeaders = { Authorization: `Bearer ${jwt}`, ...headers, };
+		const resultHeaders = { Authorization: `Bearer ${jwt}`, ...headers };
+
 		return resultHeaders;
 	}
 
 	private getJwt(): string {
-			return JwtExtractor.extractJwtFromRequestOrFail(this.request);
-		}
+		return JwtExtractor.extractJwtFromRequestOrFail(this.request);
+	}
 
 	// download
 	public async download(params: DownloadFileParams, bytesRange?: string): Promise<GetFileResponse> {

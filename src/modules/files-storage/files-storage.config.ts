@@ -35,7 +35,7 @@ export class FileStorageConfig {
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
 
 	@IsString()
-	JWT_DOMAIN = 'localhost';
+	FILES_STORAGE_OWN_DOMAIN = 'localhost';
 }
 
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {

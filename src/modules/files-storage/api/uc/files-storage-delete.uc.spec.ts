@@ -110,7 +110,7 @@ describe('FilesStorageUC delete methods', () => {
 				{
 					provide: FileStorageConfig,
 					useValue: createMock<FileStorageConfig>({
-						JWT_DOMAIN: 'localhost',
+						FILES_STORAGE_OWN_DOMAIN: 'localhost',
 					}),
 				},
 			],
