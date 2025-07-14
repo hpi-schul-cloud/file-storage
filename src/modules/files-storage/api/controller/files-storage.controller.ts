@@ -1,4 +1,4 @@
-import { CurrentUser, ICurrentUser, JWT, JwtAuthentication } from '@infra/auth-guard';
+import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
 import { RequestLoggingInterceptor } from '@infra/core/interceptor';
 import { ApiValidationError } from '@infra/error';
 import {
@@ -67,7 +67,7 @@ export class FilesStorageController {
 	public async uploadFromUrl(
 		@Body() body: FileUrlParams,
 		@Param() params: FileRecordParams,
-		@CurrentUser() currentUser: ICurrentUser,
+		@CurrentUser() currentUser: ICurrentUser
 	): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...body, ...params });
 
