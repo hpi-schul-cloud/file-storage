@@ -5,9 +5,11 @@ import { REQUEST } from '@nestjs/core';
 import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { Request } from 'express';
 import {
+	AccessTokenResponse,
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParams,
+	CreateAccessTokenParams,
 } from './authorization-api-client';
 import { AuthorizationErrorLoggableException, AuthorizationForbiddenLoggableException } from './error';
 
@@ -57,6 +59,41 @@ export class AuthorizationClientAdapter {
 			}
 
 			throw new AuthorizationErrorLoggableException(error, params);
+		}
+	}
+
+	public async createToken(params: CreateAccessTokenParams): Promise<AccessTokenResponse> {
+		try {
+			const options = this.createOptionParams();
+
+			const response = await this.authorizationApi.authorizationReferenceControllerCreateToken(params, options);
+
+			return response.data;
+		} catch (error) {
+			if (isAxiosError(error)) {
+				error = new AxiosErrorLoggable(error, 'CREATE_ACCESS_TOKEN_FAILED');
+			}
+
+			throw new AuthorizationErrorLoggableException(error, params);
+		}
+	}
+
+	public async resolveToken<T>(token: string, tokenTtl: number): Promise<T> {
+		try {
+			const options = this.createOptionParams();
+			const response = await this.authorizationApi.authorizationReferenceControllerResolveToken(
+				token,
+				tokenTtl,
+				options
+			);
+
+			return response.data.payload as T;
+		} catch (error) {
+			if (isAxiosError(error)) {
+				error = new AxiosErrorLoggable(error, 'RESOLVE_ACCESS_TOKEN_FAILED');
+			}
+
+			throw error;
 		}
 	}
 
