@@ -42,6 +42,12 @@ export interface CreateAccessTokenParams {
      */
     'referenceId': string;
     /**
+     * Lifetime of token
+     * @type {number}
+     * @memberof CreateAccessTokenParams
+     */
+    'tokenTtl': number;
+    /**
      * The payload of the access token.
      * @type {object}
      * @memberof CreateAccessTokenParams

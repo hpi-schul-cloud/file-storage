@@ -352,6 +352,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					},
 					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
 					referenceId: 'someReferenceId',
+					tokenTtl: 3600,
 					payload: {},
 				};
 				const expectedResponse = createMock<AxiosResponse<AccessTokenResponse>>({
@@ -381,6 +382,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					},
 					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
 					referenceId: 'someReferenceId',
+					tokenTtl: 3600,
 					payload: {},
 				};
 				const error = new Error('fail');
@@ -406,6 +408,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					},
 					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
 					referenceId: 'someReferenceId',
+					tokenTtl: 3600,
 					payload: {},
 				};
 
@@ -444,7 +447,7 @@ describe(AuthorizationClientAdapter.name, () => {
 			it('should return the payload response', async () => {
 				const { token, expectedResponse } = setup();
 
-				const result = await service.resolveToken(token);
+				const result = await service.resolveToken(token, 3600);
 
 				expect(result).toEqual(expectedResponse.data);
 			});
@@ -463,7 +466,7 @@ describe(AuthorizationClientAdapter.name, () => {
 			it('should throw ResolveTokenErrorLoggableException', async () => {
 				const { token } = setup();
 
-				await expect(service.resolveToken(token)).rejects.toBeInstanceOf(ResolveTokenErrorLoggableException);
+				await expect(service.resolveToken(token, 3600)).rejects.toBeInstanceOf(ResolveTokenErrorLoggableException);
 			});
 		});
 
@@ -482,7 +485,7 @@ describe(AuthorizationClientAdapter.name, () => {
 			it('should wrap the error with AxiosErrorLoggable and throw AuthorizationErrorLoggableException', async () => {
 				const { token, axiosError, spyIsAxiosError } = setup();
 
-				await expect(service.resolveToken(token)).rejects.toThrow(ResolveTokenErrorLoggableException);
+				await expect(service.resolveToken(token, 3600)).rejects.toThrow(ResolveTokenErrorLoggableException);
 
 				expect(spyIsAxiosError).toHaveBeenCalledWith(axiosError);
 				expect(AxiosErrorLoggable).toHaveBeenCalledWith(axiosError, 'RESOLVE_ACCESS_TOKEN_FAILED');
