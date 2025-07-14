@@ -1,29 +1,32 @@
-import { CurrentUser, ICurrentUser, JWT, JwtAuthentication } from '@infra/auth-guard';
-import { Controller, Get, Param, Res, StreamableFile } from '@nestjs/common';
+import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
+import { Body, Controller, Get, Param, Post, Query, StreamableFile } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
-import { SingleFileParams, WopiCheckFileInfoResponse } from '../dto';
+import {
+	AccessUrlResponse,
+	DiscoveryAccessUrlParams,
+	SingleFileParams,
+	WopiAccessTokenParams,
+	WopiCheckFileInfoResponse,
+} from '../dto';
 import { FilesStorageMapper } from '../mapper';
 import { WopiUc } from '../uc';
 
 @ApiTags('wopi')
-@JwtAuthentication()
 @Controller('wopi')
 export class WopiController {
 	constructor(private readonly wopiUc: WopiUc) {}
 
-	@ApiOperation({ summary: 'WOPI Discovery Editor Server' })
+	@ApiOperation({ summary: 'WOPI Discovery Access Url to Editor Server' })
 	@ApiResponse({ status: 307, description: 'Redirects to the online editor URL.' })
-	@Get('discovery-editor-url/:fileRecordId')
-	public async discoveryEditorUrl(
-		@Param() params: SingleFileParams,
-		@Res({ passthrough: true }) response: Response,
-		@JWT() jwt: string
-	): Promise<void> {
-		const fileRecordId: string = params.fileRecordId;
-		const onlineUrl = await this.wopiUc.discoveryEditorUrl(fileRecordId, jwt);
+	@Post('discovery-access-url')
+	@JwtAuthentication()
+	public async discoveryAccessUrl(
+		@Body() body: DiscoveryAccessUrlParams,
+		@CurrentUser() currentUser: ICurrentUser
+	): Promise<AccessUrlResponse> {
+		const result = await this.wopiUc.discoveryAccessUrl(currentUser.userId, body);
 
-		response.redirect(307, onlineUrl);
+		return result;
 	}
 
 	@ApiOperation({ summary: 'WOPI CheckFileInfo' })
@@ -31,16 +34,19 @@ export class WopiController {
 	@Get('files/:fileRecordId')
 	public async checkFileInfo(
 		@Param() params: SingleFileParams,
-		@CurrentUser() currentUser: ICurrentUser
+		@Query() query: WopiAccessTokenParams
 	): Promise<WopiCheckFileInfoResponse> {
-		return await this.wopiUc.checkFileInfo(params, currentUser.userId);
+		return await this.wopiUc.checkFileInfo(params, query);
 	}
 
 	@ApiOperation({ summary: 'WOPI GetFile (download file contents)' })
 	@ApiResponse({ status: 200, description: 'Returns the file contents as a stream.' })
 	@Get('files/:fileRecordId/contents')
-	public async getFile(@Param() params: SingleFileParams): Promise<StreamableFile> {
-		const fileResponse = await this.wopiUc.getFileStream(params);
+	public async getFile(
+		@Param() params: SingleFileParams,
+		@Query() query: WopiAccessTokenParams
+	): Promise<StreamableFile> {
+		const fileResponse = await this.wopiUc.getFileStream(params, query);
 
 		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 

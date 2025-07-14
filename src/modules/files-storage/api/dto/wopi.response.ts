@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import { FileRecord, WopiUser } from '@modules/files-storage/domain';
 import { ApiProperty } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
@@ -32,4 +33,13 @@ export class WopiCheckFileInfoResponse {
 
 	@ApiProperty()
 	UserFriendlyName: string;
+}
+
+export class AccessUrlResponse {
+	constructor(onlineUrl: string) {
+		this.onlineUrl = onlineUrl;
+	}
+
+	@ApiProperty()
+	onlineUrl: string;
 }
