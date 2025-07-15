@@ -1,5 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { DeepPartial } from 'fishery';
+import { randomUUID } from 'node:crypto';
 import {
 	FileRecord,
 	FileRecordParentType,
@@ -62,7 +63,7 @@ class FileRecordTestFactory {
 		this.securityCheck = new FileRecordSecurityCheck({
 			status: scanStatus ?? ScanStatus.VERIFIED,
 			reason: 'scan-reason',
-			requestToken: 'scan-request-token',
+			requestToken: randomUUID(),
 			updatedAt: new Date(Date.now() - 1000),
 		});
 

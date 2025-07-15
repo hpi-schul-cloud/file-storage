@@ -8,9 +8,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory, GetFileTestFactory } from '../../testing';
 import { ErrorType } from '../error';
-import { PreviewOutputMimeTypes, ScanStatus } from '../file-record.do';
+import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
 import { FileResponseBuilder } from '../mapper';
+import { ScanStatus } from '../security-check.vo';
 import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 

@@ -9,8 +9,9 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
-import { FileRecord, FileRecordProps, FileRecordSecurityCheckProps } from '../file-record.do';
+import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
+import { FileRecordSecurityCheckProps } from '../security-check.vo';
 import { FilesStorageService } from './files-storage.service';
 
 describe('FilesStorageService delete methods', () => {
@@ -144,10 +145,14 @@ describe('FilesStorageService delete methods', () => {
 				return { fileRecords };
 			};
 
-			it('should throw error if entity not found', async () => {
+			it('should pass error and rollback filerecords', async () => {
 				const { fileRecords } = setup();
 
 				await expect(service.delete(fileRecords)).rejects.toThrow(new InternalServerErrorException('bla'));
+
+				FileRecord.markForDelete(fileRecords);
+				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(1, fileRecords);
+				FileRecord.unmarkForDelete(fileRecords);
 				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(2, fileRecords);
 			});
 		});
