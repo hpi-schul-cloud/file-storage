@@ -88,7 +88,7 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
         authorizationReferenceControllerCreateToken: async (createAccessTokenParams: CreateAccessTokenParams, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'createAccessTokenParams' is not null or undefined
             assertParamExists('authorizationReferenceControllerCreateToken', 'createAccessTokenParams', createAccessTokenParams)
-            const localVarPath = `/authorization/createToken`;
+            const localVarPath = `/authorization/create-token`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -130,7 +130,7 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             assertParamExists('authorizationReferenceControllerResolveToken', 'token', token)
             // verify required parameter 'tokenTtl' is not null or undefined
             assertParamExists('authorizationReferenceControllerResolveToken', 'tokenTtl', tokenTtl)
-            const localVarPath = `/authorization/resolveToken/{token}/ttl/{tokenTtl}`
+            const localVarPath = `/authorization/resolve-token/{token}/ttl/{tokenTtl}`
                 .replace(`{${"token"}}`, encodeURIComponent(String(token)))
                 .replace(`{${"tokenTtl"}}`, encodeURIComponent(String(tokenTtl)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
