@@ -105,7 +105,7 @@ export class WopiUc {
 			referenceId,
 			context: authorizationContext,
 			payload,
-			tokenTtl: this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS,
+			tokenTtlInSeconds: this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS,
 		});
 
 		return response;
