@@ -60,11 +60,11 @@ Configuration is managed via the `.env` file. Key variables include:
 
 3. **Configure environment:**
 
-   - Copy `.env.example` to `.env` and adjust values as needed.
+   - Copy `.env.default` to `.env` and adjust values as needed.
 
 4. **Start the service:**
    ```sh
-   npm run start:file-storage:dev
+   npm run start:files-storage:dev
    ```
 
 ### Running Tests
