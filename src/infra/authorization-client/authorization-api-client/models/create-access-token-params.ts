@@ -46,7 +46,7 @@ export interface CreateAccessTokenParams {
      * @type {number}
      * @memberof CreateAccessTokenParams
      */
-    'tokenTtl': number;
+    'tokenTtlInSeconds': number;
     /**
      * The payload of the access token.
      * @type {object}
