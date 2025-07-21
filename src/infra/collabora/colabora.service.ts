@@ -1,7 +1,8 @@
 import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { DOMParser } from '@xmldom/xmldom';
+import { TypeGuard } from '@shared/guard';
+import { Document, DOMParser } from '@xmldom/xmldom';
 import { isAxiosError } from 'axios';
 import { lastValueFrom } from 'rxjs';
 import * as xpath from 'xpath';
@@ -19,40 +20,74 @@ export class CollaboraService {
 	}
 
 	public async getDiscoveryUrl(mimeType: string): Promise<string> {
-		const collaboraOnlineHost = this.getCollaboraOnlineUrl();
-
 		try {
-			const response = await lastValueFrom(
-				this.httpService.get(collaboraOnlineHost + '/hosting/discovery', { responseType: 'text' })
-			);
-			const { data } = response;
-			if (response.status !== 200) {
-				throw new Error('Request failed. Status Code: ' + response.status);
-			}
-			const doc = new DOMParser().parseFromString(data, 'text/xml');
+			const xmlDocument = await this.fetchDiscoveryXml();
+			const nodes = this.getNodesByMimeType(mimeType, xmlDocument);
 
-			if (!doc) {
-				throw new Error('The retrieved discovery.xml file is not a valid XML file');
-			}
+			const url = this.getUrlFromFirstNode(nodes);
 
-			const nodes = xpath.select(`/wopi-discovery/net-zone/app[@name='${mimeType}']/action`, doc as any);
-
-			if (Array.isArray(nodes) && nodes.length === 1) {
-				const onlineUrl = (nodes[0] as Element).getAttribute('urlsrc');
-				if (!onlineUrl) {
-					throw new Error('The requested mime type is not handled');
-				}
-
-				return onlineUrl;
-			} else {
-				throw new Error('The requested mime type is not handled');
-			}
+			return url;
 		} catch (error) {
-			if (isAxiosError(error)) {
-				error = new AxiosErrorLoggable(error, 'DISCOVERY_SERVER_FAILED');
-			}
-
-			throw new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error });
+			this.handleDiscoveryError(error);
 		}
+	}
+
+	private handleDiscoveryError(error: unknown): never {
+		if (isAxiosError(error)) {
+			error = new AxiosErrorLoggable(error, 'DISCOVERY_SERVER_FAILED');
+		}
+
+		throw new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error });
+	}
+
+	private async fetchDiscoveryXml(): Promise<Document> {
+		const collaboraOnlineHost = this.getCollaboraOnlineUrl();
+		const responseObservable = this.httpService.get(collaboraOnlineHost + '/hosting/discovery', {
+			responseType: 'text',
+		});
+		const response = await lastValueFrom(responseObservable);
+
+		this.checkStatusOk(response.data.status);
+
+		const doc = new DOMParser().parseFromString(response.data, 'text/xml');
+		this.checkDocIsDefined(doc);
+
+		return doc;
+	}
+
+	private checkStatusOk(status: number): void {
+		if (status !== 200) {
+			throw new Error('Request failed. Status Code: ' + status);
+		}
+	}
+
+	private checkDocIsDefined(doc: Document): void {
+		if (!doc) {
+			throw new Error('The retrieved discovery.xml file is not a valid XML file');
+		}
+	}
+
+	private getNodesByMimeType(mimeType: string, doc: Document): xpath.SelectReturnType {
+		const nodes = xpath.select(`/wopi-discovery/net-zone/app[@name='${mimeType}']/action`, doc as unknown as Node);
+
+		return nodes;
+	}
+
+	private getUrlFromFirstNode(nodes: xpath.SelectReturnType): string {
+		const validatedNodes = TypeGuard.checkArrayWithElements<Element>(nodes);
+		const firstElement = validatedNodes[0];
+
+		const url = firstElement.getAttribute('urlsrc');
+		const definedUrl = this.checkUrlIsDefined(url);
+
+		return definedUrl;
+	}
+
+	private checkUrlIsDefined(url: string | null): string {
+		if (!TypeGuard.isString(url)) {
+			throw new Error('The requested mime type is not handled');
+		}
+
+		return url;
 	}
 }
