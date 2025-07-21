@@ -1,8 +1,9 @@
+import { randomUUID } from 'crypto';
 import type { AccessTokenResponse } from '../authorization-api-client/models/access-token-response';
 
 class AccessTokenResponseTestFactory {
 	private props: AccessTokenResponse = {
-		token: 'test-token',
+		token: randomUUID(),
 	};
 
 	public build(params: Partial<AccessTokenResponse> = {}): AccessTokenResponse {
