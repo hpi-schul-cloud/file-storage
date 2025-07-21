@@ -1,5 +1,17 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
-import { Body, Controller, Get, Param, Post, Query, StreamableFile } from '@nestjs/common';
+import { ApiValidationError } from '@infra/error';
+import {
+	BadRequestException,
+	Body,
+	Controller,
+	ForbiddenException,
+	Get,
+	InternalServerErrorException,
+	Param,
+	Post,
+	Query,
+	StreamableFile,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	AccessUrlResponse,
@@ -17,7 +29,11 @@ export class WopiController {
 	constructor(private readonly wopiUc: WopiUc) {}
 
 	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
-	@ApiResponse({ status: 307, description: 'Redirects to the online editor URL.' })
+	@ApiResponse({ status: 201, type: AccessUrlResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@Post('authorized-collabora-access-url')
 	@JwtAuthentication()
 	public async getAuthorizedCollaboraAccessUrl(
