@@ -15,10 +15,6 @@ export class CollaboraService {
 		private readonly httpService: HttpService
 	) {}
 
-	public getCollaboraOnlineUrl(): string {
-		return this.collaboraConfig.COLLABORA_ONLINE_URL;
-	}
-
 	public async getDiscoveryUrl(mimeType: string): Promise<string> {
 		try {
 			const xmlDocument = await this.fetchDiscoveryXml();
@@ -30,6 +26,10 @@ export class CollaboraService {
 		} catch (error) {
 			this.handleDiscoveryError(error);
 		}
+	}
+
+	private getCollaboraOnlineUrl(): string {
+		return this.collaboraConfig.COLLABORA_ONLINE_URL;
 	}
 
 	private handleDiscoveryError(error: unknown): never {
@@ -47,10 +47,9 @@ export class CollaboraService {
 		});
 		const response = await lastValueFrom(responseObservable);
 
-		this.checkStatusOk(response.data.status);
+		this.checkStatusOk(response.status);
 
 		const doc = new DOMParser().parseFromString(response.data, 'text/xml');
-		this.checkDocIsDefined(doc);
 
 		return doc;
 	}
@@ -58,12 +57,6 @@ export class CollaboraService {
 	private checkStatusOk(status: number): void {
 		if (status !== 200) {
 			throw new Error('Request failed. Status Code: ' + status);
-		}
-	}
-
-	private checkDocIsDefined(doc: Document): void {
-		if (!doc) {
-			throw new Error('The retrieved discovery.xml file is not a valid XML file');
 		}
 	}
 
