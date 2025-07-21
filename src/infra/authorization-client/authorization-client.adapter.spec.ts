@@ -352,7 +352,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					},
 					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
 					referenceId: 'someReferenceId',
-					tokenTtl: 3600,
+					tokenTtlInSeconds: 3600,
 					payload: {},
 				};
 				const expectedResponse = createMock<AxiosResponse<AccessTokenResponse>>({
@@ -382,7 +382,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					},
 					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
 					referenceId: 'someReferenceId',
-					tokenTtl: 3600,
+					tokenTtlInSeconds: 3600,
 					payload: {},
 				};
 				const error = new Error('fail');
@@ -408,7 +408,7 @@ describe(AuthorizationClientAdapter.name, () => {
 					},
 					referenceType: AuthorizationBodyParamsReferenceType.COURSES,
 					referenceId: 'someReferenceId',
-					tokenTtl: 3600,
+					tokenTtlInSeconds: 3600,
 					payload: {},
 				};
 
