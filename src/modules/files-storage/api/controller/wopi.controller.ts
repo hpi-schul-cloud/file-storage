@@ -16,15 +16,15 @@ import { WopiUc } from '../uc';
 export class WopiController {
 	constructor(private readonly wopiUc: WopiUc) {}
 
-	@ApiOperation({ summary: 'WOPI Discovery Access Url to Editor Server' })
+	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
 	@ApiResponse({ status: 307, description: 'Redirects to the online editor URL.' })
-	@Post('discovery-access-url')
+	@Post('authorized-collabora-access-url')
 	@JwtAuthentication()
-	public async discoveryAccessUrl(
+	public async getAuthorizedCollaboraAccessUrl(
 		@Body() body: DiscoveryAccessUrlParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<AccessUrlResponse> {
-		const result = await this.wopiUc.discoveryAccessUrl(currentUser.userId, body);
+		const result = await this.wopiUc.getAuthorizedCollaboraAccessUrl(currentUser.userId, body);
 
 		return result;
 	}

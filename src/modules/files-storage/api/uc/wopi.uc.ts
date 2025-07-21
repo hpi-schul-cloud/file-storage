@@ -35,7 +35,10 @@ export class WopiUc {
 		this.logger.setContext(WopiUc.name);
 	}
 
-	public async discoveryAccessUrl(userId: EntityId, params: DiscoveryAccessUrlParams): Promise<AccessUrlResponse> {
+	public async getAuthorizedCollaboraAccessUrl(
+		userId: EntityId,
+		params: DiscoveryAccessUrlParams
+	): Promise<AccessUrlResponse> {
 		const { fileRecordId, userDisplayName, editorMode } = params;
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const { parentId, parentType } = fileRecord.getProps();
