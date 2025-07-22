@@ -39,7 +39,7 @@ describe('CollaboraService', () => {
 			await module.close();
 		});
 
-		describe('getDiscoveryUrl', () => {
+		describe('discoverUrl', () => {
 			describe('when httpService.get resolves', () => {
 				describe('when status is 200', () => {
 					const setup = () => {
@@ -60,7 +60,7 @@ describe('CollaboraService', () => {
 					it('should return the discovery url for the given mimeType', async () => {
 						const { mimeType, urlsrc } = setup();
 
-						const result = await service.getDiscoveryUrl(mimeType);
+						const result = await service.discoverUrl(mimeType);
 
 						expect(result).toBe(urlsrc);
 					});
@@ -84,7 +84,7 @@ describe('CollaboraService', () => {
 					it('should throw InternalServerErrorException when discovery fails', async () => {
 						const { mimeType, error } = setup();
 
-						await expect(service.getDiscoveryUrl(mimeType)).rejects.toThrow(
+						await expect(service.discoverUrl(mimeType)).rejects.toThrow(
 							new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error })
 						);
 					});
@@ -108,7 +108,7 @@ describe('CollaboraService', () => {
 					it('should throw InternalServerErrorException when discovery fails', async () => {
 						const { mimeType, error } = setup();
 
-						await expect(service.getDiscoveryUrl(mimeType)).rejects.toThrow(
+						await expect(service.discoverUrl(mimeType)).rejects.toThrow(
 							new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error })
 						);
 					});
@@ -133,7 +133,7 @@ describe('CollaboraService', () => {
 					it('should throw InternalServerErrorException when discovery fails', async () => {
 						const { mimeType, error } = setup();
 
-						await expect(service.getDiscoveryUrl(mimeType)).rejects.toThrow(
+						await expect(service.discoverUrl(mimeType)).rejects.toThrow(
 							new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error })
 						);
 					});
@@ -158,7 +158,7 @@ describe('CollaboraService', () => {
 					it('should throw InternalServerErrorException when discovery fails', async () => {
 						const { mimeType, error } = setup();
 
-						await expect(service.getDiscoveryUrl(mimeType)).rejects.toThrow(
+						await expect(service.discoverUrl(mimeType)).rejects.toThrow(
 							new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error })
 						);
 					});
@@ -183,7 +183,7 @@ describe('CollaboraService', () => {
 					it('should throw InternalServerErrorException when discovery fails', async () => {
 						const { mimeType, error } = setup();
 
-						await expect(service.getDiscoveryUrl(mimeType)).rejects.toThrow(
+						await expect(service.discoverUrl(mimeType)).rejects.toThrow(
 							new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error })
 						);
 					});
@@ -207,7 +207,7 @@ describe('CollaboraService', () => {
 						const { mimeType, error } = setup();
 
 						const axiosErrorLoggable = new AxiosErrorLoggable(error, 'DISCOVERY_SERVER_FAILED');
-						await expect(service.getDiscoveryUrl(mimeType)).rejects.toThrow(
+						await expect(service.discoverUrl(mimeType)).rejects.toThrow(
 							new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: axiosErrorLoggable })
 						);
 					});

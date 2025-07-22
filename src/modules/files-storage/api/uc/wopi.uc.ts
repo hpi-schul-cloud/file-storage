@@ -47,7 +47,7 @@ export class WopiUc {
 		const payload = WopiBuilder.buildWopiPayload(fileRecord.id, canWrite, userDisplayName, userId);
 
 		const accessToken = await this.checkPermissionAndCreateAccessToken(parentType, parentId, editorMode, payload);
-		const collaboraUrl = await this.collaboraService.getDiscoveryUrl(fileRecord.mimeType);
+		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
 
 		const url = WopiBuilder.buildAccessUrl(collaboraUrl, this.wopiConfig.WOPI_URL, fileRecord.id, accessToken);
 		const response = WopiResponseBuilder.buildAccessUrlResponse(url);

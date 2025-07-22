@@ -15,7 +15,7 @@ export class CollaboraService {
 		private readonly httpService: HttpService
 	) {}
 
-	public async getDiscoveryUrl(mimeType: string): Promise<string> {
+	public async discoverUrl(mimeType: string): Promise<string> {
 		try {
 			const xmlDocument = await this.fetchDiscoveryXml();
 			const nodes = this.getNodesByMimeType(mimeType, xmlDocument);
