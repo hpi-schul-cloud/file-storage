@@ -6,7 +6,7 @@ import { Document, DOMParser } from '@xmldom/xmldom';
 import { isAxiosError } from 'axios';
 import { lastValueFrom } from 'rxjs';
 import * as xpath from 'xpath';
-import { CollaboraConfig } from './colabora.config';
+import { CollaboraConfig } from './collabora.config';
 
 @Injectable()
 export class CollaboraService {

@@ -1,8 +1,8 @@
 import { ConfigurationModule } from '@infra/configuration';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CollaboraConfig } from './colabora.config';
-import { CollaboraService } from './colabora.service';
+import { CollaboraConfig } from './collabora.config';
+import { CollaboraService } from './collabora.service';
 
 @Module({
 	imports: [ConfigurationModule.register(CollaboraConfig), HttpModule],

@@ -1,2 +1,2 @@
-export * from './colabora.service';
 export * from './collabora.module';
+export * from './collabora.service';

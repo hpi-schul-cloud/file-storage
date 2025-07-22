@@ -6,8 +6,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { axiosResponseFactory } from '@testing/factory/axios-response.factory';
 import { AxiosError } from 'axios';
 import { of, throwError } from 'rxjs';
-import { CollaboraConfig } from './colabora.config';
-import { CollaboraService } from './colabora.service';
+import { CollaboraConfig } from './collabora.config';
+import { CollaboraService } from './collabora.service';
 
 describe('CollaboraService', () => {
 	describe('CollaboraService', () => {
