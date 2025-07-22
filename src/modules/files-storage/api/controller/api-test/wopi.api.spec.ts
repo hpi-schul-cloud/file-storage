@@ -239,30 +239,23 @@ describe('Wopi Controller (API)', () => {
 	describe('checkFileInfo', () => {
 		describe('when request is successful', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
 				const fileRecord = fileRecordEntityFactory.buildWithId();
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
-				const wopiPayload = wopiPayloadTestFactory()
-					.withFileRecordId(fileRecord.id)
-					.withUserId(studentUser.id)
-					.withCanWrite(true)
-					.build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
 				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
 
 				await em.persistAndFlush(fileRecord);
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				return { fileRecord, loggedInClient, query, studentUser, studentAccount, wopiPayload };
+				return { fileRecord, query, wopiPayload };
 			};
 
 			it('should return 200 and valid file info', async () => {
-				const { fileRecord, loggedInClient, query, studentUser, wopiPayload } = await setup();
+				const { fileRecord, query, wopiPayload } = await setup();
 
-				const response = await loggedInClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
 				const result = response.body as WopiCheckFileInfoResponse;
 
@@ -270,7 +263,7 @@ describe('Wopi Controller (API)', () => {
 				expect(result.BaseFileName).toBe(fileRecord.name);
 				expect(result.Size).toBe(fileRecord.size);
 				expect(result.OwnerID).toBe(fileRecord.creatorId);
-				expect(result.UserId).toBe(studentUser.id);
+				expect(result.UserId).toBe(wopiPayload.userId);
 				expect(result.UserCanWrite).toBe(wopiPayload.canWrite);
 				expect(result.UserFriendlyName).toBe(wopiPayload.userDisplayName);
 			});
@@ -321,86 +314,66 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when fileRecord is not in db', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
+			const setup = () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
-				const wopiPayload = wopiPayloadTestFactory()
-					.withFileRecordId(fileRecord.id)
-					.withUserId(studentUser.id)
-					.withCanWrite(true)
-					.build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
 				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				return { fileRecord, loggedInClient, query, studentUser, studentAccount, wopiPayload };
+				return { fileRecord, query, wopiPayload };
 			};
 
 			it('should return 404 not found', async () => {
-				const { loggedInClient, fileRecord, query } = await setup();
+				const { fileRecord, query } = setup();
 
-				const response = await loggedInClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
 				expect(response.status).toBe(404);
 			});
 		});
 
 		describe('when fileRecordId is not valid', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
+			const setup = () => {
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
 
-				return { loggedInClient, query };
+				return { query };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { loggedInClient, query } = await setup();
+				const { query } = setup();
 
-				const response = await loggedInClient.get(`/files/invalid-id`).query(query);
+				const response = await testApiClient.get(`/files/invalid-id`).query(query);
 
 				expect(response.status).toBe(400);
 			});
 		});
 
 		describe('when access token is not provided', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
-				return { loggedInClient };
-			};
-
 			it('should return 400 Bad Request', async () => {
-				const { loggedInClient } = await setup();
+				const fileRecordId = new ObjectId().toHexString();
 
-				const response = await loggedInClient.get(`/files/some-file-id`);
+				const response = await testApiClient.get(`/files/${fileRecordId}`);
 
 				expect(response.status).toBe(400);
 			});
 		});
 
 		describe('when access token is malformed', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
+			const setup = () => {
 				const fileRecordId = new ObjectId().toHexString();
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken('invalid-token').build();
 
-				return { loggedInClient, query, fileRecordId };
+				return { query, fileRecordId };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { loggedInClient, query, fileRecordId } = await setup();
+				const { query, fileRecordId } = setup();
 
-				const response = await loggedInClient.get(`/files/${fileRecordId}`).query(query);
+				const response = await testApiClient.get(`/files/${fileRecordId}`).query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -410,17 +383,10 @@ describe('Wopi Controller (API)', () => {
 	describe('getFile', () => {
 		describe('when request is successful', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
 				const fileRecord = fileRecordEntityFactory.buildWithId();
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
-				const wopiPayload = wopiPayloadTestFactory()
-					.withFileRecordId(fileRecord.id)
-					.withUserId(studentUser.id)
-					.withCanWrite(true)
-					.build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
 				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
@@ -431,13 +397,13 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				return { fileRecord, loggedInClient, query, fileResponse, contentForReadable };
+				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
 			it('should return 200 and file contents as stream', async () => {
-				const { fileRecord, loggedInClient, query, contentForReadable } = await setup();
+				const { fileRecord, query, contentForReadable } = await setup();
 
-				const response = await loggedInClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
 
 				expect(response.status).toBe(200);
 				expect(response.body).toBeInstanceOf(Buffer);
@@ -447,9 +413,6 @@ describe('Wopi Controller (API)', () => {
 
 		describe('when authorizationClientAdapter rejects', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
 				const fileRecord = fileRecordEntityFactory.buildWithId();
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
@@ -463,15 +426,112 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				return { fileRecord, loggedInClient, query, fileResponse, contentForReadable };
+				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
 			it('should return 403 Forbidden', async () => {
-				const { fileRecord, loggedInClient, query } = await setup();
+				const { fileRecord, query } = await setup();
 
-				const response = await loggedInClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
 
 				expect(response.status).toBe(403);
+			});
+		});
+
+		describe('when fileRecord is not in db', () => {
+			const setup = () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				const contentForReadable = 'contentForReadable';
+				const fileResponse = GetFileResponseTestFactory.build({ contentForReadable });
+				storageClient.get.mockResolvedValueOnce(fileResponse);
+
+				return { fileRecord, query, fileResponse, contentForReadable };
+			};
+
+			it('should return 404 not found', async () => {
+				const { fileRecord, query } = setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+
+				expect(response.status).toBe(404);
+			});
+		});
+
+		describe('when storage client rejects', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				const error = new Error('Storage client error');
+				storageClient.get.mockRejectedValueOnce(error);
+
+				await em.persistAndFlush(fileRecord);
+
+				return { fileRecord, query, error };
+			};
+
+			it('should return 500 Internal Server Error', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+
+				expect(response.status).toBe(500);
+			});
+		});
+
+		describe('when fileRecordId is not valid', () => {
+			const setup = () => {
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+
+				return { query };
+			};
+
+			it('should return 400 Bad Request', async () => {
+				const { query } = setup();
+
+				const response = await testApiClient.get(`/files/invalid-id/contents`).query(query);
+
+				expect(response.status).toBe(400);
+			});
+		});
+
+		describe('when access token is not provided', () => {
+			it('should return 400 Bad Request', async () => {
+				const fileRecordId = new ObjectId().toHexString();
+
+				const response = await testApiClient.get(`/files/${fileRecordId}/contents`);
+
+				expect(response.status).toBe(400);
+			});
+		});
+
+		describe('when access token is malformed', () => {
+			const setup = () => {
+				const fileRecordId = new ObjectId().toHexString();
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken('invalid-token').build();
+
+				return { query, fileRecordId };
+			};
+
+			it('should return 400 Bad Request', async () => {
+				const { query, fileRecordId } = setup();
+
+				const response = await testApiClient.get(`/files/${fileRecordId}/contents`).query(query);
+
+				expect(response.status).toBe(400);
 			});
 		});
 	});
