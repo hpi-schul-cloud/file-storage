@@ -340,12 +340,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, loggedInClient, query, studentUser, studentAccount, wopiPayload };
 			};
 
-			it('should return 500 Internal Server Error', async () => {
+			it('should return 404 not found', async () => {
 				const { loggedInClient, fileRecord, query } = await setup();
 
 				const response = await loggedInClient.get(`/files/${fileRecord.id}`).query(query);
 
-				expect(response.status).toBe(500);
+				expect(response.status).toBe(404);
 			});
 		});
 
