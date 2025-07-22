@@ -8,7 +8,7 @@ import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
 import { WopiBuilder } from '@modules/files-storage/domain/mapper/wopi.builder';
 import { WoipAccessToken } from '@modules/files-storage/domain/wopi-access-token.vo';
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '../../domain';
 import { WopiPayload } from '../../domain/wopi-payload.vo';
@@ -86,10 +86,6 @@ export class WopiUc {
 			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
 		);
 		const payload = WopiBuilder.buildWopiPayloadFromResponse(result.payload);
-		//@TODO prüfen ob wir das brauchen
-		if (!payload.isSameFileRecordId(params.fileRecordId)) {
-			throw new ForbiddenException('File record ID does not match the token');
-		}
 
 		return payload;
 	}
