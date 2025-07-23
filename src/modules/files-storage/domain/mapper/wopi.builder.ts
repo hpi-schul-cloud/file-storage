@@ -1,6 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import { AccessUrl } from '../access-url.vo';
-import { WoipAccessToken } from '../wopi-access-token.vo';
+import { WopiAccessToken } from '../wopi-access-token.vo';
 import { WopiPayload } from '../wopi-payload.vo';
 
 export class WopiBuilder {
@@ -8,7 +8,7 @@ export class WopiBuilder {
 		onlineEditorUrl: string,
 		wopiSrc: string,
 		fileRecordId: EntityId,
-		accessToken: WoipAccessToken
+		accessToken: WopiAccessToken
 	): AccessUrl {
 		const onlineUrl = new URL(onlineEditorUrl);
 		onlineUrl.searchParams.set('WOPISrc', `${wopiSrc}/${fileRecordId}`);
@@ -41,8 +41,8 @@ export class WopiBuilder {
 		return payload;
 	}
 
-	public static buildAccessToken(token: string): WoipAccessToken {
-		const accessToken = new WoipAccessToken(token);
+	public static buildAccessToken(token: string): WopiAccessToken {
+		const accessToken = new WopiAccessToken(token);
 
 		return accessToken;
 	}

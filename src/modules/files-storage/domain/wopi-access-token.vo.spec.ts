@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
-import { WoipAccessToken } from './wopi-access-token.vo';
+import { WopiAccessToken } from './wopi-access-token.vo';
 
-describe('WoipAccessToken', () => {
+describe('WopiAccessToken', () => {
 	describe('constructor', () => {
 		describe('when token is valid', () => {
 			const setup = () => {
@@ -15,7 +15,7 @@ describe('WoipAccessToken', () => {
 			it('should create WoipAccessToken with valid UUID token', () => {
 				const { token } = setup();
 
-				const result = new WoipAccessToken(token);
+				const result = new WopiAccessToken(token);
 
 				expect(result.token).toBe(token);
 			});
@@ -33,7 +33,7 @@ describe('WoipAccessToken', () => {
 			it('should throw an error', () => {
 				const { token } = setup();
 
-				expect(() => new WoipAccessToken(token)).toThrowError();
+				expect(() => new WopiAccessToken(token)).toThrowError();
 			});
 		});
 	});

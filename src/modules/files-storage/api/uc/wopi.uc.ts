@@ -7,7 +7,7 @@ import {
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
 import { WopiBuilder } from '@modules/files-storage/domain/mapper/wopi.builder';
-import { WoipAccessToken } from '@modules/files-storage/domain/wopi-access-token.vo';
+import { WopiAccessToken } from '@modules/files-storage/domain/wopi-access-token.vo';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '../../domain';
@@ -95,7 +95,7 @@ export class WopiUc {
 		referenceId: EntityId,
 		editorMode: EditorMode,
 		payload: WopiPayload
-	): Promise<WoipAccessToken> {
+	): Promise<WopiAccessToken> {
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 		const authorizationContext = this.authorizationContext(editorMode);
 

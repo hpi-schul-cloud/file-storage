@@ -2,7 +2,7 @@ import { ValueObject } from '@shared/domain/value-object.decorator';
 import { IsUUID } from 'class-validator';
 
 @ValueObject()
-export class WoipAccessToken {
+export class WopiAccessToken {
 	constructor(token: string) {
 		this.token = token;
 	}
