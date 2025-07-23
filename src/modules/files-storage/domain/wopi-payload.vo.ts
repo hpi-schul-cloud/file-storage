@@ -29,8 +29,4 @@ export class WopiPayload {
 
 	@IsMongoId()
 	public readonly userId: EntityId;
-
-	public isSameFileRecordId(fileRecordId: EntityId): boolean {
-		return this.fileRecordId === fileRecordId;
-	}
 }
