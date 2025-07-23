@@ -2,7 +2,7 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import type { AccessTokenPayloadResponse } from '../authorization-api-client/models/access-token-payload-response';
 
 class AccessTokenPayloadResponseTestFactory {
-	private props: AccessTokenPayloadResponse = {
+	private readonly props: AccessTokenPayloadResponse = {
 		payload: { userId: new ObjectId().toHexString(), roles: [new ObjectId().toHexString()], exp: 9999999999 },
 	};
 
