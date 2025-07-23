@@ -3,8 +3,8 @@ import { IsUUID } from 'class-validator';
 
 @ValueObject()
 export class WopiAccessToken {
-	constructor(token: string) {
-		this.token = token;
+	constructor(props: WopiAccessToken) {
+		this.token = props.token;
 	}
 
 	@IsUUID()

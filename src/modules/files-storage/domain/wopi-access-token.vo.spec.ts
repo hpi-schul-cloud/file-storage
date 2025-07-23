@@ -15,7 +15,7 @@ describe('WopiAccessToken', () => {
 			it('should create WoipAccessToken with valid UUID token', () => {
 				const { token } = setup();
 
-				const result = new WopiAccessToken(token);
+				const result = new WopiAccessToken({ token });
 
 				expect(result.token).toBe(token);
 			});
@@ -33,7 +33,7 @@ describe('WopiAccessToken', () => {
 			it('should throw an error', () => {
 				const { token } = setup();
 
-				expect(() => new WopiAccessToken(token)).toThrowError();
+				expect(() => new WopiAccessToken({ token })).toThrowError();
 			});
 		});
 	});

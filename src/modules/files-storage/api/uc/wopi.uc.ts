@@ -6,7 +6,6 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import { WopiAccessToken } from '@modules/files-storage/domain/wopi-access-token.vo';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import {
@@ -15,9 +14,10 @@ import {
 	FileRecordParentType,
 	FilesStorageService,
 	GetFileResponse,
+	WopiAccessToken,
+	WopiPayload,
 	WopiPayloadFactory,
 } from '../../domain';
-import { WopiPayload } from '../../domain/wopi-payload.vo';
 import { WopiConfig } from '../../wopi.config';
 import {
 	AccessUrlResponse,

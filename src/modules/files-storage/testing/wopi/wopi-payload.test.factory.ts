@@ -1,4 +1,5 @@
 import { ObjectId } from '@mikro-orm/mongodb';
+import { WopiPayloadFactory } from '@modules/files-storage/domain';
 import type { EntityId } from '@shared/domain/types';
 import { WopiPayload } from '../../domain/wopi-payload.vo';
 
@@ -11,7 +12,7 @@ class WopiPayloadTestFactory {
 	};
 
 	public build(params: Partial<Omit<WopiPayload, 'isSameFileRecordId'>> = {}): WopiPayload {
-		return new WopiPayload({ ...this.props, ...params });
+		return WopiPayloadFactory.build({ ...this.props, ...params });
 	}
 
 	public withFileRecordId(fileRecordId: EntityId): this {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { WopiAccessToken } from '../../domain/wopi-access-token.vo';
+import { WopiAccessToken, WopiAccessTokenFactory } from '../../domain';
 
 class WopiAccessTokenTestFactory {
 	private readonly props: WopiAccessToken = {
@@ -7,7 +7,7 @@ class WopiAccessTokenTestFactory {
 	};
 
 	public build(params: Partial<WopiAccessToken> = {}): WopiAccessToken {
-		return { ...this.props, ...params };
+		return WopiAccessTokenFactory.build({ ...this.props, ...params });
 	}
 }
 
