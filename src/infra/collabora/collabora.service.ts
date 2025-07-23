@@ -48,9 +48,9 @@ export class CollaboraService {
 
 		this.checkStatusOk(response.status);
 
-		const doc = new DOMParser().parseFromString(response.data, 'text/xml');
+		const xmlDocument = new DOMParser().parseFromString(response.data, 'text/xml');
 
-		return doc;
+		return xmlDocument;
 	}
 
 	private checkStatusOk(status: number): void {
@@ -59,8 +59,8 @@ export class CollaboraService {
 		}
 	}
 
-	private getNodesByMimeType(mimeType: string, doc: Document): Element[] {
-		const netZone = doc.getElementsByTagName('net-zone')[0];
+	private getNodesByMimeType(mimeType: string, xmlDocument: Document): Element[] {
+		const netZone = xmlDocument.getElementsByTagName('net-zone')[0];
 		if (!netZone) return [];
 
 		const apps = netZone.getElementsByTagName('app');
