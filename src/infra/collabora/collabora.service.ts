@@ -70,17 +70,14 @@ export class CollaboraService {
 	}
 
 	private getActionsByNameAttribute(elements: LiveNodeList<Element>, name: string): Element[] {
-		const filteredElements = [];
-
-		for (const element of elements) {
-			if (element.getAttribute('name') === name) {
+		const filteredElements = elements
+			.filter((element) => element.getAttribute('name') === name)
+			.flatMap((element) => {
 				const actions = element.getElementsByTagName('action');
+				const actionArray = Array.from(actions);
 
-				for (const action of actions) {
-					filteredElements.push(action);
-				}
-			}
-		}
+				return actionArray;
+			});
 
 		return filteredElements;
 	}
