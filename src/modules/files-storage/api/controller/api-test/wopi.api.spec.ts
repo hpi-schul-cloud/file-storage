@@ -5,15 +5,16 @@ import { accessTokenPayloadResponseTestFactory } from '@infra/authorization-clie
 import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
-import { FilesStorageTestModule } from '@modules/files-storage/files-storage-test.module';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage/files-storage.config';
-import { fileRecordEntityFactory, GetFileResponseTestFactory } from '@modules/files-storage/testing';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
+import { FilesStorageTestModule } from '../../../files-storage-test.module';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import {
 	discoveryAccessUrlParamsTestFactory,
+	fileRecordEntityFactory,
+	GetFileResponseTestFactory,
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
 } from '../../../testing';
@@ -339,7 +340,7 @@ describe('Wopi Controller (API)', () => {
 				expect(response.status).toBe(200);
 				expect(result.BaseFileName).toBe(fileRecord.name);
 				expect(result.Size).toBe(fileRecord.size);
-				expect(result.OwnerID).toBe(fileRecord.creatorId);
+				expect(result.OwnerId).toBe(fileRecord.creatorId);
 				expect(result.UserId).toBe(wopiPayload.userId);
 				expect(result.UserCanWrite).toBe(wopiPayload.canWrite);
 				expect(result.UserFriendlyName).toBe(wopiPayload.userDisplayName);
