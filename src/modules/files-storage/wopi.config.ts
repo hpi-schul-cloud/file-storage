@@ -3,7 +3,7 @@ import { IsInt, IsUrl } from 'class-validator';
 
 export class WopiConfig {
 	@IsUrl({ require_tld: false })
-	WOPI_URL!: string;
+	WOPI_URL = 'http://localhost:4444/api/v3/wopi/files';
 
 	@IsInt()
 	@StringToNumber()
