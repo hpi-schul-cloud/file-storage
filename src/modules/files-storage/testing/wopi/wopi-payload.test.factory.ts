@@ -11,7 +11,7 @@ class WopiPayloadTestFactory {
 		userId: new ObjectId().toHexString() as EntityId,
 	};
 
-	public build(params: Partial<Omit<WopiPayload, 'isSameFileRecordId'>> = {}): WopiPayload {
+	public build(params: Partial<WopiPayload> = {}): WopiPayload {
 		return WopiPayloadFactory.build({ ...this.props, ...params });
 	}
 
