@@ -66,13 +66,53 @@ describe('Wopi Controller (API)', () => {
 	});
 
 	describe('getAuthorizedCollaboraAccessUrl', () => {
-		describe('when request is successful', () => {
+		describe('when editorMode is write', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = discoveryAccessUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
+				const body = discoveryAccessUrlParamsTestFactory()
+					.withFileRecordId(fileRecord.id)
+					.withEditorMode(EditorMode.EDIT)
+					.build();
+				const token = accessTokenResponseTestFactory().build();
+				const collaboraUrl = 'http://collabora.url';
+
+				em.persistAndFlush(fileRecord);
+
+				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
+				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { body, loggedInClient, token, collaboraUrl };
+			};
+
+			it('should return 201 and valid access url', async () => {
+				const { body, loggedInClient, token, collaboraUrl } = await setup();
+
+				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+
+				const expectedWopiSrc = encodeURIComponent(`http://localhost:4444/api/v3/wopi/files/${body.fileRecordId}`);
+				const expectedUrl = `${collaboraUrl}/?WOPISrc=${expectedWopiSrc}&access_token=${token.token}`;
+				expect(response.status).toBe(201);
+				expect(response.body).toEqual({
+					onlineUrl: expectedUrl,
+				});
+			});
+		});
+
+		describe('when editorMode is VIEW', () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const body = discoveryAccessUrlParamsTestFactory()
+					.withFileRecordId(fileRecord.id)
+					.withEditorMode(EditorMode.VIEW)
+					.build();
 				const token = accessTokenResponseTestFactory().build();
 				const collaboraUrl = 'http://collabora.url';
 
