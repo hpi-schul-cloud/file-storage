@@ -51,6 +51,7 @@ export class WopiController {
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<AccessUrlResponse> {
 		this.ensureWopiEnabled();
+
 		const result = await this.wopiUc.getAuthorizedCollaboraAccessUrl(currentUser.userId, body);
 
 		return result;
@@ -78,7 +79,6 @@ export class WopiController {
 		this.ensureWopiEnabled();
 
 		const fileResponse = await this.wopiUc.getFileStream(params, query);
-
 		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 
 		return streamableFile;
