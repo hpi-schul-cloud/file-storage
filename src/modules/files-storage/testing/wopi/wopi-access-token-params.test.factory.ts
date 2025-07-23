@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { WopiAccessTokenParams } from '../../api/dto';
 
 class WopiAccessTokenParamsTestFactory {
-	private props: WopiAccessTokenParams = {
+	private readonly props: WopiAccessTokenParams = {
 		access_token: randomUUID(),
 	};
 
