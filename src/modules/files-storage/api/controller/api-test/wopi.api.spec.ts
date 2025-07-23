@@ -6,7 +6,7 @@ import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage/files-storage-test.module';
-import { FILES_STORAGE_S3_CONNECTION } from '@modules/files-storage/files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage/files-storage.config';
 import { fileRecordEntityFactory, GetFileResponseTestFactory } from '@modules/files-storage/testing';
 import { wopiAccessTokenParamsTestFactory } from '@modules/files-storage/testing/wopi/wopi-access-token-params.test.factory';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
@@ -22,6 +22,7 @@ describe('Wopi Controller (API)', () => {
 	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 	let collaboraService: DeepMocked<CollaboraService>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
+	let fileStorageConfig: DeepMocked<FileStorageConfig>;
 	let em: EntityManager;
 
 	beforeAll(async () => {
@@ -34,6 +35,10 @@ describe('Wopi Controller (API)', () => {
 			.useValue(createMock<CollaboraService>())
 			.overrideProvider(FILES_STORAGE_S3_CONNECTION)
 			.useValue(createMock<S3ClientAdapter>())
+			.overrideProvider(FileStorageConfig)
+			.useValue({
+				FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
+			})
 			.compile();
 
 		app = moduleFixture.createNestApplication();
@@ -43,6 +48,7 @@ describe('Wopi Controller (API)', () => {
 		em = moduleFixture.get(EntityManager);
 		collaboraService = moduleFixture.get(CollaboraService);
 		storageClient = moduleFixture.get(FILES_STORAGE_S3_CONNECTION);
+		fileStorageConfig = moduleFixture.get(FileStorageConfig);
 
 		testApiClient = new TestApiClient(app, '/wopi');
 	});
@@ -53,6 +59,7 @@ describe('Wopi Controller (API)', () => {
 
 	afterEach(() => {
 		jest.resetAllMocks();
+		fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 	});
 
 	describe('getAuthorizedCollaboraAccessUrl', () => {
@@ -71,6 +78,8 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
 				return { body, loggedInClient, token, collaboraUrl };
 			};
 
@@ -85,6 +94,27 @@ describe('Wopi Controller (API)', () => {
 				expect(response.body).toEqual({
 					onlineUrl: expectedUrl,
 				});
+			});
+		});
+
+		describe('when WOPI feature is disabled', () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+				const body = discoveryAccessUrlParamsTestFactory().build();
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+
+				return { body, loggedInClient };
+			};
+
+			it('should return 403 Forbidden', async () => {
+				const { body, loggedInClient } = await setup();
+
+				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+
+				expect(response.status).toBe(403);
+				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
 
@@ -145,6 +175,8 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 				collaboraService.discoverUrl.mockRejectedValueOnce(collaboraException);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { body, loggedInClient };
 			};
@@ -249,6 +281,8 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
 				return { fileRecord, query, wopiPayload };
 			};
 
@@ -269,6 +303,26 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
+		describe('when WOPI feature is disabled', () => {
+			const setup = () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const query = wopiAccessTokenParamsTestFactory().build();
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+
+				return { fileRecord, query };
+			};
+
+			it('should return 403 Forbidden', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+
+				expect(response.status).toBe(403);
+				expect(response.body.message).toBe('WOPI feature is disabled');
+			});
+		});
+
 		describe('when authorizationClientAdapter rejects with forbidden error', () => {
 			const setup = async () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
@@ -278,6 +332,8 @@ describe('Wopi Controller (API)', () => {
 				await em.persistAndFlush(fileRecord);
 
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -301,6 +357,8 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
 				return { fileRecord, query };
 			};
 
@@ -322,6 +380,8 @@ describe('Wopi Controller (API)', () => {
 				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, wopiPayload };
 			};
@@ -397,6 +457,8 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
@@ -408,6 +470,27 @@ describe('Wopi Controller (API)', () => {
 				expect(response.status).toBe(200);
 				expect(response.body).toBeInstanceOf(Buffer);
 				expect(response.body.toString()).toBe(contentForReadable);
+			});
+		});
+
+		describe('when WOPI feature is disabled', () => {
+			const setup = () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+
+				return { fileRecord, query };
+			};
+
+			it('should return 403 Forbidden', async () => {
+				const { fileRecord, query } = setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+
+				expect(response.status).toBe(403);
+				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
 
@@ -425,6 +508,8 @@ describe('Wopi Controller (API)', () => {
 				storageClient.get.mockResolvedValueOnce(fileResponse);
 
 				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
@@ -452,6 +537,8 @@ describe('Wopi Controller (API)', () => {
 				const fileResponse = GetFileResponseTestFactory.build({ contentForReadable });
 				storageClient.get.mockResolvedValueOnce(fileResponse);
 
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
@@ -478,6 +565,8 @@ describe('Wopi Controller (API)', () => {
 				storageClient.get.mockRejectedValueOnce(error);
 
 				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, error };
 			};

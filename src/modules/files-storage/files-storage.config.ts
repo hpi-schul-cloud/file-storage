@@ -33,6 +33,10 @@ export class FileStorageConfig {
 
 	@IsString()
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
+
+	@IsBoolean()
+	@StringToBoolean()
+	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 }
 
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
