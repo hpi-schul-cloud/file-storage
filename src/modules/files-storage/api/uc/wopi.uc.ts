@@ -6,11 +6,17 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import { WopiBuilder } from '@modules/files-storage/domain/mapper/wopi.builder';
 import { WopiAccessToken } from '@modules/files-storage/domain/wopi-access-token.vo';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
-import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '../../domain';
+import {
+	AccessUrlFactory,
+	FileRecord,
+	FileRecordParentType,
+	FilesStorageService,
+	GetFileResponse,
+	WopiPayloadFactory,
+} from '../../domain';
 import { WopiPayload } from '../../domain/wopi-payload.vo';
 import { WopiConfig } from '../../wopi.config';
 import {
@@ -44,12 +50,12 @@ export class WopiUc {
 		const { parentId, parentType } = fileRecord.getProps();
 
 		const canWrite = editorMode === EditorMode.EDIT;
-		const payload = WopiBuilder.buildWopiPayload(fileRecord.id, canWrite, userDisplayName, userId);
+		const payload = WopiPayloadFactory.buildFromParams(fileRecord.id, canWrite, userDisplayName, userId);
 
 		const accessToken = await this.checkPermissionAndCreateAccessToken(parentType, parentId, editorMode, payload);
 		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
 
-		const url = WopiBuilder.buildAccessUrl(collaboraUrl, this.wopiConfig.WOPI_URL, fileRecord.id, accessToken);
+		const url = AccessUrlFactory.buildFromParams(collaboraUrl, this.wopiConfig.WOPI_URL, fileRecord.id, accessToken);
 		const response = WopiResponseBuilder.buildAccessUrlResponse(url);
 
 		return response;
@@ -85,7 +91,7 @@ export class WopiUc {
 			wopiToken.access_token,
 			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
 		);
-		const payload = WopiBuilder.buildWopiPayloadFromResponse(result.payload);
+		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 
 		return payload;
 	}

@@ -1,5 +1,6 @@
 export { FileDto } from './dto';
 export { ErrorType } from './error';
+export * from './factory';
 export * from './file-record.do';
 export * from './interface';
 export { ParentStatisticFactory } from './parent-statistic.factory';
