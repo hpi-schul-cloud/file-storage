@@ -3,7 +3,7 @@ import type { DiscoveryAccessUrlParams } from '../../api/dto/wopi.params';
 import { EditorMode } from '../../api/dto/wopi.params';
 
 class DiscoveryAccessUrlParamsTestFactory {
-	private props: DiscoveryAccessUrlParams = {
+	private readonly props: DiscoveryAccessUrlParams = {
 		fileRecordId: new ObjectId().toHexString(),
 		editorMode: EditorMode.EDIT,
 		userDisplayName: 'Test User',

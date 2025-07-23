@@ -3,7 +3,7 @@ import type { EntityId } from '@shared/domain/types';
 import { WopiPayload } from '../../domain/wopi-payload.vo';
 
 class WopiPayloadTestFactory {
-	private props = {
+	private readonly props = {
 		fileRecordId: new ObjectId().toHexString() as EntityId,
 		canWrite: true,
 		userDisplayName: 'Test User',
