@@ -14,7 +14,7 @@ export class WopiCheckFileInfoResponse {
 		this.UserFriendlyName = user.userName;
 		this.BaseFileName = fileRecord.getName();
 		this.UserCanWrite = user.canWrite;
-		this.OwnerID = creatorId;
+		this.OwnerId = creatorId;
 	}
 
 	@ApiProperty()
@@ -35,7 +35,7 @@ export class WopiCheckFileInfoResponse {
 
 	@ApiProperty()
 	@IsOptional()
-	OwnerID?: EntityId;
+	OwnerId?: EntityId;
 }
 
 export class AccessUrlResponse {
