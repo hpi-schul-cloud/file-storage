@@ -8,12 +8,15 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage/files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage/files-storage.config';
 import { fileRecordEntityFactory, GetFileResponseTestFactory } from '@modules/files-storage/testing';
-import { wopiAccessTokenParamsTestFactory } from '@modules/files-storage/testing/wopi/wopi-access-token-params.test.factory';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
-import { discoveryAccessUrlParamsTestFactory, wopiPayloadTestFactory } from '../../../testing/wopi';
+import {
+	discoveryAccessUrlParamsTestFactory,
+	wopiAccessTokenParamsTestFactory,
+	wopiPayloadTestFactory,
+} from '../../../testing';
 import { EditorMode, WopiCheckFileInfoResponse } from '../../dto';
 
 describe('Wopi Controller (API)', () => {
