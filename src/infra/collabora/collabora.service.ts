@@ -2,10 +2,9 @@ import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
-import { Document, DOMParser } from '@xmldom/xmldom';
+import { Document, DOMParser, Element, LiveNodeList } from '@xmldom/xmldom';
 import { isAxiosError } from 'axios';
 import { lastValueFrom } from 'rxjs';
-import * as xpath from 'xpath';
 import { CollaboraConfig } from './collabora.config';
 
 @Injectable()
@@ -60,15 +59,35 @@ export class CollaboraService {
 		}
 	}
 
-	private getNodesByMimeType(mimeType: string, doc: Document): xpath.SelectReturnType {
-		const nodes = xpath.select(`/wopi-discovery/net-zone/app[@name='${mimeType}']/action`, doc as unknown as Node);
+	private getNodesByMimeType(mimeType: string, doc: Document): Element[] {
+		const netZone = doc.getElementsByTagName('net-zone')[0];
+		if (!netZone) return [];
 
-		return nodes;
+		const apps = netZone.getElementsByTagName('app');
+		const result = this.getActionsByNameAttribute(apps, mimeType);
+
+		return result;
 	}
 
-	private getUrlFromFirstNode(nodes: xpath.SelectReturnType): string {
-		const validatedNodes = TypeGuard.checkArrayWithElements<Element>(nodes);
-		const firstElement = validatedNodes[0];
+	private getActionsByNameAttribute(elements: LiveNodeList<Element>, name: string): Element[] {
+		const filteredElements = [];
+
+		for (const element of elements) {
+			if (element.getAttribute('name') === name) {
+				const actions = element.getElementsByTagName('action');
+
+				for (const action of actions) {
+					filteredElements.push(action);
+				}
+			}
+		}
+
+		return filteredElements;
+	}
+
+	private getUrlFromFirstNode(elements: Element[]): string {
+		const validatedElements = TypeGuard.checkArrayWithElements<Element>(elements);
+		const firstElement = validatedElements[0];
 
 		const url = firstElement.getAttribute('urlsrc');
 		const definedUrl = this.checkUrlIsDefined(url);
