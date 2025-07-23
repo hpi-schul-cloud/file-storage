@@ -6,10 +6,6 @@ import { WopiAccessToken } from '../wopi-access-token.vo';
 import { WopiPayload } from '../wopi-payload.vo';
 import { WopiBuilder } from './wopi.builder';
 
-afterEach(() => {
-	jest.resetAllMocks();
-});
-
 describe('WopiBuilder', () => {
 	describe('buildAccessToken', () => {
 		describe('when buildAccessToken resolves', () => {
@@ -61,9 +57,7 @@ describe('WopiBuilder', () => {
 			expect(result.userId).toBe(userId);
 		});
 	});
-});
 
-describe('WopiBuilder', () => {
 	describe('buildWopiPayload', () => {
 		const setup = () => {
 			const fileRecordId = new ObjectId().toHexString();
@@ -91,9 +85,7 @@ describe('WopiBuilder', () => {
 			expect(result.userId).toBe(userId);
 		});
 	});
-});
 
-describe('WopiBuilder', () => {
 	describe('buildAccessUrl', () => {
 		const setup = () => {
 			const onlineEditorUrl = 'https://editor.example.com';
