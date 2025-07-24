@@ -7,6 +7,7 @@ import {
 	Controller,
 	ForbiddenException,
 	Get,
+	HttpCode,
 	InternalServerErrorException,
 	Param,
 	Post,
@@ -86,6 +87,7 @@ export class WopiController {
 		return streamableFile;
 	}
 
+	@HttpCode(200)
 	@ApiOperation({ summary: 'WOPI PutFile (update file contents)' })
 	@ApiResponse({ status: 200, description: 'Updates the file contents.' })
 	@Post('files/:fileRecordId/contents')
