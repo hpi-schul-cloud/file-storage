@@ -1,4 +1,4 @@
-import { ParentStatistic, ParentStatisticProps } from './parent-statistic.vo';
+import { ParentStatistic, ParentStatisticProps } from './vo';
 
 export class ParentStatisticFactory {
 	public static build(props: ParentStatisticProps): ParentStatistic {

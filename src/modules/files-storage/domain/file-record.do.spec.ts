@@ -4,7 +4,7 @@ import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
 import { FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
 import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
-import { ScanStatus } from './security-check.vo';
+import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
 	describe('hasDuplicateName', () => {

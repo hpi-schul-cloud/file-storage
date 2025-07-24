@@ -1,4 +1,4 @@
-import { ScanStatus } from '../security-check.vo';
+import { ScanStatus } from '../vo';
 
 export class ScanResultDto {
 	status: ScanStatus;

@@ -1,5 +1,5 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import { WopiPayload } from '../wopi-payload.vo';
+import { WopiPayload } from '../vo';
 import { WopiPayloadFactory } from './wopi-payload.factory';
 
 describe('WopiPayloadFactory', () => {

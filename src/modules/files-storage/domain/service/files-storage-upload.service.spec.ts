@@ -14,7 +14,7 @@ import { ErrorType } from '../error';
 import { FileRecord } from '../file-record.do';
 import { FileRecordFactory } from '../file-record.factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { FileRecordSecurityCheck, ScanStatus } from '../security-check.vo';
+import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import FileType from './file-type.helper';
 import { FilesStorageService } from './files-storage.service';
 

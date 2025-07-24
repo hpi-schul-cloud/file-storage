@@ -1,6 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import { AccessUrl } from '../access-url.vo';
-import { WopiAccessToken } from '../wopi-access-token.vo';
+import { WopiAccessToken } from '../vo';
 
 export class AccessUrlFactory {
 	public static build(url: string): AccessUrl {

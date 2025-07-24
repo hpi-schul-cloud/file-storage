@@ -1,7 +1,7 @@
 import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { FileRecord } from '../file-record.do';
-import { ParentStatistic } from '../parent-statistic.vo';
+import { ParentStatistic } from '../vo';
 import { StorageLocation } from './storage-location.enum';
 
 export interface FileRecordRepo {

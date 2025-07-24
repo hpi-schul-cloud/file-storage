@@ -9,7 +9,7 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
 import { FileRecordFactory } from '../file-record.factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { ScanStatus } from '../security-check.vo';
+import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 describe('FilesStorageService copy methods', () => {

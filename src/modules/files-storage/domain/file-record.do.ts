@@ -5,7 +5,7 @@ import { EntityId } from '@shared/domain/types';
 import path from 'path';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
-import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './security-check.vo';
+import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',
