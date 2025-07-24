@@ -11,9 +11,11 @@ import {
 	Param,
 	Post,
 	Query,
+	Req,
 	StreamableFile,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import {
 	AccessUrlResponse,
 	DiscoveryAccessUrlParams,
@@ -82,5 +84,19 @@ export class WopiController {
 		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 
 		return streamableFile;
+	}
+
+	@ApiOperation({ summary: 'WOPI PutFile (update file contents)' })
+	@ApiResponse({ status: 200, description: 'Updates the file contents.' })
+	@Post('files/:fileRecordId/contents')
+	public async putFile(
+		@Param() params: SingleFileParams,
+		@Query() query: WopiAccessTokenParams,
+		@Body() fileBuffer: Buffer,
+		@Req() req: Request
+	): Promise<void> {
+		this.ensureWopiEnabled();
+
+		await this.wopiUc.putFile(query, req);
 	}
 }

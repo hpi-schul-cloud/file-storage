@@ -17,6 +17,7 @@ import { firstValueFrom } from 'rxjs';
 import internal from 'stream';
 import {
 	ErrorType,
+	FileInfoFactory,
 	FileRecord,
 	FileRecordParentType,
 	FilesStorageService,
@@ -142,7 +143,8 @@ export class FilesStorageUC {
 			let fileRecordPromise: Promise<FileRecord>;
 
 			bb.on('file', (_name, file, info) => {
-				const fileDto = FileDtoBuilder.buildFromRequest(info, file);
+				const fileInfo = FileInfoFactory.buildFromBusboyFileInfo(info);
+				const fileDto = FileDtoBuilder.buildFromRequest(fileInfo, file);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					const record = this.filesStorageService.uploadFile(userId, params, fileDto);

@@ -83,9 +83,27 @@ export class FilesStorageService {
 		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
 
-		await this.createFileInStorageAndRollbackOnError(fileRecord, file);
+		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
 
 		return fileRecord;
+	}
+
+	public async updateFileContents(fileRecordId: EntityId, file: FileDto): Promise<void> {
+		// Second call of getFileRecord: This needs to be solved
+		const fileRecord = await this.getFileRecord(fileRecordId);
+
+		const { mimeType, stream } = await this.detectMimeType(file);
+		this.checkMimeType(fileRecord.mimeType, mimeType);
+
+		// MimeType Detection consumes part of the stream, so the restored stream is passed on
+		file.data = stream;
+		await this.createFileInStorageAndRollbackOnError(fileRecord, file);
+	}
+
+	private checkMimeType(oldMimeType: string, newMimeType: string): void {
+		if (oldMimeType !== newMimeType) {
+			throw new ConflictException('Mimetype mismatch');
+		}
 	}
 
 	private async createFileRecord(
@@ -146,40 +164,64 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private async createFileInStorageAndRollbackOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
+	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		const filePath = fileRecord.createPath();
-		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 
 		try {
-			const fileSizePromise = this.countFileSize(file);
-
-			if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-				const streamToAntivirus = file.data.pipe(new PassThrough());
-
-				const [, antivirusClientResponse] = await Promise.all([
-					this.storageClient.create(filePath, file),
-					this.antivirusService.checkStream(streamToAntivirus),
-				]);
-				const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
-				fileRecord.updateSecurityCheckStatus(status, reason);
-			} else {
-				await this.storageClient.create(filePath, file);
-			}
-
-			// The actual file size is set here because it is known only after the whole file is streamed.
-			const fileRecordSize = await fileSizePromise;
-
-			fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
-
-			await this.fileRecordRepo.save(fileRecord);
-
-			if (!useStreamToAntivirus || !fileRecord.isPreviewPossible()) {
-				await this.sendToAntivirus(fileRecord);
-			}
+			await this.storeAndScanFile(file, fileRecord, filePath);
 		} catch (error) {
 			await this.storageClient.delete([filePath]);
 			await this.fileRecordRepo.delete(fileRecord);
 			throw error;
+		}
+	}
+
+	private async createFileInStorageAndRollbackOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
+		const filePath = fileRecord.createPath();
+		const unchangedFileRecord = FileRecordFactory.buildFromFileRecordProps(
+			fileRecord.getProps(),
+			fileRecord.createSecurityScanBasedOnStatus()
+		);
+
+		try {
+			await this.storeAndScanFile(file, fileRecord, filePath);
+		} catch (error) {
+			// What is the rollback in case of failing filerecord save and successfull file upload to s3?
+			console.log('rollback fileRecord save');
+			console.log('error', error);
+			// Is mikroorm losing context here?
+			await this.fileRecordRepo.save(unchangedFileRecord);
+			throw error;
+		}
+	}
+
+	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord, filePath: string): Promise<void> {
+		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
+		const fileSizePromise = this.countFileSize(file);
+
+		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
+			const streamToAntivirus = file.data.pipe(new PassThrough());
+
+			const [, antivirusClientResponse] = await Promise.all([
+				this.storageClient.create(filePath, file),
+				this.antivirusService.checkStream(streamToAntivirus),
+			]);
+			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
+			fileRecord.updateSecurityCheckStatus(status, reason);
+		} else {
+			await this.storageClient.create(filePath, file);
+		}
+
+		// The actual file size is set here because it is known only after the whole file is streamed.
+		const fileRecordSize = await fileSizePromise;
+
+		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
+		fileRecord.touchUpdatedAt();
+
+		await this.fileRecordRepo.save(fileRecord);
+
+		if (!useStreamToAntivirus || !fileRecord.isPreviewPossible()) {
+			await this.sendToAntivirus(fileRecord);
 		}
 	}
 

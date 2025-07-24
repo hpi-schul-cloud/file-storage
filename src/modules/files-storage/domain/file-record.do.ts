@@ -278,4 +278,8 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 
 		return filePath;
 	}
+
+	public touchUpdatedAt(): void {
+		this.props.updatedAt = new Date();
+	}
 }

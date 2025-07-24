@@ -6,10 +6,13 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
+import { EntityManager, RequestContext } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
+import { Request } from 'express';
 import {
 	AccessUrlFactory,
+	FileInfoFactory,
 	FileRecord,
 	FileRecordParentType,
 	FilesStorageService,
@@ -27,7 +30,7 @@ import {
 	WopiAccessTokenParams,
 	WopiCheckFileInfoResponse,
 } from '../dto';
-import { FilesStorageMapper, WopiResponseBuilder } from '../mapper';
+import { FileDtoBuilder, FilesStorageMapper, WopiResponseBuilder } from '../mapper';
 
 @Injectable()
 export class WopiUc {
@@ -36,9 +39,31 @@ export class WopiUc {
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
 		private readonly logger: Logger,
 		private readonly collaboraService: CollaboraService,
-		private readonly wopiConfig: WopiConfig
+		private readonly wopiConfig: WopiConfig,
+		private readonly em: EntityManager
 	) {
 		this.logger.setContext(WopiUc.name);
+	}
+
+	public async putFile(query: WopiAccessTokenParams, req: Request): Promise<void> {
+		const result = await this.authorizationClientAdapter.resolveToken(
+			query.access_token,
+			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
+		);
+
+		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
+
+		await this.uploadFile(payload.fileRecordId, req);
+	}
+
+	private async uploadFile(fileRecordId: EntityId, req: Request): Promise<void> {
+		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
+		const fileInfo = FileInfoFactory.buildFromParams(fileRecord.getName(), fileRecord.mimeType);
+		const fileDto = FileDtoBuilder.buildFromRequest(fileInfo, req);
+
+		return RequestContext.create(this.em, () => {
+			return this.filesStorageService.updateFileContents(fileRecordId, fileDto);
+		});
 	}
 
 	public async getAuthorizedCollaboraAccessUrl(

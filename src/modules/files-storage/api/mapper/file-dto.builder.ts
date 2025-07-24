@@ -1,7 +1,6 @@
 import { AxiosResponse } from 'axios';
-import { FileInfo } from 'busboy';
 import { Readable } from 'stream';
-import { FileDto } from '../../domain/dto/file.dto';
+import { FileDto, FileInfo } from '../../domain';
 
 export class FileDtoBuilder {
 	public static build(name: string, data: Readable, mimeType: string): FileDto {
@@ -11,7 +10,7 @@ export class FileDtoBuilder {
 	}
 
 	public static buildFromRequest(fileInfo: FileInfo, data: Readable): FileDto {
-		const file = FileDtoBuilder.build(fileInfo.filename, data, fileInfo.mimeType);
+		const file = FileDtoBuilder.build(fileInfo.name, data, fileInfo.mimeType);
 
 		return file;
 	}

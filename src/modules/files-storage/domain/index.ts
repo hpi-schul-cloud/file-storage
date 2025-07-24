@@ -5,6 +5,7 @@ export * from './file-record.do';
 export * from './interface';
 export { ParentStatisticFactory } from './parent-statistic.factory';
 export { FilesStorageService, PreviewService } from './service';
+export * from './vo';
 export {
 	FileRecordSecurityCheck,
 	FileRecordSecurityCheckProps,
