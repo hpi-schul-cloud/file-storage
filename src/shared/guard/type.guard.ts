@@ -75,14 +75,14 @@ export class TypeGuard {
 		return value;
 	}
 
-	public static isArrayWithElements(value: unknown): value is [] {
+	public static isArrayWithElements<T>(value: unknown): value is [T, ...T[]] {
 		const isArrayWithElements = TypeGuard.isArray(value) && value.length > 0;
 
 		return isArrayWithElements;
 	}
 
-	public static checkArrayWithElements(value: unknown): [] {
-		if (!TypeGuard.isArrayWithElements(value)) {
+	public static checkArrayWithElements<T>(value: unknown): [T, ...T[]] {
+		if (!TypeGuard.isArrayWithElements<T>(value)) {
 			throw new Error('Type is not an array with elements.');
 		}
 
