@@ -88,10 +88,7 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecordId: EntityId, file: FileDto): Promise<FileRecord> {
-		// Second call of getFileRecord: This needs to be solved
-		const fileRecord = await this.getFileRecord(fileRecordId);
-
+	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
 		const { mimeType, stream } = await this.detectMimeType(file);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 

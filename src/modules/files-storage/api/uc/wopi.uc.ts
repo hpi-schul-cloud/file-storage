@@ -60,13 +60,19 @@ export class WopiUc {
 	}
 
 	private async uploadFile(fileRecordId: EntityId, req: Request): Promise<FileRecord> {
+		const fileRecord = await RequestContext.create(this.em, async () => {
+			return await this.updateFileWithRequestData(fileRecordId, req);
+		});
+
+		return fileRecord;
+	}
+
+	private async updateFileWithRequestData(fileRecordId: EntityId, req: Request): Promise<FileRecord> {
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const fileInfo = FileInfoFactory.buildFromParams(fileRecord.getName(), fileRecord.mimeType);
 		const fileDto = FileDtoBuilder.buildFromRequest(fileInfo, req);
 
-		return RequestContext.create(this.em, () => {
-			return this.filesStorageService.updateFileContents(fileRecordId, fileDto);
-		});
+		return this.filesStorageService.updateFileContents(fileRecord, fileDto);
 	}
 
 	public async getAuthorizedCollaboraAccessUrl(
