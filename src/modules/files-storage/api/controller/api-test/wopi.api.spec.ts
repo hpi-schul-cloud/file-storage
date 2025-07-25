@@ -5,10 +5,12 @@ import { accessTokenPayloadResponseTestFactory } from '@infra/authorization-clie
 import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FileRecordEntity } from '@modules/files-storage/repo';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
+import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import {
@@ -19,6 +21,8 @@ import {
 	wopiPayloadTestFactory,
 } from '../../../testing';
 import { EditorMode, WopiCheckFileInfoResponse } from '../../dto';
+
+jest.mock('../../../domain/service/file-type.helper');
 
 describe('Wopi Controller (API)', () => {
 	let app: INestApplication;
@@ -665,6 +669,67 @@ describe('Wopi Controller (API)', () => {
 				const response = await testApiClient.get(`/files/${fileRecordId}/contents`).query(query);
 
 				expect(response.status).toBe(400);
+			});
+		});
+	});
+
+	describe('putFile', () => {
+		describe('when file is uploaded successfully', () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { loggedInClient, fileRecord, query };
+			};
+
+			it('should return 200 and updated file record', async () => {
+				const { loggedInClient, fileRecord, query } = await setup();
+
+				const response = await loggedInClient
+					.post(`/files/${fileRecord.id}/contents`)
+					.query(query)
+					.attach('file', Buffer.from('abcd'), 'test.txt');
+
+				const updatedFileRecord = await em.findOne(FileRecordEntity, fileRecord.id);
+
+				expect(response.status).toBe(200);
+				expect(response.body.LastModifiedTime).toBe(updatedFileRecord?.updatedAt.toISOString());
+			});
+		});
+
+		describe('when WOPI feature is disabled', () => {
+			const setup = () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const query = wopiAccessTokenParamsTestFactory().build();
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+
+				return { loggedInClient, fileRecord, query };
+			};
+
+			it('should return 403 Forbidden', async () => {
+				const { loggedInClient, fileRecord, query } = setup();
+
+				const response = await loggedInClient.put(`/files/${fileRecord.id}/contents`).query(query).send({});
+
+				expect(response.status).toBe(403);
+				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
 	});
