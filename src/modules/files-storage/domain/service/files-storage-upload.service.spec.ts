@@ -11,8 +11,8 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { FileRecordParamsTestFactory, fileRecordTestFactory, readableStreamWithFileTypeFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FileRecordFactory } from '../file-record.factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import FileType from './file-type.helper';

@@ -1,6 +1,5 @@
 import { EntityManager } from '@mikro-orm/mongodb';
-import { FileRecord, FileRecordSecurityCheck } from '../../domain';
-import { FileRecordFactory } from '../../domain/file-record.factory';
+import { FileRecord, FileRecordFactory, FileRecordSecurityCheck } from '../../domain';
 import { FileRecordEntity } from '../file-record.entity';
 import { FileRecordSecurityCheckEmbeddable } from '../security-check.embeddable';
 

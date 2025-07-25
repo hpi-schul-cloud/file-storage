@@ -3,13 +3,13 @@ import { DeepPartial } from 'fishery';
 import { randomUUID } from 'node:crypto';
 import {
 	FileRecord,
+	FileRecordFactory,
 	FileRecordParentType,
 	FileRecordProps,
 	FileRecordSecurityCheck,
 	ScanStatus,
 	StorageLocation,
 } from '../domain';
-import { FileRecordFactory } from '../domain/file-record.factory';
 
 class FileRecordTestFactory {
 	private sequence = 0;
