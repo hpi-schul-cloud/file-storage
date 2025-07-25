@@ -15,7 +15,14 @@ import { Request } from 'express';
 import { randomBytes } from 'node:crypto';
 import { of } from 'rxjs';
 import { Readable } from 'stream';
-import { FileRecord, FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
+import {
+	FileInfoFactory,
+	FileRecord,
+	FileRecordParentType,
+	FilesStorageService,
+	PreviewService,
+	StorageLocation,
+} from '../../domain';
 import { ErrorType } from '../../domain/error';
 import { fileRecordTestFactory } from '../../testing';
 import { FileRecordParams } from '../dto';
@@ -332,11 +339,12 @@ describe('FilesStorageUC upload methods', () => {
 				const fileRecord = fileRecords[0];
 				const request = createRequest();
 				const readable = Readable.from('abc');
-				const fileInfo = {
+				const busboyFileInfo = {
 					filename: fileRecord.getName(),
 					encoding: '7-bit',
 					mimeType: fileRecord.mimeType,
 				};
+				const fileInfo = FileInfoFactory.buildFromBusboyFileInfo(busboyFileInfo);
 
 				let resolveUploadFile: (value: FileRecord | PromiseLike<FileRecord>) => void;
 				const fileRecordPromise = new Promise<FileRecord>((resolve) => {
@@ -345,7 +353,7 @@ describe('FilesStorageUC upload methods', () => {
 				filesStorageService.uploadFile.mockImplementationOnce(() => fileRecordPromise);
 
 				request.pipe.mockImplementation((requestStream) => {
-					requestStream.emit('file', 'file', readable, fileInfo);
+					requestStream.emit('file', 'file', readable, busboyFileInfo);
 
 					requestStream.emit('finish');
 					resolveUploadFile(fileRecord);
