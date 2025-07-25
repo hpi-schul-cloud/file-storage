@@ -30,6 +30,7 @@ import {
 	WopiAccessTokenParams,
 	WopiCheckFileInfoResponse,
 } from '../dto';
+import { WopiCheckFileInfoResponseFactory } from '../factory';
 import { FileDtoBuilder, FilesStorageMapper, WopiResponseBuilder } from '../mapper';
 
 @Injectable()
@@ -95,7 +96,7 @@ export class WopiUc {
 		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(params, wopiToken);
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
-		const response = WopiResponseBuilder.buildCheckFileInfoResponse(fileRecord, {
+		const response = WopiCheckFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
 			id: userId,
 			userName: userDisplayName,
 			canWrite,
