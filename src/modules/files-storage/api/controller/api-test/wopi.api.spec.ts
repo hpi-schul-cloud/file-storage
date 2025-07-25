@@ -707,7 +707,7 @@ describe('Wopi Controller (API)', () => {
 				const updatedFileRecord = await em.findOne(FileRecordEntity, fileRecord.id);
 
 				expect(response.status).toBe(200);
-				expect(response.body.LastModifiedTime).toBe(updatedFileRecord?.updatedAt.toISOString());
+				expect(response.body.LastModifiedTime).toBe(updatedFileRecord?.contentLastModifiedAt?.toISOString());
 			});
 		});
 
@@ -726,7 +726,10 @@ describe('Wopi Controller (API)', () => {
 			it('should return 403 Forbidden', async () => {
 				const { loggedInClient, fileRecord, query } = setup();
 
-				const response = await loggedInClient.put(`/files/${fileRecord.id}/contents`).query(query).send({});
+				const response = await loggedInClient
+					.post(`/files/${fileRecord.id}/contents`)
+					.query(query)
+					.attach('file', Buffer.from('abcd'), 'test.txt');
 
 				expect(response.status).toBe(403);
 				expect(response.body.message).toBe('WOPI feature is disabled');

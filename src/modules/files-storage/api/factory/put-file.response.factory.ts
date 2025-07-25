@@ -1,4 +1,5 @@
 import { FileRecord } from '@modules/files-storage/domain';
+import { InternalServerErrorException } from '@nestjs/common';
 import { PutFileResponse } from '../dto/put-file.response';
 
 export class PutFileResponseFactory {
@@ -9,8 +10,14 @@ export class PutFileResponseFactory {
 	}
 
 	public static buildFromFileRecord(fileRecord: FileRecord): PutFileResponse {
+		const contentLastModifiedAt = fileRecord.getContentLastModifiedAt();
+
+		if (!contentLastModifiedAt) {
+			throw new InternalServerErrorException('FileRecord does not have content last modified time.');
+		}
+
 		const response = this.build({
-			LastModifiedTime: fileRecord.getProps().updatedAt.toISOString(),
+			LastModifiedTime: contentLastModifiedAt.toISOString(),
 		});
 
 		return response;

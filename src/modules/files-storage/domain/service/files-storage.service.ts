@@ -213,7 +213,7 @@ export class FilesStorageService {
 		const fileRecordSize = await fileSizePromise;
 
 		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
-		fileRecord.touchUpdatedAt();
+		fileRecord.touchContentLastModifiedAt();
 
 		await this.fileRecordRepo.save(fileRecord);
 

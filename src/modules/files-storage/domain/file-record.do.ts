@@ -42,6 +42,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	isUploading?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
+	contentLastModifiedAt?: Date;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -279,7 +280,11 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return filePath;
 	}
 
-	public touchUpdatedAt(): void {
-		this.props.updatedAt = new Date();
+	public getContentLastModifiedAt(): Date | undefined {
+		return this.props.contentLastModifiedAt;
+	}
+
+	public touchContentLastModifiedAt(): void {
+		this.props.contentLastModifiedAt = new Date();
 	}
 }
