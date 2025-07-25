@@ -45,7 +45,7 @@ export class WopiUc {
 		this.logger.setContext(WopiUc.name);
 	}
 
-	public async putFile(query: WopiAccessTokenParams, req: Request): Promise<void> {
+	public async putFile(query: WopiAccessTokenParams, req: Request): Promise<FileRecord> {
 		const result = await this.authorizationClientAdapter.resolveToken(
 			query.access_token,
 			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
@@ -53,10 +53,12 @@ export class WopiUc {
 
 		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 
-		await this.uploadFile(payload.fileRecordId, req);
+		const fileRecord = await this.uploadFile(payload.fileRecordId, req);
+
+		return fileRecord;
 	}
 
-	private async uploadFile(fileRecordId: EntityId, req: Request): Promise<void> {
+	private async uploadFile(fileRecordId: EntityId, req: Request): Promise<FileRecord> {
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const fileInfo = FileInfoFactory.buildFromParams(fileRecord.getName(), fileRecord.mimeType);
 		const fileDto = FileDtoBuilder.buildFromRequest(fileInfo, req);

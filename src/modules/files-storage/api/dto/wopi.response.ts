@@ -15,6 +15,7 @@ export class WopiCheckFileInfoResponse {
 		this.BaseFileName = fileRecord.getName();
 		this.UserCanWrite = user.canWrite;
 		this.OwnerId = creatorId;
+		this.LastModifiedTime = fileRecord.getProps().updatedAt.toISOString();
 	}
 
 	@ApiProperty()
@@ -32,6 +33,9 @@ export class WopiCheckFileInfoResponse {
 
 	@ApiProperty()
 	UserFriendlyName: string;
+
+	@ApiProperty()
+	LastModifiedTime: string;
 
 	@ApiProperty()
 	@IsOptional()

@@ -3,6 +3,7 @@ export * from './file-storage.response';
 export * from './files-storage-config.response';
 export * from './pagination.params';
 export * from './pagination.response';
+export * from './put-file.response';
 export * from './sorting.params';
 export * from './wopi.params';
 export * from './wopi.response';

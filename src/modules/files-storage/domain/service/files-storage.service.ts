@@ -88,7 +88,7 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecordId: EntityId, file: FileDto): Promise<void> {
+	public async updateFileContents(fileRecordId: EntityId, file: FileDto): Promise<FileRecord> {
 		// Second call of getFileRecord: This needs to be solved
 		const fileRecord = await this.getFileRecord(fileRecordId);
 
@@ -98,6 +98,8 @@ export class FilesStorageService {
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
 		file.data = stream;
 		await this.createFileInStorageAndRollbackOnError(fileRecord, file);
+
+		return fileRecord;
 	}
 
 	private checkMimeType(oldMimeType: string, newMimeType: string): void {
@@ -187,8 +189,6 @@ export class FilesStorageService {
 			await this.storeAndScanFile(file, fileRecord, filePath);
 		} catch (error) {
 			// What is the rollback in case of failing filerecord save and successfull file upload to s3?
-			console.log('rollback fileRecord save');
-			console.log('error', error);
 			// Is mikroorm losing context here?
 			await this.fileRecordRepo.save(unchangedFileRecord);
 			throw error;

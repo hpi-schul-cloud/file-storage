@@ -20,12 +20,14 @@ import { Request } from 'express';
 import {
 	AccessUrlResponse,
 	DiscoveryAccessUrlParams,
+	PutFileResponse,
 	SingleFileParams,
 	WopiAccessTokenParams,
 	WopiCheckFileInfoResponse,
 } from '../dto';
 import { FilesStorageMapper } from '../mapper';
 import { WopiUc } from '../uc';
+import { PutFileResponseFactory } from '../factory';
 
 @ApiTags('wopi')
 @Controller('wopi')
@@ -96,9 +98,12 @@ export class WopiController {
 		@Query() query: WopiAccessTokenParams,
 		@Body() fileBuffer: Buffer,
 		@Req() req: Request
-	): Promise<void> {
+	): Promise<PutFileResponse> {
 		this.ensureWopiEnabled();
 
-		await this.wopiUc.putFile(query, req);
+		const fileRecord = await this.wopiUc.putFile(query, req);
+		const response = PutFileResponseFactory.buildFromFileRecord(fileRecord);
+
+		return response;
 	}
 }
