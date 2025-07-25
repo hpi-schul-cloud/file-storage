@@ -1,6 +1,7 @@
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { PutFileResponse } from '../dto/put-file.response';
 import { PutFileResponseFactory } from './put-file.response.factory';
+import { InternalServerErrorException } from '@nestjs/common';
 
 describe('PutFileResponseFactory', () => {
 	afterEach(() => {
@@ -26,20 +27,38 @@ describe('PutFileResponseFactory', () => {
 	});
 
 	describe('buildFromFileRecord', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const result = PutFileResponseFactory.buildFromFileRecord(fileRecord);
+		describe('when fileRecord has contentLastModifiedAt', () => {
+			const setup = () => {
+				const fileRecord = fileRecordTestFactory().build();
+				const result = PutFileResponseFactory.buildFromFileRecord(fileRecord);
 
-			return {
-				fileRecord,
-				result,
+				return {
+					fileRecord,
+					result,
+				};
 			};
-		};
 
-		it('should return a PutFileResponse with LastModifiedTime from fileRecord', () => {
-			const { fileRecord, result } = setup();
+			it('should return a PutFileResponse with LastModifiedTime from fileRecord', () => {
+				const { fileRecord, result } = setup();
 
-			expect(result.LastModifiedTime).toBe(fileRecord.getProps().updatedAt.toISOString());
+				expect(result.LastModifiedTime).toBe(fileRecord.getContentLastModifiedAt()?.toISOString());
+			});
+		});
+
+		describe('when fileRecord does not have contentLastModifiedAt', () => {
+			const setup = () => {
+				const fileRecord = fileRecordTestFactory().build({ contentLastModifiedAt: undefined });
+
+				return {
+					fileRecord,
+				};
+			};
+
+			it('should throw an InternalServerErrorException', () => {
+				const { fileRecord } = setup();
+
+				expect(() => PutFileResponseFactory.buildFromFileRecord(fileRecord)).toThrow(InternalServerErrorException);
+			});
 		});
 	});
 });
