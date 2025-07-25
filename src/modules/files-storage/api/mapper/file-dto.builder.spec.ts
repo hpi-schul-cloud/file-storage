@@ -2,29 +2,21 @@ import { createMock } from '@golevelup/ts-jest';
 import { AxiosResponse } from 'axios';
 import { Readable } from 'stream';
 import { FileDto } from '../../domain/dto';
-import { fileRecordTestFactory } from '../../testing';
+import { fileInfoTestFactory } from '../../testing';
 import { FileDtoBuilder } from './file-dto.builder';
 
 describe('File Builder', () => {
 	describe('buildFromRequest is called', () => {
 		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build();
-
 			const readable = Readable.from('abc');
-
+			const fileInfo = fileInfoTestFactory().build();
 			const expectedFile = new FileDto({
-				name: fileRecord.getName(),
+				name: fileInfo.name,
 				data: readable,
-				mimeType: fileRecord.mimeType,
+				mimeType: fileInfo.mimeType,
 			});
 
-			const fileInfo = {
-				filename: fileRecord.getName(),
-				encoding: '7-bit',
-				mimeType: fileRecord.mimeType,
-			};
-
-			return { fileRecord, readable, expectedFile, fileInfo };
+			return { readable, expectedFile, fileInfo };
 		};
 
 		it('should return file from request', () => {
@@ -37,30 +29,56 @@ describe('File Builder', () => {
 	});
 
 	describe('buildFromAxiosResponse is called', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const readable = Readable.from('abc');
+		describe('when response has content-type header', () => {
+			const setup = () => {
+				const fileInfo = fileInfoTestFactory().build();
+				const readable = Readable.from('abc');
+				const response = createMock<AxiosResponse<Readable>>({
+					data: readable,
+					headers: { 'Content-Type': fileInfo.mimeType },
+				});
+				const expectedFile = new FileDto({
+					name: fileInfo.name,
+					data: readable,
+					mimeType: fileInfo.mimeType,
+				});
 
-			const response = createMock<AxiosResponse<Readable>>({
-				data: readable,
-				headers: { 'content-type': fileRecord.mimeType },
+				return { fileInfo, response, expectedFile };
+			};
+
+			it('should return file from request', () => {
+				const { response, expectedFile, fileInfo } = setup();
+
+				const result = FileDtoBuilder.buildFromAxiosResponse(fileInfo.name, response);
+
+				expect(result).toEqual(expectedFile);
 			});
+		});
 
-			const expectedFile = new FileDto({
-				name: fileRecord.getName(),
-				data: readable,
-				mimeType: fileRecord.mimeType,
+		describe('when response does not have content-type header', () => {
+			const setup = () => {
+				const fileInfo = fileInfoTestFactory().build();
+				const readable = Readable.from('abc');
+				const response = createMock<AxiosResponse<Readable>>({
+					data: readable,
+					headers: {},
+				});
+				const expectedFile = new FileDto({
+					name: fileInfo.name,
+					data: readable,
+					mimeType: 'application/octet-stream',
+				});
+
+				return { fileInfo, response, expectedFile };
+			};
+
+			it('should return file with default mime type', () => {
+				const { response, expectedFile, fileInfo } = setup();
+
+				const result = FileDtoBuilder.buildFromAxiosResponse(fileInfo.name, response);
+
+				expect(result).toEqual(expectedFile);
 			});
-
-			return { fileRecord, response, expectedFile };
-		};
-
-		it('should return file from request', () => {
-			const { response, expectedFile, fileRecord } = setup();
-
-			const result = FileDtoBuilder.buildFromAxiosResponse(fileRecord.getName(), response);
-
-			expect(result).toEqual(expectedFile);
 		});
 	});
 });
