@@ -30,8 +30,8 @@ import {
 	WopiAccessTokenParams,
 	WopiCheckFileInfoResponse,
 } from '../dto';
-import { WopiCheckFileInfoResponseFactory } from '../factory';
-import { FileDtoBuilder, FilesStorageMapper, WopiResponseBuilder } from '../mapper';
+import { AccessUrlResponseFactory, WopiCheckFileInfoResponseFactory } from '../factory';
+import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
 
 @Injectable()
 export class WopiUc {
@@ -84,7 +84,7 @@ export class WopiUc {
 		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
 
 		const url = AccessUrlFactory.buildFromParams(collaboraUrl, this.wopiConfig.WOPI_URL, fileRecord.id, accessToken);
-		const response = WopiResponseBuilder.buildAccessUrlResponse(url);
+		const response = AccessUrlResponseFactory.buildFromAccessUrl(url);
 
 		return response;
 	}

@@ -2,8 +2,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AccessUrlResponse {
-	constructor(onlineUrl: string) {
-		this.onlineUrl = onlineUrl;
+	constructor(props: AccessUrlResponse) {
+		this.onlineUrl = props.onlineUrl;
 	}
 
 	@ApiProperty()

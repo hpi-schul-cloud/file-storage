@@ -1,3 +1,4 @@
+export * from './access-url.response';
 export * from './file-storage.params';
 export * from './file-storage.response';
 export * from './files-storage-config.response';
@@ -7,4 +8,3 @@ export * from './put-file.response';
 export * from './sorting.params';
 export * from './wopi-check-file-info.response';
 export * from './wopi.params';
-export * from './wopi.response';
