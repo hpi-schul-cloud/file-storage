@@ -4,3 +4,4 @@ export * from './file-record.factory';
 export * from './parent-statistic.factory';
 export * from './wopi-access-token.factory';
 export * from './wopi-payload.factory';
+export * from './stream-file-size.observer';
