@@ -94,7 +94,8 @@ export class FilesStorageService {
 
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
 		file.data = stream;
-		await this.createFileInStorageAndRollbackOnError(fileRecord, file);
+
+		await this.storeAndScanFile(file, fileRecord);
 
 		return fileRecord;
 	}
@@ -164,37 +165,22 @@ export class FilesStorageService {
 	}
 
 	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
-
 		try {
-			await this.storeAndScanFile(file, fileRecord, filePath);
+			await this.storeAndScanFile(file, fileRecord);
 		} catch (error) {
+			const filePath = fileRecord.createPath();
+
 			await this.storageClient.delete([filePath]);
 			await this.fileRecordRepo.delete(fileRecord);
+
 			throw error;
 		}
 	}
 
-	private async createFileInStorageAndRollbackOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
-		const unchangedFileRecord = FileRecordFactory.buildFromFileRecordProps(
-			fileRecord.getProps(),
-			fileRecord.createSecurityScanBasedOnStatus()
-		);
-
-		try {
-			await this.storeAndScanFile(file, fileRecord, filePath);
-		} catch (error) {
-			// What is the rollback in case of failing filerecord save and successfull file upload to s3?
-			// Is mikroorm losing context here?
-			await this.fileRecordRepo.save(unchangedFileRecord);
-			throw error;
-		}
-	}
-
-	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord, filePath: string): Promise<void> {
+	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
 		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizePromise = this.countFileSize(file);
+		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
 			const streamToAntivirus = file.data.pipe(new PassThrough());
