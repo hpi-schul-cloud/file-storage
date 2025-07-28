@@ -251,6 +251,7 @@ describe('FilesStorageService upload methods', () => {
 							isUploading: undefined,
 							createdAt: expect.any(Date),
 							updatedAt: expect.any(Date),
+							contentLastModifiedAt: expect.any(Date),
 						},
 						securityCheck: {
 							...expectedSecurityCheck,
