@@ -11,19 +11,17 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-
-import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
-import { fileTypeStream } from './file-type.helper';
+import { extractMimeTypeFromPeparedStream } from './extract-mime-type-from-stream';
 
 @Injectable()
 export class FilesStorageService {
@@ -77,63 +75,45 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		file.data = stream;
-		file.mimeType = fileRecord.mimeType;
-		await this.fileRecordRepo.save(fileRecord);
+		const detectedMimeType = await this.detectMimeType(file);
+		const [fileRecordsOfParent] = await this.getFileRecordsOfParent(parentInfo.parentId);
 
+		const resolvedFileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(resolvedFileName, detectedMimeType, parentInfo, userId);
+
+		await this.fileRecordRepo.save(fileRecord);
 		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
 
 		return fileRecord;
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(file);
-		this.checkMimeType(fileRecord.mimeType, mimeType);
-
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		file.data = stream;
+		const detectedMimeType = await this.detectMimeType(file);
+		this.checkMimeType(fileRecord.mimeType, detectedMimeType);
 
 		await this.storeAndScanFile(file, fileRecord);
 
 		return fileRecord;
 	}
 
-	private checkMimeType(oldMimeType: string, newMimeType: string): void {
-		if (oldMimeType !== newMimeType) {
+	private checkMimeType(oldMimeType: string, detectedMimeType: string): void {
+		if (oldMimeType !== detectedMimeType) {
 			throw new ConflictException('Mimetype mismatch');
 		}
 	}
 
-	private async createFileRecordWithResolvedName(
-		file: FileDto,
-		parentInfo: ParentInfo,
-		userId: EntityId
-	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
-		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file);
+	private async detectMimeType(file: FileDto): Promise<string> {
+		let mimeType = file.mimeType;
 
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
-
-		return { fileRecord, stream };
-	}
-
-	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = this.createPipedStream(file.data);
-			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
+			const detectedMimeType = await extractMimeTypeFromPeparedStream(file);
 
-			const mimeType = detectedMimeType ?? file.mimeType;
-
-			return { mimeType, stream };
+			if (detectedMimeType) {
+				mimeType = detectedMimeType;
+			}
 		}
 
-		return { mimeType: file.mimeType, stream: file.data };
-	}
-
-	private createPipedStream(data: Readable): PassThrough {
-		return data.pipe(new PassThrough());
+		return mimeType;
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -148,23 +128,6 @@ export class FilesStorageService {
 		const result = !mimTypes.includes(mimeType);
 
 		return result;
-	}
-
-	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const stream = await fileTypeStream(file);
-
-		return { mime: stream.fileType?.mime, stream };
-	}
-
-	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
-		let fileName = file.name;
-
-		const [fileRecordsOfParent, count] = await this.getFileRecordsOfParent(parentInfo.parentId);
-		if (count > 0) {
-			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
-		}
-
-		return fileName;
 	}
 
 	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
@@ -186,11 +149,67 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const streamToAntivirus = this.createPipedStream(file.data);
+			/**************** TODO *********************
+Der Code kann funktionieren, aber nur wenn file.data ein frischer, noch nicht konsumierter Stream ist und beide Empfänger (storageClient.create und antivirusService.checkStream) nicht gleichzeitig den gesamten Stream benötigen.
 
+Problem:
+
+Das Piping mit file.data.pipe(new PassThrough()) erzeugt einen neuen Stream, aber beide Streams (file.data und newStreamPipe) lesen aus derselben Quelle.
+Wenn beide Empfänger gleichzeitig und vollständig den Stream konsumieren, kann es zu Problemen kommen (z.B. einer bekommt nicht alle Daten, oder einer Stream endet unerwartet).
+In Node.js ist ein Stream standardmäßig nur einmal lesbar. Das gleichzeitige Konsumieren desselben Streams ist nicht zuverlässig.
+Empfohlene Lösung:
+
+Wenn beide Empfänger den kompletten Stream brauchen, solltest du den Stream vorher puffern (z.B. in einen Buffer oder eine Datei) und dann zwei neue Streams daraus erzeugen.
+Alternativ: Verwende einen „tee“-Stream (z.B. das npm-Paket stream-tee), um die Daten zuverlässig auf beide Empfänger zu verteilen.
+Fazit:
+Der Code funktioniert nur, wenn beide Empfänger nicht den gesamten Stream brauchen oder der Stream mehrfach lesbar ist. Für paralleles, vollständiges Lesen ist ein Buffering oder ein Tee-Stream nötig.
+
+-------------------
+
+In Node.js gibt es keine eingebaute Möglichkeit, einen Stream direkt zu „clonen“ oder gleichzeitig in zwei Kanäle zu leiten, da Streams standardmäßig nur einmal lesbar sind.
+
+Mögliche Lösungen:
+
+1. Tee-Stream (Duplizieren):
+Verwende ein Paket wie stream-tee oder tee aus npm, um einen Stream in zwei (oder mehr) Ausgänge zu duplizieren.
+
+2. Buffering:
+Lese den Stream einmal komplett in einen Buffer (z.B. mit stream-to-buffer), und erstelle daraus zwei neue Readable-Streams.
+
+3. Datei zwischenspeichern:
+Schreibe den Stream in eine temporäre Datei und öffne danach zwei neue Streams von dieser Datei.
+
+Beispiel mit stream-tee:
+
+```
+const tee = require('stream-tee');
+const [streamA, streamB] = tee(originalStream, 2);
+
+// Jetzt können beide Streams unabhängig konsumiert werden.
+```
+
+Fazit:
+Ein echtes „clonen“ ist nicht möglich, aber mit Tee-Streams oder Buffering kannst du einen Stream auf mehrere Empfänger verteilen.
+
+------------------
+Das Paket stream-tee funktioniert ohne vollständiges Buffering des Streams.
+Es verteilt die Daten „on the fly“ (also während sie durchlaufen) auf mehrere Ausgänge. Jeder Empfänger bekommt die Daten direkt, sobald sie verfügbar sind.
+
+Wichtig:
+
+Die Ausgänge müssen die Daten etwa gleich schnell konsumieren, sonst kann es zu Backpressure oder Speicherproblemen kommen.
+Es wird nicht der gesamte Stream im Speicher gehalten, sondern die Daten werden beim Lesen weitergeleitet.
+Fazit:
+stream-tee dupliziert den Stream live, ohne ihn komplett zu puffern.
+------------------
+
+https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/tee
+https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/pipeThrough -> locked den stream, daher ist das Promise.all hier quatsch
+
+			 ***************************************/
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(streamToAntivirus),
+				this.antivirusService.checkStream(file.data),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);

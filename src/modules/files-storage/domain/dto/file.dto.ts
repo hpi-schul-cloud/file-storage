@@ -1,10 +1,12 @@
 import { File } from '@infra/s3-client';
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'node:stream';
 
 export class FileDto implements File {
 	constructor(file: FileDto) {
 		this.name = file.name;
-		this.data = file.data;
+		// Use PassThrough to ensure the stream can be read multiple times if needed
+		// It is locked the original stream to prevent it from being consumed
+		this.data = file.data.pipe(new PassThrough());
 		this.mimeType = file.mimeType;
 	}
 
