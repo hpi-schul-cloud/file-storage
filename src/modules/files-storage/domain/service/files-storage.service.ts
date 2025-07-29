@@ -11,7 +11,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -121,7 +121,7 @@ export class FilesStorageService {
 
 	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = file.createPipedStream();
+			const source = this.createPipedStream(file.data);
 			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
 
 			const mimeType = detectedMimeType ?? file.mimeType;
@@ -130,6 +130,10 @@ export class FilesStorageService {
 		}
 
 		return { mimeType: file.mimeType, stream: file.data };
+	}
+
+	private createPipedStream(data: Readable): PassThrough {
+		return data.pipe(new PassThrough());
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -182,7 +186,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const streamToAntivirus = file.createPipedStream();
+			const streamToAntivirus = this.createPipedStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),

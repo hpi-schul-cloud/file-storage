@@ -1,5 +1,5 @@
 import { File } from '@infra/s3-client';
-import { PassThrough, Readable } from 'stream';
+import { Readable } from 'stream';
 
 export class FileDto implements File {
 	constructor(file: FileDto) {
@@ -13,8 +13,4 @@ export class FileDto implements File {
 	data: Readable;
 
 	mimeType: string;
-
-	public createPipedStream(): PassThrough {
-		return this.data.pipe(new PassThrough());
-	}
 }
