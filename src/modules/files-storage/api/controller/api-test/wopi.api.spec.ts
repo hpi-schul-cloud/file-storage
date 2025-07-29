@@ -677,6 +677,9 @@ describe('Wopi Controller (API)', () => {
 		describe('when file is uploaded successfully', () => {
 			const setup = async () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const initialContentLastModifiedAt = fileRecord.contentLastModifiedAt
+					? new Date(fileRecord.contentLastModifiedAt)
+					: undefined;
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
 				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
@@ -690,11 +693,11 @@ describe('Wopi Controller (API)', () => {
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
-				return { fileRecord, query };
+				return { fileRecord, query, initialContentLastModifiedAt };
 			};
 
 			it('should return 200 and updated file record', async () => {
-				const { fileRecord, query } = await setup();
+				const { fileRecord, query, initialContentLastModifiedAt } = await setup();
 
 				const response = await testApiClient
 					.post(`/files/${fileRecord.id}/contents`)
@@ -704,6 +707,7 @@ describe('Wopi Controller (API)', () => {
 				const updatedFileRecord = await em.findOne(FileRecordEntity, fileRecord.id);
 
 				expect(response.status).toBe(200);
+				expect(response.body.LastModifiedTime).not.toBe(initialContentLastModifiedAt?.toISOString());
 				expect(response.body.LastModifiedTime).toBe(updatedFileRecord?.contentLastModifiedAt?.toISOString());
 			});
 		});
