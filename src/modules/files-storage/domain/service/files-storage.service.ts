@@ -77,10 +77,12 @@ export class FilesStorageService {
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
 		const detectedMimeType = await this.detectMimeType(file);
-		const fileRecord = await this.createFileRecordWithResolvedName(file, parentInfo, userId, detectedMimeType);
+		const [fileRecordsOfParent] = await this.getFileRecordsOfParent(parentInfo.parentId);
+
+		const resolvedFileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(resolvedFileName, detectedMimeType, parentInfo, userId);
 
 		await this.fileRecordRepo.save(fileRecord);
-
 		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
 
 		return fileRecord;
@@ -101,24 +103,13 @@ export class FilesStorageService {
 		}
 	}
 
-	private async createFileRecordWithResolvedName(
-		file: FileDto,
-		parentInfo: ParentInfo,
-		userId: EntityId,
-		detectedMimeType: string
-	): Promise<FileRecord> {
-		const fileName = await this.resolveFileName(file, parentInfo);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, detectedMimeType, parentInfo, userId);
-
-		return fileRecord;
-	}
-
 	private async detectMimeType(file: FileDto): Promise<string> {
 		let mimeType = file.mimeType;
 
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
 			const newStreamPipe = this.createPipedStream(file);
 			const detectedMimeType = await extractMimeTypeFromPeparedStream(newStreamPipe);
+			// TODO: Alternative) const { detectedMimeType } = await extractMimeTypeFromPeparedStream(file.data);
 
 			if (detectedMimeType) {
 				mimeType = detectedMimeType;
@@ -130,7 +121,8 @@ export class FilesStorageService {
 
 	private createPipedStream(file: FileDto): PassThrough {
 		const newStreamPipe = file.data.pipe(new PassThrough());
-		// TODO stream override? file.data = newStreamPipe;
+		// TODO Mögliche Stelle um immer direkt wieder zuzuweisen
+		// stream override? file.data = newStreamPipe;
 
 		return newStreamPipe;
 	}
@@ -147,17 +139,6 @@ export class FilesStorageService {
 		const result = !mimTypes.includes(mimeType);
 
 		return result;
-	}
-
-	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
-		let fileName = file.name;
-
-		const [fileRecordsOfParent, count] = await this.getFileRecordsOfParent(parentInfo.parentId);
-		if (count > 0) {
-			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
-		}
-
-		return fileName;
 	}
 
 	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {

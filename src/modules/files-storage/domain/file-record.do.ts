@@ -65,6 +65,10 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public static resolveFileNameDuplicates(fileRecords: FileRecord[], fileName: string): string {
+		if (fileRecords.length <= 1) {
+			return fileName;
+		}
+
 		let counter = 0;
 		const filenameObj = path.parse(fileName);
 		let newFilename = fileName;
