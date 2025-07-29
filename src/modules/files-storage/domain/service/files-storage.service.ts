@@ -167,6 +167,33 @@ Alternativ: Verwende einen „tee“-Stream (z.B. das npm-Paket stream-tee), um 
 Fazit:
 Der Code funktioniert nur, wenn beide Empfänger nicht den gesamten Stream brauchen oder der Stream mehrfach lesbar ist. Für paralleles, vollständiges Lesen ist ein Buffering oder ein Tee-Stream nötig.
 
+-------------------
+
+In Node.js gibt es keine eingebaute Möglichkeit, einen Stream direkt zu „clonen“ oder gleichzeitig in zwei Kanäle zu leiten, da Streams standardmäßig nur einmal lesbar sind.
+
+Mögliche Lösungen:
+
+1. Tee-Stream (Duplizieren):
+Verwende ein Paket wie stream-tee oder tee aus npm, um einen Stream in zwei (oder mehr) Ausgänge zu duplizieren.
+
+2. Buffering:
+Lese den Stream einmal komplett in einen Buffer (z.B. mit stream-to-buffer), und erstelle daraus zwei neue Readable-Streams.
+
+3. Datei zwischenspeichern:
+Schreibe den Stream in eine temporäre Datei und öffne danach zwei neue Streams von dieser Datei.
+
+Beispiel mit stream-tee:
+
+```
+const tee = require('stream-tee');
+const [streamA, streamB] = tee(originalStream, 2);
+
+// Jetzt können beide Streams unabhängig konsumiert werden.
+```
+
+Fazit:
+Ein echtes „clonen“ ist nicht möglich, aber mit Tee-Streams oder Buffering kannst du einen Stream auf mehrere Empfänger verteilen.
+
 			 ***************************************/
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
