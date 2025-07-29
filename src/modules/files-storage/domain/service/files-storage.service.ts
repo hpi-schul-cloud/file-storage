@@ -107,9 +107,7 @@ export class FilesStorageService {
 		let mimeType = file.mimeType;
 
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const newStreamPipe = this.createPipedStream(file);
-			const detectedMimeType = await extractMimeTypeFromPeparedStream(newStreamPipe);
-			// TODO: Alternative) const { detectedMimeType } = await extractMimeTypeFromPeparedStream(file.data);
+			const detectedMimeType = await extractMimeTypeFromPeparedStream(file);
 
 			if (detectedMimeType) {
 				mimeType = detectedMimeType;
@@ -117,14 +115,6 @@ export class FilesStorageService {
 		}
 
 		return mimeType;
-	}
-
-	private createPipedStream(file: FileDto): PassThrough {
-		const newStreamPipe = file.data.pipe(new PassThrough());
-		// TODO Mögliche Stelle um immer direkt wieder zuzuweisen
-		// stream override? file.data = newStreamPipe;
-
-		return newStreamPipe;
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -160,8 +150,24 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const newStreamPipe = this.createPipedStream(file);
+			const newStreamPipe = file.data.pipe(new PassThrough());
 
+			/**************** TODO *********************
+Der Code kann funktionieren, aber nur wenn file.data ein frischer, noch nicht konsumierter Stream ist und beide Empfänger (storageClient.create und antivirusService.checkStream) nicht gleichzeitig den gesamten Stream benötigen.
+
+Problem:
+
+Das Piping mit file.data.pipe(new PassThrough()) erzeugt einen neuen Stream, aber beide Streams (file.data und newStreamPipe) lesen aus derselben Quelle.
+Wenn beide Empfänger gleichzeitig und vollständig den Stream konsumieren, kann es zu Problemen kommen (z.B. einer bekommt nicht alle Daten, oder einer Stream endet unerwartet).
+In Node.js ist ein Stream standardmäßig nur einmal lesbar. Das gleichzeitige Konsumieren desselben Streams ist nicht zuverlässig.
+Empfohlene Lösung:
+
+Wenn beide Empfänger den kompletten Stream brauchen, solltest du den Stream vorher puffern (z.B. in einen Buffer oder eine Datei) und dann zwei neue Streams daraus erzeugen.
+Alternativ: Verwende einen „tee“-Stream (z.B. das npm-Paket stream-tee), um die Daten zuverlässig auf beide Empfänger zu verteilen.
+Fazit:
+Der Code funktioniert nur, wenn beide Empfänger nicht den gesamten Stream brauchen oder der Stream mehrfach lesbar ist. Für paralleles, vollständiges Lesen ist ein Buffering oder ein Tee-Stream nötig.
+
+			 ***************************************/
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
 				this.antivirusService.checkStream(newStreamPipe),
