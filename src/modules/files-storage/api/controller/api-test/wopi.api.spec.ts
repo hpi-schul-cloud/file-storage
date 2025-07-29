@@ -709,9 +709,18 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when WOPI feature is disabled', () => {
-			const setup = () => {
+			const setup = async () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const query = wopiAccessTokenParamsTestFactory().build();
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				await em.persistAndFlush(fileRecord);
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 
@@ -719,7 +728,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 403 Forbidden', async () => {
-				const { fileRecord, query } = setup();
+				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
 					.post(`/files/${fileRecord.id}/contents`)
