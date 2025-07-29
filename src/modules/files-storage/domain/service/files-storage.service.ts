@@ -11,15 +11,15 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
+import { PassThrough, Readable } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-
-import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
 import { createFileTypeStream } from './create-file-type-stream';
@@ -76,7 +76,7 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		await this.detectMimeType(file);
+		const mimeType = await this.detectMimeType(file);
 		const fileRecord = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
 
 		await this.fileRecordRepo.save(fileRecord);
@@ -87,7 +87,7 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
-		await this.detectMimeType(file);
+		const mimeType = await this.detectMimeType(file);
 		this.checkMimeType(fileRecord.mimeType, file.mimeType);
 
 		await this.storeAndScanFile(file, fileRecord);
@@ -107,24 +107,29 @@ export class FilesStorageService {
 		userId: EntityId
 	): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(file, parentInfo);
-
 		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, file.mimeType, parentInfo, userId);
 
 		return fileRecord;
 	}
 
-	private async detectMimeType(file: FileDto): Promise<void> {
+	private async detectMimeType(file: FileDto): Promise<string> {
+		let mimeType = file.mimeType;
+
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const stream = file.createPipedStream();
-			const fileTypeStream = await createFileTypeStream(stream);
-			const detectedMimeType = fileTypeStream.fileType?.mime;
+			const stream = this.createPipedStream(file.data);
+			const detectedMimeType = await createFileTypeStream(stream);
 
 			if (detectedMimeType) {
-				file.mimeType = detectedMimeType;
+				mimeType = detectedMimeType;
 			}
 		}
 
 		// TODO stream override
+		return mimeType;
+	}
+
+	private createPipedStream(data: Readable): PassThrough {
+		return data.pipe(new PassThrough());
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -171,7 +176,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const streamToAntivirus = file.createPipedStream();
+			const streamToAntivirus = this.createPipedStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
