@@ -121,7 +121,7 @@ export class FilesStorageService {
 
 	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = file.data.pipe(new PassThrough());
+			const source = file.createPipedStream();
 			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
 
 			const mimeType = detectedMimeType ?? file.mimeType;
@@ -182,7 +182,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const streamToAntivirus = file.data.pipe(new PassThrough());
+			const streamToAntivirus = file.createPipedStream();
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
