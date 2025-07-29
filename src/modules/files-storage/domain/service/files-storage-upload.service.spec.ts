@@ -21,7 +21,7 @@ import { FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
-import FileType from './file-type.helper';
+import FileType from './create-file-type-stream';
 import { FilesStorageService } from './files-storage.service';
 
 jest.mock('./file-type.helper');

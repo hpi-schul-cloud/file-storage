@@ -11,7 +11,6 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -23,7 +22,7 @@ import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
-import { fileTypeStream } from './file-type.helper';
+import { createFileTypeStream } from './create-file-type-stream';
 
 @Injectable()
 export class FilesStorageService {
@@ -77,10 +76,9 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		file.data = stream;
-		file.mimeType = fileRecord.mimeType;
+		await this.detectMimeType(file);
+		const fileRecord = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
+
 		await this.fileRecordRepo.save(fileRecord);
 
 		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
@@ -89,11 +87,8 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(file);
-		this.checkMimeType(fileRecord.mimeType, mimeType);
-
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		file.data = stream;
+		await this.detectMimeType(file);
+		this.checkMimeType(fileRecord.mimeType, file.mimeType);
 
 		await this.storeAndScanFile(file, fileRecord);
 
@@ -110,26 +105,26 @@ export class FilesStorageService {
 		file: FileDto,
 		parentInfo: ParentInfo,
 		userId: EntityId
-	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
+	): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file);
 
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, file.mimeType, parentInfo, userId);
 
-		return { fileRecord, stream };
+		return fileRecord;
 	}
 
-	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
+	private async detectMimeType(file: FileDto): Promise<void> {
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = file.createPipedStream();
-			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
+			const stream = file.createPipedStream();
+			const fileTypeStream = await createFileTypeStream(stream);
+			const detectedMimeType = fileTypeStream.fileType?.mime;
 
-			const mimeType = detectedMimeType ?? file.mimeType;
-
-			return { mimeType, stream };
+			if (detectedMimeType) {
+				file.mimeType = detectedMimeType;
+			}
 		}
 
-		return { mimeType: file.mimeType, stream: file.data };
+		// TODO stream override
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -144,12 +139,6 @@ export class FilesStorageService {
 		const result = !mimTypes.includes(mimeType);
 
 		return result;
-	}
-
-	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const stream = await fileTypeStream(file);
-
-		return { mime: stream.fileType?.mime, stream };
 	}
 
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {

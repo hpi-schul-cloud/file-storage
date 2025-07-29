@@ -10,7 +10,7 @@ import { ForbiddenException, INestApplication, InternalServerErrorException } fr
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
-import FileType from '../../../domain/service/file-type.helper';
+import FileType from '../../../domain/service/create-file-type-stream';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import {
