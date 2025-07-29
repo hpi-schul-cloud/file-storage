@@ -23,11 +23,11 @@ import {
 	PutFileResponse,
 	SingleFileParams,
 	WopiAccessTokenParams,
-	WopiCheckFileInfoResponse,
+	WopiFileInfoResponse,
 } from '../dto';
+import { PutFileResponseFactory } from '../factory';
 import { FilesStorageMapper } from '../mapper';
 import { WopiUc } from '../uc';
-import { PutFileResponseFactory } from '../factory';
 
 @ApiTags('wopi')
 @Controller('wopi')
@@ -63,12 +63,12 @@ export class WopiController {
 	}
 
 	@ApiOperation({ summary: 'WOPI CheckFileInfo' })
-	@ApiResponse({ status: 200, type: WopiCheckFileInfoResponse })
+	@ApiResponse({ status: 200, type: WopiFileInfoResponse })
 	@Get('files/:fileRecordId')
 	public async checkFileInfo(
 		@Param() params: SingleFileParams,
 		@Query() query: WopiAccessTokenParams
-	): Promise<WopiCheckFileInfoResponse> {
+	): Promise<WopiFileInfoResponse> {
 		this.ensureWopiEnabled();
 
 		return await this.wopiUc.checkFileInfo(params, query);

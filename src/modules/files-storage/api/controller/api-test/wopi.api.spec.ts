@@ -20,7 +20,7 @@ import {
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
 } from '../../../testing';
-import { EditorMode, WopiCheckFileInfoResponse } from '../../dto';
+import { EditorMode, WopiFileInfoResponse } from '../../dto';
 
 jest.mock('../../../domain/service/file-type.helper');
 
@@ -339,7 +339,7 @@ describe('Wopi Controller (API)', () => {
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
-				const result = response.body as WopiCheckFileInfoResponse;
+				const result = response.body as WopiFileInfoResponse;
 
 				expect(response.status).toBe(200);
 				expect(result.BaseFileName).toBe(fileRecord.name);

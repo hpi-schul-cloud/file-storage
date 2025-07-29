@@ -28,9 +28,9 @@ import {
 	EditorMode,
 	SingleFileParams,
 	WopiAccessTokenParams,
-	WopiCheckFileInfoResponse,
+	WopiFileInfoResponse,
 } from '../dto';
-import { AccessUrlResponseFactory, WopiCheckFileInfoResponseFactory } from '../factory';
+import { AccessUrlResponseFactory, WopiFileInfoResponseFactory } from '../factory';
 import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
 
 @Injectable()
@@ -98,11 +98,11 @@ export class WopiUc {
 	public async checkFileInfo(
 		params: SingleFileParams,
 		wopiToken: WopiAccessTokenParams
-	): Promise<WopiCheckFileInfoResponse> {
+	): Promise<WopiFileInfoResponse> {
 		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(params, wopiToken);
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
-		const response = WopiCheckFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
+		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
 			id: userId,
 			userName: userDisplayName,
 			canWrite,

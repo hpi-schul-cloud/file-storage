@@ -1,13 +1,13 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
-import { WopiCheckFileInfoResponse } from '../dto';
-import { WopiCheckFileInfoResponseFactory } from './wopi-check-file-info.response.factory';
+import { WopiFileInfoResponse } from '../dto';
+import { WopiFileInfoResponseFactory } from './wopi-file-info.response.factory';
 
-describe('WopiCheckFileInfoResponseFactory', () => {
+describe('WopiFileInfoResponseFactory', () => {
 	describe('build', () => {
 		describe('when all props are provided', () => {
 			const setup = () => {
-				const props: WopiCheckFileInfoResponse = {
+				const props: WopiFileInfoResponse = {
 					Size: 123,
 					UserId: new ObjectId().toHexString(),
 					UserFriendlyName: 'Test User',
@@ -17,7 +17,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 					LastModifiedTime: '2024-01-01T00:00:00.000Z',
 				};
 
-				const result = WopiCheckFileInfoResponseFactory.build(props);
+				const result = WopiFileInfoResponseFactory.build(props);
 
 				return {
 					props,
@@ -25,7 +25,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 				};
 			};
 
-			it('should return a WopiCheckFileInfoResponse instance with correct properties', () => {
+			it('should return a WopiFileInfoResponse instance with correct properties', () => {
 				const { props, result } = setup();
 
 				expect(result.Size).toBe(props.Size);
@@ -40,7 +40,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 
 		describe('when ownerId is missing', () => {
 			const setup = () => {
-				const props: WopiCheckFileInfoResponse = {
+				const props: WopiFileInfoResponse = {
 					Size: 123,
 					UserId: new ObjectId().toHexString(),
 					UserFriendlyName: 'Test User',
@@ -50,7 +50,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 					LastModifiedTime: '2024-01-01T00:00:00.000Z',
 				};
 
-				const result = WopiCheckFileInfoResponseFactory.build(props);
+				const result = WopiFileInfoResponseFactory.build(props);
 
 				return {
 					props,
@@ -58,7 +58,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 				};
 			};
 
-			it('should return a WopiCheckFileInfoResponse instance with correct properties', () => {
+			it('should return a WopiFileInfoResponse instance with correct properties', () => {
 				const { props, result } = setup();
 
 				expect(result.Size).toBe(props.Size);
@@ -82,7 +82,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 					canWrite: true,
 				};
 
-				const result = WopiCheckFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user);
+				const result = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user);
 
 				return {
 					fileRecord,
@@ -91,7 +91,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 				};
 			};
 
-			it('should return a WopiCheckFileInfoResponse with correct values from fileRecord and user', () => {
+			it('should return a WopiFileInfoResponse with correct values from fileRecord and user', () => {
 				const { fileRecord, user, result } = setup();
 
 				expect(result.Size).toBe(fileRecord.getProps().size);
@@ -113,7 +113,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 					canWrite: true,
 				};
 
-				const result = WopiCheckFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user);
+				const result = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user);
 
 				return {
 					fileRecord,
@@ -122,7 +122,7 @@ describe('WopiCheckFileInfoResponseFactory', () => {
 				};
 			};
 
-			it('should return a WopiCheckFileInfoResponse with undefined OwnerId', () => {
+			it('should return a WopiFileInfoResponse with undefined OwnerId', () => {
 				const { fileRecord, user, result } = setup();
 
 				expect(result.Size).toBe(fileRecord.getProps().size);

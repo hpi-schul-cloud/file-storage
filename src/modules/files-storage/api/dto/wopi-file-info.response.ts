@@ -3,8 +3,8 @@ import { EntityId } from '@shared/domain/types';
 import { DecodeHtmlEntities } from '@shared/transformer';
 import { IsOptional } from 'class-validator';
 
-export class WopiCheckFileInfoResponse {
-	constructor(props: Omit<WopiCheckFileInfoResponse, 'OwnerId'> & Partial<Pick<WopiCheckFileInfoResponse, 'OwnerId'>>) {
+export class WopiFileInfoResponse {
+	constructor(props: Omit<WopiFileInfoResponse, 'OwnerId'> & Partial<Pick<WopiFileInfoResponse, 'OwnerId'>>) {
 		this.Size = props.Size;
 		this.UserId = props.UserId;
 		this.UserFriendlyName = props.UserFriendlyName;
