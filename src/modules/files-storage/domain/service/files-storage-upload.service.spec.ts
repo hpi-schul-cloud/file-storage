@@ -102,7 +102,7 @@ describe('FilesStorageService upload methods', () => {
 
 			const fileSize = 3;
 
-			const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, 0, file.mimeType, params, userId);
+			const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
 			const expectedFileRecord = fileRecord.getProps();
 			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 			const detectedMimeType = 'image/tiff';

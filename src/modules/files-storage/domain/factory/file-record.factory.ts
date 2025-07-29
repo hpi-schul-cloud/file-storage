@@ -10,18 +10,12 @@ export class FileRecordFactory {
 		return fileRecord;
 	}
 
-	public static buildFromExternalInput(
-		name: string,
-		size: number,
-		mimeType: string,
-		params: ParentInfo,
-		userId: string
-	): FileRecord {
+	public static buildFromExternalInput(name: string, mimeType: string, params: ParentInfo, userId: string): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
 		const props: FileRecordProps = {
 			id: new ObjectId().toHexString(),
-			size,
+			size: 0,
 			name,
 			mimeType,
 			parentType: params.parentType,

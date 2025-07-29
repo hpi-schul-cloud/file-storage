@@ -20,7 +20,7 @@ import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, Stor
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 
-import { FileRecordFactory } from '../factory';
+import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
@@ -77,7 +77,7 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const { fileRecord, stream } = await this.createFileRecord(file, parentInfo, userId);
+		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
 		file.data = stream;
 		file.mimeType = fileRecord.mimeType;
@@ -106,7 +106,7 @@ export class FilesStorageService {
 		}
 	}
 
-	private async createFileRecord(
+	private async createFileRecordWithResolvedName(
 		file: FileDto,
 		parentInfo: ParentInfo,
 		userId: EntityId
@@ -114,8 +114,7 @@ export class FilesStorageService {
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file);
 
-		// Create fileRecord with 0 as initial file size, because it is overwritten later anyway.
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, 0, mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 
 		return { fileRecord, stream };
 	}
@@ -179,7 +178,7 @@ export class FilesStorageService {
 
 	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
 		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
-		const fileSizePromise = this.countFileSize(file);
+		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
@@ -195,8 +194,7 @@ export class FilesStorageService {
 			await this.storageClient.create(filePath, file);
 		}
 
-		// The actual file size is set here because it is known only after the whole file is streamed.
-		const fileRecordSize = await fileSizePromise;
+		const fileRecordSize = await fileSizeObserver.calculateFileSize();
 
 		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
 		fileRecord.touchContentLastModifiedAt();
@@ -206,20 +204,6 @@ export class FilesStorageService {
 		if (!useStreamToAntivirus || !fileRecord.isPreviewPossible()) {
 			await this.sendToAntivirus(fileRecord);
 		}
-	}
-
-	private countFileSize(file: FileDto): Promise<number> {
-		const promise = new Promise<number>((resolve) => {
-			let fileSize = 0;
-
-			file.data.on('data', (chunk: Buffer) => {
-				fileSize += chunk.length;
-			});
-
-			file.data.on('end', () => resolve(fileSize));
-		});
-
-		return promise;
 	}
 
 	private async sendToAntivirus(fileRecord: FileRecord): Promise<void> {
