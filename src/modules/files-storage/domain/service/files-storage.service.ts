@@ -11,7 +11,6 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -150,8 +149,6 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const secureLockedStreamPipe = file.data.pipe(new PassThrough());
-
 			/**************** TODO *********************
 Der Code kann funktionieren, aber nur wenn file.data ein frischer, noch nicht konsumierter Stream ist und beide Empfänger (storageClient.create und antivirusService.checkStream) nicht gleichzeitig den gesamten Stream benötigen.
 
@@ -212,7 +209,7 @@ https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/pipeThrough -> l
 			 ***************************************/
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(secureLockedStreamPipe),
+				this.antivirusService.checkStream(file.data),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);
