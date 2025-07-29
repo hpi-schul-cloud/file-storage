@@ -11,7 +11,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { PassThrough, Readable } from 'node:stream';
+import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -22,7 +22,7 @@ import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
-import { createFileTypeStream } from './create-file-type-stream';
+import { extractMimeTypeFromPeparedStream } from './extract-mime-type-from-stream';
 
 @Injectable()
 export class FilesStorageService {
@@ -76,8 +76,8 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const mimeType = await this.detectMimeType(file);
-		const fileRecord = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
+		const detectedMimeType = await this.detectMimeType(file);
+		const fileRecord = await this.createFileRecordWithResolvedName(file, parentInfo, userId, detectedMimeType);
 
 		await this.fileRecordRepo.save(fileRecord);
 
@@ -87,16 +87,16 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
-		const mimeType = await this.detectMimeType(file);
-		this.checkMimeType(fileRecord.mimeType, file.mimeType);
+		const detectedMimeType = await this.detectMimeType(file);
+		this.checkMimeType(fileRecord.mimeType, detectedMimeType);
 
 		await this.storeAndScanFile(file, fileRecord);
 
 		return fileRecord;
 	}
 
-	private checkMimeType(oldMimeType: string, newMimeType: string): void {
-		if (oldMimeType !== newMimeType) {
+	private checkMimeType(oldMimeType: string, detectedMimeType: string): void {
+		if (oldMimeType !== detectedMimeType) {
 			throw new ConflictException('Mimetype mismatch');
 		}
 	}
@@ -104,10 +104,11 @@ export class FilesStorageService {
 	private async createFileRecordWithResolvedName(
 		file: FileDto,
 		parentInfo: ParentInfo,
-		userId: EntityId
+		userId: EntityId,
+		detectedMimeType: string
 	): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(file, parentInfo);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, file.mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, detectedMimeType, parentInfo, userId);
 
 		return fileRecord;
 	}
@@ -116,20 +117,22 @@ export class FilesStorageService {
 		let mimeType = file.mimeType;
 
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const stream = this.createPipedStream(file.data);
-			const detectedMimeType = await createFileTypeStream(stream);
+			const newStreamPipe = this.createPipedStream(file);
+			const detectedMimeType = await extractMimeTypeFromPeparedStream(newStreamPipe);
 
 			if (detectedMimeType) {
 				mimeType = detectedMimeType;
 			}
 		}
 
-		// TODO stream override
 		return mimeType;
 	}
 
-	private createPipedStream(data: Readable): PassThrough {
-		return data.pipe(new PassThrough());
+	private createPipedStream(file: FileDto): PassThrough {
+		const newStreamPipe = file.data.pipe(new PassThrough());
+		// TODO stream override? file.data = newStreamPipe;
+
+		return newStreamPipe;
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -176,11 +179,11 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const streamToAntivirus = this.createPipedStream(file.data);
+			const newStreamPipe = this.createPipedStream(file);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(streamToAntivirus),
+				this.antivirusService.checkStream(newStreamPipe),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);

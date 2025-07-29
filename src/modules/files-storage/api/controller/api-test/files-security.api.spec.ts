@@ -7,7 +7,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import FileType from '../../../domain/service/create-file-type-stream';
+import FileType from '../../../domain/service/extract-mime-type-from-stream';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
