@@ -150,7 +150,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-			const newStreamPipe = file.data.pipe(new PassThrough());
+			const secureLockedStreamPipe = file.data.pipe(new PassThrough());
 
 			/**************** TODO *********************
 Der Code kann funktionieren, aber nur wenn file.data ein frischer, noch nicht konsumierter Stream ist und beide Empfänger (storageClient.create und antivirusService.checkStream) nicht gleichzeitig den gesamten Stream benötigen.
@@ -194,10 +194,25 @@ const [streamA, streamB] = tee(originalStream, 2);
 Fazit:
 Ein echtes „clonen“ ist nicht möglich, aber mit Tee-Streams oder Buffering kannst du einen Stream auf mehrere Empfänger verteilen.
 
+------------------
+Das Paket stream-tee funktioniert ohne vollständiges Buffering des Streams.
+Es verteilt die Daten „on the fly“ (also während sie durchlaufen) auf mehrere Ausgänge. Jeder Empfänger bekommt die Daten direkt, sobald sie verfügbar sind.
+
+Wichtig:
+
+Die Ausgänge müssen die Daten etwa gleich schnell konsumieren, sonst kann es zu Backpressure oder Speicherproblemen kommen.
+Es wird nicht der gesamte Stream im Speicher gehalten, sondern die Daten werden beim Lesen weitergeleitet.
+Fazit:
+stream-tee dupliziert den Stream live, ohne ihn komplett zu puffern.
+------------------
+
+https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/tee
+https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream/pipeThrough -> locked den stream, daher ist das Promise.all hier quatsch
+
 			 ***************************************/
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(newStreamPipe),
+				this.antivirusService.checkStream(secureLockedStreamPipe),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);
