@@ -1,24 +1,24 @@
 import { EntityId } from '@shared/domain/types';
-import { AccessUrl } from '../access-url.vo';
+import { AuthorizedCollaboraDocumentUrl } from '../access-url.vo';
 import { WopiAccessToken } from '../vo';
 
-export class AccessUrlFactory {
-	public static build(url: string): AccessUrl {
-		return new AccessUrl(url);
+export class AuthorizedCollaboraDocumentUrlFactory {
+	public static build(url: string): AuthorizedCollaboraDocumentUrl {
+		return new AuthorizedCollaboraDocumentUrl(url);
 	}
 
 	public static buildFromParams(
-		onlineEditorUrl: string,
+		collaboraDomain: string,
 		wopiSrc: string,
 		fileRecordId: EntityId,
 		accessToken: WopiAccessToken
-	): AccessUrl {
-		const onlineUrl = new URL(onlineEditorUrl);
-		onlineUrl.searchParams.set('WOPISrc', `${wopiSrc}/${fileRecordId}`);
-		onlineUrl.searchParams.set('access_token', accessToken.token);
+	): AuthorizedCollaboraDocumentUrl {
+		const domain = new URL(collaboraDomain);
+		domain.searchParams.set('WOPISrc', `${wopiSrc}/${fileRecordId}`);
+		domain.searchParams.set('access_token', accessToken.token);
 
-		const accessUrl = this.build(onlineUrl.toString());
+		const url = this.build(domain.toString());
 
-		return accessUrl;
+		return url;
 	}
 }

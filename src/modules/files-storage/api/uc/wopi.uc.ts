@@ -11,7 +11,7 @@ import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import {
-	AccessUrlFactory,
+	AuthorizedCollaboraDocumentUrlFactory,
 	FileRecord,
 	FileRecordParentType,
 	FilesStorageService,
@@ -22,14 +22,14 @@ import {
 } from '../../domain';
 import { WopiConfig } from '../../wopi.config';
 import {
-	AccessUrlResponse,
-	DiscoveryAccessUrlParams,
+	AuthorizedCollaboraDocumentUrlParams,
+	AuthorizedCollaboraDocumentUrlResponse,
 	EditorMode,
 	SingleFileParams,
 	WopiAccessTokenParams,
 	WopiFileInfoResponse,
 } from '../dto';
-import { AccessUrlResponseFactory, WopiFileInfoResponseFactory } from '../factory';
+import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFactory } from '../factory';
 import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
 
 @Injectable()
@@ -73,10 +73,10 @@ export class WopiUc {
 		return this.filesStorageService.updateFileContents(fileRecord, fileDto);
 	}
 
-	public async getAuthorizedCollaboraAccessUrl(
+	public async getAuthorizedCollaboraDocumentUrl(
 		userId: EntityId,
-		params: DiscoveryAccessUrlParams
-	): Promise<AccessUrlResponse> {
+		params: AuthorizedCollaboraDocumentUrlParams
+	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
 		const { fileRecordId, userDisplayName, editorMode } = params;
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const { parentId, parentType } = fileRecord.getProps();
@@ -87,8 +87,13 @@ export class WopiUc {
 		const accessToken = await this.checkPermissionAndCreateAccessToken(parentType, parentId, editorMode, payload);
 		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
 
-		const url = AccessUrlFactory.buildFromParams(collaboraUrl, this.wopiConfig.WOPI_URL, fileRecord.id, accessToken);
-		const response = AccessUrlResponseFactory.buildFromAccessUrl(url);
+		const url = AuthorizedCollaboraDocumentUrlFactory.buildFromParams(
+			collaboraUrl,
+			this.wopiConfig.WOPI_URL,
+			fileRecord.id,
+			accessToken
+		);
+		const response = AuthorizedCollaboraDocumentUrlResponseFactory.buildFromAuthorizedCollaboraDocumentUrl(url);
 
 		return response;
 	}

@@ -1,12 +1,16 @@
-import { AccessUrl } from '@modules/files-storage/domain/access-url.vo';
-import { AccessUrlResponse } from '../dto/access-url.response';
+import { AuthorizedCollaboraDocumentUrl } from '@modules/files-storage/domain/access-url.vo';
+import { AuthorizedCollaboraDocumentUrlResponse } from '../dto/authorized-collabora-document-url.response';
 
-export class AccessUrlResponseFactory {
-	public static build(props: AccessUrlResponse): AccessUrlResponse {
-		return new AccessUrlResponse(props);
+export class AuthorizedCollaboraDocumentUrlResponseFactory {
+	public static build(props: AuthorizedCollaboraDocumentUrlResponse): AuthorizedCollaboraDocumentUrlResponse {
+		return new AuthorizedCollaboraDocumentUrlResponse(props);
 	}
 
-	public static buildFromAccessUrl(accessUrl: AccessUrl): AccessUrlResponse {
-		return new AccessUrlResponse({ onlineUrl: accessUrl.url });
+	public static buildFromAuthorizedCollaboraDocumentUrl(
+		authorizedCollaboraDocumentUrl: AuthorizedCollaboraDocumentUrl
+	): AuthorizedCollaboraDocumentUrlResponse {
+		return new AuthorizedCollaboraDocumentUrlResponse({
+			authorizedCollaboraDocumentUrl: authorizedCollaboraDocumentUrl.url,
+		});
 	}
 }

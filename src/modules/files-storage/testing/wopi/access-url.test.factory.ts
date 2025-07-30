@@ -1,14 +1,15 @@
-import { AccessUrl } from '@modules/files-storage/domain/access-url.vo';
+import { AuthorizedCollaboraDocumentUrl } from '@modules/files-storage/domain/access-url.vo';
 import { randomUUID } from 'node:crypto';
 
-class AccessUrlTestFactory {
-	private readonly props: AccessUrl = {
+class AuthorizedCollaboraDocumentUrlTestFactory {
+	private readonly props: AuthorizedCollaboraDocumentUrl = {
 		url: `https://example.com?WOPISrc=https://example.com&access_token=${randomUUID()}`,
 	};
 
-	public build(params: Partial<AccessUrl> = {}): AccessUrl {
+	public build(params: Partial<AuthorizedCollaboraDocumentUrl> = {}): AuthorizedCollaboraDocumentUrl {
 		return { ...this.props, ...params };
 	}
 }
 
-export const accessUrlTestFactory = (): AccessUrlTestFactory => new AccessUrlTestFactory();
+export const authorizedCollaboraDocumentUrlTestFactory = (): AuthorizedCollaboraDocumentUrlTestFactory =>
+	new AuthorizedCollaboraDocumentUrlTestFactory();

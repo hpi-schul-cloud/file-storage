@@ -14,7 +14,7 @@ import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import {
-	discoveryAccessUrlParamsTestFactory,
+	authorizedCollaboraDocumentUrlParamsTestFactory,
 	fileRecordEntityFactory,
 	GetFileResponseTestFactory,
 	wopiAccessTokenParamsTestFactory,
@@ -70,14 +70,14 @@ describe('Wopi Controller (API)', () => {
 		fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 	});
 
-	describe('getAuthorizedCollaboraAccessUrl', () => {
+	describe('getAuthorizedCollaboraDocumentUrl', () => {
 		describe('when editorMode is write', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = discoveryAccessUrlParamsTestFactory()
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withFileRecordId(fileRecord.id)
 					.withEditorMode(EditorMode.EDIT)
 					.build();
@@ -97,13 +97,13 @@ describe('Wopi Controller (API)', () => {
 			it('should return 201 and valid access url', async () => {
 				const { body, loggedInClient, token, collaboraUrl } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').send(body);
 
 				const expectedWopiSrc = encodeURIComponent(`http://localhost:4444/api/v3/wopi/files/${body.fileRecordId}`);
 				const expectedUrl = `${collaboraUrl}/?WOPISrc=${expectedWopiSrc}&access_token=${token.token}`;
-				expect(response.status).toBe(201);
+				expect(response.status).toBe(200);
 				expect(response.body).toEqual({
-					onlineUrl: expectedUrl,
+					authorizedCollaboraDocumentUrl: expectedUrl,
 				});
 			});
 		});
@@ -114,7 +114,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = discoveryAccessUrlParamsTestFactory()
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withFileRecordId(fileRecord.id)
 					.withEditorMode(EditorMode.VIEW)
 					.build();
@@ -149,7 +149,7 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = discoveryAccessUrlParamsTestFactory().build();
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 
@@ -168,7 +168,7 @@ describe('Wopi Controller (API)', () => {
 
 		describe('when user is not logged in', () => {
 			const setup = () => {
-				const body = discoveryAccessUrlParamsTestFactory().build();
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
 				return { body };
 			};
@@ -188,7 +188,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = discoveryAccessUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
 				const collaboraUrl = 'http://collabora.url';
 				const forbiddenException = new ForbiddenException('User is not authorized');
 
@@ -215,7 +215,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = discoveryAccessUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
 				const collaboraException = new Error('Collabora service error');
 				const token = accessTokenResponseTestFactory().build();
 
@@ -243,7 +243,7 @@ describe('Wopi Controller (API)', () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
-				const body = discoveryAccessUrlParamsTestFactory().withFileRecordId('').build();
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId('').build();
 
 				return { body, loggedInClient };
 			};
@@ -261,7 +261,7 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = discoveryAccessUrlParamsTestFactory()
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withEditorMode('invalid-mode' as EditorMode)
 					.build();
 
@@ -281,7 +281,7 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = discoveryAccessUrlParamsTestFactory()
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withUserDisplayName(undefined as unknown as string)
 					.build();
 
@@ -301,7 +301,7 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = discoveryAccessUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
+				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
 
 				return { body, loggedInClient };
 			};

@@ -1,36 +1,36 @@
-import { accessUrlTestFactory } from '@modules/files-storage/testing';
-import { AccessUrlResponseFactory } from './access-url.response.factory';
+import { authorizedCollaboraDocumentUrlTestFactory } from '@modules/files-storage/testing';
+import { AuthorizedCollaboraDocumentUrlResponseFactory } from './access-url.response.factory';
 
-describe('AccessUrlResponseFactory', () => {
+describe('AuthorizedCollaboraDocumentUrlResponseFactory', () => {
 	describe('build', () => {
 		const setup = () => {
-			const props = { onlineUrl: 'https://example.com/file' };
+			const props = { authorizedCollaboraDocumentUrl: 'https://example.com/file' };
 
 			return { props };
 		};
 
-		it('should return an AccessUrlResponse with the correct onlineUrl', () => {
+		it('should return an AuthorizedCollaboraDocumentUrlResponse with the correct onlineUrl', () => {
 			const { props } = setup();
 
-			const result = AccessUrlResponseFactory.build(props);
+			const result = AuthorizedCollaboraDocumentUrlResponseFactory.build(props);
 
-			expect(result.onlineUrl).toBe(props.onlineUrl);
+			expect(result.authorizedCollaboraDocumentUrl).toBe(props.authorizedCollaboraDocumentUrl);
 		});
 	});
 
-	describe('buildFromAccessUrl', () => {
+	describe('buildFromAuthorizedCollaboraDocumentUrl', () => {
 		const setup = () => {
-			const accessUrl = accessUrlTestFactory().build();
+			const url = authorizedCollaboraDocumentUrlTestFactory().build();
 
-			return { accessUrl };
+			return { url };
 		};
 
-		it('should return an AccessUrlResponse with the correct onlineUrl', () => {
-			const { accessUrl } = setup();
+		it('should return an AuthorizedCollaboraDocumentUrlResponse with the correct onlineUrl', () => {
+			const { url } = setup();
 
-			const result = AccessUrlResponseFactory.buildFromAccessUrl(accessUrl);
+			const result = AuthorizedCollaboraDocumentUrlResponseFactory.buildFromAuthorizedCollaboraDocumentUrl(url);
 
-			expect(result.onlineUrl).toBe(accessUrl.url);
+			expect(result.authorizedCollaboraDocumentUrl).toBe(url.url);
 		});
 	});
 });

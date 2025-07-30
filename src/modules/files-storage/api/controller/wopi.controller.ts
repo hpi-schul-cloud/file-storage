@@ -17,9 +17,10 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { Readable } from 'stream';
 import {
-	AccessUrlResponse,
-	DiscoveryAccessUrlParams,
+	AuthorizedCollaboraDocumentUrlParams,
+	AuthorizedCollaboraDocumentUrlResponse,
 	PutFileResponse,
 	SingleFileParams,
 	WopiAccessTokenParams,
@@ -44,20 +45,20 @@ export class WopiController {
 	}
 
 	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
-	@ApiResponse({ status: 201, type: AccessUrlResponse })
+	@ApiResponse({ status: 201, type: AuthorizedCollaboraDocumentUrlResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@Post('authorized-collabora-access-url')
+	@Get('authorized-collabora-document-url')
 	@JwtAuthentication()
-	public async getAuthorizedCollaboraAccessUrl(
-		@Body() body: DiscoveryAccessUrlParams,
+	public async getAuthorizedCollaboraDocumentUrl(
+		@Body() body: AuthorizedCollaboraDocumentUrlParams,
 		@CurrentUser() currentUser: ICurrentUser
-	): Promise<AccessUrlResponse> {
+	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
 		this.ensureWopiEnabled();
 
-		const result = await this.wopiUc.getAuthorizedCollaboraAccessUrl(currentUser.userId, body);
+		const result = await this.wopiUc.getAuthorizedCollaboraDocumentUrl(currentUser.userId, body);
 
 		return result;
 	}
@@ -99,6 +100,9 @@ export class WopiController {
 		@Req() req: Request
 	): Promise<PutFileResponse> {
 		this.ensureWopiEnabled();
+
+		console.log('readable', req.readable);
+		console.log('instanceof Readable', req instanceof Readable);
 
 		const fileRecord = await this.wopiUc.putFile(query, req);
 		const response = PutFileResponseFactory.buildFromFileRecord(fileRecord);
