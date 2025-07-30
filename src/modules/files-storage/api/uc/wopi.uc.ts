@@ -12,7 +12,6 @@ import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import {
 	AccessUrlFactory,
-	FileInfoFactory,
 	FileRecord,
 	FileRecordParentType,
 	FilesStorageService,
@@ -69,8 +68,7 @@ export class WopiUc {
 
 	private async updateFileWithRequestData(fileRecordId: EntityId, req: Request): Promise<FileRecord> {
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
-		const fileInfo = FileInfoFactory.buildFromParams(fileRecord.getName(), fileRecord.mimeType);
-		const fileDto = FileDtoBuilder.buildFromRequest(fileInfo, req);
+		const fileDto = FileDtoBuilder.build(fileRecord.getName(), req, fileRecord.getProps().mimeType);
 
 		return this.filesStorageService.updateFileContents(fileRecord, fileDto);
 	}
