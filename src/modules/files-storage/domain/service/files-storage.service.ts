@@ -102,7 +102,7 @@ export class FilesStorageService {
 
 	private checkMimeType(oldMimeType: string, newMimeType: string): void {
 		if (oldMimeType !== newMimeType) {
-			throw new ConflictException('Mimetype mismatch');
+			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
 		}
 	}
 

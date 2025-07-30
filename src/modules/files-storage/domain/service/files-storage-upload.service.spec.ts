@@ -896,7 +896,7 @@ describe('FilesStorageService upload methods', () => {
 				const { fileDto, fileRecord } = setup();
 
 				await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(
-					new BadRequestException('Mimetype mismatch')
+					new BadRequestException(ErrorType.MIME_TYPE_MISMATCH)
 				);
 			});
 		});
