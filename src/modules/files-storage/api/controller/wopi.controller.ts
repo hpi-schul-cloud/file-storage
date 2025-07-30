@@ -3,7 +3,6 @@ import { ApiValidationError } from '@infra/error';
 import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
 import {
 	BadRequestException,
-	Body,
 	Controller,
 	ForbiddenException,
 	Get,
@@ -53,12 +52,12 @@ export class WopiController {
 	@Get('authorized-collabora-document-url')
 	@JwtAuthentication()
 	public async getAuthorizedCollaboraDocumentUrl(
-		@Body() body: AuthorizedCollaboraDocumentUrlParams,
+		@Query() query: AuthorizedCollaboraDocumentUrlParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
 		this.ensureWopiEnabled();
 
-		const result = await this.wopiUc.getAuthorizedCollaboraDocumentUrl(currentUser.userId, body);
+		const result = await this.wopiUc.getAuthorizedCollaboraDocumentUrl(currentUser.userId, query);
 
 		return result;
 	}
