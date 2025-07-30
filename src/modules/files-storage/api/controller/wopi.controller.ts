@@ -96,7 +96,6 @@ export class WopiController {
 	public async putFile(
 		@Param() params: SingleFileParams,
 		@Query() query: WopiAccessTokenParams,
-		@Body() fileBuffer: Buffer,
 		@Req() req: Request
 	): Promise<PutFileResponse> {
 		this.ensureWopiEnabled();
