@@ -77,7 +77,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withFileRecordId(fileRecord.id)
 					.withEditorMode(EditorMode.EDIT)
 					.build();
@@ -91,15 +91,15 @@ describe('Wopi Controller (API)', () => {
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
-				return { body, loggedInClient, token, collaboraUrl };
+				return { query, loggedInClient, token, collaboraUrl };
 			};
 
-			it('should return 201 and valid access url', async () => {
-				const { body, loggedInClient, token, collaboraUrl } = await setup();
+			it('should return 200 and valid access url', async () => {
+				const { query, loggedInClient, token, collaboraUrl } = await setup();
 
-				const response = await loggedInClient.get('/authorized-collabora-document-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
-				const expectedWopiSrc = encodeURIComponent(`http://localhost:4444/api/v3/wopi/files/${body.fileRecordId}`);
+				const expectedWopiSrc = encodeURIComponent(`http://localhost:4444/api/v3/wopi/files/${query.fileRecordId}`);
 				const expectedUrl = `${collaboraUrl}/?WOPISrc=${expectedWopiSrc}&access_token=${token.token}`;
 				expect(response.status).toBe(200);
 				expect(response.body).toEqual({
@@ -114,7 +114,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withFileRecordId(fileRecord.id)
 					.withEditorMode(EditorMode.VIEW)
 					.build();
@@ -128,19 +128,19 @@ describe('Wopi Controller (API)', () => {
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
-				return { body, loggedInClient, token, collaboraUrl };
+				return { query, loggedInClient, token, collaboraUrl };
 			};
 
-			it('should return 201 and valid access url', async () => {
-				const { body, loggedInClient, token, collaboraUrl } = await setup();
+			it('should return 200 and valid access url', async () => {
+				const { query, loggedInClient, token, collaboraUrl } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
-				const expectedWopiSrc = encodeURIComponent(`http://localhost:4444/api/v3/wopi/files/${body.fileRecordId}`);
+				const expectedWopiSrc = encodeURIComponent(`http://localhost:4444/api/v3/wopi/files/${query.fileRecordId}`);
 				const expectedUrl = `${collaboraUrl}/?WOPISrc=${expectedWopiSrc}&access_token=${token.token}`;
-				expect(response.status).toBe(201);
+				expect(response.status).toBe(200);
 				expect(response.body).toEqual({
-					onlineUrl: expectedUrl,
+					authorizedCollaboraDocumentUrl: expectedUrl,
 				});
 			});
 		});
@@ -149,17 +149,17 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory().build();
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 403 Forbidden', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(403);
 				expect(response.body.message).toBe('WOPI feature is disabled');
@@ -167,16 +167,10 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when user is not logged in', () => {
-			const setup = () => {
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory().build();
-
-				return { body };
-			};
-
 			it('should return 401 Unauthorized', async () => {
-				const { body } = setup();
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
-				const response = await testApiClient.post('/authorized-collabora-access-url').send(body);
+				const response = await testApiClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(401);
 			});
@@ -188,7 +182,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
 				const collaboraUrl = 'http://collabora.url';
 				const forbiddenException = new ForbiddenException('User is not authorized');
 
@@ -197,13 +191,13 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockRejectedValueOnce(forbiddenException);
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 403 Forbidden', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(403);
 			});
@@ -215,7 +209,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
 				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
 				const collaboraException = new Error('Collabora service error');
 				const token = accessTokenResponseTestFactory().build();
 
@@ -226,13 +220,13 @@ describe('Wopi Controller (API)', () => {
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 500 Internal Server Error', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(500);
 			});
@@ -243,15 +237,15 @@ describe('Wopi Controller (API)', () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId('').build();
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId('').build();
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -261,17 +255,17 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withEditorMode('invalid-mode' as EditorMode)
 					.build();
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -281,17 +275,17 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory()
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withUserDisplayName(undefined as unknown as string)
 					.build();
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -301,15 +295,15 @@ describe('Wopi Controller (API)', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const body = authorizedCollaboraDocumentUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
 
-				return { body, loggedInClient };
+				return { query, loggedInClient };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { body, loggedInClient } = await setup();
+				const { query, loggedInClient } = await setup();
 
-				const response = await loggedInClient.post('/authorized-collabora-access-url').send(body);
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
 				expect(response.status).toBe(400);
 			});

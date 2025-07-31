@@ -43,7 +43,7 @@ export class WopiController {
 	}
 
 	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
-	@ApiResponse({ status: 201, type: AuthorizedCollaboraDocumentUrlResponse })
+	@ApiResponse({ status: 200, type: AuthorizedCollaboraDocumentUrlResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
