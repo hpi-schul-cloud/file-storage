@@ -16,7 +16,6 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import { Readable } from 'stream';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
@@ -26,7 +25,7 @@ import {
 	WopiFileInfoResponse,
 } from '../dto';
 import { PutFileResponseFactory } from '../factory';
-import { FilesStorageMapper } from '../mapper';
+import { FilesStorageMapper, WopiErrorResponseMapper } from '../mapper';
 import { WopiUc } from '../uc';
 
 @ApiTags('wopi')
@@ -100,12 +99,15 @@ export class WopiController {
 	): Promise<PutFileResponse> {
 		this.ensureWopiEnabled();
 
-		console.log('readable', req.readable);
-		console.log('instanceof Readable', req instanceof Readable);
+		try {
+			const fileRecord = await this.wopiUc.putFile(query, req);
+			const response = PutFileResponseFactory.buildFromFileRecord(fileRecord);
 
-		const fileRecord = await this.wopiUc.putFile(query, req);
-		const response = PutFileResponseFactory.buildFromFileRecord(fileRecord);
+			return response;
+		} catch (error) {
+			const wopiError = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-		return response;
+			throw wopiError;
+		}
 	}
 }

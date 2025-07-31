@@ -712,6 +712,46 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
+		describe('when mime type does not match old mime type', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId({ mimeType: 'application/pdf' });
+				const initialContentLastModifiedAt = fileRecord.contentLastModifiedAt
+					? new Date(fileRecord.contentLastModifiedAt)
+					: undefined;
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => {
+					const redableStreamWithFileType = Object.assign(readable, {
+						fileType: { mime: 'text/plain', ext: 'txt' },
+					});
+
+					return Promise.resolve(redableStreamWithFileType);
+				});
+
+				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query, initialContentLastModifiedAt };
+			};
+
+			it('should return 409 conflict', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient
+					.post(`/files/${fileRecord.id}/contents`)
+					.query(query)
+					.attach('file', Buffer.from('abcd'), 'test.txt');
+
+				expect(response.status).toBe(409);
+			});
+		});
+
 		describe('when WOPI feature is disabled', () => {
 			const setup = async () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
@@ -762,7 +802,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
@@ -770,7 +810,7 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(401);
 			});
 		});
 
@@ -792,7 +832,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
@@ -800,7 +840,42 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
-				expect(response.status).toBe(500);
+				expect(response.status).toBe(401);
+			});
+		});
+
+		describe('when file is to big', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const initialContentLastModifiedAt = fileRecord.contentLastModifiedAt
+					? new Date(fileRecord.contentLastModifiedAt)
+					: undefined;
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FILES_STORAGE_MAX_FILE_SIZE = 0; // Set a small max file size for testing
+
+				return { fileRecord, query, initialContentLastModifiedAt };
+			};
+
+			it('should return 200 and updated file record', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient
+					.post(`/files/${fileRecord.id}/contents`)
+					.query(query)
+					.attach('file', Buffer.from('abcd'), 'test.txt');
+
+				expect(response.status).toBe(413);
 			});
 		});
 
