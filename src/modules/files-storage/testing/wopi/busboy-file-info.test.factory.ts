@@ -1,11 +1,12 @@
 import { FileInfo } from 'busboy';
-import { randomUUID } from 'node:crypto';
+
+let count = 0;
 
 class BusboyFileInfoTestFactory {
 	private readonly props: FileInfo = {
 		encoding: 'utf8',
 		mimeType: 'text/plain',
-		filename: `${randomUUID()}.bin`,
+		filename: `${count++}.txt`,
 	};
 
 	public build(params: Partial<FileInfo> = {}): FileInfo {
