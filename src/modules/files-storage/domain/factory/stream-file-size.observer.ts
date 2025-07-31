@@ -2,11 +2,11 @@ import { Readable } from 'stream';
 
 export class StreamFileSizeObserver {
 	private readonly stream: Readable;
-	private readonly fileSizePromise: Promise<number>;
+	private fileSizePromise: Promise<number> | undefined;
 
 	constructor(stream: Readable) {
 		this.stream = stream;
-		this.fileSizePromise = this.observeStream();
+		this.fileSizePromise;
 	}
 
 	private observeStream(): Promise<number> {
@@ -29,10 +29,13 @@ export class StreamFileSizeObserver {
 	}
 
 	public calculateFileSize(): Promise<number> {
-		return this.fileSizePromise;
+		return this.fileSizePromise as unknown as Promise<number>;
 	}
 
 	public static create(stream: Readable): StreamFileSizeObserver {
+		const observer = new StreamFileSizeObserver(stream);
+		observer.fileSizePromise = observer.observeStream();
+
 		return new StreamFileSizeObserver(stream);
 	}
 }
