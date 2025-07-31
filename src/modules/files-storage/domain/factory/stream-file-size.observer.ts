@@ -10,7 +10,7 @@ export class StreamFileSizeObserver {
 	}
 
 	private observeStream(): Promise<number> {
-		const promise = new Promise<number>((resolve) => {
+		const promise = new Promise<number>((resolve, reject) => {
 			let fileSize = 0;
 
 			this.stream.on('data', (chunk: Buffer) => {
@@ -20,7 +20,8 @@ export class StreamFileSizeObserver {
 			this.stream.on('end', () => resolve(fileSize));
 
 			this.stream.on('error', () => {
-				resolve(0);
+				const error = new Error('Stream error occurred while calculating file size');
+				reject(error);
 			});
 		});
 
