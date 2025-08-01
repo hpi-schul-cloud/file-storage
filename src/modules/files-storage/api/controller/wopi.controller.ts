@@ -3,16 +3,20 @@ import { ApiValidationError } from '@infra/error';
 import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
 import {
 	BadRequestException,
+	ConflictException,
 	Controller,
 	ForbiddenException,
 	Get,
 	HttpCode,
 	InternalServerErrorException,
+	NotFoundException,
 	Param,
+	PayloadTooLargeException,
 	Post,
 	Query,
 	Req,
 	StreamableFile,
+	UnauthorizedException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -91,6 +95,12 @@ export class WopiController {
 	@HttpCode(200)
 	@ApiOperation({ summary: 'WOPI PutFile (update file contents)' })
 	@ApiResponse({ status: 200, description: 'Updates the file contents.' })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 401, type: UnauthorizedException })
+	@ApiResponse({ status: 404, type: NotFoundException })
+	@ApiResponse({ status: 409, type: ConflictException })
+	@ApiResponse({ status: 413, type: PayloadTooLargeException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@Post('files/:fileRecordId/contents')
 	public async putFile(
 		@Param() params: SingleFileParams,
