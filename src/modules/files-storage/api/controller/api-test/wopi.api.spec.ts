@@ -808,36 +808,6 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
-		describe('when authorizationClientAdapter rejects with internal server error', () => {
-			const setup = async () => {
-				const fileRecord = fileRecordEntityFactory.buildWithId();
-				const accessToken = accessTokenResponseTestFactory().build().token;
-				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
-
-				const error = new InternalServerErrorException('Token resolution error');
-				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
-
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
-
-				await em.persistAndFlush(fileRecord);
-
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
-
-				return { fileRecord, query };
-			};
-
-			it('should return 401 Unauthorized', async () => {
-				const { fileRecord, query } = await setup();
-
-				const response = await testApiClient
-					.post(`/files/${fileRecord.id}/contents`)
-					.query(query)
-					.attach('file', Buffer.from('abcd'), 'test.txt');
-
-				expect(response.status).toBe(401);
-			});
-		});
-
 		describe('when file is to big', () => {
 			const setup = async () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
@@ -870,6 +840,36 @@ describe('Wopi Controller (API)', () => {
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
 				expect(response.status).toBe(413);
+			});
+		});
+
+		describe('when authorizationClientAdapter rejects with error that should not be mapped', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+
+				const error = new InternalServerErrorException('Token resolution error');
+				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query };
+			};
+
+			it('should pass original error ', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient
+					.post(`/files/${fileRecord.id}/contents`)
+					.query(query)
+					.attach('file', Buffer.from('abcd'), 'test.txt');
+
+				expect(response.status).toBe(500);
 			});
 		});
 
