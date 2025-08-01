@@ -10,6 +10,9 @@ import { ForbiddenException, INestApplication, InternalServerErrorException } fr
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
+import mock from 'mock-fs';
+import fs from 'node:fs';
+import path from 'node:path';
 import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
@@ -979,6 +982,53 @@ describe('Wopi Controller (API)', () => {
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
 				expect(response.status).toBe(400);
+			});
+		});
+
+		describe('when error is emitted on stream', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const initialContentLastModifiedAt = fileRecord.contentLastModifiedAt
+					? new Date(fileRecord.contentLastModifiedAt)
+					: undefined;
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				await em.persistAndFlush(fileRecord);
+
+				mock({
+					'./mocked-file.txt': 'test content for the mock',
+				});
+				const filePath = path.join(__dirname, './mocked-file.txt');
+				const stream = fs.createReadStream(filePath);
+				stream.on('data', () => {
+					stream.emit('error', new Error('Stream error'));
+				});
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query, initialContentLastModifiedAt, stream };
+			};
+
+			it('should not update filerecord', async () => {
+				const { fileRecord, query, initialContentLastModifiedAt, stream } = await setup();
+
+				try {
+					await testApiClient.post(`/files/${fileRecord.id}/contents`).query(query).attach('file', stream, 'test.txt');
+				} catch (error) {
+					expect(error.message).toBe('Aborted');
+				}
+
+				const updatedFileRecord = await em.findOne(FileRecordEntity, fileRecord.id);
+
+				expect(updatedFileRecord?.contentLastModifiedAt).toEqual(initialContentLastModifiedAt);
+				mock.restore();
 			});
 		});
 	});
