@@ -2,37 +2,27 @@ import { Readable } from 'stream';
 
 export class StreamFileSizeObserver {
 	private readonly stream: Readable;
-	private readonly fileSizePromise: Promise<number>;
+	private fileSize: number;
 
 	constructor(stream: Readable) {
 		this.stream = stream;
-		this.fileSizePromise = this.observeStream();
+		this.fileSize = 0;
 	}
 
-	private observeStream(): Promise<number> {
-		const promise = new Promise<number>((resolve, reject) => {
-			let fileSize = 0;
-
-			this.stream.on('data', (chunk: Buffer) => {
-				fileSize += chunk.length;
-			});
-
-			this.stream.on('end', () => resolve(fileSize));
-
-			this.stream.on('error', () => {
-				const error = new Error('Stream error occurred while calculating file size');
-				reject(error);
-			});
+	private observeStream(): void {
+		this.stream.on('data', (chunk: Buffer) => {
+			this.fileSize += chunk.length;
 		});
-
-		return promise;
 	}
 
-	public calculateFileSize(): Promise<number> {
-		return this.fileSizePromise;
+	public getFileSize(): number {
+		return this.fileSize;
 	}
 
 	public static create(stream: Readable): StreamFileSizeObserver {
-		return new StreamFileSizeObserver(stream);
+		const observer = new StreamFileSizeObserver(stream);
+		observer.observeStream();
+
+		return observer;
 	}
 }

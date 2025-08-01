@@ -181,6 +181,7 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
+		const streamCompletion = this.awaitStreamCompletion(file.data);
 		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
@@ -198,7 +199,9 @@ export class FilesStorageService {
 			await this.storageClient.create(filePath, file);
 		}
 
-		const fileRecordSize = await fileSizeObserver.calculateFileSize();
+		await this.throwOnIncompleteStream(streamCompletion);
+
+		const fileRecordSize = fileSizeObserver.getFileSize();
 
 		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
 		fileRecord.touchContentLastModifiedAt();
@@ -208,6 +211,21 @@ export class FilesStorageService {
 		if (!useStreamToAntivirus || !fileRecord.isPreviewPossible()) {
 			await this.sendToAntivirus(fileRecord);
 		}
+	}
+
+	private async throwOnIncompleteStream(streamPromise: Promise<void>): Promise<void> {
+		try {
+			await streamPromise;
+		} catch (err) {
+			throw new InternalServerErrorException('File stream error', { cause: err });
+		}
+	}
+
+	private awaitStreamCompletion(stream: Readable): Promise<void> {
+		return new Promise((resolve, reject) => {
+			stream.on('end', resolve);
+			stream.on('error', reject);
+		});
 	}
 
 	private async sendToAntivirus(fileRecord: FileRecord): Promise<void> {

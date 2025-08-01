@@ -4,7 +4,7 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReadableStreamWithFileType } from 'file-type';
 import { PassThrough, Readable } from 'stream';
@@ -556,6 +556,72 @@ describe('FilesStorageService upload methods', () => {
 				expect(getMimeTypeSpy).not.toHaveBeenCalled();
 			});
 		});
+
+		describe('WHEN stream emits error', () => {
+			const setup = () => {
+				const { parentInfo: params, fileRecords, parentId: userId } = FileRecordParamsTestFactory.build();
+
+				const file = fileDtoTestFactory().build();
+
+				const fileSize = 3;
+
+				const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
+				const expectedFileRecord = fileRecord.getProps();
+				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
+				const detectedMimeType = 'image/tiff';
+				expectedFileRecord.mimeType = detectedMimeType;
+
+				const expectedSecurityCheck = new FileRecordSecurityCheck({
+					reason: 'No scan result',
+					requestToken: undefined,
+					status: ScanStatus.ERROR,
+					updatedAt: new Date(),
+				});
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				const getFileRecordsOfParentSpy = jest
+					.spyOn(service, 'getFileRecordsOfParent')
+					.mockResolvedValue([[fileRecord], 1]);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				file.data.on('data', () => {
+					file.data.emit('error', new Error('Stream error'));
+				});
+
+				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
+				fileRecordRepo.save.mockImplementation((fr) => {
+					if (fr instanceof FileRecord && !fr.id) {
+						const props = fr.getProps();
+						props.id = new ObjectId().toHexString();
+						fr = fileRecordTestFactory().build(props);
+					}
+
+					return Promise.resolve();
+				});
+
+				return {
+					params,
+					file,
+					userId,
+					getFileRecordsOfParentSpy,
+					fileSize,
+					expectedFileRecord,
+					expectedSecurityCheck,
+				};
+			};
+
+			it('should throw internal server error', async () => {
+				const { params, file, userId } = setup();
+
+				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(InternalServerErrorException);
+			});
+		});
 	});
 
 	describe('updateFileContents is called', () => {
@@ -941,6 +1007,38 @@ describe('FilesStorageService upload methods', () => {
 				await service.updateFileContents(fileRecord, fileDto);
 
 				expect(mimeTypeSpy).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN stream emits error', () => {
+			const setup = () => {
+				const mimeType = 'image/png';
+				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType,
+				});
+				fileDto.data.on('data', () => {
+					fileDto.data.emit('error', new Error('Stream error'));
+				});
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				return {
+					fileDto,
+					fileRecord,
+				};
+			};
+
+			it('should throw InternalServerErrorException', async () => {
+				const { fileRecord, fileDto } = setup();
+
+				await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});
