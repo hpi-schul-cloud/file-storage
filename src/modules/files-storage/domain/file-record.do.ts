@@ -246,7 +246,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	private setSizeInByte(sizeInByte: number, maxSizeInByte: number): void {
-		if (sizeInByte <= 0) {
+		if (sizeInByte < 0) {
 			throw new BadRequestException(ErrorType.FILE_IS_EMPTY);
 		}
 		if (sizeInByte > maxSizeInByte) {
