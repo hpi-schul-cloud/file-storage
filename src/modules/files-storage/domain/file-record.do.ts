@@ -185,6 +185,10 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.props.name;
 	}
 
+	public getMimeType(): string {
+		return this.props.mimeType;
+	}
+
 	public isPreviewPossible(): boolean {
 		const isPreviewPossible = Object.values<string>(PreviewInputMimeTypes).includes(this.props.mimeType);
 

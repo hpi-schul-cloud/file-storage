@@ -6,7 +6,6 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import { EntityManager, RequestContext } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
@@ -39,8 +38,7 @@ export class WopiUc {
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
 		private readonly logger: Logger,
 		private readonly collaboraService: CollaboraService,
-		private readonly wopiConfig: WopiConfig,
-		private readonly em: EntityManager
+		private readonly wopiConfig: WopiConfig
 	) {
 		this.logger.setContext(WopiUc.name);
 	}
@@ -53,24 +51,14 @@ export class WopiUc {
 
 		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 
-		const fileRecord = await this.uploadFile(payload.fileRecordId, req);
+		const fileRecord = await this.filesStorageService.getFileRecord(payload.fileRecordId);
+		const mimeType = fileRecord.getMimeType();
+		const name = fileRecord.getName();
+		const fileDto = FileDtoBuilder.build(name, req, mimeType);
 
-		return fileRecord;
-	}
+		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, fileDto);
 
-	private async uploadFile(fileRecordId: EntityId, req: Request): Promise<FileRecord> {
-		const fileRecord = await RequestContext.create(this.em, async () => {
-			return await this.updateFileWithRequestData(fileRecordId, req);
-		});
-
-		return fileRecord;
-	}
-
-	private async updateFileWithRequestData(fileRecordId: EntityId, req: Request): Promise<FileRecord> {
-		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
-		const fileDto = FileDtoBuilder.build(fileRecord.getName(), req, fileRecord.getProps().mimeType);
-
-		return this.filesStorageService.updateFileContents(fileRecord, fileDto);
+		return updatedFileRecord;
 	}
 
 	public async getAuthorizedCollaboraDocumentUrl(

@@ -375,4 +375,26 @@ describe('FileRecord', () => {
 			});
 		});
 	});
+
+	describe('getName', () => {
+		it('should return the name of the file record', () => {
+			const name = 'test-file.txt';
+			const fileRecord = fileRecordTestFactory().build({ name });
+
+			const result = fileRecord.getName();
+
+			expect(result).toBe(name);
+		});
+	});
+
+	describe('getMimeType', () => {
+		it('should return the mime type of the file record', () => {
+			const mimeType = 'image/png';
+			const fileRecord = fileRecordTestFactory().build({ mimeType });
+
+			const result = fileRecord.getMimeType();
+
+			expect(result).toBe(mimeType);
+		});
+	});
 });
