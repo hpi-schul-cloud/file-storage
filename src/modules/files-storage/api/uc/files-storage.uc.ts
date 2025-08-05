@@ -184,13 +184,17 @@ export class FilesStorageUC {
 		params: FileRecordParams & FileUrlParams
 	): Promise<AxiosResponse<internal.Readable, unknown>> {
 		const config: AxiosRequestConfig = {
-			headers: { 'User-Agent': 'Embed Request User Agent' },
-			params: { headers: { 'User-Agent': 'Embed Request User Agent' } },
+			headers: params.headers,
 			responseType: 'stream',
 		};
 
 		try {
-			const responseStream = this.httpService.get<internal.Readable>(encodeURI(params.url), config);
+			const isProbablyEncoded = (url: string): boolean => {
+				return /%[0-9A-Fa-f]{2}/.test(url);
+			};
+
+			const urlToUse = isProbablyEncoded(params.url) ? params.url : encodeURI(params.url);
+			const responseStream = this.httpService.get<internal.Readable>(urlToUse, config);
 
 			const response = await firstValueFrom(responseStream);
 
