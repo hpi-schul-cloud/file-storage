@@ -178,6 +178,39 @@ describe('files-storage controller (API)', () => {
 
 				expect(response.name).toEqual('test (1).txt');
 			});
+
+			describe('when file has size 0', () => {
+				it('should return status 201 for successful upload', async () => {
+					const { loggedInClient, validId } = setup();
+					const response = await loggedInClient
+						.post(`/upload/school/${validId}/schools/${validId}`)
+						.attach('file', Buffer.from(''), 'empty.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+
+					expect(response.status).toEqual(201);
+				});
+
+				it('should return the new created file record', async () => {
+					const { loggedInClient, validId, user } = setup();
+
+					const result = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+					const response = result.body as FileRecordEntity;
+
+					expect(response).toStrictEqual(
+						expect.objectContaining({
+							id: expect.any(String),
+							name: 'test.txt',
+							parentId: validId,
+							creatorId: user.id,
+							mimeType: 'text/plain',
+							parentType: 'schools',
+							securityCheckStatus: 'pending',
+							size: expect.any(Number),
+						})
+					);
+				});
+			});
 		});
 	});
 
