@@ -1,3 +1,4 @@
+export * from './file-dto.test.factory';
 export * from './file-record-params.test.factory';
 export * from './file-record-security-check.embeddable.factory';
 export * from './file-record.entity.factory';

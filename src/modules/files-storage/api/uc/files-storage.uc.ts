@@ -142,7 +142,7 @@ export class FilesStorageUC {
 			let fileRecordPromise: Promise<FileRecord>;
 
 			bb.on('file', (_name, file, info) => {
-				const fileDto = FileDtoBuilder.buildFromRequest(info, file);
+				const fileDto = FileDtoBuilder.buildFromBusboyFileInfo(info, file);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					const record = this.filesStorageService.uploadFile(userId, params, fileDto);

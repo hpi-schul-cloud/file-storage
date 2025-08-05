@@ -8,8 +8,9 @@ import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
+import { Request } from 'express';
 import {
-	AccessUrlFactory,
+	AuthorizedCollaboraDocumentUrlFactory,
 	FileRecord,
 	FileRecordParentType,
 	FilesStorageService,
@@ -20,14 +21,15 @@ import {
 } from '../../domain';
 import { WopiConfig } from '../../wopi.config';
 import {
-	AccessUrlResponse,
-	DiscoveryAccessUrlParams,
+	AuthorizedCollaboraDocumentUrlParams,
+	AuthorizedCollaboraDocumentUrlResponse,
 	EditorMode,
 	SingleFileParams,
 	WopiAccessTokenParams,
-	WopiCheckFileInfoResponse,
+	WopiFileInfoResponse,
 } from '../dto';
-import { FilesStorageMapper, WopiResponseBuilder } from '../mapper';
+import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFactory } from '../factory';
+import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
 
 @Injectable()
 export class WopiUc {
@@ -41,10 +43,28 @@ export class WopiUc {
 		this.logger.setContext(WopiUc.name);
 	}
 
-	public async getAuthorizedCollaboraAccessUrl(
+	public async putFile(query: WopiAccessTokenParams, req: Request): Promise<FileRecord> {
+		const result = await this.authorizationClientAdapter.resolveToken(
+			query.access_token,
+			this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS
+		);
+
+		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
+
+		const fileRecord = await this.filesStorageService.getFileRecord(payload.fileRecordId);
+		const mimeType = fileRecord.getMimeType();
+		const name = fileRecord.getName();
+		const fileDto = FileDtoBuilder.build(name, req, mimeType);
+
+		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, fileDto);
+
+		return updatedFileRecord;
+	}
+
+	public async getAuthorizedCollaboraDocumentUrl(
 		userId: EntityId,
-		params: DiscoveryAccessUrlParams
-	): Promise<AccessUrlResponse> {
+		params: AuthorizedCollaboraDocumentUrlParams
+	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
 		const { fileRecordId, userDisplayName, editorMode } = params;
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const { parentId, parentType } = fileRecord.getProps();
@@ -55,8 +75,13 @@ export class WopiUc {
 		const accessToken = await this.checkPermissionAndCreateAccessToken(parentType, parentId, editorMode, payload);
 		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
 
-		const url = AccessUrlFactory.buildFromParams(collaboraUrl, this.wopiConfig.WOPI_URL, fileRecord.id, accessToken);
-		const response = WopiResponseBuilder.buildAccessUrlResponse(url);
+		const url = AuthorizedCollaboraDocumentUrlFactory.buildFromParams(
+			collaboraUrl,
+			this.wopiConfig.WOPI_URL,
+			fileRecord.id,
+			accessToken
+		);
+		const response = AuthorizedCollaboraDocumentUrlResponseFactory.buildFromAuthorizedCollaboraDocumentUrl(url);
 
 		return response;
 	}
@@ -64,11 +89,11 @@ export class WopiUc {
 	public async checkFileInfo(
 		params: SingleFileParams,
 		wopiToken: WopiAccessTokenParams
-	): Promise<WopiCheckFileInfoResponse> {
+	): Promise<WopiFileInfoResponse> {
 		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(params, wopiToken);
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
-		const response = WopiResponseBuilder.buildCheckFileInfoResponse(fileRecord, {
+		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
 			id: userId,
 			userName: userDisplayName,
 			canWrite,

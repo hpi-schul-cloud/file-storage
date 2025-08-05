@@ -8,7 +8,7 @@ export enum EditorMode {
 	VIEW = 'view',
 }
 
-export class DiscoveryAccessUrlParams {
+export class AuthorizedCollaboraDocumentUrlParams {
 	@ApiProperty()
 	@IsMongoId()
 	fileRecordId!: EntityId;

@@ -1,7 +1,7 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
-import { FileRecord, FileRecordProps, ParentInfo } from './file-record.do';
-import { FileRecordSecurityCheck } from './security-check.vo';
+import { FileRecord, FileRecordProps, ParentInfo } from '../file-record.do';
+import { FileRecordSecurityCheck } from '../vo';
 
 export class FileRecordFactory {
 	private static build(fileRecordProps: FileRecordProps, securityCheck: FileRecordSecurityCheck): FileRecord {
@@ -10,18 +10,12 @@ export class FileRecordFactory {
 		return fileRecord;
 	}
 
-	public static buildFromExternalInput(
-		name: string,
-		size: number,
-		mimeType: string,
-		params: ParentInfo,
-		userId: string
-	): FileRecord {
+	public static buildFromExternalInput(name: string, mimeType: string, params: ParentInfo, userId: string): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
 		const props: FileRecordProps = {
 			id: new ObjectId().toHexString(),
-			size,
+			size: 0,
 			name,
 			mimeType,
 			parentType: params.parentType,

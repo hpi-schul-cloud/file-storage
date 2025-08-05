@@ -1,17 +1,17 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { wopiAccessTokenTestFactory } from '@modules/files-storage/testing';
-import { AccessUrl } from '../access-url.vo';
-import { AccessUrlFactory } from './access-url.factory';
+import { AuthorizedCollaboraDocumentUrl } from '../access-url.vo';
+import { AuthorizedCollaboraDocumentUrlFactory } from './access-url.factory';
 
-describe('AccessUrlFactory', () => {
+describe('AuthorizedCollaboraDocumentUrlFactory', () => {
 	describe('build', () => {
-		it('should build a valid AccessUrl', () => {
+		it('should build a valid AuthorizedCollaboraDocumentUrl', () => {
 			const url =
 				'https://editor.example.com/?WOPISrc=https%3A%2F%2Fwopi.example.com%2Fwopi%2F12345&access_token=testtoken';
 
-			const result = AccessUrlFactory.build(url);
+			const result = AuthorizedCollaboraDocumentUrlFactory.build(url);
 
-			expect(result).toBeInstanceOf(AccessUrl);
+			expect(result).toBeInstanceOf(AuthorizedCollaboraDocumentUrl);
 			expect(result.url).toBe(url);
 		});
 	});
@@ -31,12 +31,17 @@ describe('AccessUrlFactory', () => {
 			};
 		};
 
-		it('should build a valid AccessUrl with correct params', () => {
+		it('should build a valid AuthorizedCollaboraDocumentUrl with correct params', () => {
 			const { onlineEditorUrl, wopiSrc, fileRecordId, accessToken } = setup();
 
-			const result = AccessUrlFactory.buildFromParams(onlineEditorUrl, wopiSrc, fileRecordId, accessToken);
+			const result = AuthorizedCollaboraDocumentUrlFactory.buildFromParams(
+				onlineEditorUrl,
+				wopiSrc,
+				fileRecordId,
+				accessToken
+			);
 
-			expect(result).toBeInstanceOf(AccessUrl);
+			expect(result).toBeInstanceOf(AuthorizedCollaboraDocumentUrl);
 			expect(result.url).toBe(
 				`${onlineEditorUrl}/?WOPISrc=${encodeURIComponent(`${wopiSrc}/${fileRecordId}`)}&access_token=${accessToken.token}`
 			);

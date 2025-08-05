@@ -1,4 +1,4 @@
-import { WopiAccessToken } from '../wopi-access-token.vo';
+import { WopiAccessToken } from '../vo';
 
 export class WopiAccessTokenFactory {
 	public static build(props: WopiAccessToken): WopiAccessToken {
