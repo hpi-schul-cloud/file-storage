@@ -85,13 +85,7 @@ export class AuthorizationClientAdapter {
 
 	public async resolveToken(token: string, tokenTtl: number): Promise<AccessTokenPayloadResponse> {
 		try {
-			const options = this.createOptionParams();
-
-			const response = await this.authorizationApi.authorizationReferenceControllerResolveToken(
-				token,
-				tokenTtl,
-				options
-			);
+			const response = await this.authorizationApi.authorizationReferenceControllerResolveToken(token, tokenTtl);
 
 			return response.data;
 		} catch (error) {

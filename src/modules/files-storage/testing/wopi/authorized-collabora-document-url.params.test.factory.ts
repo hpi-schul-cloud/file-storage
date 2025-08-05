@@ -1,15 +1,15 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import type { DiscoveryAccessUrlParams } from '../../api/dto/wopi.params';
+import type { AuthorizedCollaboraDocumentUrlParams } from '../../api/dto/wopi.params';
 import { EditorMode } from '../../api/dto/wopi.params';
 
-class DiscoveryAccessUrlParamsTestFactory {
-	private readonly props: DiscoveryAccessUrlParams = {
+class AuthorizedCollaboraDocumentUrlParamsTestFactory {
+	private readonly props: AuthorizedCollaboraDocumentUrlParams = {
 		fileRecordId: new ObjectId().toHexString(),
 		editorMode: EditorMode.EDIT,
 		userDisplayName: 'Test User',
 	};
 
-	public build(params: Partial<DiscoveryAccessUrlParams> = {}): DiscoveryAccessUrlParams {
+	public build(params: Partial<AuthorizedCollaboraDocumentUrlParams> = {}): AuthorizedCollaboraDocumentUrlParams {
 		return { ...this.props, ...params };
 	}
 
@@ -32,5 +32,5 @@ class DiscoveryAccessUrlParamsTestFactory {
 	}
 }
 
-export const discoveryAccessUrlParamsTestFactory = (): DiscoveryAccessUrlParamsTestFactory =>
-	new DiscoveryAccessUrlParamsTestFactory();
+export const authorizedCollaboraDocumentUrlParamsTestFactory = (): AuthorizedCollaboraDocumentUrlParamsTestFactory =>
+	new AuthorizedCollaboraDocumentUrlParamsTestFactory();

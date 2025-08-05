@@ -1,5 +1,5 @@
 import { EntityId } from '@shared/domain/types';
-import { WopiPayload } from '../wopi-payload.vo';
+import { WopiPayload } from '../vo';
 
 export class WopiPayloadFactory {
 	public static build(props: WopiPayload): WopiPayload {

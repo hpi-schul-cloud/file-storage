@@ -17,7 +17,7 @@ import { of } from 'rxjs';
 import { Readable } from 'stream';
 import { FileRecord, FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
 import { ErrorType } from '../../domain/error';
-import { fileRecordTestFactory } from '../../testing';
+import { busboyFileInfoTestFactory, fileRecordTestFactory } from '../../testing';
 import { FileRecordParams } from '../dto';
 import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
 import { FilesStorageUC, FileStorageAuthorizationContext } from './files-storage.uc';
@@ -293,11 +293,7 @@ describe('FilesStorageUC upload methods', () => {
 				const fileRecord = fileRecords[0];
 				const request = createRequest();
 				const readable = Readable.from('abc');
-				const fileInfo = {
-					filename: fileRecord.getName(),
-					encoding: '7-bit',
-					mimeType: fileRecord.mimeType,
-				};
+				const fileInfo = busboyFileInfoTestFactory().build();
 
 				let resolveUploadFile: (value: FileRecord | PromiseLike<FileRecord>) => void;
 				const fileRecordPromise = new Promise<FileRecord>((resolve) => {
@@ -314,7 +310,7 @@ describe('FilesStorageUC upload methods', () => {
 					return requestStream;
 				});
 
-				return { params, userId, request, fileRecord, readable, fileInfo };
+				return { params, userId, request, fileRecord, readable };
 			};
 
 			it('should throw an not implemented error', async () => {
@@ -332,11 +328,7 @@ describe('FilesStorageUC upload methods', () => {
 				const fileRecord = fileRecords[0];
 				const request = createRequest();
 				const readable = Readable.from('abc');
-				const fileInfo = {
-					filename: fileRecord.getName(),
-					encoding: '7-bit',
-					mimeType: fileRecord.mimeType,
-				};
+				const busboyFileInfo = busboyFileInfoTestFactory().build();
 
 				let resolveUploadFile: (value: FileRecord | PromiseLike<FileRecord>) => void;
 				const fileRecordPromise = new Promise<FileRecord>((resolve) => {
@@ -345,7 +337,7 @@ describe('FilesStorageUC upload methods', () => {
 				filesStorageService.uploadFile.mockImplementationOnce(() => fileRecordPromise);
 
 				request.pipe.mockImplementation((requestStream) => {
-					requestStream.emit('file', 'file', readable, fileInfo);
+					requestStream.emit('file', 'file', readable, busboyFileInfo);
 
 					requestStream.emit('finish');
 					resolveUploadFile(fileRecord);
@@ -353,7 +345,9 @@ describe('FilesStorageUC upload methods', () => {
 					return requestStream;
 				});
 
-				return { params, userId, request, fileRecord, readable, fileInfo };
+				const expectedFileDto = FileDtoBuilder.buildFromBusboyFileInfo(busboyFileInfo, readable);
+
+				return { params, userId, request, fileRecord, readable, expectedFileDto };
 			};
 
 			it('should call checkPermissionByReferences', async () => {
@@ -382,11 +376,10 @@ describe('FilesStorageUC upload methods', () => {
 			});
 
 			it('should call uploadFile with correct params', async () => {
-				const { params, userId, request, readable, fileInfo } = setup();
-				const file = FileDtoBuilder.buildFromRequest(fileInfo, readable);
+				const { params, userId, request, expectedFileDto } = setup();
 
 				await filesStorageUC.upload(userId, params, request);
-				expect(filesStorageService.uploadFile).toHaveBeenCalledWith(userId, params, file);
+				expect(filesStorageService.uploadFile).toHaveBeenCalledWith(userId, params, expectedFileDto);
 			});
 
 			it('should return fileRecord', async () => {
@@ -400,13 +393,13 @@ describe('FilesStorageUC upload methods', () => {
 
 		describe('WHEN user is authorized, busboy emits event and filesStorageService throws error', () => {
 			const setup = () => {
-				const { params, userId, fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const { params, userId } = buildFileRecordsWithParams();
 				const request = createRequest();
 				const readable = Readable.from('abc');
 				const error = new Error('test');
 
 				const size = request.headers['content-length'];
+				const busboyFileInfo = busboyFileInfoTestFactory().build();
 
 				let rejectUploadFile: (value: Error) => void;
 				const fileRecordPromise = new Promise<FileRecord>((resolve, reject) => {
@@ -416,11 +409,7 @@ describe('FilesStorageUC upload methods', () => {
 
 				request.get.mockReturnValue(size);
 				request.pipe.mockImplementation((requestStream) => {
-					requestStream.emit('file', 'file', readable, {
-						filename: fileRecord.getName(),
-						encoding: '7-bit',
-						mimeType: fileRecord.mimeType,
-					});
+					requestStream.emit('file', 'file', readable, busboyFileInfo);
 
 					requestStream.emit('finish');
 					rejectUploadFile(error);

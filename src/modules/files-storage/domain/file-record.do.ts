@@ -5,7 +5,7 @@ import { EntityId } from '@shared/domain/types';
 import path from 'path';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
-import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './security-check.vo';
+import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',
@@ -42,6 +42,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	isUploading?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
+	contentLastModifiedAt?: Date;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -184,6 +185,10 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.props.name;
 	}
 
+	public getMimeType(): string {
+		return this.props.mimeType;
+	}
+
 	public isPreviewPossible(): boolean {
 		const isPreviewPossible = Object.values<string>(PreviewInputMimeTypes).includes(this.props.mimeType);
 
@@ -277,5 +282,13 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		const filePath = [folderPath, hash].join('/');
 
 		return filePath;
+	}
+
+	public getContentLastModifiedAt(): Date | undefined {
+		return this.props.contentLastModifiedAt;
+	}
+
+	public touchContentLastModifiedAt(): void {
+		this.props.contentLastModifiedAt = new Date();
 	}
 }

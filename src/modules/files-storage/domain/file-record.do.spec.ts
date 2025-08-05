@@ -4,7 +4,7 @@ import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
 import { FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
 import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
-import { ScanStatus } from './security-check.vo';
+import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
 	describe('hasDuplicateName', () => {
@@ -373,6 +373,28 @@ describe('FileRecord', () => {
 
 				expect(result.size).toBe(0);
 			});
+		});
+	});
+
+	describe('getName', () => {
+		it('should return the name of the file record', () => {
+			const name = 'test-file.txt';
+			const fileRecord = fileRecordTestFactory().build({ name });
+
+			const result = fileRecord.getName();
+
+			expect(result).toBe(name);
+		});
+	});
+
+	describe('getMimeType', () => {
+		it('should return the mime type of the file record', () => {
+			const mimeType = 'image/png';
+			const fileRecord = fileRecordTestFactory().build({ mimeType });
+
+			const result = fileRecord.getMimeType();
+
+			expect(result).toBe(mimeType);
 		});
 	});
 });
