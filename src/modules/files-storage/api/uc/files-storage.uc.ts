@@ -184,7 +184,8 @@ export class FilesStorageUC {
 		params: FileRecordParams & FileUrlParams
 	): Promise<AxiosResponse<internal.Readable, unknown>> {
 		const config: AxiosRequestConfig = {
-			headers: params.headers,
+			headers: { 'User-Agent': 'Embed Request User Agent' },
+			params: { headers: { 'User-Agent': 'Embed Request User Agent' } },
 			responseType: 'stream',
 		};
 
