@@ -226,6 +226,56 @@ describe('FilesStorageUC upload methods', () => {
 
 				expect(result).toEqual(fileRecord);
 			});
+
+			describe('WHEN url is already encoded', () => {
+				const setup = () => {
+					const { fileRecord, userId, uploadFromUrlParams, response } = createUploadFromUrlParams();
+					uploadFromUrlParams.url = 'http://localhost/test%20encoded.jpg';
+
+					httpService.get.mockReturnValueOnce(of(response));
+					filesStorageService.uploadFile.mockResolvedValueOnce(fileRecord);
+
+					return { uploadFromUrlParams, userId, response, fileRecord };
+				};
+
+				it('should call httpService without double encoding', async () => {
+					const { uploadFromUrlParams, userId } = setup();
+
+					await filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams);
+
+					const expectedConfig: AxiosRequestConfig = {
+						headers: uploadFromUrlParams.headers,
+						responseType: 'stream',
+					};
+
+					expect(httpService.get).toHaveBeenCalledWith(uploadFromUrlParams.url, expectedConfig);
+				});
+			});
+
+			describe('WHEN url is not encoded', () => {
+				const setup = () => {
+					const { fileRecord, userId, uploadFromUrlParams, response } = createUploadFromUrlParams();
+					uploadFromUrlParams.url = 'http://localhost/We🖤Bugs .JPG';
+
+					httpService.get.mockReturnValueOnce(of(response));
+					filesStorageService.uploadFile.mockResolvedValueOnce(fileRecord);
+
+					return { uploadFromUrlParams, userId, response, fileRecord };
+				};
+
+				it('should call httpService with encoded url', async () => {
+					const { uploadFromUrlParams, userId } = setup();
+
+					await filesStorageUC.uploadFromUrl(userId, uploadFromUrlParams);
+
+					const expectedConfig: AxiosRequestConfig = {
+						headers: uploadFromUrlParams.headers,
+						responseType: 'stream',
+					};
+
+					expect(httpService.get).toHaveBeenCalledWith(encodeURI(uploadFromUrlParams.url), expectedConfig);
+				});
+			});
 		});
 
 		describe('WHEN user is not authorised', () => {
