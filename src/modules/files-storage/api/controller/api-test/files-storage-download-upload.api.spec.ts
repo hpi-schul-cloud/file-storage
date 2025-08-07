@@ -286,7 +286,7 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			describe(`with new file`, () => {
-				const setup = async () => {
+				const setup = async (fileName = 'test.txt') => {
 					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
 					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
@@ -300,20 +300,21 @@ describe('files-storage controller (API)', () => {
 
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
-						.attach('file', Buffer.from('abcd'), 'test.txt')
+						.attach('file', Buffer.from('abcd'), decodeURI(fileName))
 						.set('connection', 'keep-alive')
 						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
 					const response = result.body as FileRecordEntity;
+					const fileId = response.id;
 
 					const body = {
-						url: `http://localhost:${appPort}/file/download/${response.id}/${response.name}`,
-						fileName: 'test.txt',
+						url: `http://localhost:${appPort}/file/download/${fileId}/${fileName}`,
+						fileName,
 						headers: {
 							authorization: loggedInClient.getAuthHeader(),
 						},
 					};
 
-					return { validId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, user: studentUser };
 				};
 
 				it('should return status 201 for successful upload', async () => {
@@ -341,6 +342,50 @@ describe('files-storage controller (API)', () => {
 							securityCheckStatus: 'pending',
 						})
 					);
+				});
+
+				describe('when the url is encoded', () => {
+					it('should work with fileNames with special characters', async () => {
+						const fileName = encodeURI('we ❤️ bugfixes.doc');
+						const { validId, loggedInClient, body, user } = await setup(fileName);
+
+						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+						const response = result.body as FileRecordEntity;
+
+						expect(response).toStrictEqual(
+							expect.objectContaining({
+								id: expect.any(String),
+								name: fileName,
+								parentId: validId,
+								creatorId: user.id,
+								mimeType: 'application/octet-stream',
+								parentType: 'schools',
+								securityCheckStatus: 'pending',
+							})
+						);
+					});
+				});
+
+				describe('when the url is unencoded', () => {
+					it('should work with fileNames with special characters', async () => {
+						const fileName = 'we ❤️ bugfixes.doc';
+						const { validId, loggedInClient, body, user } = await setup(fileName);
+
+						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+						const response = result.body as FileRecordEntity;
+
+						expect(response).toStrictEqual(
+							expect.objectContaining({
+								id: expect.any(String),
+								name: fileName.replace(/\.doc/, ' (1).doc'),
+								parentId: validId,
+								creatorId: user.id,
+								mimeType: 'application/octet-stream',
+								parentType: 'schools',
+								securityCheckStatus: 'pending',
+							})
+						);
+					});
 				});
 			});
 
