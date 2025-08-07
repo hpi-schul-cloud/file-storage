@@ -188,8 +188,10 @@ export class FilesStorageUC {
 			responseType: 'stream',
 		};
 
+		const encodedUrl = this.ensureEncodedUrl(params.url);
+
 		try {
-			const responseStream = this.httpService.get<internal.Readable>(encodeURI(params.url), config);
+			const responseStream = this.httpService.get<internal.Readable>(encodedUrl, config);
 
 			const response = await firstValueFrom(responseStream);
 
@@ -202,6 +204,16 @@ export class FilesStorageUC {
 		} catch (error) {
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND, { cause: error });
 		}
+	}
+
+	private ensureEncodedUrl(url: string): string {
+		const containsEncodedCharacters = (url: string): boolean => {
+			return /%[0-9A-Fa-f]{2}/.test(url);
+		};
+
+		const encodedUrl = containsEncodedCharacters(url) ? url : encodeURI(url);
+
+		return encodedUrl;
 	}
 
 	// download
