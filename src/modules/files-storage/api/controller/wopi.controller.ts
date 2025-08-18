@@ -3,25 +3,33 @@ import { ApiValidationError } from '@infra/error';
 import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
 import {
 	BadRequestException,
-	Body,
+	ConflictException,
 	Controller,
 	ForbiddenException,
 	Get,
+	HttpCode,
 	InternalServerErrorException,
+	NotFoundException,
 	Param,
+	PayloadTooLargeException,
 	Post,
 	Query,
+	Req,
 	StreamableFile,
+	UnauthorizedException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import {
-	AccessUrlResponse,
-	DiscoveryAccessUrlParams,
+	AuthorizedCollaboraDocumentUrlParams,
+	AuthorizedCollaboraDocumentUrlResponse,
+	PutFileResponse,
 	SingleFileParams,
 	WopiAccessTokenParams,
-	WopiCheckFileInfoResponse,
+	WopiFileInfoResponse,
 } from '../dto';
-import { FilesStorageMapper } from '../mapper';
+import { PutFileResponseFactory } from '../factory';
+import { FilesStorageMapper, WopiErrorResponseMapper } from '../mapper';
 import { WopiUc } from '../uc';
 
 @ApiTags('wopi')
@@ -39,31 +47,31 @@ export class WopiController {
 	}
 
 	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
-	@ApiResponse({ status: 201, type: AccessUrlResponse })
+	@ApiResponse({ status: 200, type: AuthorizedCollaboraDocumentUrlResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@Post('authorized-collabora-access-url')
+	@Get('authorized-collabora-document-url')
 	@JwtAuthentication()
-	public async getAuthorizedCollaboraAccessUrl(
-		@Body() body: DiscoveryAccessUrlParams,
+	public async getAuthorizedCollaboraDocumentUrl(
+		@Query() query: AuthorizedCollaboraDocumentUrlParams,
 		@CurrentUser() currentUser: ICurrentUser
-	): Promise<AccessUrlResponse> {
+	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
 		this.ensureWopiEnabled();
 
-		const result = await this.wopiUc.getAuthorizedCollaboraAccessUrl(currentUser.userId, body);
+		const result = await this.wopiUc.getAuthorizedCollaboraDocumentUrl(currentUser.userId, query);
 
 		return result;
 	}
 
 	@ApiOperation({ summary: 'WOPI CheckFileInfo' })
-	@ApiResponse({ status: 200, type: WopiCheckFileInfoResponse })
+	@ApiResponse({ status: 200, type: WopiFileInfoResponse })
 	@Get('files/:fileRecordId')
 	public async checkFileInfo(
 		@Param() params: SingleFileParams,
 		@Query() query: WopiAccessTokenParams
-	): Promise<WopiCheckFileInfoResponse> {
+	): Promise<WopiFileInfoResponse> {
 		this.ensureWopiEnabled();
 
 		return await this.wopiUc.checkFileInfo(params, query);
@@ -82,5 +90,34 @@ export class WopiController {
 		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 
 		return streamableFile;
+	}
+
+	@HttpCode(200)
+	@ApiOperation({ summary: 'WOPI PutFile (update file contents)' })
+	@ApiResponse({ status: 200, description: 'Updates the file contents.' })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 401, type: UnauthorizedException })
+	@ApiResponse({ status: 404, type: NotFoundException })
+	@ApiResponse({ status: 409, type: ConflictException })
+	@ApiResponse({ status: 413, type: PayloadTooLargeException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@Post('files/:fileRecordId/contents')
+	public async putFile(
+		@Param() params: SingleFileParams,
+		@Query() query: WopiAccessTokenParams,
+		@Req() req: Request
+	): Promise<PutFileResponse> {
+		this.ensureWopiEnabled();
+
+		try {
+			const fileRecord = await this.wopiUc.putFile(query, req);
+			const response = PutFileResponseFactory.buildFromFileRecord(fileRecord);
+
+			return response;
+		} catch (error) {
+			const wopiError = WopiErrorResponseMapper.mapErrorToWopiError(error);
+
+			throw wopiError;
+		}
 	}
 }

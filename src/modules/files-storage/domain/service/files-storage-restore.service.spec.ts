@@ -9,7 +9,7 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../security-check.vo';
+import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {

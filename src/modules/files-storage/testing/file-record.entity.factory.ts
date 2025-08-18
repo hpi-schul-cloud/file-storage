@@ -30,6 +30,7 @@ export const fileRecordEntityFactory = FileRecordEntityFactory.define(
 			storageLocation: StorageLocation.SCHOOL,
 			createdAt: new Date(),
 			updatedAt: new Date(),
+			contentLastModifiedAt: new Date(),
 		};
 
 		return props;

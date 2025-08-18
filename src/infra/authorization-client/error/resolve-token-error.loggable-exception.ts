@@ -1,8 +1,8 @@
 import { ErrorLogMessage } from '@infra/logger';
 import { Loggable } from '@infra/logger/interfaces';
-import { InternalServerErrorException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 
-export class ResolveTokenErrorLoggableException extends InternalServerErrorException implements Loggable {
+export class ResolveTokenErrorLoggableException extends ForbiddenException implements Loggable {
 	constructor(
 		private readonly error: unknown,
 		private readonly token: string

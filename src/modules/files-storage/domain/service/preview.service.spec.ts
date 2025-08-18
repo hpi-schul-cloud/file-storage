@@ -11,7 +11,7 @@ import { ErrorType } from '../error';
 import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
 import { FileResponseBuilder } from '../mapper';
-import { ScanStatus } from '../security-check.vo';
+import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 
