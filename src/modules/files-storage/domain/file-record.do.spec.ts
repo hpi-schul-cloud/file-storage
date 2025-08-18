@@ -287,9 +287,9 @@ describe('FileRecord', () => {
 			expect(fileRecord.sizeInByte).toBe(newSize);
 		});
 
-		it('should throw BadRequestException if size is less than or equal to 0', () => {
+		it('should throw BadRequestException if size is less than 0', () => {
 			const fileRecord = fileRecordTestFactory().build();
-			const invalidSize = 0;
+			const invalidSize = -1;
 			const maxSize = 4096;
 
 			// Assert exception is thrown
