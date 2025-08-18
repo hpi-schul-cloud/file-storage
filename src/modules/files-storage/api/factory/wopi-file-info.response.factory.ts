@@ -16,7 +16,7 @@ export class WopiFileInfoResponseFactory {
 			BaseFileName: fileRecord.getName(),
 			UserCanWrite: user.canWrite,
 			OwnerId: fileRecord.getProps().creatorId,
-			LastModifiedTime: fileRecord.getProps().updatedAt.toISOString(),
+			LastModifiedTime: fileRecord.getContentLastModifiedAt()?.toISOString(),
 		});
 
 		return response;
