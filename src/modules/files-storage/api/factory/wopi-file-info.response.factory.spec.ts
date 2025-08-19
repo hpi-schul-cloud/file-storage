@@ -100,7 +100,7 @@ describe('WopiFileInfoResponseFactory', () => {
 				expect(result.BaseFileName).toBe(fileRecord.getName());
 				expect(result.UserCanWrite).toBe(user.canWrite);
 				expect(result.OwnerId).toBe(fileRecord.getProps().creatorId);
-				expect(result.LastModifiedTime).toBe(fileRecord.getProps().updatedAt.toISOString());
+				expect(result.LastModifiedTime).toBe(fileRecord.getProps().contentLastModifiedAt?.toISOString());
 			});
 		});
 
@@ -131,7 +131,7 @@ describe('WopiFileInfoResponseFactory', () => {
 				expect(result.BaseFileName).toBe(fileRecord.getName());
 				expect(result.UserCanWrite).toBe(user.canWrite);
 				expect(result.OwnerId).toBeUndefined();
-				expect(result.LastModifiedTime).toBe(fileRecord.getProps().updatedAt.toISOString());
+				expect(result.LastModifiedTime).toBe(fileRecord.getProps().contentLastModifiedAt?.toISOString());
 			});
 		});
 	});
