@@ -27,6 +27,21 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
 
+export enum CollaboraMimeTypes {
+	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	DOC = 'application/msword',
+	ODT = 'application/vnd.oasis.opendocument.text',
+	RTF = 'application/rtf',
+	TXT = 'text/plain',
+	XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	XLS = 'application/vnd.ms-excel',
+	ODS = 'application/vnd.oasis.opendocument.spreadsheet',
+	CSV = 'text/csv',
+	PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+	PPT = 'application/vnd.ms-powerpoint',
+	ODP = 'application/vnd.oasis.opendocument.presentation',
+}
+
 export interface FileRecordProps extends AuthorizableObject {
 	id: EntityId;
 	size: number;
@@ -193,6 +208,12 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		const isPreviewPossible = Object.values<string>(PreviewInputMimeTypes).includes(this.props.mimeType);
 
 		return isPreviewPossible;
+	}
+
+	public hasCollaboraMimeType(): boolean {
+		const collaboraMimeTypes: string[] = Object.values(CollaboraMimeTypes);
+
+		return collaboraMimeTypes.includes(this.props.mimeType);
 	}
 
 	public getParentInfo(): ParentInfo {
