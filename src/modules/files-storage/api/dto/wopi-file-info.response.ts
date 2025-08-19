@@ -31,7 +31,7 @@ export class WopiFileInfoResponse {
 	UserFriendlyName: string;
 
 	@ApiProperty()
-	LastModifiedTime: string;
+	LastModifiedTime?: string;
 
 	@ApiProperty()
 	@IsOptional()
