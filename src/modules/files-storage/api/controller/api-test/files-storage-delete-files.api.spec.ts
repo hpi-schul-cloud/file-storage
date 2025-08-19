@@ -182,6 +182,7 @@ describe(`${baseRouteName} (api)`, () => {
 					securityCheckStatus: 'pending',
 					size: expect.any(Number),
 					previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+					isCollaboraEditable: true,
 				});
 			});
 
@@ -293,6 +294,7 @@ describe(`${baseRouteName} (api)`, () => {
 						securityCheckStatus: 'pending',
 						size: expect.any(Number),
 						previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+						isCollaboraEditable: true,
 					});
 				});
 
@@ -453,6 +455,7 @@ describe(`${baseRouteName} (api)`, () => {
 								securityCheckStatus: 'pending',
 								size: expect.any(Number),
 								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
 							},
 							{
 								creatorId: expect.any(String),
@@ -468,6 +471,7 @@ describe(`${baseRouteName} (api)`, () => {
 								securityCheckStatus: 'pending',
 								size: expect.any(Number),
 								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
 							},
 						],
 						total: 2,

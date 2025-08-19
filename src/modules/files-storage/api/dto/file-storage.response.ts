@@ -24,6 +24,7 @@ export class FileRecordResponse {
 		this.previewStatus = fileRecord.getPreviewStatus();
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
+		this.isCollaboraEditable = fileRecord.isCollaboraEditable();
 	}
 
 	@ApiProperty()
@@ -59,6 +60,9 @@ export class FileRecordResponse {
 
 	@ApiProperty({ enum: PreviewStatus, enumName: 'PreviewStatus' })
 	previewStatus: PreviewStatus;
+
+	@ApiProperty()
+	isCollaboraEditable: boolean;
 
 	@ApiPropertyOptional()
 	deletedSince?: Date;

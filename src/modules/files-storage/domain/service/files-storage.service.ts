@@ -186,7 +186,9 @@ export class FilesStorageService {
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
 
-		if (useStreamToAntivirus && (fileRecord.isPreviewPossible() || fileRecord.hasCollaboraMimeType())) {
+		const shouldStreamToAntiVirus =
+			useStreamToAntivirus && (fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+		if (shouldStreamToAntiVirus) {
 			const streamToAntivirus = this.createPipedStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
@@ -208,7 +210,7 @@ export class FilesStorageService {
 
 		await this.fileRecordRepo.save(fileRecord);
 
-		if (!useStreamToAntivirus || !fileRecord.isPreviewPossible()) {
+		if (!shouldStreamToAntiVirus) {
 			await this.sendToAntivirus(fileRecord);
 		}
 	}

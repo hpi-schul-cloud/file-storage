@@ -715,6 +715,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.send).not.toHaveBeenCalled();
 					});
 				});
 
@@ -726,6 +727,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.send).not.toHaveBeenCalled();
 					});
 				});
 
@@ -737,6 +739,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
 					});
 				});
 
@@ -748,6 +751,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
 					});
 				});
 
@@ -759,6 +763,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
 					});
 				});
 			});

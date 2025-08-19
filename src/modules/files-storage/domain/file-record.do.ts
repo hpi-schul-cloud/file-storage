@@ -210,7 +210,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return isPreviewPossible;
 	}
 
-	public hasCollaboraMimeType(): boolean {
+	public isCollaboraEditable(): boolean {
 		const collaboraMimeTypes: string[] = Object.values(CollaboraMimeTypes);
 
 		return collaboraMimeTypes.includes(this.props.mimeType);
