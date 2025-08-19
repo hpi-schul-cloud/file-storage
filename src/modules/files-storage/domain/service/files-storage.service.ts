@@ -188,6 +188,7 @@ export class FilesStorageService {
 
 		const shouldStreamToAntiVirus =
 			useStreamToAntivirus && (fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+
 		if (shouldStreamToAntiVirus) {
 			const streamToAntivirus = this.createPipedStream(file.data);
 
