@@ -5,6 +5,7 @@ import { accessTokenPayloadResponseTestFactory } from '@infra/authorization-clie
 import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { ScanStatus } from '@modules/files-storage/domain';
 import { FileRecordEntity } from '@modules/files-storage/repo';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -19,6 +20,7 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-s
 import {
 	authorizedCollaboraDocumentUrlParamsTestFactory,
 	fileRecordEntityFactory,
+	fileRecordSecurityCheckEmbeddableFactory,
 	GetFileResponseTestFactory,
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
@@ -145,6 +147,39 @@ describe('Wopi Controller (API)', () => {
 				expect(response.body).toEqual({
 					authorizedCollaboraDocumentUrl: expectedUrl,
 				});
+			});
+		});
+
+		describe('when filerecord is blocked', () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
+					.withFileRecordId(fileRecord.id)
+					.withEditorMode(EditorMode.EDIT)
+					.build();
+				const token = accessTokenResponseTestFactory().build();
+				const collaboraUrl = 'http://collabora.url';
+
+				em.persistAndFlush(fileRecord);
+
+				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
+				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { query, loggedInClient };
+			};
+
+			it('should return 404', async () => {
+				const { query, loggedInClient } = await setup();
+
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
+
+				expect(response.status).toBe(404);
 			});
 		});
 
@@ -348,6 +383,33 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
+		describe('when filerecord is blocked', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				await em.persistAndFlush(fileRecord);
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query };
+			};
+
+			it('should return 404', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+
+				expect(response.status).toBe(404);
+			});
+		});
+
 		describe('when WOPI feature is disabled', () => {
 			const setup = () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
@@ -515,6 +577,37 @@ describe('Wopi Controller (API)', () => {
 				expect(response.status).toBe(200);
 				expect(response.body).toBeInstanceOf(Buffer);
 				expect(response.body.toString()).toBe(contentForReadable);
+			});
+		});
+
+		describe('when filerecord is blocked', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId();
+				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				const contentForReadable = 'contentForReadable';
+				const fileResponse = GetFileResponseTestFactory.build({ contentForReadable });
+				storageClient.get.mockResolvedValueOnce(fileResponse);
+
+				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query, fileResponse };
+			};
+
+			it('should return 404', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+
+				expect(response.status).toBe(404);
 			});
 		});
 

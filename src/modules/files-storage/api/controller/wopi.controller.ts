@@ -67,6 +67,7 @@ export class WopiController {
 
 	@ApiOperation({ summary: 'WOPI CheckFileInfo' })
 	@ApiResponse({ status: 200, type: WopiFileInfoResponse })
+	@ApiResponse({ status: 404, type: NotFoundException })
 	@Get('files/:fileRecordId')
 	public async checkFileInfo(
 		@Param() params: SingleFileParams,
@@ -79,6 +80,7 @@ export class WopiController {
 
 	@ApiOperation({ summary: 'WOPI GetFile (download file contents)' })
 	@ApiResponse({ status: 200, description: 'Returns the file contents as a stream.' })
+	@ApiResponse({ status: 404, type: NotFoundException })
 	@Get('files/:fileRecordId/contents')
 	public async getFile(
 		@Param() params: SingleFileParams,

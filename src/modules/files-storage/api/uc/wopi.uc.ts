@@ -6,7 +6,7 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import {
@@ -69,6 +69,8 @@ export class WopiUc {
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const { parentId, parentType } = fileRecord.getProps();
 
+		this.throwIfBlocked(fileRecord);
+
 		const canWrite = editorMode === EditorMode.EDIT;
 		const payload = WopiPayloadFactory.buildFromParams(fileRecord.id, canWrite, userDisplayName, userId);
 
@@ -93,6 +95,8 @@ export class WopiUc {
 		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(params, wopiToken);
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
+		this.throwIfBlocked(fileRecord);
+
 		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
 			id: userId,
 			userName: userDisplayName,
@@ -106,9 +110,17 @@ export class WopiUc {
 		const { fileRecordId } = await this.getWopiPayload(params, wopiToken);
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
+		this.throwIfBlocked(fileRecord);
+
 		const fileResponse = await this.filesStorageService.downloadFile(fileRecord);
 
 		return fileResponse;
+	}
+
+	private throwIfBlocked(fileRecord: FileRecord): void {
+		if (fileRecord.isBlocked()) {
+			throw new NotFoundException('File blocked due to suspected virus');
+		}
 	}
 
 	private async getWopiPayload(params: SingleFileParams, wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
