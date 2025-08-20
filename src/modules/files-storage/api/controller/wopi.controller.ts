@@ -51,6 +51,7 @@ export class WopiController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 404, type: NotFoundException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@Get('authorized-collabora-document-url')
 	@JwtAuthentication()
