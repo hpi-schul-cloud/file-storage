@@ -211,9 +211,12 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public isCollaboraEditable(): boolean {
-		const collaboraMimeTypes: string[] = Object.values(CollaboraMimeTypes);
+		const hasCollaboraCompatibleMimeType = Object.values<string>(CollaboraMimeTypes).includes(this.props.mimeType);
+		const isBlocked = this.securityCheck.isBlocked();
 
-		return collaboraMimeTypes.includes(this.props.mimeType);
+		const isEditable = hasCollaboraCompatibleMimeType && !isBlocked;
+
+		return isEditable;
 	}
 
 	public getParentInfo(): ParentInfo {

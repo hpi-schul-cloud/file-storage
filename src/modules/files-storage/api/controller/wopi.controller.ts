@@ -51,6 +51,7 @@ export class WopiController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 404, type: NotFoundException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@Get('authorized-collabora-document-url')
 	@JwtAuthentication()
@@ -67,6 +68,7 @@ export class WopiController {
 
 	@ApiOperation({ summary: 'WOPI CheckFileInfo' })
 	@ApiResponse({ status: 200, type: WopiFileInfoResponse })
+	@ApiResponse({ status: 404, type: NotFoundException })
 	@Get('files/:fileRecordId')
 	public async checkFileInfo(
 		@Param() params: SingleFileParams,
@@ -79,6 +81,7 @@ export class WopiController {
 
 	@ApiOperation({ summary: 'WOPI GetFile (download file contents)' })
 	@ApiResponse({ status: 200, description: 'Returns the file contents as a stream.' })
+	@ApiResponse({ status: 404, type: NotFoundException })
 	@Get('files/:fileRecordId/contents')
 	public async getFile(
 		@Param() params: SingleFileParams,
