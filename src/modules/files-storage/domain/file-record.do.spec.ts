@@ -8,6 +8,24 @@ import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
 	describe('isCollaboraEditable', () => {
+		describe('when file is blocked', () => {
+			it('should return false for collabora editable file', () => {
+				const fileRecordDOCX = fileRecordTestFactory()
+					.withScanStatus(ScanStatus.BLOCKED)
+					.build({ mimeType: CollaboraMimeTypes.DOCX });
+
+				expect(fileRecordDOCX.isCollaboraEditable()).toBe(false);
+			});
+
+			it('should return false for a non-collabora editable file', () => {
+				const fileRecordDOCX = fileRecordTestFactory()
+					.withScanStatus(ScanStatus.BLOCKED)
+					.build({ mimeType: 'image/webp' });
+
+				expect(fileRecordDOCX.isCollaboraEditable()).toBe(false);
+			});
+		});
+
 		it('should return true for a Collabora-supported mime type', () => {
 			const fileRecordDOCX = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
 			expect(fileRecordDOCX.isCollaboraEditable()).toBe(true);
