@@ -2,11 +2,61 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
-import { FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
+import { CollaboraMimeTypes, FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
 import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
 import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
+	describe('isCollaboraEditable', () => {
+		it('should return true for a Collabora-supported mime type', () => {
+			const fileRecordDOCX = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+			expect(fileRecordDOCX.isCollaboraEditable()).toBe(true);
+
+			const fileRecordDOC = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOC });
+			expect(fileRecordDOC.isCollaboraEditable()).toBe(true);
+
+			const fileRecordODT = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.ODT });
+			expect(fileRecordODT.isCollaboraEditable()).toBe(true);
+
+			const fileRecordRTF = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.RTF });
+			expect(fileRecordRTF.isCollaboraEditable()).toBe(true);
+
+			const fileRecordTXT = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.TXT });
+			expect(fileRecordTXT.isCollaboraEditable()).toBe(true);
+
+			const fileRecordXLSX = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.XLSX });
+			expect(fileRecordXLSX.isCollaboraEditable()).toBe(true);
+
+			const fileRecordXLS = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.XLS });
+			expect(fileRecordXLS.isCollaboraEditable()).toBe(true);
+
+			const fileRecordODS = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.ODS });
+			expect(fileRecordODS.isCollaboraEditable()).toBe(true);
+
+			const fileRecordCSV = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.CSV });
+			expect(fileRecordCSV.isCollaboraEditable()).toBe(true);
+
+			const fileRecordPPTX = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.PPTX });
+			expect(fileRecordPPTX.isCollaboraEditable()).toBe(true);
+
+			const fileRecordPPT = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.PPT });
+			expect(fileRecordPPT.isCollaboraEditable()).toBe(true);
+
+			const fileRecordODP = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.ODP });
+			expect(fileRecordODP.isCollaboraEditable()).toBe(true);
+		});
+
+		it('should return false for a non-Collabora mime type', () => {
+			const fileRecordPng = fileRecordTestFactory().build({ mimeType: 'image/png' });
+			expect(fileRecordPng.isCollaboraEditable()).toBe(false);
+
+			const fileRecordPdf = fileRecordTestFactory().build({ mimeType: 'application/pdf' });
+			expect(fileRecordPdf.isCollaboraEditable()).toBe(false);
+
+			const fileRecordMp3 = fileRecordTestFactory().build({ mimeType: 'audio/mpeg' });
+			expect(fileRecordMp3.isCollaboraEditable()).toBe(false);
+		});
+	});
 	describe('hasDuplicateName', () => {
 		const setup = () => {
 			const fileRecords = [

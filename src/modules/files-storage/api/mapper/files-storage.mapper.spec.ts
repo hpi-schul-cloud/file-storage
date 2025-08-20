@@ -87,6 +87,7 @@ describe('FilesStorageMapper', () => {
 				previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 				createdAt: props.createdAt,
 				updatedAt: props.updatedAt,
+				isCollaboraEditable: false,
 			};
 
 			expect(result).toEqual(expectedFileRecordResponse);

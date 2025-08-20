@@ -626,12 +626,12 @@ describe('FilesStorageService upload methods', () => {
 
 	describe('updateFileContents is called', () => {
 		describe('WHEN update is successfull', () => {
-			const setup = () => {
+			const setup = (mimeTypeProp?: string) => {
 				const mimeType = 'image/png';
-				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileRecord = fileRecordTestFactory().build({ mimeType: mimeTypeProp ?? mimeType });
 				const fileDto = fileDtoTestFactory().build({
 					name: fileRecord.getName(),
-					mimeType,
+					mimeType: fileRecord.getMimeType(),
 				});
 				const mimeTypeSpy = jest
 					.spyOn(FileType, 'fileTypeStream')
@@ -707,25 +707,63 @@ describe('FilesStorageService upload methods', () => {
 			});
 
 			describe('Antivirus handling by upload ', () => {
-				describe('when useStreamToAntivirus is true', () => {
+				describe('when useStreamToAntivirus is true, fileRecord is previewable and has not a collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const { fileRecord, fileDto } = setup();
+						const { fileRecord, fileDto } = setup('image/png');
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.send).not.toHaveBeenCalled();
 					});
 				});
 
-				describe('when useStreamToAntivirus is false', () => {
+				describe('when useStreamToAntivirus is true, fileRecord is not previewable and has collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const { fileRecord, fileDto } = setup();
+						const { fileRecord, fileDto } = setup('text/plain');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.send).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is true and fileRecord is not previewable and has no collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('audio/aac');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is false and fileRecord is previewable and has no collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('image/png');
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is false and fileRecord is not previewable and has collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('text/plain');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
 					});
 				});
 			});
