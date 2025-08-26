@@ -119,7 +119,9 @@ export class WopiUc {
 
 	private throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
 		if (!fileRecord.isCollaboraEditable()) {
-			throw new NotFoundException('File blocked due to suspected virus or mimetype not collabora compatible');
+			throw new NotFoundException(
+				'File blocked due to suspected virus, mimetype not collabora compatible or file size exceeds limit'
+			);
 		}
 	}
 

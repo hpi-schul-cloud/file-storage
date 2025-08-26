@@ -25,6 +25,7 @@ export class FileRecordResponse {
 		this.createdAt = props.createdAt;
 		this.updatedAt = props.updatedAt;
 		this.isCollaboraEditable = fileRecord.isCollaboraEditable();
+		this.exceedsCollaboraEditableFileSize = fileRecord.exceedsCollaboraEditableFileSize();
 	}
 
 	@ApiProperty()
@@ -63,6 +64,9 @@ export class FileRecordResponse {
 
 	@ApiProperty()
 	isCollaboraEditable: boolean;
+
+	@ApiProperty()
+	exceedsCollaboraEditableFileSize: boolean;
 
 	@ApiPropertyOptional()
 	deletedSince?: Date;
