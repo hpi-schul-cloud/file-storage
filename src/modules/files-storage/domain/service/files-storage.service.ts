@@ -16,11 +16,19 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FileRecord, ParentInfo } from '../file-record.do';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import {
+	CollaboraEditabilityStatus,
+	CopyFileResult,
+	FILE_RECORD_REPO,
+	FileRecordRepo,
+	GetFileResponse,
+	StorageLocationParams,
+} from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 
 import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { FileRecordStatus } from '../interface';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
@@ -75,6 +83,37 @@ export class FilesStorageService {
 		return countedFileRecords;
 	}
 
+	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
+		const scanStatus = fileRecord.scanStatus;
+		const previewStatus = fileRecord.getPreviewStatus();
+		const collaboraEditabilityStatus = this.getCollaboraEditabilityStatus(fileRecord);
+
+		const status = {
+			scanStatus,
+			previewStatus,
+			...collaboraEditabilityStatus,
+		};
+
+		return status;
+	}
+
+	public getFileRecordsStatus(fileRecords: FileRecord[]): { fileRecord: FileRecord; status: FileRecordStatus }[] {
+		return fileRecords.map((fileRecord) => ({
+			fileRecord,
+			status: this.getFileRecordStatus(fileRecord),
+		}));
+	}
+
+	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
+		const { COLLABORA_MAX_FILE_SIZE_IN_BYTES } = this.config;
+		const status = {
+			isCollaboraEditable: fileRecord.isCollaboraEditable(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+		};
+
+		return status;
+	}
+
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
 		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
@@ -114,13 +153,7 @@ export class FilesStorageService {
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file);
 
-		const fileRecord = FileRecordFactory.buildFromExternalInput(
-			fileName,
-			mimeType,
-			parentInfo,
-			userId,
-			this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES
-		);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 
 		return { fileRecord, stream };
 	}
@@ -191,9 +224,10 @@ export class FilesStorageService {
 		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
+		const status = this.getCollaboraEditabilityStatus(fileRecord);
 
 		const shouldStreamToAntiVirus =
-			useStreamToAntivirus && (fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+			useStreamToAntivirus && (fileRecord.isPreviewPossible() || status.isCollaboraEditable);
 
 		if (shouldStreamToAntiVirus) {
 			const streamToAntivirus = this.createPipedStream(file.data);

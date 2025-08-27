@@ -63,8 +63,7 @@ export interface FileRecordProps extends AuthorizableObject {
 export class FileRecord extends DomainObject<FileRecordProps> {
 	constructor(
 		props: FileRecordProps,
-		private securityCheck: FileRecordSecurityCheck,
-		public collaboraMaxFileSizeInBytes: number
+		private securityCheck: FileRecordSecurityCheck
 	) {
 		super(props);
 	}
@@ -211,16 +210,16 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return isPreviewPossible;
 	}
 
-	public exceedsCollaboraEditableFileSize(): boolean {
-		const exceedsFileSize = this.props.size > this.collaboraMaxFileSizeInBytes;
+	public exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes: number): boolean {
+		const exceedsFileSize = this.props.size > collaboraMaxFileSizeInBytes;
 
 		return exceedsFileSize;
 	}
 
-	public isCollaboraEditable(): boolean {
+	public isCollaboraEditable(collaboraMaxFileSizeInBytes: number): boolean {
 		const isBlocked = this.securityCheck.isBlocked();
 		const hasCollaboraCompatibleMimeType = Object.values<string>(CollaboraMimeTypes).includes(this.props.mimeType);
-		const exceedsFileSize = this.exceedsCollaboraEditableFileSize();
+		const exceedsFileSize = this.exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes);
 
 		const isEditable = hasCollaboraCompatibleMimeType && !isBlocked && !exceedsFileSize;
 

@@ -118,7 +118,9 @@ export class WopiUc {
 	}
 
 	private throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
-		if (!fileRecord.isCollaboraEditable()) {
+		const status = this.filesStorageService.getCollaboraEditabilityStatus(fileRecord);
+
+		if (!status.isCollaboraEditable) {
 			throw new NotFoundException(
 				'File blocked due to suspected virus, mimetype not collabora compatible or file size exceeds limit'
 			);

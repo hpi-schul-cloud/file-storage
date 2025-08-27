@@ -7,7 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { FilesStorageService, PreviewService } from '../../domain';
 import { CopyFileResponse, CopyFilesOfParentPayload, FileRecordResponse } from '../dto';
-import { FilesStorageMapper } from '../mapper';
+import { FileRecordMapper } from '../mapper';
 import { FilesStorageEvents, FilesStorageExchange } from './files-storage.exchange';
 
 @Injectable()
@@ -47,7 +47,8 @@ export class FilesStorageConsumer {
 		const [fileRecords, total] = await this.filesStorageService.getFileRecordsOfParent(payload);
 		this.logger.debug(new FileStorageActionsLoggable('Start get files of parent', { action: 'getFilesOfParent' }));
 
-		const response = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, total);
+		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, total);
 
 		return { message: response.data };
 	}
@@ -70,7 +71,8 @@ export class FilesStorageConsumer {
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFilesOfParent(fileRecords);
 
-		const response = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, total);
+		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, total);
 
 		return { message: response.data };
 	}
@@ -91,7 +93,8 @@ export class FilesStorageConsumer {
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.delete(fileRecords);
 
-		const response = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
+		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, fileRecords.length);
 
 		return { message: response.data };
 	}
@@ -115,7 +118,8 @@ export class FilesStorageConsumer {
 
 		await this.filesStorageService.removeCreatorIdFromFileRecords(fileRecords);
 
-		const response = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
+		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, fileRecords.length);
 
 		return { message: response.data };
 	}

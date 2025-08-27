@@ -2,7 +2,7 @@ import { EntityManager, EntityName, ObjectId, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
-import { FilesStorageService, ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
+import { ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
 import { FileRecord } from '../domain/file-record.do';
 import { FileRecordRepo } from '../domain/interface/file-record.repo.interface';
 import { FileRecordEntity } from './file-record.entity';
@@ -11,10 +11,7 @@ import { FileRecordScope } from './scope/file-record-scope';
 
 @Injectable()
 export class FileRecordMikroOrmRepo implements FileRecordRepo {
-	constructor(
-		private readonly em: EntityManager,
-		private readonly service: FilesStorageService
-	) {}
+	constructor(private readonly em: EntityManager) {}
 
 	get entityName(): EntityName<FileRecordEntity> {
 		return FileRecordEntity;
@@ -179,10 +176,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 			orderBy: order,
 		});
 
-		const collaboraMaxFileSizeInBytes = this.service.getCollaboraMaxFileSize();
-		const fileRecords = entities.map((entity) =>
-			FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes)
-		);
+		const fileRecords = entities.map((entity) => FileRecordEntityMapper.mapEntityToDo(entity));
 
 		return [fileRecords, count];
 	}
@@ -190,8 +184,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 	private async findOneOrFail(scope: FileRecordScope): Promise<FileRecord> {
 		const entity = await this.em.findOneOrFail(FileRecordEntity, scope.query);
 
-		const collaboraMaxFileSizeInBytes = this.service.getCollaboraMaxFileSize();
-		const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
+		const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity);
 
 		return fileRecord;
 	}

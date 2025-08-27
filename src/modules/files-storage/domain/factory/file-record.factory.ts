@@ -4,23 +4,13 @@ import { FileRecord, FileRecordProps, ParentInfo } from '../file-record.do';
 import { FileRecordSecurityCheck } from '../vo';
 
 export class FileRecordFactory {
-	private static build(
-		fileRecordProps: FileRecordProps,
-		securityCheck: FileRecordSecurityCheck,
-		collaboraMaxFileSizeInBytes: number
-	): FileRecord {
-		const fileRecord = new FileRecord(fileRecordProps, securityCheck, collaboraMaxFileSizeInBytes);
+	private static build(fileRecordProps: FileRecordProps, securityCheck: FileRecordSecurityCheck): FileRecord {
+		const fileRecord = new FileRecord(fileRecordProps, securityCheck);
 
 		return fileRecord;
 	}
 
-	public static buildFromExternalInput(
-		name: string,
-		mimeType: string,
-		params: ParentInfo,
-		userId: string,
-		collaboraMaxFileSizeInBytes: number
-	): FileRecord {
+	public static buildFromExternalInput(name: string, mimeType: string, params: ParentInfo, userId: string): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
 		const props: FileRecordProps = {
@@ -38,17 +28,13 @@ export class FileRecordFactory {
 			updatedAt: new Date(),
 		};
 
-		const fileRecord = FileRecordFactory.build(props, defaultSecurityCheck, collaboraMaxFileSizeInBytes);
+		const fileRecord = FileRecordFactory.build(props, defaultSecurityCheck);
 
 		return fileRecord;
 	}
 
-	public static buildFromFileRecordProps(
-		props: FileRecordProps,
-		securityCheck: FileRecordSecurityCheck,
-		collaboraMaxFileSizeInBytes: number
-	): FileRecord {
-		const fileRecord = FileRecordFactory.build(props, securityCheck, collaboraMaxFileSizeInBytes);
+	public static buildFromFileRecordProps(props: FileRecordProps, securityCheck: FileRecordSecurityCheck): FileRecord {
+		const fileRecord = FileRecordFactory.build(props, securityCheck);
 
 		return fileRecord;
 	}
@@ -74,7 +60,7 @@ export class FileRecordFactory {
 			updatedAt: new Date(),
 		};
 
-		const fileRecordCopy = FileRecordFactory.build(props, newSecurityCheck, fileRecord.collaboraMaxFileSizeInBytes);
+		const fileRecordCopy = FileRecordFactory.build(props, newSecurityCheck);
 
 		return fileRecordCopy;
 	}

@@ -1,9 +1,8 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
 import { NotImplementedException, StreamableFile } from '@nestjs/common';
-import { PreviewStatus, StorageLocation } from '../../domain';
+import { StorageLocation } from '../../domain';
 import { FileRecordParentType } from '../../domain/interface';
-import { fileRecordTestFactory, GetFileResponseTestFactory } from '../../testing';
-import { FileRecordListResponse, FileRecordResponse } from '../dto';
+import { GetFileResponseTestFactory } from '../../testing';
 import { FilesStorageMapper } from './files-storage.mapper';
 
 describe('FilesStorageMapper', () => {
@@ -62,70 +61,6 @@ describe('FilesStorageMapper', () => {
 				FilesStorageMapper.mapToAllowedStorageLocationType('' as StorageLocation);
 			};
 			expect(exec).toThrowError(NotImplementedException);
-		});
-	});
-
-	describe('mapToFileRecordResponse is called', () => {
-		it('should return FileRecordResponse DO', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const props = fileRecord.getProps();
-			const securityCheckProps = fileRecord.getSecurityCheckProps();
-
-			const result = FilesStorageMapper.mapToFileRecordResponse(fileRecord);
-
-			const expectedFileRecordResponse: FileRecordResponse = {
-				id: props.id,
-				name: props.name,
-				url: expect.any(String),
-				size: props.size,
-				securityCheckStatus: securityCheckProps.status,
-				parentId: props.parentId,
-				creatorId: props.creatorId,
-				mimeType: props.mimeType,
-				parentType: props.parentType,
-				deletedSince: props.deletedSince,
-				previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
-				createdAt: props.createdAt,
-				updatedAt: props.updatedAt,
-				isCollaboraEditable: false,
-				exceedsCollaboraEditableFileSize: false,
-			};
-
-			expect(result).toEqual(expectedFileRecordResponse);
-		});
-	});
-
-	describe('mapToFileRecordListResponse is called', () => {
-		it('should return instance of FileRecordListResponse', () => {
-			const fileRecords = fileRecordTestFactory().buildList(3);
-
-			const result = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
-
-			expect(result).toBeInstanceOf(FileRecordListResponse);
-		});
-
-		it('should contains props [data, total, skip, limit]', () => {
-			const fileRecords = fileRecordTestFactory().buildList(3);
-
-			const result = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length, 0, 5);
-
-			expect(result).toEqual(
-				expect.objectContaining({
-					data: expect.any(Array) as FileRecordResponse[],
-					total: fileRecords.length,
-					skip: 0,
-					limit: 5,
-				})
-			);
-		});
-
-		it('should contains instances of FileRecordResponse', () => {
-			const fileRecords = fileRecordTestFactory().buildList(3);
-
-			const result = FilesStorageMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
-
-			expect(result.data).toBeInstanceOf(Array);
-			expect(result.data[0]).toBeInstanceOf(FileRecordResponse);
 		});
 	});
 
