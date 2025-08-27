@@ -107,7 +107,8 @@ export class FilesStorageUC {
 
 	public getPublicConfig(): FilesStorageConfigResponse {
 		const maxFileSize = this.filesStorageService.getMaxFileSize();
-		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize);
+		const collaboraMaxFileSize = this.filesStorageService.getCollaboraMaxFileSize();
+		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize, collaboraMaxFileSize);
 
 		return configResponse;
 	}

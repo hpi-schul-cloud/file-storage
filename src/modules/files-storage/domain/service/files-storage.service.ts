@@ -254,6 +254,12 @@ export class FilesStorageService {
 		return maxFileSize;
 	}
 
+	public getCollaboraMaxFileSize(): number {
+		const collaboraMaxFileSize = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+
+		return collaboraMaxFileSize;
+	}
+
 	// update
 	private checkDuplicatedNames(fileRecords: FileRecord[], newFileName: string): void {
 		if (fileRecords.find((item) => item.hasName(newFileName))) {
