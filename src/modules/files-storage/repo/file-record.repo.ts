@@ -2,10 +2,9 @@ import { EntityManager, EntityName, ObjectId, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
-import { ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
+import { FilesStorageService, ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
 import { FileRecord } from '../domain/file-record.do';
 import { FileRecordRepo } from '../domain/interface/file-record.repo.interface';
-import { FileStorageConfig } from '../files-storage.config';
 import { FileRecordEntity } from './file-record.entity';
 import { FileRecordEntityMapper } from './mapper';
 import { FileRecordScope } from './scope/file-record-scope';
@@ -14,7 +13,7 @@ import { FileRecordScope } from './scope/file-record-scope';
 export class FileRecordMikroOrmRepo implements FileRecordRepo {
 	constructor(
 		private readonly em: EntityManager,
-		private readonly config: FileStorageConfig
+		private readonly service: FilesStorageService
 	) {}
 
 	get entityName(): EntityName<FileRecordEntity> {
@@ -180,7 +179,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 			orderBy: order,
 		});
 
-		const collaboraMaxFileSizeInBytes = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+		const collaboraMaxFileSizeInBytes = this.service.getCollaboraMaxFileSize();
 		const fileRecords = entities.map((entity) =>
 			FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes)
 		);
@@ -191,7 +190,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 	private async findOneOrFail(scope: FileRecordScope): Promise<FileRecord> {
 		const entity = await this.em.findOneOrFail(FileRecordEntity, scope.query);
 
-		const collaboraMaxFileSizeInBytes = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+		const collaboraMaxFileSizeInBytes = this.service.getCollaboraMaxFileSize();
 		const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
 
 		return fileRecord;

@@ -1,9 +1,9 @@
+import { createMock } from '@golevelup/ts-jest';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { cleanupCollections, MongoMemoryDatabaseModule } from '@testing/database';
-import { FileRecord, FileRecordParentType, StorageLocation } from '../domain';
-import { FileStorageConfig } from '../files-storage.config';
+import { FileRecord, FileRecordParentType, FilesStorageService, StorageLocation } from '../domain';
 import { TEST_ENTITIES } from '../files-storage.entity.imports';
 import { fileRecordEntityFactory } from '../testing';
 import { FileRecordEntity } from './file-record.entity';
@@ -17,10 +17,12 @@ describe('FileRecordRepo', () => {
 	let repo: FileRecordMikroOrmRepo;
 	let em: EntityManager;
 
+	const service = createMock<FilesStorageService>();
+
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			imports: [MongoMemoryDatabaseModule.forRoot(TEST_ENTITIES)],
-			providers: [FileRecordMikroOrmRepo, FileStorageConfig],
+			providers: [FileRecordMikroOrmRepo, { provide: FilesStorageService, useValue: service }],
 		}).compile();
 		repo = module.get(FileRecordMikroOrmRepo);
 		em = module.get(EntityManager);
