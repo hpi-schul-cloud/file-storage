@@ -5,13 +5,17 @@ import { Counted, EntityId } from '@shared/domain/types';
 import { ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
 import { FileRecord } from '../domain/file-record.do';
 import { FileRecordRepo } from '../domain/interface/file-record.repo.interface';
+import { FileStorageConfig } from '../files-storage.config';
 import { FileRecordEntity } from './file-record.entity';
 import { FileRecordEntityMapper } from './mapper';
 import { FileRecordScope } from './scope/file-record-scope';
 
 @Injectable()
 export class FileRecordMikroOrmRepo implements FileRecordRepo {
-	constructor(private readonly em: EntityManager) {}
+	constructor(
+		private readonly em: EntityManager,
+		private readonly config: FileStorageConfig
+	) {}
 
 	get entityName(): EntityName<FileRecordEntity> {
 		return FileRecordEntity;
@@ -176,7 +180,10 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 			orderBy: order,
 		});
 
-		const fileRecords = entities.map((entity) => FileRecordEntityMapper.mapEntityToDo(entity));
+		const collaboraMaxFileSizeInBytes = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+		const fileRecords = entities.map((entity) =>
+			FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes)
+		);
 
 		return [fileRecords, count];
 	}
@@ -184,7 +191,8 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 	private async findOneOrFail(scope: FileRecordScope): Promise<FileRecord> {
 		const entity = await this.em.findOneOrFail(FileRecordEntity, scope.query);
 
-		const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity);
+		const collaboraMaxFileSizeInBytes = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+		const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
 
 		return fileRecord;
 	}

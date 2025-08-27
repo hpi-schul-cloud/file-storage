@@ -4,7 +4,7 @@ import { FileRecordEntity } from '../file-record.entity';
 import { FileRecordSecurityCheckEmbeddable } from '../security-check.embeddable';
 
 export class FileRecordEntityMapper {
-	public static mapEntityToDo(fileRecordEntity: FileRecordEntity): FileRecord {
+	public static mapEntityToDo(fileRecordEntity: FileRecordEntity, collaboraMaxFileSizeInBytes: number): FileRecord {
 		// check identity map reference
 		if (fileRecordEntity.domainObject) {
 			return fileRecordEntity.domainObject;
@@ -15,7 +15,11 @@ export class FileRecordEntityMapper {
 		fileRecordProps.id = fileRecordEntity.id;
 		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
 		// It is very important to hand over "fileRecordProps" CLEAN (meaning no additional properties)!!!
-		const fileRecord = FileRecordFactory.buildFromFileRecordProps(fileRecordProps, securityCheck);
+		const fileRecord = FileRecordFactory.buildFromFileRecordProps(
+			fileRecordProps,
+			securityCheck,
+			collaboraMaxFileSizeInBytes
+		);
 
 		// attach to identity map
 		fileRecordEntity.domainObject = fileRecord;

@@ -114,7 +114,13 @@ export class FilesStorageService {
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file);
 
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(
+			fileName,
+			mimeType,
+			parentInfo,
+			userId,
+			this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES
+		);
 
 		return { fileRecord, stream };
 	}

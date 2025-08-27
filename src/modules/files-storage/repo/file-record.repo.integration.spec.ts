@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { cleanupCollections, MongoMemoryDatabaseModule } from '@testing/database';
 import { FileRecord, FileRecordParentType, StorageLocation } from '../domain';
+import { FileStorageConfig } from '../files-storage.config';
 import { TEST_ENTITIES } from '../files-storage.entity.imports';
 import { fileRecordEntityFactory } from '../testing';
 import { FileRecordEntity } from './file-record.entity';
@@ -19,7 +20,7 @@ describe('FileRecordRepo', () => {
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			imports: [MongoMemoryDatabaseModule.forRoot(TEST_ENTITIES)],
-			providers: [FileRecordMikroOrmRepo],
+			providers: [FileRecordMikroOrmRepo, FileStorageConfig],
 		}).compile();
 		repo = module.get(FileRecordMikroOrmRepo);
 		em = module.get(EntityManager);
@@ -62,8 +63,9 @@ describe('FileRecordRepo', () => {
 
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id]);
 
+			const collaboraMaxFileSizeInBytes = 104857600;
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord)
+				FileRecordEntityMapper.mapEntityToDo(fileRecord, collaboraMaxFileSizeInBytes)
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -80,8 +82,9 @@ describe('FileRecordRepo', () => {
 
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id, fileRecord3.id]);
 
+			const collaboraMaxFileSizeInBytes = 104857600;
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord)
+				FileRecordEntityMapper.mapEntityToDo(fileRecord, collaboraMaxFileSizeInBytes)
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -130,7 +133,8 @@ describe('FileRecordRepo', () => {
 			await new Promise((resolve) => {
 				setTimeout(resolve, 20);
 			});
-			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity);
+			const collaboraMaxFileSizeInBytes = 104857600;
+			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
 			fileRecord.setName(`updated-${fileRecord.getName()}`);
 
 			await repo.save(fileRecord);
@@ -146,7 +150,8 @@ describe('FileRecordRepo', () => {
 
 			await em.persistAndFlush(entity);
 
-			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity);
+			const collaboraMaxFileSizeInBytes = 104857600;
+			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
 
 			await repo.delete(fileRecord);
 
@@ -158,7 +163,10 @@ describe('FileRecordRepo', () => {
 
 			await em.persistAndFlush(entities);
 
-			const fileRecords = entities.map((entity) => FileRecordEntityMapper.mapEntityToDo(entity));
+			const collaboraMaxFileSizeInBytes = 104857600;
+			const fileRecords = entities.map((entity) =>
+				FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes)
+			);
 
 			await repo.delete(fileRecords);
 

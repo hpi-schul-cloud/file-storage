@@ -88,6 +88,7 @@ describe('FilesStorageMapper', () => {
 				createdAt: props.createdAt,
 				updatedAt: props.updatedAt,
 				isCollaboraEditable: false,
+				exceedsCollaboraEditableFileSize: false,
 			};
 
 			expect(result).toEqual(expectedFileRecordResponse);

@@ -63,7 +63,8 @@ export interface FileRecordProps extends AuthorizableObject {
 export class FileRecord extends DomainObject<FileRecordProps> {
 	constructor(
 		props: FileRecordProps,
-		private securityCheck: FileRecordSecurityCheck
+		private securityCheck: FileRecordSecurityCheck,
+		public collaboraMaxFileSizeInBytes: number
 	) {
 		super(props);
 	}
@@ -211,8 +212,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public exceedsCollaboraEditableFileSize(): boolean {
-		const collaboraMaxFileSizeInBytes = 104857600;
-		const exceedsFileSize = this.props.size > collaboraMaxFileSizeInBytes;
+		const exceedsFileSize = this.props.size > this.collaboraMaxFileSizeInBytes;
 
 		return exceedsFileSize;
 	}

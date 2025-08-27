@@ -35,8 +35,13 @@ class FileRecordTestFactory {
 	public build(params: DeepPartial<FileRecordProps> = {}): FileRecord {
 		const props = { ...this.props, ...params };
 		props.id = params.id ?? new ObjectId().toHexString();
+		const collaboraMaxFileSizeInBytes = 104857600;
 
-		const fileRecord = FileRecordFactory.buildFromFileRecordProps(props, this.securityCheck);
+		const fileRecord = FileRecordFactory.buildFromFileRecordProps(
+			props,
+			this.securityCheck,
+			collaboraMaxFileSizeInBytes
+		);
 
 		this.sequence += 1;
 
