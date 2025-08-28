@@ -21,6 +21,7 @@ import {
 	CopyFileResult,
 	FILE_RECORD_REPO,
 	FileRecordRepo,
+	FileRecordWithStatus,
 	GetFileResponse,
 	StorageLocationParams,
 } from '../interface';
@@ -97,7 +98,7 @@ export class FilesStorageService {
 		return status;
 	}
 
-	public getFileRecordsStatus(fileRecords: FileRecord[]): { fileRecord: FileRecord; status: FileRecordStatus }[] {
+	public getFileRecordsStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
 		return fileRecords.map((fileRecord) => ({
 			fileRecord,
 			status: this.getFileRecordStatus(fileRecord),

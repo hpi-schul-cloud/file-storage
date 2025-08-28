@@ -1,5 +1,4 @@
-import { FileRecord } from '../domain';
-import { FileRecordStatus } from '../domain/interface/file-record-status.interface';
+import { FileRecordWithStatus } from '../domain/interface/file-record-status.interface';
 import { fileRecordStatusTestFactory } from './file-record-status.test.factory';
 import { fileRecordTestFactory } from './file-record.test.factory';
 
@@ -12,7 +11,7 @@ export class FileRecordWithStatusTestFactory {
 			fileRecord: Partial<Parameters<typeof this.fileRecordFactory.build>[0]>;
 			status: Partial<ReturnType<typeof this.fileRecordStatusFactory.build>>;
 		}>
-	): { fileRecord: FileRecord; status: FileRecordStatus } {
+	): FileRecordWithStatus {
 		const fileRecord = this.fileRecordFactory.build(overrides?.fileRecord);
 		const status = { ...this.fileRecordStatusFactory.build(), ...overrides?.status };
 
@@ -25,8 +24,8 @@ export class FileRecordWithStatusTestFactory {
 			fileRecord: Partial<Parameters<typeof this.fileRecordFactory.build>[0]>;
 			status: Partial<ReturnType<typeof this.fileRecordStatusFactory.build>>;
 		}>
-	): { fileRecord: FileRecord; status: FileRecordStatus }[] {
-		const list: { fileRecord: FileRecord; status: FileRecordStatus }[] = [];
+	): FileRecordWithStatus[] {
+		const list: FileRecordWithStatus[] = [];
 
 		for (let i = 0; i < count; i += 1) {
 			list.push(this.build(overrides));

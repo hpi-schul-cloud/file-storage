@@ -1,4 +1,4 @@
-import { FileRecord, FileRecordStatus, StorageLocationParams } from '../../domain';
+import { FileRecord, FileRecordStatus, FileRecordWithStatus, StorageLocationParams } from '../../domain';
 import { DeleteByStorageLocationResponse, FileRecordListResponse, FileRecordResponse } from '../dto';
 
 export class FileRecordMapper {
@@ -9,7 +9,7 @@ export class FileRecordMapper {
 	}
 
 	public static mapToFileRecordListResponse(
-		fileRecordsStatus: { fileRecord: FileRecord; status: FileRecordStatus }[],
+		fileRecordsStatus: FileRecordWithStatus[],
 		total: number,
 		skip?: number,
 		limit?: number
