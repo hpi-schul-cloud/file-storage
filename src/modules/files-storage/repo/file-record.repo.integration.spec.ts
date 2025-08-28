@@ -65,9 +65,8 @@ describe('FileRecordRepo', () => {
 
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id]);
 
-			const collaboraMaxFileSizeInBytes = 104857600;
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord, collaboraMaxFileSizeInBytes)
+				FileRecordEntityMapper.mapEntityToDo(fileRecord)
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -84,9 +83,8 @@ describe('FileRecordRepo', () => {
 
 			const [result, total] = await repo.findMultipleById([fileRecord1.id, fileRecord2.id, fileRecord3.id]);
 
-			const collaboraMaxFileSizeInBytes = 104857600;
 			const expectedFileRecords = [fileRecord1, fileRecord2].map((fileRecord) =>
-				FileRecordEntityMapper.mapEntityToDo(fileRecord, collaboraMaxFileSizeInBytes)
+				FileRecordEntityMapper.mapEntityToDo(fileRecord)
 			);
 			expect(total).toBe(2);
 			expect(result).toHaveLength(2);
@@ -135,8 +133,7 @@ describe('FileRecordRepo', () => {
 			await new Promise((resolve) => {
 				setTimeout(resolve, 20);
 			});
-			const collaboraMaxFileSizeInBytes = 104857600;
-			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
+			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity);
 			fileRecord.setName(`updated-${fileRecord.getName()}`);
 
 			await repo.save(fileRecord);
@@ -152,8 +149,7 @@ describe('FileRecordRepo', () => {
 
 			await em.persistAndFlush(entity);
 
-			const collaboraMaxFileSizeInBytes = 104857600;
-			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes);
+			const fileRecord = FileRecordEntityMapper.mapEntityToDo(entity);
 
 			await repo.delete(fileRecord);
 
@@ -165,10 +161,7 @@ describe('FileRecordRepo', () => {
 
 			await em.persistAndFlush(entities);
 
-			const collaboraMaxFileSizeInBytes = 104857600;
-			const fileRecords = entities.map((entity) =>
-				FileRecordEntityMapper.mapEntityToDo(entity, collaboraMaxFileSizeInBytes)
-			);
+			const fileRecords = entities.map((entity) => FileRecordEntityMapper.mapEntityToDo(entity));
 
 			await repo.delete(fileRecords);
 

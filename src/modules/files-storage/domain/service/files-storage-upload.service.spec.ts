@@ -102,14 +102,7 @@ describe('FilesStorageService upload methods', () => {
 
 			const fileSize = 3;
 
-			const collaboraMaxFileSizeInBytes = 104857600;
-			const fileRecord = FileRecordFactory.buildFromExternalInput(
-				file.name,
-				file.mimeType,
-				params,
-				userId,
-				collaboraMaxFileSizeInBytes
-			);
+			const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
 			const expectedFileRecord = fileRecord.getProps();
 			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 			const detectedMimeType = 'image/tiff';
@@ -572,14 +565,7 @@ describe('FilesStorageService upload methods', () => {
 
 				const fileSize = 3;
 
-				const collaboraMaxFileSizeInBytes = 104857600;
-				const fileRecord = FileRecordFactory.buildFromExternalInput(
-					file.name,
-					file.mimeType,
-					params,
-					userId,
-					collaboraMaxFileSizeInBytes
-				);
+				const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
 				const expectedFileRecord = fileRecord.getProps();
 				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 				const detectedMimeType = 'image/tiff';

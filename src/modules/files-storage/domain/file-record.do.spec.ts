@@ -9,24 +9,24 @@ import { ScanStatus } from './vo';
 describe('FileRecord', () => {
 	describe('exceedsCollaboraEditableFileSize', () => {
 		it('should return false if file size is less than collaboraMaxFileSizeInBytes', () => {
-			const maxSize = fileRecordTestFactory().build().collaboraMaxFileSizeInBytes;
-			const fileRecordSmaller = fileRecordTestFactory().build({ size: maxSize - 1 });
+			const fileRecord = fileRecordTestFactory().build();
+			const maxSize = fileRecord.sizeInByte + 1;
 
-			expect(fileRecordSmaller.exceedsCollaboraEditableFileSize()).toBe(false);
+			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
 		});
 
 		it('should return false if file size is equal to collaboraMaxFileSizeInBytes', () => {
-			const maxSize = fileRecordTestFactory().build().collaboraMaxFileSizeInBytes;
-			const fileRecord = fileRecordTestFactory().build({ size: maxSize });
+			const fileRecord = fileRecordTestFactory().build();
+			const maxSize = fileRecord.sizeInByte;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize()).toBe(false);
+			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
 		});
 
 		it('should return true if file size is greater than collaboraMaxFileSizeInBytes', () => {
-			const maxSize = fileRecordTestFactory().build().collaboraMaxFileSizeInBytes;
-			const fileRecord = fileRecordTestFactory().build({ size: maxSize + 1 });
+			const fileRecord = fileRecordTestFactory().build();
+			const maxSize = fileRecord.sizeInByte - 1;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize()).toBe(true);
+			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(true);
 		});
 	});
 
@@ -36,38 +36,38 @@ describe('FileRecord', () => {
 				const fileRecordDOCX = fileRecordTestFactory()
 					.withScanStatus(ScanStatus.BLOCKED)
 					.build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecordDOCX.sizeInByte;
 
-				expect(fileRecordDOCX.isCollaboraEditable()).toBe(false);
+				expect(fileRecordDOCX.isCollaboraEditable(maxSize)).toBe(false);
 			});
 
 			it('should return false for a non-collabora editable file', () => {
 				const fileRecordWebp = fileRecordTestFactory()
 					.withScanStatus(ScanStatus.BLOCKED)
 					.build({ mimeType: 'image/webp' });
+				const maxSize = fileRecordWebp.sizeInByte;
 
-				expect(fileRecordWebp.isCollaboraEditable()).toBe(false);
+				expect(fileRecordWebp.isCollaboraEditable(maxSize)).toBe(false);
 			});
 		});
 
 		describe('when file size exceeds collabora max file size', () => {
 			it('should return false for collabora editable file', () => {
-				const collaboraMaxFileSizeInBytes = fileRecordTestFactory().build().collaboraMaxFileSizeInBytes;
 				const fileRecordDOCX = fileRecordTestFactory().build({
 					mimeType: CollaboraMimeTypes.DOCX,
-					size: collaboraMaxFileSizeInBytes + 1,
 				});
+				const maxSize = fileRecordDOCX.sizeInByte - 1;
 
-				expect(fileRecordDOCX.isCollaboraEditable()).toBe(false);
+				expect(fileRecordDOCX.isCollaboraEditable(maxSize)).toBe(false);
 			});
 
 			it('should return false for a non-collabora editable file', () => {
-				const collaboraMaxFileSizeInBytes = fileRecordTestFactory().build().collaboraMaxFileSizeInBytes;
 				const fileRecordWebp = fileRecordTestFactory().build({
 					mimeType: 'image/webp',
-					size: collaboraMaxFileSizeInBytes + 1,
 				});
+				const maxSize = fileRecordWebp.sizeInByte - 1;
 
-				expect(fileRecordWebp.isCollaboraEditable()).toBe(false);
+				expect(fileRecordWebp.isCollaboraEditable(maxSize)).toBe(false);
 			});
 		});
 
@@ -76,20 +76,22 @@ describe('FileRecord', () => {
 				const collaboraMimeTypes = Object.values(CollaboraMimeTypes);
 				for (const mimeType of collaboraMimeTypes) {
 					const fileRecord = fileRecordTestFactory().build({ mimeType });
+					const maxSize = fileRecord.sizeInByte;
 
-					expect(fileRecord.isCollaboraEditable()).toBe(true);
+					expect(fileRecord.isCollaboraEditable(maxSize)).toBe(true);
 				}
 			});
 
 			it('should return false for a non-Collabora mime type', () => {
 				const fileRecordPng = fileRecordTestFactory().build({ mimeType: 'image/png' });
-				expect(fileRecordPng.isCollaboraEditable()).toBe(false);
+				const maxSize = fileRecordPng.sizeInByte;
+				expect(fileRecordPng.isCollaboraEditable(maxSize)).toBe(false);
 
 				const fileRecordPdf = fileRecordTestFactory().build({ mimeType: 'application/pdf' });
-				expect(fileRecordPdf.isCollaboraEditable()).toBe(false);
+				expect(fileRecordPdf.isCollaboraEditable(maxSize)).toBe(false);
 
 				const fileRecordMp3 = fileRecordTestFactory().build({ mimeType: 'audio/mpeg' });
-				expect(fileRecordMp3.isCollaboraEditable()).toBe(false);
+				expect(fileRecordMp3.isCollaboraEditable(maxSize)).toBe(false);
 			});
 		});
 	});

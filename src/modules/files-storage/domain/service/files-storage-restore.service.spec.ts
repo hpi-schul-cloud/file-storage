@@ -219,13 +219,7 @@ describe('FilesStorageService restore methods', () => {
 					const fileRecordProps = fileRecord.getProps();
 					const securityCheck = new FileRecordSecurityCheck(fileRecord.getSecurityCheckProps());
 
-					// Recreate the FileRecord instance with copied properties
-					const collaboraMaxFileSizeInBytes = 104857600;
-					const copiedFileRecord = FileRecordFactory.buildFromFileRecordProps(
-						{ ...fileRecordProps },
-						securityCheck,
-						collaboraMaxFileSizeInBytes
-					);
+					const copiedFileRecord = FileRecordFactory.buildFromFileRecordProps({ ...fileRecordProps }, securityCheck);
 
 					return copiedFileRecord;
 				});
