@@ -3,6 +3,7 @@ import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { WopiFileInfoResponse } from '../dto';
 import { WopiFileInfoResponseFactory } from './wopi-file-info.response.factory';
 
+const wopiPostMessageOrigin = 'http://localhost:4000';
 describe('WopiFileInfoResponseFactory', () => {
 	describe('build', () => {
 		describe('when all props are provided', () => {
@@ -15,6 +16,8 @@ describe('WopiFileInfoResponseFactory', () => {
 					UserCanWrite: true,
 					OwnerId: new ObjectId().toHexString(),
 					LastModifiedTime: '2024-01-01T00:00:00.000Z',
+					IsAdminUser: false,
+					PostMessageOrigin: wopiPostMessageOrigin,
 				};
 
 				const result = WopiFileInfoResponseFactory.build(props);
@@ -48,6 +51,8 @@ describe('WopiFileInfoResponseFactory', () => {
 					UserCanWrite: true,
 					OwnerId: undefined,
 					LastModifiedTime: '2024-01-01T00:00:00.000Z',
+					IsAdminUser: false,
+					PostMessageOrigin: wopiPostMessageOrigin,
 				};
 
 				const result = WopiFileInfoResponseFactory.build(props);
@@ -82,7 +87,7 @@ describe('WopiFileInfoResponseFactory', () => {
 					canWrite: true,
 				};
 
-				const result = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user);
+				const result = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user, wopiPostMessageOrigin);
 
 				return {
 					fileRecord,
@@ -113,7 +118,7 @@ describe('WopiFileInfoResponseFactory', () => {
 					canWrite: true,
 				};
 
-				const result = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user);
+				const result = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, user, wopiPostMessageOrigin);
 
 				return {
 					fileRecord,

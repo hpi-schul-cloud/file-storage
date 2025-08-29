@@ -97,11 +97,15 @@ export class WopiUc {
 
 		this.throwIfNotCollaboraEditable(fileRecord);
 
-		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
-			id: userId,
-			userName: userDisplayName,
-			canWrite,
-		});
+		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(
+			fileRecord,
+			{
+				id: userId,
+				userName: userDisplayName,
+				canWrite,
+			},
+			this.wopiConfig.WOPI_POST_MESSAGE_ORIGIN
+		);
 
 		return response;
 	}
