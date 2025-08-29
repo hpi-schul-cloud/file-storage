@@ -47,8 +47,8 @@ export class FilesStorageConsumer {
 		const [fileRecords, total] = await this.filesStorageService.getFileRecordsOfParent(payload);
 		this.logger.debug(new FileStorageActionsLoggable('Start get files of parent', { action: 'getFilesOfParent' }));
 
-		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, total);
+		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, total);
 
 		return { message: response.data };
 	}
@@ -71,8 +71,8 @@ export class FilesStorageConsumer {
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFilesOfParent(fileRecords);
 
-		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, total);
+		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, total);
 
 		return { message: response.data };
 	}
@@ -93,8 +93,8 @@ export class FilesStorageConsumer {
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.delete(fileRecords);
 
-		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, fileRecords.length);
+		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, fileRecords.length);
 
 		return { message: response.data };
 	}
@@ -118,8 +118,8 @@ export class FilesStorageConsumer {
 
 		await this.filesStorageService.removeCreatorIdFromFileRecords(fileRecords);
 
-		const fileRecordsStatus = this.filesStorageService.getFileRecordsStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsStatus, fileRecords.length);
+		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, fileRecords.length);
 
 		return { message: response.data };
 	}

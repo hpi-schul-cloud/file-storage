@@ -98,7 +98,7 @@ export class FilesStorageService {
 		return status;
 	}
 
-	public getFileRecordsStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
+	public getFileRecordsWithStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
 		return fileRecords.map((fileRecord) => ({
 			fileRecord,
 			status: this.getFileRecordStatus(fileRecord),

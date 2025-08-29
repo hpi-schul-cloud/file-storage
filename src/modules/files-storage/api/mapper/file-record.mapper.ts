@@ -9,12 +9,12 @@ export class FileRecordMapper {
 	}
 
 	public static mapToFileRecordListResponse(
-		fileRecordsStatus: FileRecordWithStatus[],
+		fileRecordsWithStatus: FileRecordWithStatus[],
 		total: number,
 		skip?: number,
 		limit?: number
 	): FileRecordListResponse {
-		const responseFileRecords = fileRecordsStatus.map((fileRecord) =>
+		const responseFileRecords = fileRecordsWithStatus.map((fileRecord) =>
 			FileRecordMapper.mapToFileRecordResponse(fileRecord.fileRecord, fileRecord.status)
 		);
 		const response = new FileRecordListResponse(responseFileRecords, total, skip, limit);
