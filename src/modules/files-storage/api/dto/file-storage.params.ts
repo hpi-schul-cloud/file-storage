@@ -2,7 +2,7 @@
 import { ScanResult } from '@infra/antivirus';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
-import { StringToBoolean, StringToObject } from '@shared/transformer';
+import { SanitizeHtml, StringToBoolean, StringToObject } from '@shared/transformer';
 import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ParentInfo, PreviewOutputMimeTypes } from '../../domain/file-record.do';
 import {
@@ -115,6 +115,7 @@ export class RenameFileParams {
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
+	@SanitizeHtml()
 	fileName!: string;
 }
 
