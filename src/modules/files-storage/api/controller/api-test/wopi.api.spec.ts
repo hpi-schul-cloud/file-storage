@@ -457,6 +457,7 @@ describe('Wopi Controller (API)', () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId({
 					mimeType: 'application/vnd.oasis.opendocument.text',
 				});
+				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
 				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
