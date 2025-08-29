@@ -78,10 +78,10 @@ describe('files-storage controller (API)', () => {
 			return { validId, loggedInClient, user: studentUser };
 		};
 
-		const uploadFile = async (routeName: string, apiClient: TestApiClient) => {
+		const uploadFile = async (routeName: string, apiClient: TestApiClient, fileName?: string) => {
 			const response = await apiClient
 				.post(routeName)
-				.attach('file', Buffer.from('abcd'), 'test.txt')
+				.attach('file', Buffer.from('abcd'), fileName ?? 'test.txt')
 				.set('connection', 'keep-alive')
 				.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
 
@@ -177,6 +177,21 @@ describe('files-storage controller (API)', () => {
 				const response = result.body as FileRecordEntity;
 
 				expect(response.name).toEqual('test (1).txt');
+			});
+
+			it('should sanitize file name', async () => {
+				const { loggedInClient, validId } = setup();
+
+				await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+
+				const result = await uploadFile(
+					`/upload/school/${validId}/schools/${validId}`,
+					loggedInClient,
+					'asd <test.txt'
+				);
+				const response = result.body as FileRecordEntity;
+
+				expect(response.name).toEqual('asd ');
 			});
 
 			describe('when file has size 0', () => {
@@ -315,6 +330,24 @@ describe('files-storage controller (API)', () => {
 				]);
 				expect(response.status).toEqual(400);
 			});
+
+			it('should return status 400 for empty fileName because of sanitization', async () => {
+				const { validId, loggedInClient, body } = setup();
+
+				const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, {
+					...body,
+					fileName: '<test1.txt',
+				});
+				const { validationErrors } = response.body as ApiValidationError;
+
+				expect(validationErrors).toEqual([
+					{
+						errors: ['fileName should not be empty'],
+						field: ['fileName'],
+					},
+				]);
+				expect(response.status).toEqual(400);
+			});
 		});
 
 		describe(`with valid request data`, () => {
@@ -375,6 +408,27 @@ describe('files-storage controller (API)', () => {
 							securityCheckStatus: 'pending',
 						})
 					);
+				});
+
+				describe('when the name contains opening bracket', () => {
+					it('should remove opening bracket', async () => {
+						const { validId, loggedInClient, body, user } = await setup('test<script>.txt');
+
+						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+						const response = result.body as FileRecordEntity;
+
+						expect(response).toStrictEqual(
+							expect.objectContaining({
+								id: expect.any(String),
+								name: 'test',
+								parentId: validId,
+								creatorId: user.id,
+								mimeType: 'application/octet-stream',
+								parentType: 'schools',
+								securityCheckStatus: 'pending',
+							})
+						);
+					});
 				});
 
 				describe('when the url is encoded', () => {

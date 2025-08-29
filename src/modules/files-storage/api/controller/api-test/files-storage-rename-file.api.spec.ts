@@ -106,6 +106,21 @@ describe(`${baseRouteName} (api)`, () => {
 			expect(result.status).toEqual(400);
 		});
 
+		it('should return status 400 for string that is empty because of sanitization', async () => {
+			const { loggedInClient, fileRecord } = await setup();
+
+			const result = await loggedInClient.patch(`${fileRecord.id}`, { fileName: '<test1.txt' });
+			const { validationErrors } = result.body as ApiValidationError;
+
+			expect(validationErrors).toEqual([
+				{
+					errors: ['fileName should not be empty'],
+					field: ['fileName'],
+				},
+			]);
+			expect(result.status).toEqual(400);
+		});
+
 		it('should return status 409 if filename exists', async () => {
 			const { loggedInClient, fileRecord } = await setup();
 
@@ -123,8 +138,18 @@ describe(`${baseRouteName} (api)`, () => {
 			const result = await loggedInClient.patch(`${fileRecord.id}`, { fileName: 'test_1.txt' });
 			const response = result.body as FileRecordResponse;
 
-			expect(response.name).toEqual('test_1.txt');
 			expect(result.status).toEqual(200);
+			expect(response.name).toEqual('test_1.txt');
+		});
+
+		it('should remove opening brackets by sanitization', async () => {
+			const { loggedInClient, fileRecord } = await setup();
+
+			const result = await loggedInClient.patch(`${fileRecord.id}`, { fileName: 'test_1.txt <script' });
+			const response = result.body as FileRecordResponse;
+
+			expect(result.status).toEqual(200);
+			expect(response.name).toEqual('test_1.txt script');
 		});
 	});
 });
