@@ -51,6 +51,7 @@ export class FileUrlParams {
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()
+	@SanitizeHtml()
 	fileName!: string;
 
 	@ApiPropertyOptional()
