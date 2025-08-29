@@ -177,6 +177,7 @@ describe(`${baseRouteName} (api)`, () => {
 				size: expect.any(Number),
 				previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 				isCollaboraEditable: false,
+				exceedsCollaboraEditableFileSize: false,
 			});
 		});
 

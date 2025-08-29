@@ -35,7 +35,7 @@ describe(`files-storage (api)`, () => {
 				const response = await testApiClient.get('config/public');
 
 				expect(response.statusCode).toEqual(HttpStatus.OK);
-				expect(response.body).toEqual({ MAX_FILE_SIZE: 2684354560 });
+				expect(response.body).toEqual({ MAX_FILE_SIZE: 2684354560, COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600 });
 			});
 		});
 	});

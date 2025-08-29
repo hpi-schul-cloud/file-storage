@@ -1,20 +1,22 @@
-import { FileRecord, StorageLocationParams } from '../../domain';
+import { FileRecord, FileRecordStatus, FileRecordWithStatus, StorageLocationParams } from '../../domain';
 import { DeleteByStorageLocationResponse, FileRecordListResponse, FileRecordResponse } from '../dto';
 
 export class FileRecordMapper {
-	public static mapToFileRecordResponse(fileRecord: FileRecord): FileRecordResponse {
-		const fileRecordResponse = new FileRecordResponse(fileRecord);
+	public static mapToFileRecordResponse(fileRecord: FileRecord, status: FileRecordStatus): FileRecordResponse {
+		const fileRecordResponse = new FileRecordResponse(fileRecord, status);
 
 		return fileRecordResponse;
 	}
 
 	public static mapToFileRecordListResponse(
-		fileRecords: FileRecord[],
+		fileRecordsWithStatus: FileRecordWithStatus[],
 		total: number,
 		skip?: number,
 		limit?: number
 	): FileRecordListResponse {
-		const responseFileRecords = fileRecords.map((fileRecord) => FileRecordMapper.mapToFileRecordResponse(fileRecord));
+		const responseFileRecords = fileRecordsWithStatus.map((fileRecord) =>
+			FileRecordMapper.mapToFileRecordResponse(fileRecord.fileRecord, fileRecord.status)
+		);
 		const response = new FileRecordListResponse(responseFileRecords, total, skip, limit);
 
 		return response;

@@ -33,6 +33,7 @@ describe('FilesStorageService get methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
+	let fileStorageConfig: DeepMocked<FileStorageConfig>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -67,6 +68,7 @@ describe('FilesStorageService get methods', () => {
 
 		service = module.get(FilesStorageService);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
+		fileStorageConfig = module.get(FileStorageConfig);
 	});
 
 	beforeEach(() => {
@@ -79,6 +81,22 @@ describe('FilesStorageService get methods', () => {
 
 	it('service should be defined', () => {
 		expect(service).toBeDefined();
+	});
+
+	describe('getMaxFileSize', () => {
+		it('should return max file size from config', () => {
+			fileStorageConfig.FILES_STORAGE_MAX_FILE_SIZE = 123456;
+
+			expect(service.getMaxFileSize()).toBe(123456);
+		});
+	});
+
+	describe('getCollaboraMaxFileSize', () => {
+		it('should return collabora max file size from config', () => {
+			fileStorageConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES = 654321;
+
+			expect(service.getCollaboraMaxFileSize()).toBe(654321);
+		});
 	});
 
 	describe('getFileRecord is called', () => {
