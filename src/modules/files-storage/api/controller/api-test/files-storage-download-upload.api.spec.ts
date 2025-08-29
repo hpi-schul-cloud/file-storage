@@ -78,10 +78,10 @@ describe('files-storage controller (API)', () => {
 			return { validId, loggedInClient, user: studentUser };
 		};
 
-		const uploadFile = async (routeName: string, apiClient: TestApiClient) => {
+		const uploadFile = async (routeName: string, apiClient: TestApiClient, fileName?: string) => {
 			const response = await apiClient
 				.post(routeName)
-				.attach('file', Buffer.from('abcd'), 'test.txt')
+				.attach('file', Buffer.from('abcd'), fileName ?? 'test.txt')
 				.set('connection', 'keep-alive')
 				.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
 
@@ -177,6 +177,21 @@ describe('files-storage controller (API)', () => {
 				const response = result.body as FileRecordEntity;
 
 				expect(response.name).toEqual('test (1).txt');
+			});
+
+			it('should sanitize file name', async () => {
+				const { loggedInClient, validId } = setup();
+
+				await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+
+				const result = await uploadFile(
+					`/upload/school/${validId}/schools/${validId}`,
+					loggedInClient,
+					'asd <test.txt'
+				);
+				const response = result.body as FileRecordEntity;
+
+				expect(response.name).toEqual('asd ');
 			});
 
 			describe('when file has size 0', () => {
