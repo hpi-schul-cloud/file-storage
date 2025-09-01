@@ -432,23 +432,30 @@ describe('Wopi Controller (API)', () => {
 
 				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
-				return { fileRecord, query, wopiPayload };
+				const expectedResult = {
+					BaseFileName: fileRecord.name,
+					Size: fileRecord.size,
+					OwnerId: fileRecord.creatorId,
+					UserId: wopiPayload.userId,
+					UserCanWrite: wopiPayload.canWrite,
+					UserFriendlyName: wopiPayload.userDisplayName,
+					IsAdminUser: false,
+					LastModifiedTime: fileRecord.contentLastModifiedAt?.toISOString(),
+					PostMessageOrigin: 'http://localhost:4000',
+				};
+
+				return { fileRecord, query, wopiPayload, expectedResult };
 			};
 
 			it('should return 200 and valid file info', async () => {
-				const { fileRecord, query, wopiPayload } = await setup();
+				const { fileRecord, query, expectedResult } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
 				const result = response.body as WopiFileInfoResponse;
 
 				expect(response.status).toBe(200);
-				expect(result.BaseFileName).toBe(fileRecord.name);
-				expect(result.Size).toBe(fileRecord.size);
-				expect(result.OwnerId).toBe(fileRecord.creatorId);
-				expect(result.UserId).toBe(wopiPayload.userId);
-				expect(result.UserCanWrite).toBe(wopiPayload.canWrite);
-				expect(result.UserFriendlyName).toBe(wopiPayload.userDisplayName);
+				expect(result).toEqual(expectedResult);
 			});
 		});
 
@@ -935,15 +942,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when access token is malformed', () => {
-			const setup = () => {
+			it('should return 400 Bad Request', async () => {
 				const fileRecordId = new ObjectId().toHexString();
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken('invalid-token').build();
-
-				return { query, fileRecordId };
-			};
-
-			it('should return 400 Bad Request', async () => {
-				const { query, fileRecordId } = setup();
 
 				const response = await testApiClient.get(`/files/${fileRecordId}/contents`).query(query);
 
