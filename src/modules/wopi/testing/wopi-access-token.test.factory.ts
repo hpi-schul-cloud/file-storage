@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { WopiAccessToken, WopiAccessTokenFactory } from '../../domain';
+import { WopiAccessToken, WopiAccessTokenFactory } from '../domain';
 
+// TODO Hier haut irgendwas gar nicht hin!
 class WopiAccessTokenTestFactory {
 	private readonly props: WopiAccessToken = {
 		token: randomUUID(),

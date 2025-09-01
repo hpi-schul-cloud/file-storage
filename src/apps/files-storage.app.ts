@@ -7,7 +7,7 @@ import { install as sourceMapInstall } from 'source-map-support';
 
 // application imports
 import { LoggerConfig } from '@infra/logger';
-import { FilesStorageApiModule } from '@modules/files-storage/files-storage-api.app.module';
+import { FilesStorageApiModule } from '@modules/files-storage-app';
 import { createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
 
 async function bootstrap(): Promise<void> {

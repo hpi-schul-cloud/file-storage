@@ -1,4 +1,4 @@
-import { authorizedCollaboraDocumentUrlTestFactory } from '@modules/files-storage/testing';
+import { authorizedCollaboraDocumentUrlTestFactory } from '../../testing';
 import { AuthorizedCollaboraDocumentUrlResponseFactory } from './access-url.response.factory';
 
 describe('AuthorizedCollaboraDocumentUrlResponseFactory', () => {

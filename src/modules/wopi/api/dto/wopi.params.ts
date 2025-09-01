@@ -2,13 +2,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
 import { IsEnum, IsMongoId, IsString, Matches, MaxLength } from 'class-validator';
+import { accessTokenRegex } from '../../domain';
 
 export enum EditorMode {
 	EDIT = 'edit',
 	VIEW = 'view',
 }
-
-export const accessTokenRegex = /^[a-zA-Z0-9_-]{24}$/;
 
 export class AuthorizedCollaboraDocumentUrlParams {
 	@ApiProperty()

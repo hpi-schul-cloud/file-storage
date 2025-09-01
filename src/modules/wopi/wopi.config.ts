@@ -12,4 +12,7 @@ export class WopiConfig {
 	@IsInt()
 	@StringToNumber()
 	WOPI_TOKEN_TTL_IN_SECONDS = 7200;
+
+	// TODO
+	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED;
 }

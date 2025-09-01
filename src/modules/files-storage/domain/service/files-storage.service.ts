@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough, Readable } from 'stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FileRecord, ParentInfo } from '../file-record.do';
@@ -180,14 +180,19 @@ export class FilesStorageService {
 		}
 	}
 
+	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
+		const shouldStreamToAntiVirus =
+			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS &&
+			(fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+
+		return shouldStreamToAntiVirus;
+	}
+
 	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
 		const streamCompletion = this.awaitStreamCompletion(file.data);
-		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
-
-		const shouldStreamToAntiVirus =
-			useStreamToAntivirus && (fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
 			const streamToAntivirus = this.createPipedStream(file.data);

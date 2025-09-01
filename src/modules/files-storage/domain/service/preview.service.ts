@@ -2,7 +2,7 @@ import { Logger } from '@infra/logger';
 import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage-app/files-storage.config';
 import { ErrorType } from '../error';
 import { FileRecord, PreviewStatus } from '../file-record.do';
 import { GetFileResponse, PreviewFileParams } from '../interface';

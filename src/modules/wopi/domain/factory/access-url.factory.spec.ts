@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import { wopiAccessTokenTestFactory } from '@modules/files-storage/testing';
-import { AuthorizedCollaboraDocumentUrl } from '../access-url.vo';
+import { wopiAccessTokenTestFactory } from '../../testing';
+import { AuthorizedCollaboraDocumentUrl } from '../vo/access-url.vo';
 import { AuthorizedCollaboraDocumentUrlFactory } from './access-url.factory';
 
 describe('AuthorizedCollaboraDocumentUrlFactory', () => {

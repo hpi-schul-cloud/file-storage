@@ -1,6 +1,5 @@
 import { EntityId } from '@shared/domain/types';
-import { AuthorizedCollaboraDocumentUrl } from '../access-url.vo';
-import { WopiAccessToken } from '../vo';
+import { AuthorizedCollaboraDocumentUrl, WopiAccessToken } from '../vo/';
 
 export class AuthorizedCollaboraDocumentUrlFactory {
 	public static build(url: string): AuthorizedCollaboraDocumentUrl {

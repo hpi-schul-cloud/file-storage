@@ -1,6 +1,9 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
 import { ApiValidationError } from '@infra/error';
-import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
+// TODO: Nur eine Id, eine entsprechung hierfür bei wopi ablegen
+import { SingleFileParams } from '@modules/files-storage/api/dto';
+// TODO: scheint nicht zum FilesStorage zu gehören
+import { FilesStorageMapper } from '@modules/files-storage/api/mapper';
 import {
 	BadRequestException,
 	ConflictException,
@@ -20,24 +23,24 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
 	PutFileResponse,
-	SingleFileParams,
 	WopiAccessTokenParams,
 	WopiFileInfoResponse,
-} from '../dto';
-import { PutFileResponseFactory } from '../factory';
-import { FilesStorageMapper, WopiErrorResponseMapper } from '../mapper';
-import { WopiUc } from '../uc';
+} from './dto';
+import { PutFileResponseFactory } from './factory';
+import { WopiErrorResponseMapper } from './mapper';
+import { WopiUc } from './wopi.uc';
 
 @ApiTags('wopi')
 @Controller('wopi')
 export class WopiController {
 	constructor(
 		private readonly wopiUc: WopiUc,
-		private readonly config: FileStorageConfig
+		private readonly config: WopiConfig
 	) {}
 
 	private ensureWopiEnabled(): void {

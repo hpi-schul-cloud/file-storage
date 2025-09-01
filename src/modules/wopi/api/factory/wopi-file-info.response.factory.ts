@@ -1,5 +1,12 @@
-import { FileRecord, WopiUser } from '@modules/files-storage/domain';
+import { FileRecord } from '@modules/files-storage/domain';
+import { EntityId } from '@shared/domain/types';
 import { WopiFileInfoResponse } from '../dto';
+
+interface WopiUser {
+	id: EntityId;
+	userName: string;
+	canWrite: boolean;
+}
 
 export class WopiFileInfoResponseFactory {
 	public static build(props: WopiFileInfoResponse): WopiFileInfoResponse {

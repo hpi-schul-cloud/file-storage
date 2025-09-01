@@ -14,18 +14,20 @@ import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
-import FileType from '../../../domain/service/file-type.helper';
-import { FilesStorageTestModule } from '../../../files-storage-test.module';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
+import { FilesStorageTestModule } from '../../../files-storage-app/testing/files-storage-test.module';
+import FileType from '../../../files-storage/domain/service/file-type.helper';
 import {
-	authorizedCollaboraDocumentUrlParamsTestFactory,
 	fileRecordEntityFactory,
 	fileRecordSecurityCheckEmbeddableFactory,
 	GetFileResponseTestFactory,
+} from '../../../files-storage/testing';
+import {
+	authorizedCollaboraDocumentUrlParamsTestFactory,
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
-} from '../../../testing';
-import { EditorMode, WopiFileInfoResponse } from '../../dto';
+} from '../../testing';
+import { EditorMode, WopiFileInfoResponse } from '../dto';
 
 jest.mock('../../../domain/service/file-type.helper');
 

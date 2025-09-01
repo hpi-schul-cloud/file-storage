@@ -1,5 +1,5 @@
 import { pseudoRandomBytes } from 'node:crypto';
-import { WopiAccessTokenParams } from '../../api/dto';
+import { WopiAccessTokenParams } from '../api/dto';
 
 const generateNanoId = (length = 24): string => {
 	const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-';

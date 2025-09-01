@@ -1,5 +1,5 @@
-import { AuthorizedCollaboraDocumentUrl } from '@modules/files-storage/domain/access-url.vo';
-import { AuthorizedCollaboraDocumentUrlResponse } from '../dto/authorized-collabora-document-url.response';
+import { AuthorizedCollaboraDocumentUrl } from '../../domain';
+import { AuthorizedCollaboraDocumentUrlResponse } from '../dto';
 
 export class AuthorizedCollaboraDocumentUrlResponseFactory {
 	public static build(props: AuthorizedCollaboraDocumentUrlResponse): AuthorizedCollaboraDocumentUrlResponse {

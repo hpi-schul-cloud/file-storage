@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import type { AuthorizedCollaboraDocumentUrlParams } from '../../api/dto/wopi.params';
-import { EditorMode } from '../../api/dto/wopi.params';
+import type { AuthorizedCollaboraDocumentUrlParams } from '../api/dto/wopi.params';
+import { EditorMode } from '../api/dto/wopi.params';
 
 class AuthorizedCollaboraDocumentUrlParamsTestFactory {
 	private readonly props: AuthorizedCollaboraDocumentUrlParams = {

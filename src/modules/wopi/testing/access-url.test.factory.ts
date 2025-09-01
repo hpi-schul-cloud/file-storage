@@ -1,4 +1,4 @@
-import { AuthorizedCollaboraDocumentUrl } from '@modules/files-storage/domain/access-url.vo';
+import { AuthorizedCollaboraDocumentUrl } from '@modules/wopi/domain/vo/access-url.vo';
 import { randomUUID } from 'node:crypto';
 
 class AuthorizedCollaboraDocumentUrlTestFactory {

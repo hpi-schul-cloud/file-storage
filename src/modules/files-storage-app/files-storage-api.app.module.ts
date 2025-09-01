@@ -17,11 +17,11 @@ import {
 	FilesStorageUC,
 	WopiController,
 	WopiUc,
-} from './api';
+} from '../files-storage/api';
+import { FilesStorageModule } from '../files-storage/files-storage.module';
+import { WopiConfig } from '../wopi/wopi.config';
 import { FileStorageConfig, RequestTimeoutConfig } from './files-storage.config';
 import { ENTITIES } from './files-storage.entity.imports';
-import { FilesStorageModule } from './files-storage.module';
-import { WopiConfig } from './wopi.config';
 
 @Module({
 	imports: [

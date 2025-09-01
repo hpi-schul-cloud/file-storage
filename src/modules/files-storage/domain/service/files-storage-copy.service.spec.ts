@@ -5,7 +5,7 @@ import { Logger } from '@infra/logger';
 import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
 import { FileRecordFactory } from '../factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo } from '../interface';

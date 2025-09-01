@@ -6,30 +6,28 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
+import { SingleFileParams } from '@modules/files-storage/api/dto'; // TODO: Entsprechung von hier nutzen
+import { FileDtoBuilder, FilesStorageMapper } from '@modules/files-storage/api/mapper'; // TODO: puhh darüber muss man noch mal nachdenken
+import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '@modules/files-storage/domain'; // TODO export location und GetFileResponse?
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import {
 	AuthorizedCollaboraDocumentUrlFactory,
-	FileRecord,
-	FileRecordParentType,
-	FilesStorageService,
-	GetFileResponse,
 	WopiAccessToken,
+	WopiAccessTokenFactory,
 	WopiPayload,
 	WopiPayloadFactory,
-} from '../../domain';
-import { WopiConfig } from '../../wopi.config';
+} from '../domain';
+import { WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
 	EditorMode,
-	SingleFileParams,
 	WopiAccessTokenParams,
 	WopiFileInfoResponse,
-} from '../dto';
-import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFactory } from '../factory';
-import { FileDtoBuilder, FilesStorageMapper } from '../mapper';
+} from './dto';
+import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFactory } from './factory';
 
 @Injectable()
 export class WopiUc {
@@ -154,7 +152,9 @@ export class WopiUc {
 			tokenTtlInSeconds: this.wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS,
 		});
 
-		return response;
+		const wopiAccessToken = WopiAccessTokenFactory.buildFromString(response.token);
+
+		return wopiAccessToken;
 	}
 
 	private authorizationContext(editorMode: EditorMode): AuthorizationContextParams {

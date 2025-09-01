@@ -1,7 +1,7 @@
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
+import { InternalServerErrorException } from '@nestjs/common';
 import { PutFileResponse } from '../dto/put-file.response';
 import { PutFileResponseFactory } from './put-file.response.factory';
-import { InternalServerErrorException } from '@nestjs/common';
 
 describe('PutFileResponseFactory', () => {
 	afterEach(() => {

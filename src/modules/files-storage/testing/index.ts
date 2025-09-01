@@ -6,4 +6,3 @@ export * from './file-record.test.factory';
 export * from './get-file.test.factory';
 export * from './parent-statistic.test.factory';
 export * from './readable-stream-with-file-type.factory';
-export * from './wopi';

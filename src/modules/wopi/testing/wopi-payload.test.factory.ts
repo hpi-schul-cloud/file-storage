@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import type { EntityId } from '@shared/domain/types';
-import { WopiPayload, WopiPayloadFactory } from '../../domain';
+import { WopiPayload, WopiPayloadFactory } from '../domain';
 
 class WopiPayloadTestFactory {
 	private readonly props = {
