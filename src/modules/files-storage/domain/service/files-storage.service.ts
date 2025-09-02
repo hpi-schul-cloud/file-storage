@@ -77,6 +77,7 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
+		this.throwOnEmptyFileName(file);
 		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
 		file.data = stream;
@@ -86,6 +87,12 @@ export class FilesStorageService {
 		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
 
 		return fileRecord;
+	}
+
+	private throwOnEmptyFileName(file: FileDto): void {
+		if (file.name === '' || file.name === null || file.name === undefined) {
+			throw new Error('File name is missing due to sanitization');
+		}
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
