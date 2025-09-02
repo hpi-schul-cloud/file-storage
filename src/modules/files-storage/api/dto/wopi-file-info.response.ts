@@ -19,7 +19,7 @@ export class WopiFileInfoResponse {
 	@DecodeHtmlEntities()
 	BaseFileName: string;
 
-	@ApiProperty()
+	@ApiProperty({ type: Boolean })
 	readonly IsAdminUser = false;
 
 	@ApiProperty()
