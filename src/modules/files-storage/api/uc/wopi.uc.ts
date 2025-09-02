@@ -97,11 +97,15 @@ export class WopiUc {
 
 		this.throwIfNotCollaboraEditable(fileRecord);
 
-		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, {
-			id: userId,
-			userName: userDisplayName,
-			canWrite,
-		});
+		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(
+			fileRecord,
+			{
+				id: userId,
+				userName: userDisplayName,
+				canWrite,
+			},
+			this.wopiConfig.WOPI_POST_MESSAGE_ORIGIN
+		);
 
 		return response;
 	}
@@ -118,8 +122,12 @@ export class WopiUc {
 	}
 
 	private throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
-		if (!fileRecord.isCollaboraEditable()) {
-			throw new NotFoundException('File blocked due to suspected virus or mimetype not collabora compatible');
+		const status = this.filesStorageService.getCollaboraEditabilityStatus(fileRecord);
+
+		if (!status.isCollaboraEditable) {
+			throw new NotFoundException(
+				'File blocked due to suspected virus, mimetype not collabora compatible or file size exceeds limit'
+			);
 		}
 	}
 
