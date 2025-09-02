@@ -12,17 +12,15 @@ import {
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough, Readable } from 'stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-
-import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()

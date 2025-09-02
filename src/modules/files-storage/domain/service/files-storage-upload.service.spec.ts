@@ -8,7 +8,7 @@ import { BadRequestException, InternalServerErrorException } from '@nestjs/commo
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReadableStreamWithFileType } from 'file-type';
 import { PassThrough, Readable } from 'stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import {
 	fileDtoTestFactory,
 	FileRecordParamsTestFactory,

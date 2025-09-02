@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 /* eslint-disable no-console */
-import { PreviewGeneratorAMQPModule } from '@modules/files-storage-app';
+import { PreviewGeneratorAMQPModule } from '@modules/files-preview-app';
 import { NestFactory } from '@nestjs/core';
 import { install as sourceMapInstall } from 'source-map-support';
 

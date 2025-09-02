@@ -4,6 +4,5 @@ export {
 	FilesStorageAdminController,
 	FilesStorageConfigController,
 	FilesStorageController,
-	WopiController,
 } from './controller';
-export { FilesStorageAdminUC, FilesStorageUC, WopiUc } from './uc';
+export { FilesStorageAdminUC, FilesStorageUC } from './uc';

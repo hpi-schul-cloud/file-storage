@@ -9,9 +9,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FILES_STORAGE_S3_CONNECTION } from '../../../../files-storage-app/files-storage.config';
-import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage-test.module';
+import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
+import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { availableParentTypes } from './mocks';
 

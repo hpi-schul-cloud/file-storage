@@ -5,15 +5,15 @@ import { LoggerModule } from '@infra/logger';
 import { PreviewGeneratorProducerModule } from '@infra/preview-generator';
 import { S3ClientModule } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
-import { createS3ModuleOptions, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../files-storage-app/files-storage.config';
 import { FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
+import { createS3ModuleOptions, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
 import { FileRecordMikroOrmRepo } from './repo';
 
 const imports = [
 	ConfigurationModule.register(FileStorageConfig),
 	ErrorModule,
 	LoggerModule,
-	AntivirusModule.forRoot(),
+	AntivirusModule.forRoot(), // TODO for root() in sub Module is not ideal
 	S3ClientModule.registerAsync({
 		injectionToken: FILES_STORAGE_S3_CONNECTION,
 		useFactory: createS3ModuleOptions,
@@ -22,6 +22,7 @@ const imports = [
 	}),
 	PreviewGeneratorProducerModule,
 ];
+
 const providers = [
 	FilesStorageService,
 	PreviewService,
@@ -29,7 +30,7 @@ const providers = [
 ];
 
 @Module({
-	imports: [...imports],
+	imports,
 	providers,
 	exports: [FilesStorageService, PreviewService],
 })

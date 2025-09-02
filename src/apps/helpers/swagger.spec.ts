@@ -1,4 +1,4 @@
-import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage-test.module';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { Server } from 'node:net';

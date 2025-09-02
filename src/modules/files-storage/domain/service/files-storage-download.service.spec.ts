@@ -7,13 +7,13 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'node:stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
 import { ScanStatus } from '../../domain';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { ArchiveFactory } from '../factory/archive.factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileResponseBuilder } from '../mapper';
-import { ArchiveFactory } from './archive.factory';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {

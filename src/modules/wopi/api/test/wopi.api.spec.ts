@@ -14,9 +14,9 @@ import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage-app/files-storage.config';
-import { FilesStorageTestModule } from '../../../files-storage-app/testing/files-storage-test.module';
+import { FilesStorageTestModule } from '../../../files-storage-app/testing/files-storage.test.module';
 import FileType from '../../../files-storage/domain/service/file-type.helper';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage/files-storage.config';
 import {
 	fileRecordEntityFactory,
 	fileRecordSecurityCheckEmbeddableFactory,

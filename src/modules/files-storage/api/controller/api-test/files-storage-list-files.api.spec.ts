@@ -8,7 +8,7 @@ import { EntityId } from '@shared/domain/types';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage-test.module';
+import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { FileRecordParentType, PreviewStatus, StorageLocation } from '../../../domain';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';

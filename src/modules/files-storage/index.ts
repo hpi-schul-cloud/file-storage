@@ -1,2 +1,2 @@
-// this module has no exports
-// it is an isolated module, it cannot be used in other modules
+export { FilesStorageApiModule } from './files-storage.api.module';
+export { FilesStorageModule } from './files-storage.module';

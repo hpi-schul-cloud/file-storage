@@ -1,5 +1,5 @@
-import { StringToNumber } from '@shared/transformer';
-import { IsInt, IsUrl } from 'class-validator';
+import { StringToBoolean, StringToNumber } from '@shared/transformer';
+import { IsBoolean, IsInt, IsUrl } from 'class-validator';
 
 export class WopiConfig {
 	@IsUrl({ require_tld: false })
@@ -13,6 +13,7 @@ export class WopiConfig {
 	@StringToNumber()
 	WOPI_TOKEN_TTL_IN_SECONDS = 7200;
 
-	// TODO
-	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED;
+	@IsBoolean()
+	@StringToBoolean()
+	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
 }

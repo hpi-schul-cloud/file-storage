@@ -1,4 +1,3 @@
-import { ConfigurationModule } from '@infra/configuration';
 import { CoreModule } from '@infra/core';
 import { DatabaseModule } from '@infra/database';
 import { LoggerModule } from '@infra/logger';
@@ -7,12 +6,11 @@ import { Module } from '@nestjs/common';
 import { FilesStorageConsumer } from '../files-storage/api';
 import { FilesStorageExchange } from '../files-storage/api/amqp';
 import { FilesStorageModule } from '../files-storage/files-storage.module';
-import { FileStorageConfig, RequestTimeoutConfig } from './files-storage.config';
+import { RequestTimeoutConfig } from './files-storage-app.config';
 import { ENTITIES } from './files-storage.entity.imports';
 
 @Module({
 	imports: [
-		ConfigurationModule.register(FileStorageConfig),
 		FilesStorageModule,
 		CoreModule.register(RequestTimeoutConfig),
 		LoggerModule,

@@ -5,7 +5,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage-app/files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory, GetFileTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { PreviewOutputMimeTypes } from '../file-record.do';

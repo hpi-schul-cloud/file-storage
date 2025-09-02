@@ -7,7 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage-test.module';
+import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { FileRecordParentType } from '../../../domain';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordResponse } from '../../dto';
