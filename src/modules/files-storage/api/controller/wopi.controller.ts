@@ -42,7 +42,7 @@ export class WopiController {
 
 	private ensureWopiEnabled(): void {
 		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
-			throw new ForbiddenException('WOPI feature is disabled');
+			throw new NotFoundException('WOPI feature is disabled');
 		}
 	}
 
@@ -76,7 +76,15 @@ export class WopiController {
 	): Promise<WopiFileInfoResponse> {
 		this.ensureWopiEnabled();
 
-		return await this.wopiUc.checkFileInfo(params, query);
+		try {
+			const response = await this.wopiUc.checkFileInfo(params, query);
+
+			return response;
+		} catch (error) {
+			const wopiError = WopiErrorResponseMapper.mapErrorToWopiError(error);
+
+			throw wopiError;
+		}
 	}
 
 	@ApiOperation({ summary: 'WOPI GetFile (download file contents)' })
@@ -89,10 +97,16 @@ export class WopiController {
 	): Promise<StreamableFile> {
 		this.ensureWopiEnabled();
 
-		const fileResponse = await this.wopiUc.getFileStream(params, query);
-		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
+		try {
+			const fileResponse = await this.wopiUc.getFileStream(params, query);
+			const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 
-		return streamableFile;
+			return streamableFile;
+		} catch (error) {
+			const wopiError = WopiErrorResponseMapper.mapErrorToWopiError(error);
+
+			throw wopiError;
+		}
 	}
 
 	@HttpCode(200)

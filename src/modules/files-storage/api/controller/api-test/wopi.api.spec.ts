@@ -226,12 +226,12 @@ describe('Wopi Controller (API)', () => {
 				return { query, loggedInClient };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { query, loggedInClient } = await setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
@@ -264,12 +264,12 @@ describe('Wopi Controller (API)', () => {
 				return { query, loggedInClient };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { query, loggedInClient } = await setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 			});
 		});
 
@@ -485,12 +485,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
@@ -510,12 +510,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(401);
 			});
 		});
 
@@ -717,12 +717,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
@@ -747,12 +747,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 401 Unauthorizrd', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(401);
 			});
 		});
 
@@ -919,7 +919,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
 
-			it('should return 409 conflict', async () => {
+			it('should return 500 internal error becaus 409 in wopi as other use case', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
@@ -927,7 +927,7 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
-				expect(response.status).toBe(409);
+				expect(response.status).toBe(500);
 			});
 		});
 
@@ -950,7 +950,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
@@ -958,7 +958,7 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});

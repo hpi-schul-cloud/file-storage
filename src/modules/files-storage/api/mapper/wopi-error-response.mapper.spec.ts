@@ -2,6 +2,7 @@ import { ErrorType } from '@modules/files-storage/domain';
 import {
 	BadRequestException,
 	ForbiddenException,
+	InternalServerErrorException,
 	NotFoundException,
 	PayloadTooLargeException,
 	UnauthorizedException,
@@ -77,7 +78,7 @@ describe('WopiErrorResponseMapper', () => {
 
 				const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-				expect(result).toBeInstanceOf(BadRequestException);
+				expect(result).toEqual(new InternalServerErrorException(message, { cause: error }));
 				expect(result.message).toBe(message);
 			});
 		});
