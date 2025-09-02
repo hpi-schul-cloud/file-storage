@@ -35,7 +35,6 @@ import {
 	CopyFileResponse,
 	CopyFilesOfParentParams,
 	DownloadFileParams,
-	FileParams,
 	FileRecordListResponse,
 	FileRecordParams,
 	FileRecordResponse,
@@ -80,10 +79,9 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@ApiConsumes('multipart/form-data')
+	@ApiConsumes('application/octet-stream')
 	@Post('/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async upload(
-		@Body() _: FileParams,
 		@Param() params: FileRecordParams,
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request

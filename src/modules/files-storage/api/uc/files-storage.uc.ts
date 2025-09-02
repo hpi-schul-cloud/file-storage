@@ -124,7 +124,8 @@ export class FilesStorageUC {
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req);
+		const fileDto = FileDtoBuilder.build('my_filename', req, 'plain/text');
+		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
