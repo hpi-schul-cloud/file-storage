@@ -118,13 +118,25 @@ export class FilesStorageUC {
 	}
 
 	// upload
-	public async upload(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
+	public async upload(
+		userId: EntityId,
+		params: FileRecordParams,
+		req: Request,
+		contentDisposition?: string
+	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileDto = FileDtoBuilder.build('my_filename', req, 'plain/text');
+		// Extract filename from Content-Disposition header if present
+		let filename = 'unknown';
+		if (contentDisposition) {
+			const match = /filename="?([^";]+)"?/.exec(contentDisposition);
+			filename = match?.[1] ?? filename;
+		}
+
+		const fileDto = FileDtoBuilder.build(filename, req, 'application/octet-stream');
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);

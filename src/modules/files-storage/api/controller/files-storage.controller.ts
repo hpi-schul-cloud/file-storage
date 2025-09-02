@@ -84,9 +84,10 @@ export class FilesStorageController {
 	public async upload(
 		@Param() params: FileRecordParams,
 		@CurrentUser() currentUser: ICurrentUser,
-		@Req() req: Request
+		@Req() req: Request,
+		@Headers('content-disposition') contentDisposition?: string
 	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.upload(currentUser.userId, params, req);
+		const response = await this.filesStorageUC.upload(currentUser.userId, params, req, contentDisposition);
 
 		return response;
 	}
