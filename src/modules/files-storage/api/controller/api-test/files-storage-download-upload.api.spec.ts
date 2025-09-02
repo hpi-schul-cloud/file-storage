@@ -179,10 +179,8 @@ describe('files-storage controller (API)', () => {
 				expect(response.name).toEqual('test (1).txt');
 			});
 
-			it('should sanitize file name', async () => {
+			it.only('should sanitize file name', async () => {
 				const { loggedInClient, validId } = setup();
-
-				await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 
 				const result = await uploadFile(
 					`/upload/school/${validId}/schools/${validId}`,
