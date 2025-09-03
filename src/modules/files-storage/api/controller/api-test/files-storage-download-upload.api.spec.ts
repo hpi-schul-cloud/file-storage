@@ -78,10 +78,10 @@ describe('files-storage controller (API)', () => {
 			return { validId, loggedInClient, user: studentUser };
 		};
 
-		const uploadFile = async (routeName: string, apiClient: TestApiClient, fileName?: string) => {
+		const uploadFile = async (routeName: string, apiClient: TestApiClient) => {
 			const response = await apiClient
 				.post(routeName)
-				.attach('file', Buffer.from('abcd'), fileName ?? 'test.txt')
+				.attach('file', Buffer.from('abcd'), 'test.txt')
 				.set('connection', 'keep-alive')
 				.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
 
@@ -177,27 +177,6 @@ describe('files-storage controller (API)', () => {
 				const response = result.body as FileRecordEntity;
 
 				expect(response.name).toEqual('test (1).txt');
-			});
-
-			it('should sanitize file name', async () => {
-				const { loggedInClient, validId } = setup();
-
-				const result = await uploadFile(
-					`/upload/school/${validId}/schools/${validId}`,
-					loggedInClient,
-					'asd <test.txt'
-				);
-				const response = result.body as FileRecordEntity;
-
-				expect(response.name).toEqual('asd ');
-			});
-
-			it('should sanitize file name', async () => {
-				const { loggedInClient, validId } = setup();
-
-				const result = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient, '<test.txt');
-
-				expect(result.status).toEqual(500);
 			});
 
 			describe('when file has size 0', () => {

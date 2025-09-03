@@ -146,20 +146,24 @@ export class FilesStorageUC {
 	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecord> {
 		const promise = new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
+			let fileRecordPromise: Promise<FileRecord>;
 
 			bb.on('file', (_name, file, info) => {
 				const fileDto = FileDtoBuilder.buildFromBusboyFileInfo(info, file);
 
-				RequestContext.create(this.em, () => {
+				fileRecordPromise = RequestContext.create(this.em, () => {
 					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
 
 					return record;
-				})
+				});
+			});
+
+			bb.on('finish', () => {
+				fileRecordPromise
 					.then((result) => resolve(result))
 					.catch((error) => {
 						req.unpipe(bb);
-						bb.destroy();
-						reject(error);
+						reject(new Error('Error by stream uploading', { cause: error }));
 					});
 			});
 

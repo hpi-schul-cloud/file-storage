@@ -1,13 +1,11 @@
 import { AxiosResponse } from 'axios';
 import { FileInfo as BusboyFileInfo } from 'busboy';
-import { plainToInstance } from 'class-transformer';
 import { Readable } from 'stream';
 import { FileDto } from '../../domain';
 
 export class FileDtoBuilder {
 	public static build(name: string, data: Readable, mimeType: string): FileDto {
-		const file = plainToInstance(FileDto, { name, mimeType });
-		file.data = data;
+		const file = new FileDto({ name, data, mimeType });
 
 		return file;
 	}

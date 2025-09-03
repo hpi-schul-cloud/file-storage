@@ -1,12 +1,16 @@
 import { File } from '@infra/s3-client';
-import { SanitizeHtml } from '@shared/transformer';
 import { Readable } from 'stream';
 
 export class FileDto implements File {
-	@SanitizeHtml()
-	name!: string;
+	constructor(file: FileDto) {
+		this.name = file.name;
+		this.data = file.data;
+		this.mimeType = file.mimeType;
+	}
 
-	data!: Readable;
+	name: string;
 
-	mimeType!: string;
+	data: Readable;
+
+	mimeType: string;
 }
