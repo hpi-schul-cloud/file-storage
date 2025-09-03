@@ -8,9 +8,15 @@ export class WopiFileInfoResponseFactory {
 		return fileInfo;
 	}
 
-	public static buildFromFileRecordAndUser(fileRecord: FileRecord, user: WopiUser): WopiFileInfoResponse {
+	public static buildFromFileRecordAndUser(
+		fileRecord: FileRecord,
+		user: WopiUser,
+		wopiPostMessageOrigin: string
+	): WopiFileInfoResponse {
 		const response = this.build({
 			Size: fileRecord.getProps().size,
+			IsAdminUser: false,
+			PostMessageOrigin: wopiPostMessageOrigin,
 			UserId: user.id,
 			UserFriendlyName: user.userName,
 			BaseFileName: fileRecord.getName(),

@@ -37,6 +37,10 @@ export class FileStorageConfig {
 	@IsBoolean()
 	@StringToBoolean()
 	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+
+	@IsNumber()
+	@StringToNumber()
+	COLLABORA_MAX_FILE_SIZE_IN_BYTES = 104857600;
 }
 
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
