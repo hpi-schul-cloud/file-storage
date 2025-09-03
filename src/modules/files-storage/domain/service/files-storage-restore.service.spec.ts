@@ -7,6 +7,7 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
+import { FileRecordFactory } from '../factory';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
@@ -216,13 +217,9 @@ describe('FilesStorageService restore methods', () => {
 
 				const unmarkedFileRecords = fileRecords.map((fileRecord) => {
 					const fileRecordProps = fileRecord.getProps();
-					const securityCheckProps = fileRecord.getSecurityCheckProps();
+					const securityCheck = new FileRecordSecurityCheck(fileRecord.getSecurityCheckProps());
 
-					// Recreate the FileRecord instance with copied properties
-					const copiedFileRecord = new FileRecord(
-						{ ...fileRecordProps },
-						new FileRecordSecurityCheck(securityCheckProps)
-					);
+					const copiedFileRecord = FileRecordFactory.buildFromFileRecordProps({ ...fileRecordProps }, securityCheck);
 
 					return copiedFileRecord;
 				});

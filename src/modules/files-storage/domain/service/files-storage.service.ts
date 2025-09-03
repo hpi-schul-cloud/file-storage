@@ -16,11 +16,20 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FileRecord, ParentInfo } from '../file-record.do';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import {
+	CollaboraEditabilityStatus,
+	CopyFileResult,
+	FILE_RECORD_REPO,
+	FileRecordRepo,
+	FileRecordWithStatus,
+	GetFileResponse,
+	StorageLocationParams,
+} from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 
 import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { FileRecordStatus } from '../interface';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
@@ -73,6 +82,37 @@ export class FilesStorageService {
 		const countedFileRecords = await this.fileRecordRepo.findByCreatorId(creatorId);
 
 		return countedFileRecords;
+	}
+
+	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
+		const scanStatus = fileRecord.scanStatus;
+		const previewStatus = fileRecord.getPreviewStatus();
+		const collaboraEditabilityStatus = this.getCollaboraEditabilityStatus(fileRecord);
+
+		const status = {
+			scanStatus,
+			previewStatus,
+			...collaboraEditabilityStatus,
+		};
+
+		return status;
+	}
+
+	public getFileRecordsWithStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
+		return fileRecords.map((fileRecord) => ({
+			fileRecord,
+			status: this.getFileRecordStatus(fileRecord),
+		}));
+	}
+
+	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
+		const { COLLABORA_MAX_FILE_SIZE_IN_BYTES } = this.config;
+		const status = {
+			isCollaboraEditable: fileRecord.isCollaboraEditable(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+		};
+
+		return status;
 	}
 
 	// upload
@@ -185,9 +225,10 @@ export class FilesStorageService {
 		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
+		const status = this.getCollaboraEditabilityStatus(fileRecord);
 
 		const shouldStreamToAntiVirus =
-			useStreamToAntivirus && (fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+			useStreamToAntivirus && (fileRecord.isPreviewPossible() || status.isCollaboraEditable);
 
 		if (shouldStreamToAntiVirus) {
 			const streamToAntivirus = this.createPipedStream(file.data);
@@ -246,6 +287,12 @@ export class FilesStorageService {
 		const maxFileSize = this.config.FILES_STORAGE_MAX_FILE_SIZE;
 
 		return maxFileSize;
+	}
+
+	public getCollaboraMaxFileSize(): number {
+		const collaboraMaxFileSize = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+
+		return collaboraMaxFileSize;
 	}
 
 	// update
