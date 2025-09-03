@@ -129,14 +129,21 @@ export class FilesStorageUC {
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		// Extract filename from Content-Disposition header if present
+		// Extract filename and mimetype from Content-Disposition header if present
 		let filename = 'unknown';
+		let mimeType = 'application/octet-stream';
 		if (contentDisposition) {
-			const match = /filename="?([^";]+)"?/.exec(contentDisposition);
-			filename = match?.[1] ?? filename;
+			const filenameMatch = /filename="?([^";]+)"?/.exec(contentDisposition);
+			if (filenameMatch?.[1]) {
+				filename = filenameMatch[1];
+			}
+			const typeMatch = /mimeType="?([^";]+)"?/.exec(contentDisposition);
+			if (typeMatch?.[1]) {
+				mimeType = typeMatch[1];
+			}
 		}
-
-		const fileDto = FileDtoBuilder.build(filename, req, 'application/octet-stream');
+		console.log(`Extracted filename: ${filename}, mimeType: ${mimeType}`);
+		const fileDto = FileDtoBuilder.build(filename, req, mimeType);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
