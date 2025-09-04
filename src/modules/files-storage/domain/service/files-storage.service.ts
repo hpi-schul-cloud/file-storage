@@ -17,7 +17,15 @@ import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import {
+	CopyFileResult,
+	FILE_RECORD_REPO,
+	FileRecordRepo,
+	FileRecordStatus,
+	FileRecordWithStatus,
+	GetFileResponse,
+	StorageLocationParams,
+} from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
@@ -71,6 +79,27 @@ export class FilesStorageService {
 		const countedFileRecords = await this.fileRecordRepo.findByCreatorId(creatorId);
 
 		return countedFileRecords;
+	}
+
+	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
+		const scanStatus = fileRecord.scanStatus;
+		const previewStatus = fileRecord.getPreviewStatus();
+		const collaboraEditabilityStatus = this.getCollaboraEditabilityStatus(fileRecord);
+
+		const status = {
+			scanStatus,
+			previewStatus,
+			...collaboraEditabilityStatus,
+		};
+
+		return status;
+	}
+
+	public getFileRecordsWithStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
+		return fileRecords.map((fileRecord) => ({
+			fileRecord,
+			status: this.getFileRecordStatus(fileRecord),
+		}));
 	}
 
 	// upload
@@ -179,9 +208,10 @@ export class FilesStorageService {
 	}
 
 	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
+		const status = this.getCollaboraEditabilityStatus(fileRecord);
 		const shouldStreamToAntiVirus =
 			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS &&
-			(fileRecord.isPreviewPossible() || fileRecord.isCollaboraEditable());
+			(fileRecord.isPreviewPossible() || status.isCollaboraEditable);
 
 		return shouldStreamToAntiVirus;
 	}
@@ -190,6 +220,7 @@ export class FilesStorageService {
 		const streamCompletion = this.awaitStreamCompletion(file.data);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
+
 		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
@@ -209,7 +240,7 @@ export class FilesStorageService {
 
 		const fileRecordSize = fileSizeObserver.getFileSize();
 
-		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
+		fileRecord.markAsUploaded(fileRecordSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
 
 		await this.fileRecordRepo.save(fileRecord);
@@ -243,12 +274,6 @@ export class FilesStorageService {
 		} else {
 			await this.antivirusService.send(fileRecord.getSecurityToken());
 		}
-	}
-
-	public getMaxFileSize(): number {
-		const maxFileSize = this.config.FILES_STORAGE_MAX_FILE_SIZE;
-
-		return maxFileSize;
 	}
 
 	// update

@@ -48,7 +48,7 @@ import {
 	RenameFileParams,
 	SingleFileParams,
 } from '../dto';
-import { FileRecordMapper, FilesStorageMapper } from '../mapper';
+import { FilesStorageMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
 
 @ApiTags('file')
@@ -69,9 +69,7 @@ export class FilesStorageController {
 		@Param() params: FileRecordParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<FileRecordResponse> {
-		const fileRecord = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...body, ...params });
-
-		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
+		const response = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...body, ...params });
 
 		return response;
 	}
@@ -90,9 +88,7 @@ export class FilesStorageController {
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request
 	): Promise<FileRecordResponse> {
-		const fileRecord = await this.filesStorageUC.upload(currentUser.userId, params, req);
-
-		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
+		const response = await this.filesStorageUC.upload(currentUser.userId, params, req);
 
 		return response;
 	}
@@ -232,9 +228,7 @@ export class FilesStorageController {
 		@Param() params: FileRecordParams,
 		@Query() pagination: PaginationParams
 	): Promise<FileRecordListResponse> {
-		const [fileRecords, total] = await this.filesStorageUC.getFileRecordsOfParent(params);
-		const { skip, limit } = pagination;
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecords, total, skip, limit);
+		const response = await this.filesStorageUC.getFileRecordsOfParent(params, pagination);
 
 		return response;
 	}
@@ -255,9 +249,7 @@ export class FilesStorageController {
 		@Param() params: SingleFileParams,
 		@Body() renameFileParam: RenameFileParams
 	): Promise<FileRecordResponse> {
-		const fileRecord = await this.filesStorageUC.patchFilename(params, renameFileParam);
-
-		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
+		const response = await this.filesStorageUC.patchFilename(params, renameFileParam);
 
 		return response;
 	}
@@ -273,8 +265,7 @@ export class FilesStorageController {
 	@Delete('/delete/:storageLocation/:storageLocationId/:parentType/:parentId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteByParent(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
-		const [fileRecords, total] = await this.filesStorageUC.deleteFilesOfParent(params);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecords, total);
+		const response = await this.filesStorageUC.deleteFilesOfParent(params);
 
 		return response;
 	}
@@ -287,9 +278,7 @@ export class FilesStorageController {
 	@Delete('/delete/:fileRecordId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
-		const fileRecord = await this.filesStorageUC.deleteOneFile(params);
-
-		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
+		const response = await this.filesStorageUC.deleteOneFile(params);
 
 		return response;
 	}
@@ -302,9 +291,7 @@ export class FilesStorageController {
 	@Delete('/delete')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
-		const [fileRecords, total] = await this.filesStorageUC.deleteMultipleFiles(params);
-
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecords, total);
+		const response = await this.filesStorageUC.deleteMultipleFiles(params);
 
 		return response;
 	}
@@ -315,9 +302,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@Post('/restore/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async restore(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
-		const [fileRecords, total] = await this.filesStorageUC.restoreFilesOfParent(params);
-
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecords, total);
+		const response = await this.filesStorageUC.restoreFilesOfParent(params);
 
 		return response;
 	}
@@ -328,9 +313,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@Post('/restore/:fileRecordId')
 	public async restoreFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
-		const fileRecord = await this.filesStorageUC.restoreOneFile(params);
-
-		const response = FileRecordMapper.mapToFileRecordResponse(fileRecord);
+		const response = await this.filesStorageUC.restoreOneFile(params);
 
 		return response;
 	}

@@ -39,6 +39,7 @@ describe('Wopi Controller (API)', () => {
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let fileStorageConfig: DeepMocked<FileStorageConfig>;
 	let em: EntityManager;
+	const collaboraMaxFileSizeInBytes = 104857600;
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -53,6 +54,7 @@ describe('Wopi Controller (API)', () => {
 			.overrideProvider(FileStorageConfig)
 			.useValue({
 				FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
+				COLLABORA_MAX_FILE_SIZE_IN_BYTES: collaboraMaxFileSizeInBytes,
 			})
 			.compile();
 
@@ -157,7 +159,7 @@ describe('Wopi Controller (API)', () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
-				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const fileRecord = fileRecordEntityFactory.buildWithId({ mimeType: 'application/vnd.oasis.opendocument.text' });
 				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withFileRecordId(fileRecord.id)
@@ -217,6 +219,41 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
+		describe('when filerecord has size exceeding the collabora limit', () => {
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+
+				const fileRecord = fileRecordEntityFactory.buildWithId({
+					mimeType: 'application/vnd.oasis.opendocument.text',
+					size: collaboraMaxFileSizeInBytes + 1,
+				});
+				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
+					.withFileRecordId(fileRecord.id)
+					.withEditorMode(EditorMode.EDIT)
+					.build();
+				const token = accessTokenResponseTestFactory().build();
+				const collaboraUrl = 'http://collabora.url';
+
+				em.persistAndFlush(fileRecord);
+
+				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
+				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { query, loggedInClient };
+			};
+
+			it('should return 404', async () => {
+				const { query, loggedInClient } = await setup();
+
+				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
+
+				expect(response.status).toBe(404);
+			});
+		});
+
 		describe('when WOPI feature is disabled', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
@@ -228,12 +265,12 @@ describe('Wopi Controller (API)', () => {
 				return { query, loggedInClient };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { query, loggedInClient } = await setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
@@ -266,12 +303,12 @@ describe('Wopi Controller (API)', () => {
 				return { query, loggedInClient };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { query, loggedInClient } = await setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 			});
 		});
 
@@ -426,7 +463,9 @@ describe('Wopi Controller (API)', () => {
 
 		describe('when filerecord is blocked', () => {
 			const setup = async () => {
-				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const fileRecord = fileRecordEntityFactory.buildWithId({
+					mimeType: 'application/vnd.oasis.opendocument.text',
+				});
 				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
@@ -477,6 +516,35 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
+		describe('when filerecord has size exceeding the collabora limit', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId({
+					mimeType: 'application/vnd.oasis.opendocument.text',
+					size: collaboraMaxFileSizeInBytes + 1,
+				});
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				await em.persistAndFlush(fileRecord);
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query };
+			};
+
+			it('should return 404', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+
+				expect(response.status).toBe(404);
+			});
+		});
+
 		describe('when WOPI feature is disabled', () => {
 			const setup = () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
@@ -487,12 +555,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
@@ -512,12 +580,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(401);
 			});
 		});
 
@@ -649,7 +717,7 @@ describe('Wopi Controller (API)', () => {
 
 		describe('when filerecord is blocked', () => {
 			const setup = async () => {
-				const fileRecord = fileRecordEntityFactory.buildWithId();
+				const fileRecord = fileRecordEntityFactory.buildWithId({ mimeType: 'application/vnd.oasis.opendocument.text' });
 				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
@@ -708,6 +776,39 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
+		describe('when filerecord has size exceeding the collabora limit', () => {
+			const setup = async () => {
+				const fileRecord = fileRecordEntityFactory.buildWithId({
+					mimeType: 'application/vnd.oasis.opendocument.text',
+					size: collaboraMaxFileSizeInBytes + 1,
+				});
+				const accessToken = accessTokenResponseTestFactory().build().token;
+				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
+				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
+				const accessTokenPayloadResponse = accessTokenPayloadResponseTestFactory().withPayload(wopiPayload).build();
+
+				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
+
+				const contentForReadable = 'contentForReadable';
+				const fileResponse = GetFileResponseTestFactory.build({ contentForReadable });
+				storageClient.get.mockResolvedValueOnce(fileResponse);
+
+				await em.persistAndFlush(fileRecord);
+
+				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+
+				return { fileRecord, query, fileResponse };
+			};
+
+			it('should return 404', async () => {
+				const { fileRecord, query } = await setup();
+
+				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+
+				expect(response.status).toBe(404);
+			});
+		});
+
 		describe('when WOPI feature is disabled', () => {
 			const setup = () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
@@ -719,12 +820,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
@@ -749,12 +850,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 401 Unauthorizrd', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(401);
 			});
 		});
 
@@ -921,7 +1022,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
 
-			it('should return 409 conflict', async () => {
+			it('should return 500 internal error becaus 409 in wopi as other use case', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
@@ -929,7 +1030,7 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
-				expect(response.status).toBe(409);
+				expect(response.status).toBe(500);
 			});
 		});
 
@@ -952,7 +1053,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query };
 			};
 
-			it('should return 403 Forbidden', async () => {
+			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await testApiClient
@@ -960,7 +1061,7 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
-				expect(response.status).toBe(403);
+				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled');
 			});
 		});
