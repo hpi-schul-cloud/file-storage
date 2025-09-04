@@ -1,5 +1,5 @@
-import { AuthorizedCollaboraDocumentUrl } from '@modules/wopi/domain/vo/access-url.vo';
 import { randomUUID } from 'node:crypto';
+import { AuthorizedCollaboraDocumentUrl } from '../domain';
 
 class AuthorizedCollaboraDocumentUrlTestFactory {
 	private readonly props: AuthorizedCollaboraDocumentUrl = {

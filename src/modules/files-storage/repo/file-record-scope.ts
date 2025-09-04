@@ -1,7 +1,7 @@
 import { EntityId } from '@shared/domain/types';
 import { Scope } from '@shared/repo/scope';
-import { StorageLocation } from '../../domain';
-import { FileRecordEntity } from '../file-record.entity';
+import { StorageLocation } from '../domain';
+import { FileRecordEntity } from './file-record.entity';
 
 export class FileRecordScope extends Scope<FileRecordEntity> {
 	public byParentId(parentId: EntityId): this {

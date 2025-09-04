@@ -1,7 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import crypto from 'crypto';
-import { FileRecord } from '../../domain';
-import { PreviewFileParams } from '../../domain/interface';
+import { FileRecord, PreviewFileParams } from '../../domain';
 import { PreviewParams } from '../dto';
 
 export class PreviewBuilder {

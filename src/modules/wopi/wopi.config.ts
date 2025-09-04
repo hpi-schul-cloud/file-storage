@@ -1,5 +1,5 @@
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
-import { IsBoolean, IsInt, IsUrl } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsUrl } from 'class-validator';
 
 export class WopiConfig {
 	@IsUrl({ require_tld: false })
@@ -16,4 +16,8 @@ export class WopiConfig {
 	@IsBoolean()
 	@StringToBoolean()
 	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+
+	@IsNumber()
+	@StringToNumber()
+	COLLABORA_MAX_FILE_SIZE_IN_BYTES = 104857600;
 }

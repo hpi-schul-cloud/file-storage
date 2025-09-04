@@ -5,8 +5,8 @@ import { accessTokenPayloadResponseTestFactory } from '@infra/authorization-clie
 import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { ScanStatus } from '@modules/files-storage/domain';
-import { FileRecordEntity } from '@modules/files-storage/repo';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
@@ -14,21 +14,24 @@ import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
-import { FilesStorageTestModule } from '../../../files-storage-app/testing/files-storage.test.module';
+// TODO
 import FileType from '../../../files-storage/domain/service/file-type.helper';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage/files-storage.config';
+// TODO: Die config sollte nicht notwendig sein
 import {
 	fileRecordEntityFactory,
 	fileRecordSecurityCheckEmbeddableFactory,
 	GetFileResponseTestFactory,
-} from '../../../files-storage/testing';
+} from '@modules/files-storage/testing';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage/files-storage.config';
 import {
 	authorizedCollaboraDocumentUrlParamsTestFactory,
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
 } from '../../testing';
 import { EditorMode, WopiFileInfoResponse } from '../dto';
+import { FileRecordEntity } from '@modules/files-storage/repo';
 
+// TODO???
 jest.mock('../../../domain/service/file-type.helper');
 
 describe('Wopi Controller (API)', () => {

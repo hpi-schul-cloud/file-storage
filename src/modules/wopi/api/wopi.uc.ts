@@ -14,6 +14,7 @@ import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import {
 	AuthorizedCollaboraDocumentUrlFactory,
+	CollaboraEditabilityStatus,
 	WopiAccessToken,
 	WopiAccessTokenFactory,
 	WopiPayload,
@@ -119,8 +120,21 @@ export class WopiUc {
 		return fileResponse;
 	}
 
+	private getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const exceedsCollaboraEditableFileSize = fileRecord.exceedsCollaboraEditableFileSize(
+			this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES
+		);
+		const status = {
+			isCollaboraEditable,
+			exceedsCollaboraEditableFileSize,
+		};
+
+		return status;
+	}
+
 	private throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
-		const status = this.filesStorageService.getCollaboraEditabilityStatus(fileRecord);
+		const status = this.getCollaboraEditabilityStatus(fileRecord);
 
 		if (!status.isCollaboraEditable) {
 			throw new NotFoundException(

@@ -34,7 +34,6 @@ import {
 	FileRecordListResponse,
 	FileRecordParams,
 	FileRecordResponse,
-	FilesStorageConfigResponse,
 	FileUrlParams,
 	MultiFileParams,
 	PaginationParams,
@@ -46,14 +45,13 @@ import {
 	SingleFileParams,
 } from '../dto';
 import {
-	ConfigResponseMapper,
 	CopyFileResponseBuilder,
 	FileDtoBuilder,
 	FileRecordMapper,
 	FilesStorageMapper,
+	ParentStatisticMapper,
 	PreviewBuilder,
 } from '../mapper';
-import { ParentStatisticMapper } from '../mapper/parent-statistic.mapper';
 
 export const FileStorageAuthorizationContext = {
 	create: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_CREATE]),
@@ -107,14 +105,6 @@ export class FilesStorageUC {
 		if (parentIds.length > maximumOfDifferentParents) {
 			throw new ToManyDifferentParentsException(parentIds, maximumOfDifferentParents);
 		}
-	}
-
-	public getPublicConfig(): FilesStorageConfigResponse {
-		const maxFileSize = this.filesStorageService.getMaxFileSize();
-		const collaboraMaxFileSize = this.filesStorageService.getCollaboraMaxFileSize();
-		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize, collaboraMaxFileSize);
-
-		return configResponse;
 	}
 
 	// upload

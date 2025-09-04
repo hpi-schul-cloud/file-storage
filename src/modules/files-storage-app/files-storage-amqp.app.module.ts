@@ -2,10 +2,8 @@ import { CoreModule } from '@infra/core';
 import { DatabaseModule } from '@infra/database';
 import { LoggerModule } from '@infra/logger';
 import { RabbitMQWrapperModule } from '@infra/rabbitmq';
+import { FilesStorageConsumer, FilesStorageExchange, FilesStorageModule } from '@modules/files-storage';
 import { Module } from '@nestjs/common';
-import { FilesStorageConsumer } from '../files-storage/api';
-import { FilesStorageExchange } from '../files-storage/api/amqp';
-import { FilesStorageModule } from '../files-storage/files-storage.module';
 import { RequestTimeoutConfig } from './files-storage-app.config';
 import { ENTITIES } from './files-storage.entity.imports';
 

@@ -1,6 +1,6 @@
 import { FileRecord } from '@modules/files-storage/domain';
 import { InternalServerErrorException } from '@nestjs/common';
-import { PutFileResponse } from '../dto/put-file.response';
+import { PutFileResponse } from '../dto';
 
 export class PutFileResponseFactory {
 	public static build(props: PutFileResponse): PutFileResponse {
