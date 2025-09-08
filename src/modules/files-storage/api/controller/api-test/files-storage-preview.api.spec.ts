@@ -94,7 +94,7 @@ describe('File Controller (API) - preview', () => {
 		uploadPath = `/upload/school/${validId}/schools/${validId}`;
 
 		jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
-		antivirusService.checkStream.mockResolvedValueOnce({ virus_detected: false });
+		antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
 
 		return loggedInClient;
 	};

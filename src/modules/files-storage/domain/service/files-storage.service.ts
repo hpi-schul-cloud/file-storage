@@ -212,6 +212,7 @@ export class FilesStorageService {
 		const shouldStreamToAntiVirus =
 			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS &&
 			(fileRecord.isPreviewPossible() || status.isCollaboraEditable);
+		// fileRecord.isCollaboraEditable(this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES)
 
 		return shouldStreamToAntiVirus;
 	}
@@ -224,11 +225,11 @@ export class FilesStorageService {
 		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
-			const streamToAntivirus = this.createPipedStream(file.data);
+			const pipedStream = this.createPipedStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(streamToAntivirus),
+				this.antivirusService.scanStream(pipedStream),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);

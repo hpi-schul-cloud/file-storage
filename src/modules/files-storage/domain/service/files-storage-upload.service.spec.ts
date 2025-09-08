@@ -117,7 +117,7 @@ describe('FilesStorageService upload methods', () => {
 
 			const readableStreamWithFileType = readableStreamWithFileTypeFactory.build();
 
-			antivirusService.checkStream.mockResolvedValueOnce({
+			antivirusService.scanStream.mockResolvedValueOnce({
 				virus_detected: undefined,
 				virus_signature: undefined,
 				error: undefined,
@@ -293,7 +293,7 @@ describe('FilesStorageService upload methods', () => {
 
 						await service.uploadFile(userId, params, file);
 
-						expect(antivirusService.checkStream).toHaveBeenCalledWith(file);
+						expect(antivirusService.scanStream).toHaveBeenCalledWith(file);
 					});
 				});
 
@@ -578,7 +578,7 @@ describe('FilesStorageService upload methods', () => {
 					updatedAt: new Date(),
 				});
 
-				antivirusService.checkStream.mockResolvedValueOnce({
+				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
 					virus_signature: undefined,
 					error: undefined,
@@ -637,7 +637,7 @@ describe('FilesStorageService upload methods', () => {
 					.spyOn(FileType, 'fileTypeStream')
 					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
-				antivirusService.checkStream.mockResolvedValueOnce({
+				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
 					virus_signature: undefined,
 					error: undefined,
@@ -714,7 +714,7 @@ describe('FilesStorageService upload methods', () => {
 
 						await service.updateFileContents(fileRecord, fileDto);
 
-						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.scanStream).toHaveBeenCalledWith(expect.any(PassThrough));
 						expect(antivirusService.send).not.toHaveBeenCalled();
 					});
 				});
@@ -726,7 +726,7 @@ describe('FilesStorageService upload methods', () => {
 
 						await service.updateFileContents(fileRecord, fileDto);
 
-						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.scanStream).toHaveBeenCalledWith(expect.any(PassThrough));
 						expect(antivirusService.send).not.toHaveBeenCalled();
 					});
 				});
@@ -739,7 +739,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
-						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+						expect(antivirusService.scanStream).not.toHaveBeenCalled();
 					});
 				});
 
@@ -751,7 +751,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
-						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+						expect(antivirusService.scanStream).not.toHaveBeenCalled();
 					});
 				});
 
@@ -763,7 +763,7 @@ describe('FilesStorageService upload methods', () => {
 						await service.updateFileContents(fileRecord, fileDto);
 
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
-						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+						expect(antivirusService.scanStream).not.toHaveBeenCalled();
 					});
 				});
 			});
@@ -814,7 +814,7 @@ describe('FilesStorageService upload methods', () => {
 					const error = new Error('test');
 					storageClient.create.mockRejectedValueOnce(error);
 
-					antivirusService.checkStream.mockResolvedValueOnce({
+					antivirusService.scanStream.mockResolvedValueOnce({
 						virus_detected: undefined,
 						virus_signature: undefined,
 						error: undefined,
@@ -921,7 +921,7 @@ describe('FilesStorageService upload methods', () => {
 					jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
 
 					const error = new Error('test');
-					antivirusService.checkStream.mockRejectedValueOnce(error);
+					antivirusService.scanStream.mockRejectedValueOnce(error);
 
 					return {
 						fileDto,
@@ -982,7 +982,7 @@ describe('FilesStorageService upload methods', () => {
 						return Promise.resolve(result);
 					});
 
-				antivirusService.checkStream.mockResolvedValueOnce({
+				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
 					virus_signature: undefined,
 					error: undefined,
@@ -1017,7 +1017,7 @@ describe('FilesStorageService upload methods', () => {
 					.spyOn(FileType, 'fileTypeStream')
 					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
-				antivirusService.checkStream.mockResolvedValueOnce({
+				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
 					virus_signature: undefined,
 					error: undefined,
@@ -1061,7 +1061,7 @@ describe('FilesStorageService upload methods', () => {
 				});
 				jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
 
-				antivirusService.checkStream.mockResolvedValueOnce({
+				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
 					virus_signature: undefined,
 					error: undefined,
