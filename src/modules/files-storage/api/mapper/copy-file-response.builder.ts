@@ -1,4 +1,4 @@
-import { CopyFileResponse } from '../dto/file-storage.response';
+import { CopyFileResponse } from '../dto';
 
 export class CopyFileResponseBuilder {
 	public static build(id: string | undefined, sourceId: string, name: string): CopyFileResponse {

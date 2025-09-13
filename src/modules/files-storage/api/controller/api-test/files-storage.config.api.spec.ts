@@ -5,7 +5,7 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FilesStorageTestModule } from '../../../files-storage-test.module';
+import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 
 describe(`files-storage (api)`, () => {

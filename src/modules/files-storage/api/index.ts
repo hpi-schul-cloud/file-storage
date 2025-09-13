@@ -1,9 +1,3 @@
-export { FilesStorageConsumer } from './amqp';
-export {
-	FileSecurityController,
-	FilesStorageAdminController,
-	FilesStorageConfigController,
-	FilesStorageController,
-	WopiController,
-} from './controller';
-export { FilesStorageAdminUC, FilesStorageUC, WopiUc } from './uc';
+export { FilesStorageConsumer, FilesStorageExchange } from './amqp';
+export { FileSecurityController, FilesStorageAdminController, FilesStorageController } from './controller';
+export { FilesStorageAdminUC, FilesStorageUC } from './uc';

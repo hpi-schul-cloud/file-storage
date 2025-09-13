@@ -15,23 +15,20 @@ import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
-	CollaboraEditabilityStatus,
 	CopyFileResult,
 	FILE_RECORD_REPO,
 	FileRecordRepo,
+	FileRecordStatus,
 	FileRecordWithStatus,
 	GetFileResponse,
 	StorageLocationParams,
 } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-
-import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
-import { FileRecordStatus } from '../interface';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()
@@ -103,16 +100,6 @@ export class FilesStorageService {
 			fileRecord,
 			status: this.getFileRecordStatus(fileRecord),
 		}));
-	}
-
-	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
-		const { COLLABORA_MAX_FILE_SIZE_IN_BYTES } = this.config;
-		const status = {
-			isCollaboraEditable: fileRecord.isCollaboraEditable(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
-			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
-		};
-
-		return status;
 	}
 
 	// upload
@@ -220,22 +207,29 @@ export class FilesStorageService {
 		}
 	}
 
+	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
+		const status = this.getCollaboraEditabilityStatus(fileRecord);
+		const shouldStreamToAntiVirus =
+			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS &&
+			(fileRecord.isPreviewPossible() || status.isCollaboraEditable);
+		// fileRecord.isCollaboraEditable(this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES)
+
+		return shouldStreamToAntiVirus;
+	}
+
 	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
 		const streamCompletion = this.awaitStreamCompletion(file.data);
-		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
-		const status = this.getCollaboraEditabilityStatus(fileRecord);
 
-		const shouldStreamToAntiVirus =
-			useStreamToAntivirus && (fileRecord.isPreviewPossible() || status.isCollaboraEditable);
+		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
-			const streamToAntivirus = this.createPipedStream(file.data);
+			const pipedStream = this.createPipedStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(streamToAntivirus),
+				this.antivirusService.scanStream(pipedStream),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);
@@ -247,7 +241,7 @@ export class FilesStorageService {
 
 		const fileRecordSize = fileSizeObserver.getFileSize();
 
-		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
+		fileRecord.markAsUploaded(fileRecordSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
 
 		await this.fileRecordRepo.save(fileRecord);
@@ -281,18 +275,6 @@ export class FilesStorageService {
 		} else {
 			await this.antivirusService.send(fileRecord.getSecurityToken());
 		}
-	}
-
-	public getMaxFileSize(): number {
-		const maxFileSize = this.config.FILES_STORAGE_MAX_FILE_SIZE;
-
-		return maxFileSize;
-	}
-
-	public getCollaboraMaxFileSize(): number {
-		const collaboraMaxFileSize = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
-
-		return collaboraMaxFileSize;
 	}
 
 	// update
