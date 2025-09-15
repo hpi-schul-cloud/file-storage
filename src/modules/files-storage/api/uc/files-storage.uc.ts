@@ -165,16 +165,13 @@ export class FilesStorageUC {
 
 	public async uploadFromUrl(userId: EntityId, params: FileRecordParams & FileUrlParams): Promise<FileRecordResponse> {
 		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create);
-
 		await this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId);
 
 		const response = await this.getResponse(params);
-
 		const fileDto = FileDtoBuilder.buildFromAxiosResponse(params.fileName, response);
-
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
-		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 
+		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
 		return fileRecordResponse;
@@ -270,8 +267,8 @@ export class FilesStorageUC {
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFilesOfParent(fileRecords);
 
-		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, count);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
 
 		return response;
 	}
@@ -296,8 +293,8 @@ export class FilesStorageUC {
 
 		await this.deletePreviewsAndFiles(fileRecords);
 
-		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, count);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
 
 		return response;
 	}
@@ -312,8 +309,8 @@ export class FilesStorageUC {
 		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create);
 		const [fileRecords, count] = await this.filesStorageService.restoreFilesOfParent(params);
 
-		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, count);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
 
 		return response;
 	}
@@ -404,9 +401,9 @@ export class FilesStorageUC {
 		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.read);
 
 		const [fileRecords, counted] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
-		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const response = FileRecordMapper.mapToFileRecordListResponse(
-			fileRecordsWithStatus,
+			fileRecordWithStatus,
 			counted,
 			pagination.skip,
 			pagination.limit

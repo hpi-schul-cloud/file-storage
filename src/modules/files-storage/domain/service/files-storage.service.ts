@@ -18,6 +18,7 @@ import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
+	CollaboraEditabilityStatus,
 	CopyFileResult,
 	FILE_RECORD_REPO,
 	FileRecordRepo,
@@ -90,6 +91,17 @@ export class FilesStorageService {
 			scanStatus,
 			previewStatus,
 			...collaboraEditabilityStatus,
+		};
+
+		return status;
+	}
+
+	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
+		const status = {
+			isCollaboraEditable: fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(
+				this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES
+			),
 		};
 
 		return status;

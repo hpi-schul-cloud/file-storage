@@ -216,9 +216,15 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return exceedsFileSize;
 	}
 
+	public hasCollaboraCompatibleMimeType(): boolean {
+		const hasCollaboraCompatibleMimeType = Object.values<string>(CollaboraMimeTypes).includes(this.props.mimeType);
+
+		return hasCollaboraCompatibleMimeType;
+	}
+
 	public isCollaboraEditable(collaboraMaxFileSizeInBytes: number): boolean {
 		const isBlocked = this.securityCheck.isBlocked();
-		const hasCollaboraCompatibleMimeType = Object.values<string>(CollaboraMimeTypes).includes(this.props.mimeType);
+		const hasCollaboraCompatibleMimeType = this.hasCollaboraCompatibleMimeType();
 		const exceedsFileSize = this.exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes);
 
 		const isEditable = hasCollaboraCompatibleMimeType && !isBlocked && !exceedsFileSize;

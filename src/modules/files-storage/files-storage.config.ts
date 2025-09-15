@@ -32,6 +32,13 @@ export class FileStorageConfig {
 
 	@IsString()
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
+
+	/**
+	 * @deprecated need to be removed
+	 */
+	@IsNumber()
+	@StringToNumber()
+	COLLABORA_MAX_FILE_SIZE_IN_BYTES = 104857600;
 }
 
 // TODO part of @infra/s3-client' ?

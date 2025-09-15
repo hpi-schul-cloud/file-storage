@@ -43,12 +43,6 @@ export class WopiController {
 		private readonly config: WopiConfig
 	) {}
 
-	private ensureWopiEnabled(): void {
-		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
-			throw new NotFoundException('WOPI feature is disabled');
-		}
-	}
-
 	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
 	@ApiResponse({ status: 200, type: AuthorizedCollaboraDocumentUrlResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
@@ -62,8 +56,6 @@ export class WopiController {
 		@Query() query: AuthorizedCollaboraDocumentUrlParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
-		this.ensureWopiEnabled();
-
 		const result = await this.wopiUc.getAuthorizedCollaboraDocumentUrl(currentUser.userId, query);
 
 		return result;
@@ -80,8 +72,6 @@ export class WopiController {
 		@Param() params: SingleFileParams,
 		@Query() query: WopiAccessTokenParams
 	): Promise<WopiFileInfoResponse> {
-		this.ensureWopiEnabled();
-
 		try {
 			const response = await this.wopiUc.checkFileInfo(params, query);
 
@@ -104,8 +94,6 @@ export class WopiController {
 		@Param() params: SingleFileParams,
 		@Query() query: WopiAccessTokenParams
 	): Promise<StreamableFile> {
-		this.ensureWopiEnabled();
-
 		try {
 			const fileResponse = await this.wopiUc.getFileStream(params, query);
 			const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
@@ -133,8 +121,6 @@ export class WopiController {
 		@Query() query: WopiAccessTokenParams,
 		@Req() req: Request
 	): Promise<PutFileResponse> {
-		this.ensureWopiEnabled();
-
 		try {
 			const fileRecord = await this.wopiUc.putFile(query, req);
 			const response = PutFileResponseFactory.buildFromFileRecord(fileRecord);
