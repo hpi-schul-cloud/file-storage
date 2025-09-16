@@ -6,15 +6,8 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import { SingleFileParams } from '@modules/files-storage/api/dto'; // TODO: Entsprechung von hier nutzen
-import { FileDtoBuilder, FilesStorageMapper } from '@modules/files-storage/api/mapper'; // TODO: puhh darüber muss man noch mal nachdenken
-import {
-	FileDto,
-	FileRecord,
-	FileRecordParentType,
-	FilesStorageService,
-	GetFileResponse,
-} from '@modules/files-storage/domain'; // TODO export location und GetFileResponse?
+import { FilesStorageMapper } from '@modules/files-storage/api/mapper'; // TODO: puhh darüber muss man noch mal nachdenken
+import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '@modules/files-storage/domain'; // TODO export location und GetFileResponse?
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
@@ -60,8 +53,7 @@ export class WopiUc {
 
 		this.wopiService.checkCollaboraCompatibilityMimetype(fileRecord);
 
-		const fileDto = this.mapFileRecordToFileDto(fileRecord, req);
-		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, fileDto);
+		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, req);
 
 		return updatedFileRecord;
 	}
@@ -96,13 +88,10 @@ export class WopiUc {
 		return response;
 	}
 
-	public async checkFileInfo(
-		params: SingleFileParams,
-		wopiToken: WopiAccessTokenParams
-	): Promise<WopiFileInfoResponse> {
+	public async checkFileInfo(wopiToken: WopiAccessTokenParams): Promise<WopiFileInfoResponse> {
 		this.wopiService.ensureWopiEnabled();
 
-		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(params, wopiToken);
+		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(wopiToken);
 		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
 		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
@@ -121,10 +110,10 @@ export class WopiUc {
 		return response;
 	}
 
-	public async getFileStream(params: SingleFileParams, wopiToken: WopiAccessTokenParams): Promise<GetFileResponse> {
+	public async getFileStream(wopiToken: WopiAccessTokenParams): Promise<GetFileResponse> {
 		this.wopiService.ensureWopiEnabled();
 
-		const { fileRecordId } = await this.getWopiPayload(params, wopiToken);
+		const { fileRecordId } = await this.getWopiPayload(wopiToken);
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 
 		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
@@ -134,16 +123,7 @@ export class WopiUc {
 		return fileResponse;
 	}
 
-	// TODO: no go, need to be removed
-	private mapFileRecordToFileDto(fileRecord: FileRecord, req: Request): FileDto {
-		const mimeType = fileRecord.getMimeType();
-		const name = fileRecord.getName();
-		const fileDto = FileDtoBuilder.build(name, req, mimeType);
-
-		return fileDto;
-	}
-
-	private async getWopiPayload(params: SingleFileParams, wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
+	private async getWopiPayload(wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
 		const result = await this.authorizationClientAdapter.resolveToken(
 			wopiToken.access_token,
 			this.wopiService.getTokenTtlInSeconds()

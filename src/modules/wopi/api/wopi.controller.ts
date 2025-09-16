@@ -23,7 +23,6 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import { WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
@@ -38,10 +37,7 @@ import { WopiUc } from './wopi.uc';
 @ApiTags('wopi')
 @Controller('wopi')
 export class WopiController {
-	constructor(
-		private readonly wopiUc: WopiUc,
-		private readonly config: WopiConfig
-	) {}
+	constructor(private readonly wopiUc: WopiUc) {}
 
 	@ApiOperation({ summary: 'Get Collabora access URL with permission check and access token creation' })
 	@ApiResponse({ status: 200, type: AuthorizedCollaboraDocumentUrlResponse })
@@ -73,7 +69,7 @@ export class WopiController {
 		@Query() query: WopiAccessTokenParams
 	): Promise<WopiFileInfoResponse> {
 		try {
-			const response = await this.wopiUc.checkFileInfo(params, query);
+			const response = await this.wopiUc.checkFileInfo(query);
 
 			return response;
 		} catch (error) {
@@ -95,7 +91,7 @@ export class WopiController {
 		@Query() query: WopiAccessTokenParams
 	): Promise<StreamableFile> {
 		try {
-			const fileResponse = await this.wopiUc.getFileStream(params, query);
+			const fileResponse = await this.wopiUc.getFileStream(query);
 			const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
 
 			return streamableFile;

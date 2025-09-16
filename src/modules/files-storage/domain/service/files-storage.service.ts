@@ -11,8 +11,10 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
+import { Request } from 'express';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+// TODO: Create interface that is implemented in dto
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
@@ -127,14 +129,12 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(file);
+	public async updateFileContents(fileRecord: FileRecord, req: Request): Promise<FileRecord> {
+		const { mimeType, stream } = await this.detectMimeType(req, fileRecord.mimeType);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		file.data = stream;
-
-		await this.storeAndScanFile(file, fileRecord);
+		const fileProcessData = { data: stream, mimeType, name: fileRecord.getName() };
+		await this.storeAndScanFile(fileProcessData, fileRecord);
 
 		return fileRecord;
 	}
@@ -151,24 +151,27 @@ export class FilesStorageService {
 		userId: EntityId
 	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
 		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file);
+		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
 
 		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 
 		return { fileRecord, stream };
 	}
 
-	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
-		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = this.createPipedStream(file.data);
+	private async detectMimeType(
+		data: Readable,
+		expectedMimeType: string
+	): Promise<{ mimeType: string; stream: Readable }> {
+		if (this.isStreamMimeTypeDetectionPossible(expectedMimeType)) {
+			const source = this.createPipedStream(data);
 			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
 
-			const mimeType = detectedMimeType ?? file.mimeType;
+			const mimeType = detectedMimeType ?? expectedMimeType;
 
 			return { mimeType, stream };
 		}
 
-		return { mimeType: file.mimeType, stream: file.data };
+		return { mimeType: expectedMimeType, stream: data };
 	}
 
 	private createPipedStream(data: Readable): PassThrough {
@@ -229,7 +232,10 @@ export class FilesStorageService {
 		return shouldStreamToAntiVirus;
 	}
 
-	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
+	private async storeAndScanFile(
+		file: { name: string; data: Readable; mimeType: string },
+		fileRecord: FileRecord
+	): Promise<void> {
 		const streamCompletion = this.awaitStreamCompletion(file.data);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
