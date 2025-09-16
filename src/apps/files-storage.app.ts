@@ -7,13 +7,13 @@ import { install as sourceMapInstall } from 'source-map-support';
 
 // application imports
 import { LoggerConfig } from '@infra/logger';
-import { FilesStorageApiModule } from '@modules/files-storage-app';
+import { FilesStorageAppModule } from '@modules/files-storage-app';
 import { createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
 
 async function bootstrap(): Promise<void> {
 	sourceMapInstall();
 
-	const nestApp = await NestFactory.create(FilesStorageApiModule);
+	const nestApp = await NestFactory.create(FilesStorageAppModule);
 
 	// customize nest app settings
 	nestApp.enableCors({ exposedHeaders: ['Content-Disposition'] });
