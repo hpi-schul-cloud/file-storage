@@ -22,6 +22,6 @@ const providers = [WopiUc, WopiController];
 @Module({
 	imports,
 	providers,
-	exports: [WopiUc, WopiController],
+	exports: [],
 })
 export class WopiApiModule {}
