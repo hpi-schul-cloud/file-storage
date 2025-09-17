@@ -33,7 +33,6 @@ describe('FilesStorageService get methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
-	let fileStorageConfig: DeepMocked<FileStorageConfig>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -68,7 +67,6 @@ describe('FilesStorageService get methods', () => {
 
 		service = module.get(FilesStorageService);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
-		fileStorageConfig = module.get(FileStorageConfig);
 	});
 
 	beforeEach(() => {
