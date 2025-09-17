@@ -129,7 +129,7 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, req: Request): Promise<FileRecord> {
+	public async updateFileContents(fileRecord: FileRecord, req: Request | Readable): Promise<FileRecord> {
 		const { mimeType, stream } = await this.detectMimeType(req, fileRecord.mimeType);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
