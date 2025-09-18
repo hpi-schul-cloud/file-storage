@@ -11,7 +11,6 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { Request } from 'express';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 // TODO: Create interface that is implemented in dto
@@ -33,6 +32,8 @@ import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { fileTypeStream } from './file-type.helper';
+// invalid import
+import { FileDtoBuilder } from '../../api/mapper';
 
 @Injectable()
 export class FilesStorageService {
@@ -120,6 +121,7 @@ export class FilesStorageService {
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
 		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
+		// remapped need to be removed
 		file.data = stream;
 		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
@@ -129,12 +131,12 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, req: Request | Readable): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(req, fileRecord.mimeType);
+	public async updateFileContents(fileRecord: FileRecord, readable: Readable): Promise<FileRecord> {
+		const { mimeType, stream } = await this.detectMimeType(readable, fileRecord.mimeType);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
-		const fileProcessData = { data: stream, mimeType, name: fileRecord.getName() };
-		await this.storeAndScanFile(fileProcessData, fileRecord);
+		const file = FileDtoBuilder.build(fileRecord.getName(), stream, mimeType);
+		await this.storeAndScanFile(file, fileRecord);
 
 		return fileRecord;
 	}
