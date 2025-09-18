@@ -12,10 +12,10 @@ import { cleanupCollections } from '@testing/database';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
+import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
 import FileType from '../../../domain/service/file-type.helper';
-import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
@@ -94,7 +94,7 @@ describe('File Controller (API) - preview', () => {
 		uploadPath = `/upload/school/${validId}/schools/${validId}`;
 
 		jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
-		antivirusService.checkStream.mockResolvedValueOnce({ virus_detected: false });
+		antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
 
 		return loggedInClient;
 	};

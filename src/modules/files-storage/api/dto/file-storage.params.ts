@@ -4,14 +4,15 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
 import { SanitizeHtml, StringToBoolean, StringToObject } from '@shared/transformer';
 import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { ParentInfo, PreviewOutputMimeTypes } from '../../domain/file-record.do';
 import {
 	FileRecordParentType,
+	ParentInfo,
 	PreviewInfo,
+	PreviewOutputMimeTypes,
 	PreviewWidth,
 	StorageLocation,
 	StorageLocationParams,
-} from '../../domain/interface';
+} from '../../domain';
 
 // "paramsDto" is the same information twice
 export class StorageLocationParamsDto implements StorageLocationParams {

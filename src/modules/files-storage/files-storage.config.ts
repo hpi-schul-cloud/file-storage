@@ -1,4 +1,3 @@
-import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
 import { S3Config } from '@infra/s3-client';
 import { Injectable } from '@nestjs/common';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
@@ -34,27 +33,15 @@ export class FileStorageConfig {
 	@IsString()
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
 
-	@IsBoolean()
-	@StringToBoolean()
-	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
-
+	/**
+	 * @deprecated need to be removed
+	 */
 	@IsNumber()
 	@StringToNumber()
 	COLLABORA_MAX_FILE_SIZE_IN_BYTES = 104857600;
 }
 
-export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
-	[key: string]: number;
-
-	@IsNumber()
-	@StringToNumber()
-	CORE_INCOMING_REQUEST_TIMEOUT_MS!: number;
-
-	@IsNumber()
-	@StringToNumber()
-	INCOMING_REQUEST_TIMEOUT_COPY_API_MS!: number;
-}
-
+// TODO part of @infra/s3-client' ?
 export const createS3ModuleOptions = (config: FileStorageConfig): S3Config => {
 	return {
 		connectionName: FILES_STORAGE_S3_CONNECTION,

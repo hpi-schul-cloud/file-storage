@@ -1,7 +1,6 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
 import { NotImplementedException, StreamableFile } from '@nestjs/common';
-import { StorageLocation } from '../../domain';
-import { FileRecordParentType } from '../../domain/interface';
+import { FileRecordParentType, StorageLocation } from '../../domain';
 import { GetFileResponseTestFactory } from '../../testing';
 import { FilesStorageMapper } from './files-storage.mapper';
 
