@@ -1,11 +1,13 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
-import { accessTokenResponseTestFactory } from '@infra/authorization-client/testing';
-import { accessTokenPayloadResponseTestFactory } from '@infra/authorization-client/testing/access-token-payload-response.test.factory';
+import {
+	accessTokenPayloadResponseTestFactory,
+	accessTokenResponseTestFactory,
+} from '@infra/authorization-client/testing';
 import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
-import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing';
 import { ScanStatus } from '@modules/files-storage/domain';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -15,14 +17,14 @@ import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
 // TODO
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage';
 import { FileRecordEntity } from '@modules/files-storage/repo';
 import {
 	fileRecordEntityFactory,
 	fileRecordSecurityCheckEmbeddableFactory,
 	GetFileResponseTestFactory,
 } from '@modules/files-storage/testing';
-import FileType from '../../../files-storage/domain/service/file-type.helper';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage/files-storage.config';
+import FileTypeHelper from '../../../files-storage/domain/service/file-type.helper';
 import {
 	authorizedCollaboraDocumentUrlParamsTestFactory,
 	wopiAccessTokenParamsTestFactory,
@@ -31,8 +33,8 @@ import {
 import { WopiConfig } from '../../wopi.config';
 import { EditorMode, WopiFileInfoResponse } from '../dto';
 
-// TODO???
-jest.mock('../../../domain/service/file-type.helper');
+// TODO Gefällt mir bei einem api Test nicht
+jest.mock('../../../files-storage/domain/service/file-type.helper');
 
 describe('Wopi Controller (API)', () => {
 	let app: INestApplication;
@@ -41,6 +43,7 @@ describe('Wopi Controller (API)', () => {
 	let collaboraService: DeepMocked<CollaboraService>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let wopiConfig: DeepMocked<WopiConfig>;
+	let filesStorageConfig: DeepMocked<FileStorageConfig>;
 	let em: EntityManager;
 	const collaboraMaxFileSizeInBytes = 104857600;
 
@@ -54,7 +57,7 @@ describe('Wopi Controller (API)', () => {
 			.useValue(createMock<CollaboraService>())
 			.overrideProvider(FILES_STORAGE_S3_CONNECTION)
 			.useValue(createMock<S3ClientAdapter>())
-			.overrideProvider(FileStorageConfig)
+			.overrideProvider(WopiConfig)
 			.useValue({
 				FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
 				COLLABORA_MAX_FILE_SIZE_IN_BYTES: collaboraMaxFileSizeInBytes,
@@ -68,7 +71,8 @@ describe('Wopi Controller (API)', () => {
 		em = moduleFixture.get(EntityManager);
 		collaboraService = moduleFixture.get(CollaboraService);
 		storageClient = moduleFixture.get(FILES_STORAGE_S3_CONNECTION);
-		wopiConfig = moduleFixture.get(FileStorageConfig);
+		wopiConfig = moduleFixture.get(WopiConfig);
+		filesStorageConfig = moduleFixture.get(FileStorageConfig);
 
 		testApiClient = new TestApiClient(app, '/wopi');
 	});
@@ -972,7 +976,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1010,7 +1014,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => {
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => {
 					const redableStreamWithFileType = Object.assign(readable, {
 						fileType: { mime: 'text/plain', ext: 'txt' },
 					});
@@ -1047,7 +1051,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1078,7 +1082,7 @@ describe('Wopi Controller (API)', () => {
 				const error = new ForbiddenException('Token resolution error');
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1095,6 +1099,7 @@ describe('Wopi Controller (API)', () => {
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
+				console.log(response);
 				expect(response.status).toBe(401);
 			});
 		});
@@ -1112,12 +1117,12 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 
 				wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
-				wopiConfig.FILES_STORAGE_MAX_FILE_SIZE = 0; // Set a small max file size for testing
+				filesStorageConfig.FILES_STORAGE_MAX_FILE_SIZE = 0; // Set a small max file size for testing
 
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
@@ -1143,7 +1148,7 @@ describe('Wopi Controller (API)', () => {
 				const error = new InternalServerErrorException('Token resolution error');
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1174,7 +1179,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
@@ -1206,7 +1211,7 @@ describe('Wopi Controller (API)', () => {
 				const error = new Error('Storage client error');
 				storageClient.create.mockRejectedValueOnce(error);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1286,7 +1291,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				await em.persistAndFlush(fileRecord);
 

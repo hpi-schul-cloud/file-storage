@@ -32,7 +32,7 @@ import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { fileTypeStream } from './file-type.helper';
-// invalid import
+// invalid import, move to domain?
 import { FileDtoBuilder } from '../../api/mapper';
 
 @Injectable()
@@ -129,7 +129,7 @@ export class FilesStorageService {
 		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
 
-		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
+		await this.storeAndScanFileWithRollback(fileRecord, file);
 
 		return fileRecord;
 	}
@@ -139,7 +139,7 @@ export class FilesStorageService {
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
 		const file = FileDtoBuilder.build(fileRecord.getName(), stream, mimeType);
-		await this.storeAndScanFile(file, fileRecord);
+		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
 	}
@@ -201,9 +201,9 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
+	private async storeAndScanFileWithRollback(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		try {
-			await this.storeAndScanFile(file, fileRecord);
+			await this.storeAndScanFile(fileRecord, file);
 		} catch (error) {
 			const filePath = fileRecord.createPath();
 
@@ -224,10 +224,7 @@ export class FilesStorageService {
 		return shouldStreamToAntiVirus;
 	}
 
-	private async storeAndScanFile(
-		file: { name: string; data: Readable; mimeType: string },
-		fileRecord: FileRecord
-	): Promise<void> {
+	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		const streamCompletion = this.awaitStreamCompletion(file.data);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();

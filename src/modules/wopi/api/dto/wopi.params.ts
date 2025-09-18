@@ -29,3 +29,9 @@ export class WopiAccessTokenParams {
 	@Matches(accessTokenRegex, { message: 'Token must be a valid string.' })
 	access_token!: string;
 }
+
+export class SingleFileParams {
+	@ApiProperty()
+	@IsMongoId()
+	fileRecordId!: EntityId;
+}

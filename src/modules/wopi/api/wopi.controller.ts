@@ -1,8 +1,7 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
 import { ApiValidationError } from '@infra/error';
-// TODO: Nur eine Id, eine entsprechung hierfür bei wopi ablegen
-import { SingleFileParams } from '@modules/files-storage/api/dto';
-// TODO: scheint nicht zum FilesStorage zu gehören
+import { SingleFileParams } from './dto';
+// TODO: Import
 import { FilesStorageMapper } from '@modules/files-storage/api/mapper';
 import {
 	BadRequestException,
