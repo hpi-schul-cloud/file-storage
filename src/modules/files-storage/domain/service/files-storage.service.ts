@@ -119,9 +119,12 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
+		const fileName = await this.resolveFileName(file, parentInfo);
+		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		// remapped need to be removed
+		// remapped need to be removed, see this.updateFileContents
 		file.data = stream;
 		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
@@ -145,19 +148,6 @@ export class FilesStorageService {
 		if (oldMimeType !== newMimeType) {
 			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
 		}
-	}
-
-	private async createFileRecordWithResolvedName(
-		file: FileDto,
-		parentInfo: ParentInfo,
-		userId: EntityId
-	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
-		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
-
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
-
-		return { fileRecord, stream };
 	}
 
 	private async detectMimeType(
