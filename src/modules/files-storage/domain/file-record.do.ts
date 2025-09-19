@@ -29,15 +29,19 @@ export enum PreviewStatus {
 
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
 	DOC = 'application/msword',
 	ODT = 'application/vnd.oasis.opendocument.text',
 	RTF = 'application/rtf',
 	TXT = 'text/plain',
 	XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	XLTX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
 	XLS = 'application/vnd.ms-excel',
 	ODS = 'application/vnd.oasis.opendocument.spreadsheet',
 	CSV = 'text/csv',
 	PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+	POTX = 'application/vnd.openxmlformats-officedocument.presentationml.template',
+	PPSX = 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
 	PPT = 'application/vnd.ms-powerpoint',
 	ODP = 'application/vnd.oasis.opendocument.presentation',
 }
