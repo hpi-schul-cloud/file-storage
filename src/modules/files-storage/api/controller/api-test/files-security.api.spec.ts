@@ -8,7 +8,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import FileType from '../../../domain/service/file-type.helper';
+import FileTypeHelper from '../../../domain/service/file-type.helper';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
 import { ScanResultParams } from '../../dto';
@@ -24,7 +24,7 @@ describe(`${baseRouteName} (api)`, () => {
 	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
-		jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+		jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 		const module: TestingModule = await Test.createTestingModule({
 			imports: [FilesStorageTestModule],

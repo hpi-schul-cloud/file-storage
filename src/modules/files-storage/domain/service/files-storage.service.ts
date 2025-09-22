@@ -214,11 +214,9 @@ export class FilesStorageService {
 	}
 
 	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
-		const status = this.getCollaboraEditabilityStatus(fileRecord);
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
 		const shouldStreamToAntiVirus =
-			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS &&
-			(fileRecord.isPreviewPossible() || status.isCollaboraEditable);
-		// fileRecord.isCollaboraEditable(this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES)
+			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
 
 		return shouldStreamToAntiVirus;
 	}
