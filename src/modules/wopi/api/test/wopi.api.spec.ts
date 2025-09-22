@@ -62,6 +62,8 @@ describe('Wopi Controller (API)', () => {
 				FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
 				COLLABORA_MAX_FILE_SIZE_IN_BYTES: collaboraMaxFileSizeInBytes,
 			})
+			.overrideProvider(FileStorageConfig)
+			.useValue({})
 			.compile();
 
 		app = moduleFixture.createNestApplication();
