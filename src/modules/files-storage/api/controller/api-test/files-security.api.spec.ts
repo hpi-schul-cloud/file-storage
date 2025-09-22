@@ -75,6 +75,7 @@ describe(`${baseRouteName} (api)`, () => {
 				parentType: FileRecordParentType.School,
 			});
 			const token = fileRecord.securityCheck.requestToken ?? '';
+
 			await em.persistAndFlush(fileRecord);
 			em.clear();
 
