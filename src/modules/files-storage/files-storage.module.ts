@@ -13,7 +13,7 @@ const imports = [
 	ConfigurationModule.register(FileStorageConfig),
 	ErrorModule,
 	LoggerModule,
-	AntivirusModule.forRoot(), // TODO for root() in sub Module is not ideal
+	AntivirusModule.forRoot(),
 	S3ClientModule.registerAsync({
 		injectionToken: FILES_STORAGE_S3_CONNECTION,
 		useFactory: createS3ModuleOptions,

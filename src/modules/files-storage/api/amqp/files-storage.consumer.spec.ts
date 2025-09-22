@@ -5,8 +5,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
 import { setupEntities } from '@testing/database';
 // TODO: Test Module
-import { ENTITIES } from '../../../files-storage-app/files-storage.entity.imports';
 import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
+import { ENTITIES } from '../../files-storage.entity.imports';
 import { fileRecordTestFactory, fileRecordWithStatusTestFactory } from '../../testing';
 import { CopyFilesOfParentPayload, FileRecordResponse } from '../dto';
 import { FilesStorageConsumer } from './files-storage.consumer';

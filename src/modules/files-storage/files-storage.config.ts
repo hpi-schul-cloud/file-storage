@@ -41,7 +41,6 @@ export class FileStorageConfig {
 	COLLABORA_MAX_FILE_SIZE_IN_BYTES = 104857600;
 }
 
-// TODO part of @infra/s3-client' ?
 export const createS3ModuleOptions = (config: FileStorageConfig): S3Config => {
 	return {
 		connectionName: FILES_STORAGE_S3_CONNECTION,

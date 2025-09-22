@@ -39,7 +39,7 @@ export class FilesStorageMapper {
 		return res;
 	}
 
-	// TODO nicht fileStorage spezifisch shared, infra?
+	// TODO: nicht fileStorage spezifisch shared, infra?
 	public static mapToStreamableFile(fileResponse: GetFileResponse): StreamableFile {
 		let disposition: string;
 
