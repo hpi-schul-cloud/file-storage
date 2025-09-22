@@ -633,8 +633,7 @@ describe('FilesStorageService upload methods', () => {
 				const mimeType = 'image/png';
 				const fileRecord = fileRecordTestFactory().build({ mimeType: mimeTypeProp ?? mimeType });
 
-				//  { ext: 'png', mime: 'image/png' }
-				const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+				const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // ==  { ext: 'png', mime: 'image/png' }
 				const readable = Readable.from(pngHeader);
 				const mimeTypeSpy = jest
 					.spyOn(FileTypeHelper, 'fileTypeStream')

@@ -267,8 +267,8 @@ export class FilesStorageUC {
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFilesOfParent(fileRecords);
 
-		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
-		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
+		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, count);
 
 		return response;
 	}
