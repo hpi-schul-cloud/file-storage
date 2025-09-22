@@ -31,7 +31,7 @@ import {
 	WopiAccessTokenParams,
 	WopiFileInfoResponse,
 } from './dto';
-import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFactory } from './factory';
+import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFactory, WopiUserFactory } from './factory';
 
 @Injectable()
 export class WopiUc {
@@ -93,21 +93,14 @@ export class WopiUc {
 	public async checkFileInfo(wopiToken: WopiAccessTokenParams): Promise<WopiFileInfoResponse> {
 		this.wopiService.ensureWopiEnabled();
 
-		const { fileRecordId, userId, userDisplayName, canWrite } = await this.getWopiPayload(wopiToken);
-		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
+		const wopiPayload = await this.getWopiPayload(wopiToken);
+		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
 
 		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
 		const postMessageOrigin = this.wopiService.getPostMessageOrigin();
 
-		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(
-			fileRecord,
-			{
-				id: userId,
-				userName: userDisplayName,
-				canWrite,
-			},
-			postMessageOrigin
-		);
+		const wopiUser = WopiUserFactory.build(wopiPayload);
+		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, wopiUser, postMessageOrigin);
 
 		return response;
 	}
