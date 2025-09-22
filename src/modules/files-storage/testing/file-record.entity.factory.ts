@@ -20,6 +20,10 @@ class FileRecordEntityFactory extends EntityFactory<FileRecordEntity, FileRecord
 	public asPdf(): this {
 		return this.params({ mimeType: 'application/pdf' });
 	}
+
+	public setSize(size: number): this {
+		return this.params({ size });
+	}
 }
 
 export const fileRecordEntityFactory = FileRecordEntityFactory.define(

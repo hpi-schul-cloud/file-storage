@@ -13,7 +13,6 @@ import {
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-// TODO: Create interface that is implemented in dto
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';

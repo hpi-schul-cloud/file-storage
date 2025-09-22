@@ -6,8 +6,8 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
+import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '@modules/files-storage';
 import { FilesStorageMapper } from '@modules/files-storage/api/mapper'; // TODO: puhh darüber muss man noch mal nachdenken
-import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '@modules/files-storage/domain'; // TODO export location und GetFileResponse?
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';

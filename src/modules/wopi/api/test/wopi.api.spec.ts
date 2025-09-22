@@ -230,9 +230,8 @@ describe('Wopi Controller (API)', () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 
-				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId({
-					size: collaboraMaxFileSizeInBytes + 1,
-				});
+				const size = collaboraMaxFileSizeInBytes + 1;
+				const fileRecord = fileRecordEntityFactory.asOpenDocument().setSize(size).buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withFileRecordId(fileRecord.id)
 					.withEditorMode(EditorMode.EDIT)
@@ -518,12 +517,10 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
-		// TODO: Test already exists?
 		describe('when filerecord has size exceeding the collabora limit', () => {
 			const setup = async () => {
-				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId({
-					size: collaboraMaxFileSizeInBytes + 1,
-				});
+				const size = collaboraMaxFileSizeInBytes + 1;
+				const fileRecord = fileRecordEntityFactory.asOpenDocument().setSize(size).buildWithId();
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
 				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
@@ -778,12 +775,10 @@ describe('Wopi Controller (API)', () => {
 			});
 		});
 
-		// TODO: again?
 		describe('when filerecord has size exceeding the collabora limit', () => {
 			const setup = async () => {
-				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId({
-					size: collaboraMaxFileSizeInBytes + 1,
-				});
+				const size = collaboraMaxFileSizeInBytes + 1;
+				const fileRecord = fileRecordEntityFactory.asOpenDocument().setSize(size).buildWithId();
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
 				const wopiPayload = wopiPayloadTestFactory().withFileRecordId(fileRecord.id).withCanWrite(true).build();
