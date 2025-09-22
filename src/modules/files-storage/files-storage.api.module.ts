@@ -4,7 +4,13 @@ import { ErrorModule } from '@infra/error';
 import { LoggerModule } from '@infra/logger';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { FilesStorageAdminController, FilesStorageAdminUC, FilesStorageController, FilesStorageUC } from './api';
+import {
+	FileSecurityController,
+	FilesStorageAdminController,
+	FilesStorageAdminUC,
+	FilesStorageController,
+	FilesStorageUC,
+} from './api';
 import { FilesStorageModule } from './files-storage.module';
 
 const imports = [
@@ -16,7 +22,7 @@ const imports = [
 	AuthGuardModule.register([AuthGuardOptions.JWT]),
 ];
 const providers = [FilesStorageUC, FilesStorageAdminUC];
-const controllers = [FilesStorageController, FilesStorageAdminController];
+const controllers = [FilesStorageController, FilesStorageAdminController, FileSecurityController];
 
 @Module({
 	imports,

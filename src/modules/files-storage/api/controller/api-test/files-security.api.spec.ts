@@ -82,8 +82,8 @@ describe(`${baseRouteName} (api)`, () => {
 			const response = await testApiClient.put(`/update-status/${token}`, scanResult);
 			const changedFileRecord = await em.findOneOrFail(FileRecordEntity, fileRecord.id);
 
-			expect(changedFileRecord.securityCheck.status).toStrictEqual('verified');
 			expect(response.status).toEqual(200);
+			expect(changedFileRecord.securityCheck.status).toStrictEqual('verified');
 		});
 	});
 });
