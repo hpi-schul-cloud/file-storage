@@ -1,8 +1,5 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
 import { ApiValidationError } from '@infra/error';
-import { SingleFileParams } from './dto';
-// TODO: Import
-import { FilesStorageMapper } from '@modules/files-storage/api/mapper';
 import {
 	BadRequestException,
 	ConflictException,
@@ -26,11 +23,12 @@ import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
 	PutFileResponse,
+	SingleFileParams,
 	WopiAccessTokenParams,
 	WopiFileInfoResponse,
 } from './dto';
 import { PutFileResponseFactory } from './factory';
-import { WopiErrorResponseMapper } from './mapper';
+import { StreamableFileMapper, WopiErrorResponseMapper } from './mapper';
 import { WopiUc } from './wopi.uc';
 
 @ApiTags('wopi')
@@ -91,7 +89,7 @@ export class WopiController {
 	): Promise<StreamableFile> {
 		try {
 			const fileResponse = await this.wopiUc.getFileStream(query);
-			const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
+			const streamableFile = StreamableFileMapper.fromResponse(fileResponse);
 
 			return streamableFile;
 		} catch (error) {

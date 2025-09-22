@@ -19,6 +19,7 @@ import {
 	ErrorType,
 	FileRecord,
 	FileRecordParentType,
+	FilesStorageMapper,
 	FilesStorageService,
 	GetFileResponse,
 	PreviewService,
@@ -48,7 +49,6 @@ import {
 	CopyFileResponseBuilder,
 	FileDtoBuilder,
 	FileRecordMapper,
-	FilesStorageMapper,
 	ParentStatisticMapper,
 	PreviewBuilder,
 } from '../mapper';

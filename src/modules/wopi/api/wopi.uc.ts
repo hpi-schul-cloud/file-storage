@@ -6,8 +6,13 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import { FileRecord, FileRecordParentType, FilesStorageService, GetFileResponse } from '@modules/files-storage';
-import { FilesStorageMapper } from '@modules/files-storage/api/mapper'; // TODO: puhh darüber muss man noch mal nachdenken
+import {
+	FileRecord,
+	FileRecordParentType,
+	FilesStorageMapper,
+	FilesStorageService,
+	GetFileResponse,
+} from '@modules/files-storage';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
@@ -50,10 +55,6 @@ export class WopiUc {
 
 		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 		const fileRecord = await this.filesStorageService.getFileRecord(payload.fileRecordId);
-
-		// TODO: check if this line should be added
-		// this.wopiService.checkCollaboraCompatibilityMimetype(fileRecord);
-
 		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, req);
 
 		return updatedFileRecord;

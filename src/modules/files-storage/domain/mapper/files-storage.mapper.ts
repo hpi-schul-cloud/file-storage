@@ -1,6 +1,6 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
-import { NotImplementedException, StreamableFile } from '@nestjs/common';
-import { ErrorType, FileRecordParentType, GetFileResponse, StorageLocation } from '../../domain';
+import { NotImplementedException } from '@nestjs/common';
+import { ErrorType, FileRecordParentType, StorageLocation } from '..';
 
 export class FilesStorageMapper {
 	private static readonly authorizationEntityMap = new Map<FileRecordParentType, AuthorizationBodyParamsReferenceType>([
@@ -37,26 +37,5 @@ export class FilesStorageMapper {
 		}
 
 		return res;
-	}
-
-	// TODO: nicht fileStorage spezifisch shared, infra?
-	public static mapToStreamableFile(fileResponse: GetFileResponse): StreamableFile {
-		let disposition: string;
-
-		if (fileResponse.contentType === 'application/pdf') {
-			disposition = `inline;`;
-		} else {
-			disposition = `attachment;`;
-		}
-
-		const encodedFileName = encodeURIComponent(fileResponse.name);
-
-		const streamableFile = new StreamableFile(fileResponse.data, {
-			type: fileResponse.contentType,
-			disposition: `${disposition}; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`,
-			length: fileResponse.contentLength,
-		});
-
-		return streamableFile;
 	}
 }
