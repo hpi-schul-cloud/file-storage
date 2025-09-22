@@ -1,12 +1,12 @@
 import { createMock } from '@golevelup/ts-jest';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { cleanupCollections } from '@testing/database';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
-import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
 import FileType from '../../../domain/service/file-type.helper';
 import { FileRecordEntity } from '../../../repo';

@@ -7,12 +7,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { FileRecordEntity } from '@modules/files-storage/repo';
 import { EntityId } from '@shared/domain/types';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FilesStorageTestModule } from '../../../../files-storage-app/testing/files-storage.test.module';
 import { ErrorType, FileRecordParentType, PreviewStatus } from '../../../domain';
 import FileType from '../../../domain/service/file-type.helper';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
