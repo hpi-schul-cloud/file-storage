@@ -17,11 +17,13 @@ const imports = [
 	AuthGuardModule.register([AuthGuardOptions.JWT]),
 	AuthorizationClientModule.register(),
 ];
-const providers = [WopiUc, WopiController];
+const providers = [WopiUc];
+const controllers = [WopiController];
 
 @Module({
 	imports,
 	providers,
+	controllers,
 	exports: [],
 })
 export class WopiApiModule {}

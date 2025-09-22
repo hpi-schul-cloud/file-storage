@@ -14,7 +14,7 @@ export class WopiService {
 
 	public ensureWopiEnabled(): void {
 		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
-			throw new NotFoundException('WOPI feature is disabled');
+			throw new NotFoundException('WOPI feature is disabled.');
 		}
 	}
 
@@ -23,7 +23,7 @@ export class WopiService {
 
 		if (!isCollaboraEditable) {
 			throw new NotFoundException(
-				'File blocked due to suspected virus, mimetype not collabora compatible or file size exceeds limit'
+				'File blocked due to suspected virus, mimetype not collabora compatible or file size exceeds limit.'
 			);
 		}
 	}

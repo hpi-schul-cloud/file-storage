@@ -51,7 +51,8 @@ export class WopiUc {
 		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 		const fileRecord = await this.filesStorageService.getFileRecord(payload.fileRecordId);
 
-		this.wopiService.checkCollaboraCompatibilityMimetype(fileRecord);
+		// TODO: check if this line should be added
+		// this.wopiService.checkCollaboraCompatibilityMimetype(fileRecord);
 
 		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, req);
 
