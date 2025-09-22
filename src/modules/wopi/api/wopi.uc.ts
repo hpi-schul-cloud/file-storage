@@ -97,8 +97,8 @@ export class WopiUc {
 		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
 
 		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
-		const postMessageOrigin = this.wopiService.getPostMessageOrigin();
 
+		const postMessageOrigin = this.wopiService.getPostMessageOrigin();
 		const wopiUser = WopiUserFactory.build(wopiPayload);
 		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, wopiUser, postMessageOrigin);
 
@@ -108,8 +108,8 @@ export class WopiUc {
 	public async getFileStream(wopiToken: WopiAccessTokenParams): Promise<GetFileResponse> {
 		this.wopiService.ensureWopiEnabled();
 
-		const { fileRecordId } = await this.getWopiPayload(wopiToken);
-		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
+		const wopiPayload = await this.getWopiPayload(wopiToken);
+		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
 
 		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
 
