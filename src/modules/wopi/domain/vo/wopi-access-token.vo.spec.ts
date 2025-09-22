@@ -1,18 +1,18 @@
-import { randomUUID } from 'crypto';
+import { generateNanoId } from '@testing/factory/nanoid.factory';
 import { WopiAccessToken } from './wopi-access-token.vo';
 
 describe('WopiAccessToken', () => {
 	describe('constructor', () => {
 		describe('when token is valid', () => {
 			const setup = () => {
-				const token = randomUUID();
+				const token = generateNanoId();
 
 				return {
 					token,
 				};
 			};
 
-			it('should create WoipAccessToken with valid UUID token', () => {
+			it('should create WoipAccessToken with valid 24 chars alpha numeric token', () => {
 				const { token } = setup();
 
 				const result = new WopiAccessToken({ token });
