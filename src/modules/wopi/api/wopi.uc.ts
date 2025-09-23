@@ -11,8 +11,7 @@ import { FileRecord, FilesStorageMapper, GetFileResponse } from '@modules/files-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
-import { AuthorizedCollaboraDocumentUrlFactory, WopiPayload, WopiPayloadFactory } from '../domain';
-import { WopiService } from '../domain/wopi.service';
+import { AuthorizedCollaboraDocumentUrlFactory, WopiPayload, WopiPayloadFactory, WopiService } from '../domain';
 import { WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,

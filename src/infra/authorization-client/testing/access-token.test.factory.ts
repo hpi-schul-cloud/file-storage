@@ -1,4 +1,4 @@
-import { generateNanoId } from '@testing/factory/nanoid.factory';
+import { generateNanoId } from '../testing';
 import { AccessToken, AccessTokenFactory } from '../vo';
 
 class AccessTokenTestFactory {

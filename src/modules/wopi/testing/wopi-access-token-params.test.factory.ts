@@ -1,4 +1,4 @@
-import { generateNanoId } from '@testing/factory/nanoid.factory';
+import { generateNanoId } from '@infra/authorization-client/testing';
 import { WopiAccessTokenParams } from '../api/dto';
 
 class WopiAccessTokenParamsTestFactory {

@@ -1,8 +1,8 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { generateNanoId } from '@infra/authorization-client/testing';
 import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { REQUEST } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { generateNanoId } from '@testing/factory/nanoid.factory';
 import { AxiosResponse } from 'axios';
 import { Request } from 'express';
 import { randomBytes } from 'node:crypto';

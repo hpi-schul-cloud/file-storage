@@ -1,4 +1,4 @@
-import { generateNanoId } from '@testing/factory/nanoid.factory';
+import { generateNanoId } from '../testing/nanoid.test.factory';
 import { AccessToken } from './access-token.vo';
 
 describe('AccessToken', () => {

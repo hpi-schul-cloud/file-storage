@@ -1,4 +1,4 @@
-import { generateNanoId } from '@testing/factory/nanoid.factory';
+import { generateNanoId } from '@infra/authorization-client/testing';
 import { AuthorizedCollaboraDocumentUrl } from '../domain';
 
 class AuthorizedCollaboraDocumentUrlTestFactory {
