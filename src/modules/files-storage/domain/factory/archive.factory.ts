@@ -1,7 +1,7 @@
 import { Logger } from '@infra/logger';
 import { InternalServerErrorException } from '@nestjs/common';
 import archiver from 'archiver';
-import { PassThrough } from 'stream';
+import { PassThrough } from 'node:stream';
 import { FileRecord } from '../file-record.do';
 import { GetFileResponse } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
