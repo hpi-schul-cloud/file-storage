@@ -15,17 +15,17 @@ export function Configuration() {
 			constructor(...args: any[]) {
 				super(...args);
 				const proxyInstance = new Proxy(this, {
-					set: (target, prop, value): true => {
+					set: (target: any, prop: string | symbol, value: unknown): true => {
 						const propertyAccessKeys: PropertyAccessKey[] = this.getPropertyAccessKeys();
 						const propKey =
 							propertyAccessKeys.find((item: PropertyAccessKey) => item.key === prop)?.propertyKey ?? prop;
 						if (propKey) {
-							(target as any)[propKey] = value;
+							target[propKey] = value;
 						}
 
 						return true;
 					},
-					get: (target, prop, receiver): any => {
+					get: (target: any, prop: string | symbol, receiver: any): any => {
 						const value = Reflect.get(target, prop, receiver);
 
 						return value;
