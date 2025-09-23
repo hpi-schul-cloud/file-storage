@@ -1,7 +1,7 @@
 import { ConfigurationModule } from '@infra/configuration';
 import { FilesStorageModule } from '@modules/files-storage';
 import { Module } from '@nestjs/common';
-import { WopiService } from './domain/wopi.service';
+import { WopiService } from './domain';
 import { WopiConfig } from './wopi.config';
 
 @Module({

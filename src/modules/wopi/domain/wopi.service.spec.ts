@@ -1,5 +1,5 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FilesStorageService, ScanStatus } from '@modules/files-storage/domain';
+import { FilesStorageService, ScanStatus } from '@modules/files-storage';
 import { fileRecordTestFactory, GetFileResponseTestFactory } from '@modules/files-storage/testing';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { Test, TestingModule } from '@nestjs/testing';
