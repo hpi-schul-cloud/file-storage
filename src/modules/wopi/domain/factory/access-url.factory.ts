@@ -1,5 +1,6 @@
+import { AccessToken } from '@infra/authorization-client';
 import { EntityId } from '@shared/domain/types';
-import { AccessToken, AuthorizedCollaboraDocumentUrl } from '../vo/';
+import { AuthorizedCollaboraDocumentUrl } from '../vo/';
 
 export class AuthorizedCollaboraDocumentUrlFactory {
 	public static build(url: string): AuthorizedCollaboraDocumentUrl {

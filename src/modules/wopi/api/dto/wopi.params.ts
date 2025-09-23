@@ -1,8 +1,8 @@
 /* eslint-disable max-classes-per-file */
+import { accessTokenRegex } from '@infra/authorization-client';
 import { ApiProperty } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
 import { IsEnum, IsMongoId, IsString, Matches, MaxLength } from 'class-validator';
-import { accessTokenRegex } from '../../domain';
 
 export enum EditorMode {
 	EDIT = 'edit',

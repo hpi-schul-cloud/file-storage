@@ -1,5 +1,5 @@
+import { accessTokenTestFactory } from '@infra/authorization-client/testing';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { wopiAccessTokenTestFactory } from '../../testing';
 import { AuthorizedCollaboraDocumentUrl } from '../vo/access-url.vo';
 import { AuthorizedCollaboraDocumentUrlFactory } from './access-url.factory';
 
@@ -21,7 +21,7 @@ describe('AuthorizedCollaboraDocumentUrlFactory', () => {
 			const onlineEditorUrl = 'https://editor.example.com';
 			const wopiSrc = 'https://wopi.example.com/wopi';
 			const fileRecordId = new ObjectId().toHexString();
-			const accessToken = wopiAccessTokenTestFactory().build();
+			const accessToken = accessTokenTestFactory().build();
 
 			return {
 				onlineEditorUrl,
