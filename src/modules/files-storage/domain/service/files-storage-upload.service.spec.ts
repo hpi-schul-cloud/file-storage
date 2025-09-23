@@ -7,8 +7,7 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReadableStreamWithFileType } from 'file-type';
-import { PassThrough, Readable } from 'stream';
-import { FileDtoMapper } from '../../api/mapper';
+import { PassThrough, Readable } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import {
 	fileDtoTestFactory,
@@ -18,7 +17,7 @@ import {
 } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileRecordFactory } from '../factory';
+import { FileDtoBuilder, FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
@@ -1036,9 +1035,9 @@ describe('FilesStorageService upload methods', () => {
 				readable.on('data', () => {
 					readable.emit('error', new Error('Stream error'));
 				});
-				const file = FileDtoMapper.build(fileRecord.getName(), readable, mimeType);
+				const file = FileDtoBuilder.build(fileRecord.getName(), readable, mimeType);
 				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
-				jest.spyOn(FileDtoMapper, 'build').mockImplementationOnce(() => {
+				jest.spyOn(FileDtoBuilder, 'build').mockImplementationOnce(() => {
 					return file;
 				});
 
