@@ -5,7 +5,7 @@ import { FilesStorageConfigResponse } from './dto';
 import { ConfigResponseMapper } from './mapper.ts';
 
 @Injectable()
-export class FilesStorageConfigUC {
+export class FilesStorageConfigUc {
 	constructor(
 		private readonly wopiConfig: WopiConfig,
 		private readonly filesStorageConfig: FileStorageConfig
