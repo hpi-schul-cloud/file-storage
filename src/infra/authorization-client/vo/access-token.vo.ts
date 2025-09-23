@@ -4,8 +4,8 @@ import { Matches } from 'class-validator';
 export const accessTokenRegex = /^[a-zA-Z0-9_-]{24}$/;
 
 @ValueObject()
-export class WopiAccessToken {
-	constructor(props: WopiAccessToken) {
+export class AccessToken {
+	constructor(props: AccessToken) {
 		this.token = props.token;
 	}
 

@@ -1,5 +1,5 @@
 import { EntityId } from '@shared/domain/types';
-import { AuthorizedCollaboraDocumentUrl, WopiAccessToken } from '../vo/';
+import { AccessToken, AuthorizedCollaboraDocumentUrl } from '../vo/';
 
 export class AuthorizedCollaboraDocumentUrlFactory {
 	public static build(url: string): AuthorizedCollaboraDocumentUrl {
@@ -10,7 +10,7 @@ export class AuthorizedCollaboraDocumentUrlFactory {
 		collaboraDomain: string,
 		wopiSrc: string,
 		fileRecordId: EntityId,
-		accessToken: WopiAccessToken
+		accessToken: AccessToken
 	): AuthorizedCollaboraDocumentUrl {
 		const domain = new URL(collaboraDomain);
 		domain.searchParams.set('WOPISrc', `${wopiSrc}/${fileRecordId}`);

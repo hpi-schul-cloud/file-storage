@@ -1,4 +1,5 @@
 import {
+	AccessToken,
 	AuthorizationClientAdapter,
 	AuthorizationContextBuilder,
 	AuthorizationContextParams,
@@ -16,13 +17,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
-import {
-	AuthorizedCollaboraDocumentUrlFactory,
-	WopiAccessToken,
-	WopiAccessTokenFactory,
-	WopiPayload,
-	WopiPayloadFactory,
-} from '../domain';
+import { AuthorizedCollaboraDocumentUrlFactory, WopiPayload, WopiPayloadFactory } from '../domain';
 import { WopiService } from '../domain/wopi.service';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
@@ -133,11 +128,11 @@ export class WopiUc {
 		referenceId: EntityId,
 		editorMode: EditorMode,
 		payload: WopiPayload
-	): Promise<WopiAccessToken> {
+	): Promise<AccessToken> {
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 		const authorizationContext = this.authorizationContext(editorMode);
 
-		const response = await this.authorizationClientAdapter.createToken({
+		const accessToken = await this.authorizationClientAdapter.createToken({
 			referenceType,
 			referenceId,
 			context: authorizationContext,
@@ -145,9 +140,7 @@ export class WopiUc {
 			tokenTtlInSeconds: this.wopiService.getTokenTtlInSeconds(),
 		});
 
-		const wopiAccessToken = WopiAccessTokenFactory.buildFromString(response.token);
-
-		return wopiAccessToken;
+		return accessToken;
 	}
 
 	private authorizationContext(editorMode: EditorMode): AuthorizationContextParams {

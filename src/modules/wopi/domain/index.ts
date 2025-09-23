@@ -1,2 +1,2 @@
-export { AuthorizedCollaboraDocumentUrlFactory, WopiAccessTokenFactory, WopiPayloadFactory } from './factory';
-export { accessTokenRegex, AuthorizedCollaboraDocumentUrl, WopiAccessToken, WopiPayload } from './vo';
+export { AuthorizedCollaboraDocumentUrlFactory, WopiPayloadFactory } from './factory';
+export { AuthorizedCollaboraDocumentUrl, WopiPayload } from './vo';

@@ -31,7 +31,7 @@ import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { fileTypeStream } from './file-type.helper';
-// invalid import, move to domain?
+// invalid import
 import { FileDtoBuilder } from '../../api/mapper';
 
 @Injectable()

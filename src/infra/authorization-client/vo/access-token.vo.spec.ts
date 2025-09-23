@@ -1,7 +1,7 @@
 import { generateNanoId } from '@testing/factory/nanoid.factory';
-import { WopiAccessToken } from './wopi-access-token.vo';
+import { AccessToken } from './access-token.vo';
 
-describe('WopiAccessToken', () => {
+describe('AccessToken', () => {
 	describe('constructor', () => {
 		describe('when token is valid', () => {
 			const setup = () => {
@@ -12,10 +12,10 @@ describe('WopiAccessToken', () => {
 				};
 			};
 
-			it('should create WoipAccessToken with valid 24 chars alpha numeric token', () => {
+			it('should create AccessToken with valid 24 chars alpha numeric token', () => {
 				const { token } = setup();
 
-				const result = new WopiAccessToken({ token });
+				const result = new AccessToken({ token });
 
 				expect(result.token).toBe(token);
 			});
@@ -33,7 +33,7 @@ describe('WopiAccessToken', () => {
 			it('should throw an error', () => {
 				const { token } = setup();
 
-				expect(() => new WopiAccessToken({ token })).toThrowError();
+				expect(() => new AccessToken({ token })).toThrowError();
 			});
 		});
 	});

@@ -17,6 +17,7 @@ import {
 	AuthorizationForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
+import { AccessTokenFactory } from './vo';
 
 @Injectable()
 export class AuthorizationClientAdapter {
@@ -72,8 +73,9 @@ export class AuthorizationClientAdapter {
 			const options = this.createOptionParams();
 
 			const response = await this.authorizationApi.authorizationReferenceControllerCreateToken(params, options);
+			const accessToken = AccessTokenFactory.buildFromString(response.data.token);
 
-			return response.data;
+			return accessToken;
 		} catch (error) {
 			if (isAxiosError(error)) {
 				error = new AxiosErrorLoggable(error, 'CREATE_ACCESS_TOKEN_FAILED');

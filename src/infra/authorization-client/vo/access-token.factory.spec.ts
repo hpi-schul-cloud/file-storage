@@ -1,12 +1,12 @@
 import { generateNanoId } from '@testing/factory/nanoid.factory';
-import { WopiAccessTokenFactory } from './wopi-access-token.factory';
+import { AccessTokenFactory } from './access-token.factory';
 
-describe('WopiAccessTokenFactory', () => {
+describe('AccessTokenFactory', () => {
 	describe('build', () => {
 		it('should create a WopiAccessToken with the provided token', () => {
 			const token = generateNanoId();
 
-			const result = WopiAccessTokenFactory.build({ token });
+			const result = AccessTokenFactory.build({ token });
 
 			expect(result.token).toBe(token);
 		});
@@ -16,7 +16,7 @@ describe('WopiAccessTokenFactory', () => {
 		it('should create a WopiAccessToken from a string token', () => {
 			const token = generateNanoId();
 
-			const result = WopiAccessTokenFactory.buildFromString(token);
+			const result = AccessTokenFactory.buildFromString(token);
 
 			expect(result.token).toBe(token);
 		});
