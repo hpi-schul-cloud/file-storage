@@ -1,4 +1,3 @@
-import { createMock } from '@golevelup/ts-jest';
 import { ScanStatus } from '@modules/files-storage/domain';
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -16,10 +15,10 @@ describe('WopiService', () => {
 				WopiService,
 				{
 					provide: WopiConfig,
-					useValue: createMock<WopiConfig>({
+					useValue: {
 						FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
 						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600,
-					}),
+					},
 				},
 			],
 		}).compile();
@@ -79,9 +78,7 @@ describe('WopiService', () => {
 		it('should not throw if WOPI feature is enabled', () => {
 			wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
-			const result = wopiService.ensureWopiEnabled();
-
-			expect(result).toBe(undefined);
+			expect(wopiService.ensureWopiEnabled()).toEqual(undefined);
 		});
 	});
 
