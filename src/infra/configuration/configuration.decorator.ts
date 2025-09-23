@@ -50,8 +50,9 @@ export function Configuration() {
 			}
 
 			private getPropertyAccessKeys(): PropertyAccessKey[] {
-				//@ts-expect-error - We are dynamically setting properties
-				return this.__proto__.__propertyAccessKeys ?? [];
+				const propertyAccessKeys = Object.getPrototypeOf(this).__propertyAccessKeys ?? [];
+
+				return propertyAccessKeys;
 			}
 		};
 	};
