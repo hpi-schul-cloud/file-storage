@@ -7,18 +7,13 @@ import {
 } from '@infra/authorization-client';
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
-import {
-	FileRecord,
-	FileRecordParentType,
-	FilesStorageMapper,
-	FilesStorageService,
-	GetFileResponse,
-} from '@modules/files-storage';
-import { Injectable } from '@nestjs/common';
+import { FileRecord, FilesStorageMapper, GetFileResponse } from '@modules/files-storage';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import { AuthorizedCollaboraDocumentUrlFactory, WopiPayload, WopiPayloadFactory } from '../domain';
 import { WopiService } from '../domain/wopi.service';
+import { WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
@@ -31,26 +26,20 @@ import { AuthorizedCollaboraDocumentUrlResponseFactory, WopiFileInfoResponseFact
 @Injectable()
 export class WopiUc {
 	constructor(
-		private readonly filesStorageService: FilesStorageService,
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
 		private readonly logger: Logger,
 		private readonly collaboraService: CollaboraService,
-		private readonly wopiService: WopiService
+		private readonly wopiService: WopiService,
+		private readonly config: WopiConfig
 	) {
 		this.logger.setContext(WopiUc.name);
 	}
 
-	public async putFile(query: WopiAccessTokenParams, req: Request): Promise<FileRecord> {
-		this.wopiService.ensureWopiEnabled();
+	public async putFile(wopiToken: WopiAccessTokenParams, req: Request): Promise<FileRecord> {
+		this.ensureWopiEnabled();
 
-		const result = await this.authorizationClientAdapter.resolveToken(
-			query.access_token,
-			this.wopiService.getTokenTtlInSeconds()
-		);
-
-		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
-		const fileRecord = await this.filesStorageService.getFileRecord(payload.fileRecordId);
-		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, req);
+		const wopiPayload = await this.getWopiPayload(wopiToken);
+		const updatedFileRecord = await this.wopiService.updateFileContents(wopiPayload, req);
 
 		return updatedFileRecord;
 	}
@@ -59,20 +48,14 @@ export class WopiUc {
 		userId: EntityId,
 		params: AuthorizedCollaboraDocumentUrlParams
 	): Promise<AuthorizedCollaboraDocumentUrlResponse> {
-		this.wopiService.ensureWopiEnabled();
+		this.ensureWopiEnabled();
 
-		const { fileRecordId, userDisplayName, editorMode } = params;
-		const fileRecord: FileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
-		const { parentId, parentType } = fileRecord.getProps();
+		const fileRecord = await this.wopiService.getFileRecord(params.fileRecordId);
 
-		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
-
-		const canWrite = editorMode === EditorMode.EDIT;
-		const payload = WopiPayloadFactory.buildFromParams(fileRecord.id, canWrite, userDisplayName, userId);
-
-		const accessToken = await this.checkPermissionAndCreateAccessToken(parentType, parentId, editorMode, payload);
+		const payload = this.buildWopiPayload(userId, params);
+		const accessToken = await this.checkPermissionAndCreateAccessToken(fileRecord, params, payload);
 		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
-		const wopiUrl = this.wopiService.getWopiUrl();
+		const wopiUrl = this.config.WOPI_URL;
 
 		const url = AuthorizedCollaboraDocumentUrlFactory.buildFromParams(
 			collaboraUrl,
@@ -86,37 +69,42 @@ export class WopiUc {
 	}
 
 	public async checkFileInfo(wopiToken: WopiAccessTokenParams): Promise<WopiFileInfoResponse> {
-		this.wopiService.ensureWopiEnabled();
+		this.ensureWopiEnabled();
 
 		const wopiPayload = await this.getWopiPayload(wopiToken);
-		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
+		const fileRecord = await this.wopiService.getFileRecord(wopiPayload.fileRecordId);
 
-		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
-
-		const postMessageOrigin = this.wopiService.getPostMessageOrigin();
 		const wopiUser = WopiUserFactory.build(wopiPayload);
-		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(fileRecord, wopiUser, postMessageOrigin);
+		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(
+			fileRecord,
+			wopiUser,
+			this.config.WOPI_POST_MESSAGE_ORIGIN
+		);
 
 		return response;
 	}
 
 	public async getFileStream(wopiToken: WopiAccessTokenParams): Promise<GetFileResponse> {
-		this.wopiService.ensureWopiEnabled();
+		this.ensureWopiEnabled();
 
 		const wopiPayload = await this.getWopiPayload(wopiToken);
-		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
-
-		this.wopiService.throwIfNotCollaboraEditable(fileRecord);
-
-		const fileResponse = await this.filesStorageService.downloadFile(fileRecord);
+		const fileResponse = await this.wopiService.getFile(wopiPayload);
 
 		return fileResponse;
+	}
+
+	private buildWopiPayload(userId: EntityId, params: AuthorizedCollaboraDocumentUrlParams): WopiPayload {
+		const { fileRecordId, userDisplayName, editorMode } = params;
+		const canWrite = editorMode === EditorMode.EDIT;
+		const payload = WopiPayloadFactory.buildFromParams(fileRecordId, canWrite, userDisplayName, userId);
+
+		return payload;
 	}
 
 	private async getWopiPayload(wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
 		const result = await this.authorizationClientAdapter.resolveToken(
 			wopiToken.access_token,
-			this.wopiService.getTokenTtlInSeconds()
+			this.config.WOPI_TOKEN_TTL_IN_SECONDS
 		);
 		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 
@@ -124,20 +112,20 @@ export class WopiUc {
 	}
 
 	private async checkPermissionAndCreateAccessToken(
-		parentType: FileRecordParentType,
-		referenceId: EntityId,
-		editorMode: EditorMode,
+		fileRecord: FileRecord,
+		params: AuthorizedCollaboraDocumentUrlParams,
 		payload: WopiPayload
 	): Promise<AccessToken> {
+		const { parentId, parentType } = fileRecord.getParentInfo();
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
-		const authorizationContext = this.authorizationContext(editorMode);
+		const authorizationContext = this.authorizationContext(params.editorMode);
 
 		const accessToken = await this.authorizationClientAdapter.createToken({
 			referenceType,
-			referenceId,
+			referenceId: parentId,
 			context: authorizationContext,
 			payload,
-			tokenTtlInSeconds: this.wopiService.getTokenTtlInSeconds(),
+			tokenTtlInSeconds: this.config.WOPI_TOKEN_TTL_IN_SECONDS,
 		});
 
 		return accessToken;
@@ -152,5 +140,11 @@ export class WopiUc {
 		}
 
 		return context;
+	}
+
+	public ensureWopiEnabled(): void {
+		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
+			throw new NotFoundException('WOPI feature is disabled.');
+		}
 	}
 }

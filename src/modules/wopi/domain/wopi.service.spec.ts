@@ -16,7 +16,6 @@ describe('WopiService', () => {
 				{
 					provide: WopiConfig,
 					useValue: {
-						FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
 						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600,
 					},
 				},
@@ -33,53 +32,6 @@ describe('WopiService', () => {
 
 	afterEach(() => {
 		jest.resetAllMocks();
-		wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
-	});
-
-	describe('checkCollaboraCompatibilityMimetype', () => {
-		describe('when mimetype is not collabora compatible', () => {
-			const setup = () => {
-				const fileRecord = fileRecordTestFactory().asApplicationOctetStream().build();
-
-				return { fileRecord };
-			};
-
-			it('should throw NotFoundException if mimetype is not collabora compatible', () => {
-				const { fileRecord } = setup();
-
-				expect(() => wopiService.checkCollaboraCompatibilityMimetype(fileRecord)).toThrow(
-					'File mimetype not collabora compatible.'
-				);
-			});
-		});
-
-		describe('when mimetype is collabora compatible', () => {
-			const setup = () => {
-				const fileRecord = fileRecordTestFactory().asOpenDocument().build();
-
-				return { fileRecord };
-			};
-
-			it('should not throw if mimetype is collabora compatible', () => {
-				const { fileRecord } = setup();
-
-				expect(() => wopiService.checkCollaboraCompatibilityMimetype(fileRecord)).not.toThrow();
-			});
-		});
-	});
-
-	describe('ensureWopiEnabled', () => {
-		it('should throw NotFoundException if WOPI feature is disabled', () => {
-			wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
-
-			expect(() => wopiService.ensureWopiEnabled()).toThrow('WOPI feature is disabled.');
-		});
-
-		it('should not throw if WOPI feature is enabled', () => {
-			wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
-
-			expect(wopiService.ensureWopiEnabled()).toEqual(undefined);
-		});
 	});
 
 	describe('throwIfNotCollaboraEditable', () => {
@@ -126,30 +78,6 @@ describe('WopiService', () => {
 					});
 				expect(() => wopiService.throwIfNotCollaboraEditable(fileRecord)).not.toThrow();
 			});
-		});
-	});
-
-	describe('getTokenTtlInSeconds', () => {
-		it('should return the token TTL in seconds from config', () => {
-			const ttl = wopiService.getTokenTtlInSeconds();
-
-			expect(ttl).toBe(wopiConfig.WOPI_TOKEN_TTL_IN_SECONDS);
-		});
-	});
-
-	describe('getWopiUrl', () => {
-		it('should return the WOPI URL from config', () => {
-			const url = wopiService.getWopiUrl();
-
-			expect(url).toBe(wopiConfig.WOPI_URL);
-		});
-	});
-
-	describe('getPostMessageOrigin', () => {
-		it('should return the WOPI post message origin from config', () => {
-			const origin = wopiService.getPostMessageOrigin();
-
-			expect(origin).toBe(wopiConfig.WOPI_POST_MESSAGE_ORIGIN);
 		});
 	});
 });

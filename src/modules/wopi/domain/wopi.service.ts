@@ -1,21 +1,36 @@
-import { FileRecord } from '@modules/files-storage/domain';
+import { FileRecord, FilesStorageService, GetFileResponse } from '@modules/files-storage';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Readable } from 'node:stream';
 import { WopiConfig } from '../wopi.config';
+import { WopiPayload } from './vo';
 
 @Injectable()
 export class WopiService {
-	constructor(private readonly config: WopiConfig) {}
+	constructor(
+		private readonly config: WopiConfig,
+		private readonly filesStorageService: FilesStorageService
+	) {}
 
-	public checkCollaboraCompatibilityMimetype(fileRecord: FileRecord): void {
-		if (!fileRecord.hasCollaboraCompatibleMimeType()) {
-			throw new NotFoundException('File mimetype not collabora compatible.');
-		}
+	public async updateFileContents(wopiPayload: WopiPayload, readable: Readable): Promise<FileRecord> {
+		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
+		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, readable);
+
+		return updatedFileRecord;
 	}
 
-	public ensureWopiEnabled(): void {
-		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
-			throw new NotFoundException('WOPI feature is disabled.');
-		}
+	public async getFile(wopiPayload: WopiPayload): Promise<GetFileResponse> {
+		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
+		this.throwIfNotCollaboraEditable(fileRecord);
+		const fileResponse = await this.filesStorageService.downloadFile(fileRecord);
+
+		return fileResponse;
+	}
+
+	public async getFileRecord(fileRecordId: string): Promise<FileRecord> {
+		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
+		this.throwIfNotCollaboraEditable(fileRecord);
+
+		return fileRecord;
 	}
 
 	public throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
@@ -26,17 +41,5 @@ export class WopiService {
 				'File blocked due to suspected virus, mimetype not collabora compatible or file size exceeds limit.'
 			);
 		}
-	}
-
-	public getTokenTtlInSeconds(): number {
-		return this.config.WOPI_TOKEN_TTL_IN_SECONDS;
-	}
-
-	public getWopiUrl(): string {
-		return this.config.WOPI_URL;
-	}
-
-	public getPostMessageOrigin(): string {
-		return this.config.WOPI_POST_MESSAGE_ORIGIN;
 	}
 }
