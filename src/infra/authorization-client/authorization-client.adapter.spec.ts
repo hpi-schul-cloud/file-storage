@@ -2,6 +2,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { REQUEST } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
+import { generateNanoId } from '@testing/factory/nanoid.factory';
 import { AxiosResponse } from 'axios';
 import { Request } from 'express';
 import { randomBytes } from 'node:crypto';
@@ -21,6 +22,7 @@ import {
 	AuthorizationForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
+import { AccessToken } from './vo';
 
 jest.mock('@infra/error/loggable');
 
@@ -356,20 +358,20 @@ describe(AuthorizationClientAdapter.name, () => {
 					payload: {},
 				};
 				const expectedResponse = createMock<AxiosResponse<AccessTokenResponse>>({
-					data: { token: 'abc' },
+					data: { token: generateNanoId() },
 				});
 
 				authorizationApi.authorizationReferenceControllerCreateToken.mockResolvedValueOnce(expectedResponse);
 
-				return { params, expectedResponse };
+				return { params };
 			};
 
-			it('should return the token response', async () => {
-				const { params, expectedResponse } = setup();
+			it('should return AccessTokenResponse', async () => {
+				const { params } = setup();
 
 				const result = await service.createToken(params);
 
-				expect(result).toEqual(expectedResponse.data);
+				expect(result).toBeInstanceOf(AccessToken);
 			});
 		});
 

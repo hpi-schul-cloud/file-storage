@@ -6,7 +6,6 @@ import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { Request } from 'express';
 import {
 	AccessTokenPayloadResponse,
-	AccessTokenResponse,
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParams,
@@ -17,7 +16,7 @@ import {
 	AuthorizationForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
-import { AccessTokenFactory } from './vo';
+import { AccessToken, AccessTokenFactory } from './vo';
 
 @Injectable()
 export class AuthorizationClientAdapter {
@@ -68,7 +67,7 @@ export class AuthorizationClientAdapter {
 		}
 	}
 
-	public async createToken(params: CreateAccessTokenParams): Promise<AccessTokenResponse> {
+	public async createToken(params: CreateAccessTokenParams): Promise<AccessToken> {
 		try {
 			const options = this.createOptionParams();
 
