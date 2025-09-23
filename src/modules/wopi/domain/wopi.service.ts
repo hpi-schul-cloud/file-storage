@@ -19,8 +19,7 @@ export class WopiService {
 	}
 
 	public async getFile(fileRecordId: EntityId): Promise<GetFileResponse> {
-		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
-		this.throwIfNotCollaboraEditable(fileRecord);
+		const fileRecord = await this.getFileRecord(fileRecordId);
 		const fileResponse = await this.filesStorageService.downloadFile(fileRecord);
 
 		return fileResponse;
