@@ -1,6 +1,7 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
 import { NotImplementedException } from '@nestjs/common';
-import { ErrorType, FileRecordParentType, StorageLocation } from '..';
+import { ErrorType } from '../error';
+import { FileRecordParentType, StorageLocation } from '../interface';
 
 export class FilesStorageMapper {
 	private static readonly authorizationEntityMap = new Map<FileRecordParentType, AuthorizationBodyParamsReferenceType>([
