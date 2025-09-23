@@ -1,6 +1,6 @@
 import { DeepPartial } from 'fishery';
 import { Readable } from 'stream';
-import { FileDtoBuilder } from '../api/mapper';
+import { FileDtoMapper } from '../api/mapper';
 import { FileDto } from '../domain';
 
 class FileDtoTestFactory {
@@ -14,11 +14,7 @@ class FileDtoTestFactory {
 		const props = { ...this.props, ...params };
 		const data = params.data ?? props.data;
 
-		const fileDto = FileDtoBuilder.build(
-			params.name ?? props.name,
-			data as Readable,
-			params.mimeType ?? props.mimeType
-		);
+		const fileDto = FileDtoMapper.build(params.name ?? props.name, data as Readable, params.mimeType ?? props.mimeType);
 
 		return fileDto;
 	}

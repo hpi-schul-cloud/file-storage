@@ -47,7 +47,7 @@ import {
 } from '../dto';
 import {
 	CopyFileResponseBuilder,
-	FileDtoBuilder,
+	FileDtoMapper,
 	FileRecordMapper,
 	ParentStatisticMapper,
 	PreviewBuilder,
@@ -139,7 +139,7 @@ export class FilesStorageUC {
 			let fileRecordPromise: Promise<FileRecord>;
 
 			bb.on('file', (_name, file, info) => {
-				const fileDto = FileDtoBuilder.buildFromBusboyFileInfo(info, file);
+				const fileDto = FileDtoMapper.buildFromBusboyFileInfo(info, file);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
@@ -168,7 +168,7 @@ export class FilesStorageUC {
 		await this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId);
 
 		const response = await this.getResponse(params);
-		const fileDto = FileDtoBuilder.buildFromAxiosResponse(params.fileName, response);
+		const fileDto = FileDtoMapper.buildFromAxiosResponse(params.fileName, response);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);

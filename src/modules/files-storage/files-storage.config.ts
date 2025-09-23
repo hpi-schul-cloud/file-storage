@@ -34,7 +34,7 @@ export class FileStorageConfig {
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
 
 	/**
-	 * @deprecated need to be removed
+	 * @deprecated is config from wopi module, but we need it here until we refactor isCollaboraEditable logic
 	 */
 	@IsNumber()
 	@StringToNumber()

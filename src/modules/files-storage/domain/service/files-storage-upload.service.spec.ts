@@ -8,7 +8,7 @@ import { BadRequestException, InternalServerErrorException } from '@nestjs/commo
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReadableStreamWithFileType } from 'file-type';
 import { PassThrough, Readable } from 'stream';
-import { FileDtoBuilder } from '../../api/mapper';
+import { FileDtoMapper } from '../../api/mapper';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import {
 	fileDtoTestFactory,
@@ -1036,9 +1036,9 @@ describe('FilesStorageService upload methods', () => {
 				readable.on('data', () => {
 					readable.emit('error', new Error('Stream error'));
 				});
-				const file = FileDtoBuilder.build(fileRecord.getName(), readable, mimeType);
+				const file = FileDtoMapper.build(fileRecord.getName(), readable, mimeType);
 				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
-				jest.spyOn(FileDtoBuilder, 'build').mockImplementationOnce(() => {
+				jest.spyOn(FileDtoMapper, 'build').mockImplementationOnce(() => {
 					return file;
 				});
 

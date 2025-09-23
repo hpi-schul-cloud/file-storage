@@ -15,7 +15,7 @@ import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { ArchiveFactory, FileDtoBuilder, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
@@ -31,8 +31,6 @@ import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { fileTypeStream } from './file-type.helper';
-// invalid import
-import { FileDtoBuilder } from '../../api/mapper';
 
 @Injectable()
 export class FilesStorageService {
