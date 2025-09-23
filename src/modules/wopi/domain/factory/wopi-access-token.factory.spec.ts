@@ -1,10 +1,10 @@
-import { randomUUID } from 'crypto';
+import { generateNanoId } from '@testing/factory/nanoid.factory';
 import { WopiAccessTokenFactory } from './wopi-access-token.factory';
 
 describe('WopiAccessTokenFactory', () => {
 	describe('build', () => {
 		it('should create a WopiAccessToken with the provided token', () => {
-			const token = randomUUID();
+			const token = generateNanoId();
 
 			const result = WopiAccessTokenFactory.build({ token });
 
@@ -14,7 +14,7 @@ describe('WopiAccessTokenFactory', () => {
 
 	describe('buildFromString', () => {
 		it('should create a WopiAccessToken from a string token', () => {
-			const token = randomUUID();
+			const token = generateNanoId();
 
 			const result = WopiAccessTokenFactory.buildFromString(token);
 

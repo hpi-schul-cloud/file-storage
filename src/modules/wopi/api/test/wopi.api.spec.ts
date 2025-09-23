@@ -7,8 +7,15 @@ import {
 import { CollaboraService } from '@infra/collabora';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing';
 import { ScanStatus } from '@modules/files-storage/domain';
+import { FileRecordEntity } from '@modules/files-storage/repo';
+import {
+	fileRecordEntityFactory,
+	fileRecordSecurityCheckEmbeddableFactory,
+	GetFileResponseTestFactory,
+} from '@modules/files-storage/testing';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
@@ -16,14 +23,6 @@ import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
-// TODO
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage';
-import { FileRecordEntity } from '@modules/files-storage/repo';
-import {
-	fileRecordEntityFactory,
-	fileRecordSecurityCheckEmbeddableFactory,
-	GetFileResponseTestFactory,
-} from '@modules/files-storage/testing';
 import FileTypeHelper from '../../../files-storage/domain/service/file-type.helper';
 import {
 	authorizedCollaboraDocumentUrlParamsTestFactory,
@@ -33,7 +32,6 @@ import {
 import { WopiConfig } from '../../wopi.config';
 import { EditorMode, WopiFileInfoResponse } from '../dto';
 
-// TODO Gefällt mir bei einem api Test nicht
 jest.mock('../../../files-storage/domain/service/file-type.helper');
 
 describe('Wopi Controller (API)', () => {
