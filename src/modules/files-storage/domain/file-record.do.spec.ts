@@ -2,11 +2,100 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
-import { FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
+import { CollaboraMimeTypes, FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
 import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
-import { ScanStatus } from './security-check.vo';
+import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
+	describe('exceedsCollaboraEditableFileSize', () => {
+		it('should return false if file size is less than collaboraMaxFileSizeInBytes', () => {
+			const fileRecord = fileRecordTestFactory().build();
+			const maxSize = fileRecord.sizeInByte + 1;
+
+			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+		});
+
+		it('should return false if file size is equal to collaboraMaxFileSizeInBytes', () => {
+			const fileRecord = fileRecordTestFactory().build();
+			const maxSize = fileRecord.sizeInByte;
+
+			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+		});
+
+		it('should return true if file size is greater than collaboraMaxFileSizeInBytes', () => {
+			const fileRecord = fileRecordTestFactory().build();
+			const maxSize = fileRecord.sizeInByte - 1;
+
+			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(true);
+		});
+	});
+
+	describe('isCollaboraEditable', () => {
+		describe('when file is blocked', () => {
+			it('should return false for collabora editable file', () => {
+				const fileRecordDOCX = fileRecordTestFactory()
+					.withScanStatus(ScanStatus.BLOCKED)
+					.build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecordDOCX.sizeInByte;
+
+				expect(fileRecordDOCX.isCollaboraEditable(maxSize)).toBe(false);
+			});
+
+			it('should return false for a non-collabora editable file', () => {
+				const fileRecordWebp = fileRecordTestFactory()
+					.withScanStatus(ScanStatus.BLOCKED)
+					.build({ mimeType: 'image/webp' });
+				const maxSize = fileRecordWebp.sizeInByte;
+
+				expect(fileRecordWebp.isCollaboraEditable(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file size exceeds collabora max file size', () => {
+			it('should return false for collabora editable file', () => {
+				const fileRecordDOCX = fileRecordTestFactory().build({
+					mimeType: CollaboraMimeTypes.DOCX,
+				});
+				const maxSize = fileRecordDOCX.sizeInByte - 1;
+
+				expect(fileRecordDOCX.isCollaboraEditable(maxSize)).toBe(false);
+			});
+
+			it('should return false for a non-collabora editable file', () => {
+				const fileRecordWebp = fileRecordTestFactory().build({
+					mimeType: 'image/webp',
+				});
+				const maxSize = fileRecordWebp.sizeInByte - 1;
+
+				expect(fileRecordWebp.isCollaboraEditable(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file is not blocked and size is within limit', () => {
+			it('should return true for all Collabora-supported mime types', () => {
+				const collaboraMimeTypes = Object.values(CollaboraMimeTypes);
+				for (const mimeType of collaboraMimeTypes) {
+					const fileRecord = fileRecordTestFactory().build({ mimeType });
+					const maxSize = fileRecord.sizeInByte;
+
+					expect(fileRecord.isCollaboraEditable(maxSize)).toBe(true);
+				}
+			});
+
+			it('should return false for a non-Collabora mime type', () => {
+				const fileRecordPng = fileRecordTestFactory().build({ mimeType: 'image/png' });
+				const maxSize = fileRecordPng.sizeInByte;
+				expect(fileRecordPng.isCollaboraEditable(maxSize)).toBe(false);
+
+				const fileRecordPdf = fileRecordTestFactory().build({ mimeType: 'application/pdf' });
+				expect(fileRecordPdf.isCollaboraEditable(maxSize)).toBe(false);
+
+				const fileRecordMp3 = fileRecordTestFactory().build({ mimeType: 'audio/mpeg' });
+				expect(fileRecordMp3.isCollaboraEditable(maxSize)).toBe(false);
+			});
+		});
+	});
+
 	describe('hasDuplicateName', () => {
 		const setup = () => {
 			const fileRecords = [
@@ -287,9 +376,9 @@ describe('FileRecord', () => {
 			expect(fileRecord.sizeInByte).toBe(newSize);
 		});
 
-		it('should throw BadRequestException if size is less than or equal to 0', () => {
+		it('should throw BadRequestException if size is less than 0', () => {
 			const fileRecord = fileRecordTestFactory().build();
-			const invalidSize = 0;
+			const invalidSize = -1;
 			const maxSize = 4096;
 
 			// Assert exception is thrown
@@ -373,6 +462,28 @@ describe('FileRecord', () => {
 
 				expect(result.size).toBe(0);
 			});
+		});
+	});
+
+	describe('getName', () => {
+		it('should return the name of the file record', () => {
+			const name = 'test-file.txt';
+			const fileRecord = fileRecordTestFactory().build({ name });
+
+			const result = fileRecord.getName();
+
+			expect(result).toBe(name);
+		});
+	});
+
+	describe('getMimeType', () => {
+		it('should return the mime type of the file record', () => {
+			const mimeType = 'image/png';
+			const fileRecord = fileRecordTestFactory().build({ mimeType });
+
+			const result = fileRecord.getMimeType();
+
+			expect(result).toBe(mimeType);
 		});
 	});
 });

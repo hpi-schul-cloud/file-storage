@@ -2,6 +2,8 @@ import { Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
+export const AntivirusExchange = 'antivirus';
+
 @Configuration()
 export class AntivirusConfig {
 	// the antivirus service is enabled
@@ -11,9 +13,6 @@ export class AntivirusConfig {
 	// base url for the file storage service
 	@IsString()
 	FILE_STORAGE_SERVICE_URL!: string;
-	// rabbitmq exchange name for antivirus
-	@IsString()
-	ANTIVIRUS_EXCHANGE = 'antivirus';
 	// rabbitmq routing key for antivirus
 	@IsString()
 	ANTIVIRUS_ROUTING_KEY = 'scan_file_v2';

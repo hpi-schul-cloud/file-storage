@@ -1,4 +1,4 @@
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
+import { FileRecordEntity } from '@modules/files-storage/repo';
 import { EntityId } from '@shared/domain/types';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
@@ -27,7 +28,8 @@ describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
 	let testApiClient: TestApiClient;
-	let authorizationClientAdapter: AuthorizationClientAdapter;
+	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
+	let storageClient: DeepMocked<S3ClientAdapter>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -48,6 +50,7 @@ describe(`${baseRouteName} (api)`, () => {
 		em = module.get(EntityManager);
 		testApiClient = new TestApiClient(app, baseRouteName);
 		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
+		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 	});
 
 	afterAll(async () => {
@@ -179,6 +182,8 @@ describe(`${baseRouteName} (api)`, () => {
 					securityCheckStatus: 'pending',
 					size: expect.any(Number),
 					previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+					isCollaboraEditable: true,
+					exceedsCollaboraEditableFileSize: false,
 				});
 			});
 
@@ -241,6 +246,78 @@ describe(`${baseRouteName} (api)`, () => {
 		});
 
 		describe(`with valid request data`, () => {
+			describe('WHEN storage client resolves', () => {
+				const setup = async () => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+					const validId = new ObjectId().toHexString();
+
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+					const result = await loggedInClient
+						.post(`/upload/school/${validId}/schools/${validId}`)
+						.attach('file', Buffer.from('abcd'), 'test1.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response = result.body as FileRecordResponse;
+					const fileRecordId = response.id;
+
+					return { loggedInClient, fileRecordId };
+				};
+
+				it('should return status 200 for successful request', async () => {
+					const { loggedInClient, fileRecordId } = await setup();
+
+					const response = await loggedInClient.delete(`/delete/${fileRecordId}`);
+
+					expect(response.status).toEqual(200);
+				});
+
+				it('should return right type of data', async () => {
+					const { loggedInClient, fileRecordId } = await setup();
+
+					const result = await loggedInClient.delete(`/delete/${fileRecordId}`);
+					const response = result.body as FileRecordResponse;
+
+					expect(response).toStrictEqual({
+						creatorId: expect.any(String),
+						id: expect.any(String),
+						name: expect.any(String),
+						url: expect.any(String),
+						parentId: expect.any(String),
+						createdAt: expect.any(String),
+						updatedAt: expect.any(String),
+						parentType: 'schools',
+						mimeType: 'text/plain',
+						deletedSince: expect.any(String),
+						securityCheckStatus: 'pending',
+						size: expect.any(Number),
+						previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+						isCollaboraEditable: true,
+						exceedsCollaboraEditableFileSize: false,
+					});
+				});
+
+				it('should return elements of requested scope', async () => {
+					const { loggedInClient, fileRecordId } = await setup();
+					const otherFileRecords = fileRecordEntityFactory.buildList(3, {
+						parentType: FileRecordParentType.School,
+					});
+
+					await em.persistAndFlush(otherFileRecords);
+					em.clear();
+
+					const result = await loggedInClient.delete(`/delete/${fileRecordId}`);
+					const response = result.body as FileRecordResponse;
+
+					expect(response.id).toEqual(fileRecordId);
+				});
+			});
+		});
+
+		describe('WHEN storage client rejects', () => {
 			const setup = async () => {
 				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
 
@@ -249,6 +326,8 @@ describe(`${baseRouteName} (api)`, () => {
 				const validId = new ObjectId().toHexString();
 
 				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+
+				storageClient.moveToTrash.mockRejectedValueOnce(new Error('Storage client error'));
 
 				const result = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -261,50 +340,22 @@ describe(`${baseRouteName} (api)`, () => {
 				return { loggedInClient, fileRecordId };
 			};
 
-			it('should return status 200 for successful request', async () => {
+			it('should return status 500 for error', async () => {
 				const { loggedInClient, fileRecordId } = await setup();
 
 				const response = await loggedInClient.delete(`/delete/${fileRecordId}`);
 
-				expect(response.status).toEqual(200);
+				expect(response.status).toEqual(500);
 			});
 
 			it('should return right type of data', async () => {
 				const { loggedInClient, fileRecordId } = await setup();
 
-				const result = await loggedInClient.delete(`/delete/${fileRecordId}`);
-				const response = result.body as FileRecordResponse;
+				await loggedInClient.delete(`/delete/${fileRecordId}`);
 
-				expect(response).toStrictEqual({
-					creatorId: expect.any(String),
-					id: expect.any(String),
-					name: expect.any(String),
-					url: expect.any(String),
-					parentId: expect.any(String),
-					createdAt: expect.any(String),
-					updatedAt: expect.any(String),
-					parentType: 'schools',
-					mimeType: 'text/plain',
-					deletedSince: expect.any(String),
-					securityCheckStatus: 'pending',
-					size: expect.any(Number),
-					previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
-				});
-			});
-
-			it('should return elements of requested scope', async () => {
-				const { loggedInClient, fileRecordId } = await setup();
-				const otherFileRecords = fileRecordEntityFactory.buildList(3, {
-					parentType: FileRecordParentType.School,
-				});
-
-				await em.persistAndFlush(otherFileRecords);
-				em.clear();
-
-				const result = await loggedInClient.delete(`/delete/${fileRecordId}`);
-				const response = result.body as FileRecordResponse;
-
-				expect(response.id).toEqual(fileRecordId);
+				const fileRecord = await em.findOneOrFail(FileRecordEntity, { id: fileRecordId });
+				expect(fileRecord).toBeDefined();
+				expect(fileRecord.deletedSince).toBeUndefined();
 			});
 		});
 	});
@@ -406,6 +457,8 @@ describe(`${baseRouteName} (api)`, () => {
 								securityCheckStatus: 'pending',
 								size: expect.any(Number),
 								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
+								exceedsCollaboraEditableFileSize: false,
 							},
 							{
 								creatorId: expect.any(String),
@@ -421,6 +474,8 @@ describe(`${baseRouteName} (api)`, () => {
 								securityCheckStatus: 'pending',
 								size: expect.any(Number),
 								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
+								exceedsCollaboraEditableFileSize: false,
 							},
 						],
 						total: 2,

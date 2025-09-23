@@ -20,6 +20,9 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	@Property({ nullable: true })
 	deletedSince?: Date;
 
+	@Property({ nullable: true })
+	contentLastModifiedAt?: Date;
+
 	@Property()
 	size!: number;
 

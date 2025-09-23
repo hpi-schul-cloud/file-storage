@@ -3,13 +3,13 @@ import { DeepPartial } from 'fishery';
 import { randomUUID } from 'node:crypto';
 import {
 	FileRecord,
+	FileRecordFactory,
 	FileRecordParentType,
 	FileRecordProps,
 	FileRecordSecurityCheck,
 	ScanStatus,
 	StorageLocation,
 } from '../domain';
-import { FileRecordFactory } from '../domain/file-record.factory';
 
 class FileRecordTestFactory {
 	private sequence = 0;
@@ -27,6 +27,7 @@ class FileRecordTestFactory {
 		deletedSince: undefined,
 		createdAt: new Date(Date.now() - 1000),
 		updatedAt: new Date(Date.now() - 1000),
+		contentLastModifiedAt: new Date(Date.now() - 500),
 	};
 
 	private securityCheck = FileRecordSecurityCheck.createWithDefaultProps();

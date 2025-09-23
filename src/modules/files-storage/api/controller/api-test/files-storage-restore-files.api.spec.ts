@@ -175,6 +175,8 @@ describe(`${baseRouteName} (api)`, () => {
 					securityCheckStatus: 'pending',
 					size: expect.any(Number),
 					previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+					isCollaboraEditable: true,
+					exceedsCollaboraEditableFileSize: false,
 				});
 			});
 
@@ -287,6 +289,8 @@ describe(`${baseRouteName} (api)`, () => {
 					securityCheckStatus: 'pending',
 					size: expect.any(Number),
 					previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+					isCollaboraEditable: true,
+					exceedsCollaboraEditableFileSize: false,
 				});
 			});
 

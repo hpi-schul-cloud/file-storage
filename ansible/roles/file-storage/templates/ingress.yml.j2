@@ -41,3 +41,10 @@ spec:
             port:
               number: 4444
         pathType: Prefix
+      - path: /api/v3/wopi/
+        backend:
+          service:
+            name: file-storage-svc
+            port:
+              number: 4444
+        pathType: Prefix

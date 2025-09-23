@@ -16,12 +16,21 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FileRecord, ParentInfo } from '../file-record.do';
-import { FileRecordFactory } from '../file-record.factory';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import {
+	CollaboraEditabilityStatus,
+	CopyFileResult,
+	FILE_RECORD_REPO,
+	FileRecordRepo,
+	FileRecordWithStatus,
+	GetFileResponse,
+	StorageLocationParams,
+} from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-import { ParentStatistic } from '../parent-statistic.vo';
-import { ScanStatus } from '../security-check.vo';
+
+import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { FileRecordStatus } from '../interface';
+import { ParentStatistic, ScanStatus } from '../vo';
 import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 
@@ -75,20 +84,69 @@ export class FilesStorageService {
 		return countedFileRecords;
 	}
 
+	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
+		const scanStatus = fileRecord.scanStatus;
+		const previewStatus = fileRecord.getPreviewStatus();
+		const collaboraEditabilityStatus = this.getCollaboraEditabilityStatus(fileRecord);
+
+		const status = {
+			scanStatus,
+			previewStatus,
+			...collaboraEditabilityStatus,
+		};
+
+		return status;
+	}
+
+	public getFileRecordsWithStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
+		return fileRecords.map((fileRecord) => ({
+			fileRecord,
+			status: this.getFileRecordStatus(fileRecord),
+		}));
+	}
+
+	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
+		const { COLLABORA_MAX_FILE_SIZE_IN_BYTES } = this.config;
+		const status = {
+			isCollaboraEditable: fileRecord.isCollaboraEditable(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+		};
+
+		return status;
+	}
+
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const { fileRecord, stream } = await this.createFileRecord(file, parentInfo, userId);
+		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
 		file.data = stream;
 		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
 
-		await this.createFileInStorageAndRollbackOnError(fileRecord, file);
+		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
 
 		return fileRecord;
 	}
 
-	private async createFileRecord(
+	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
+		const { mimeType, stream } = await this.detectMimeType(file);
+		this.checkMimeType(fileRecord.mimeType, mimeType);
+
+		// MimeType Detection consumes part of the stream, so the restored stream is passed on
+		file.data = stream;
+
+		await this.storeAndScanFile(file, fileRecord);
+
+		return fileRecord;
+	}
+
+	private checkMimeType(oldMimeType: string, newMimeType: string): void {
+		if (oldMimeType !== newMimeType) {
+			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
+		}
+	}
+
+	private async createFileRecordWithResolvedName(
 		file: FileDto,
 		parentInfo: ParentInfo,
 		userId: EntityId
@@ -96,15 +154,14 @@ export class FilesStorageService {
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file);
 
-		// Create fileRecord with 0 as initial file size, because it is overwritten later anyway.
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, 0, mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 
 		return { fileRecord, stream };
 	}
 
 	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
 		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = file.data.pipe(new PassThrough());
+			const source = this.createPipedStream(file.data);
 			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
 
 			const mimeType = detectedMimeType ?? file.mimeType;
@@ -113,6 +170,10 @@ export class FilesStorageService {
 		}
 
 		return { mimeType: file.mimeType, stream: file.data };
+	}
+
+	private createPipedStream(data: Readable): PassThrough {
+		return data.pipe(new PassThrough());
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
@@ -146,55 +207,69 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private async createFileInStorageAndRollbackOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
-		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
-
+	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		try {
-			const fileSizePromise = this.countFileSize(file);
-
-			if (useStreamToAntivirus && fileRecord.isPreviewPossible()) {
-				const streamToAntivirus = file.data.pipe(new PassThrough());
-
-				const [, antivirusClientResponse] = await Promise.all([
-					this.storageClient.create(filePath, file),
-					this.antivirusService.checkStream(streamToAntivirus),
-				]);
-				const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
-				fileRecord.updateSecurityCheckStatus(status, reason);
-			} else {
-				await this.storageClient.create(filePath, file);
-			}
-
-			// The actual file size is set here because it is known only after the whole file is streamed.
-			const fileRecordSize = await fileSizePromise;
-
-			fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
-
-			await this.fileRecordRepo.save(fileRecord);
-
-			if (!useStreamToAntivirus || !fileRecord.isPreviewPossible()) {
-				await this.sendToAntivirus(fileRecord);
-			}
+			await this.storeAndScanFile(file, fileRecord);
 		} catch (error) {
+			const filePath = fileRecord.createPath();
+
 			await this.storageClient.delete([filePath]);
 			await this.fileRecordRepo.delete(fileRecord);
+
 			throw error;
 		}
 	}
 
-	private countFileSize(file: FileDto): Promise<number> {
-		const promise = new Promise<number>((resolve) => {
-			let fileSize = 0;
+	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
+		const streamCompletion = this.awaitStreamCompletion(file.data);
+		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
+		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
+		const filePath = fileRecord.createPath();
+		const status = this.getCollaboraEditabilityStatus(fileRecord);
 
-			file.data.on('data', (chunk: Buffer) => {
-				fileSize += chunk.length;
-			});
+		const shouldStreamToAntiVirus =
+			useStreamToAntivirus && (fileRecord.isPreviewPossible() || status.isCollaboraEditable);
 
-			file.data.on('end', () => resolve(fileSize));
+		if (shouldStreamToAntiVirus) {
+			const streamToAntivirus = this.createPipedStream(file.data);
+
+			const [, antivirusClientResponse] = await Promise.all([
+				this.storageClient.create(filePath, file),
+				this.antivirusService.checkStream(streamToAntivirus),
+			]);
+			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
+			fileRecord.updateSecurityCheckStatus(status, reason);
+		} else {
+			await this.storageClient.create(filePath, file);
+		}
+
+		await this.throwOnIncompleteStream(streamCompletion);
+
+		const fileRecordSize = fileSizeObserver.getFileSize();
+
+		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
+		fileRecord.touchContentLastModifiedAt();
+
+		await this.fileRecordRepo.save(fileRecord);
+
+		if (!shouldStreamToAntiVirus) {
+			await this.sendToAntivirus(fileRecord);
+		}
+	}
+
+	private async throwOnIncompleteStream(streamPromise: Promise<void>): Promise<void> {
+		try {
+			await streamPromise;
+		} catch (err) {
+			throw new InternalServerErrorException('File stream error', { cause: err });
+		}
+	}
+
+	private awaitStreamCompletion(stream: Readable): Promise<void> {
+		return new Promise((resolve, reject) => {
+			stream.on('end', resolve);
+			stream.on('error', reject);
 		});
-
-		return promise;
 	}
 
 	private async sendToAntivirus(fileRecord: FileRecord): Promise<void> {
@@ -212,6 +287,12 @@ export class FilesStorageService {
 		const maxFileSize = this.config.FILES_STORAGE_MAX_FILE_SIZE;
 
 		return maxFileSize;
+	}
+
+	public getCollaboraMaxFileSize(): number {
+		const collaboraMaxFileSize = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+
+		return collaboraMaxFileSize;
 	}
 
 	// update
@@ -312,9 +393,15 @@ export class FilesStorageService {
 		try {
 			await this.deleteFilesInFilesStorageClient(fileRecords);
 		} catch (error) {
-			await this.fileRecordRepo.save(fileRecords);
+			this.rollbackFileRecords(fileRecords);
+
 			throw error;
 		}
+	}
+
+	private async rollbackFileRecords(fileRecords: FileRecord[]): Promise<void> {
+		FileRecord.unmarkForDelete(fileRecords);
+		await this.fileRecordRepo.save(fileRecords);
 	}
 
 	public async delete(fileRecords: FileRecord[]): Promise<void> {

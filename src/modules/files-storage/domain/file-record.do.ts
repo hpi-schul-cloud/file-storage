@@ -5,7 +5,7 @@ import { EntityId } from '@shared/domain/types';
 import path from 'path';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
-import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './security-check.vo';
+import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',
@@ -27,6 +27,25 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
 
+export enum CollaboraMimeTypes {
+	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+	DOC = 'application/msword',
+	ODT = 'application/vnd.oasis.opendocument.text',
+	RTF = 'application/rtf',
+	TXT = 'text/plain',
+	XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+	XLTX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+	XLS = 'application/vnd.ms-excel',
+	ODS = 'application/vnd.oasis.opendocument.spreadsheet',
+	CSV = 'text/csv',
+	PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+	POTX = 'application/vnd.openxmlformats-officedocument.presentationml.template',
+	PPSX = 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+	PPT = 'application/vnd.ms-powerpoint',
+	ODP = 'application/vnd.oasis.opendocument.presentation',
+}
+
 export interface FileRecordProps extends AuthorizableObject {
 	id: EntityId;
 	size: number;
@@ -42,6 +61,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	isUploading?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
+	contentLastModifiedAt?: Date;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -184,10 +204,30 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.props.name;
 	}
 
+	public getMimeType(): string {
+		return this.props.mimeType;
+	}
+
 	public isPreviewPossible(): boolean {
 		const isPreviewPossible = Object.values<string>(PreviewInputMimeTypes).includes(this.props.mimeType);
 
 		return isPreviewPossible;
+	}
+
+	public exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes: number): boolean {
+		const exceedsFileSize = this.props.size > collaboraMaxFileSizeInBytes;
+
+		return exceedsFileSize;
+	}
+
+	public isCollaboraEditable(collaboraMaxFileSizeInBytes: number): boolean {
+		const isBlocked = this.securityCheck.isBlocked();
+		const hasCollaboraCompatibleMimeType = Object.values<string>(CollaboraMimeTypes).includes(this.props.mimeType);
+		const exceedsFileSize = this.exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes);
+
+		const isEditable = hasCollaboraCompatibleMimeType && !isBlocked && !exceedsFileSize;
+
+		return isEditable;
 	}
 
 	public getParentInfo(): ParentInfo {
@@ -246,7 +286,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	private setSizeInByte(sizeInByte: number, maxSizeInByte: number): void {
-		if (sizeInByte <= 0) {
+		if (sizeInByte < 0) {
 			throw new BadRequestException(ErrorType.FILE_IS_EMPTY);
 		}
 		if (sizeInByte > maxSizeInByte) {
@@ -277,5 +317,13 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		const filePath = [folderPath, hash].join('/');
 
 		return filePath;
+	}
+
+	public getContentLastModifiedAt(): Date | undefined {
+		return this.props.contentLastModifiedAt;
+	}
+
+	public touchContentLastModifiedAt(): void {
+		this.props.contentLastModifiedAt = new Date();
 	}
 }

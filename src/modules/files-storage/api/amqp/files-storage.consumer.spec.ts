@@ -6,13 +6,14 @@ import { EntityId } from '@shared/domain/types';
 import { setupEntities } from '@testing/database';
 import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
 import { ENTITIES } from '../../files-storage.entity.imports';
-import { fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, fileRecordWithStatusTestFactory } from '../../testing';
 import { CopyFilesOfParentPayload, FileRecordResponse } from '../dto';
 import { FilesStorageConsumer } from './files-storage.consumer';
 
 describe('FilesStorageConsumer', () => {
 	let module: TestingModule;
 	let filesStorageService: DeepMocked<FilesStorageService>;
+	let previewService: DeepMocked<PreviewService>;
 	let service: FilesStorageConsumer;
 
 	afterEach(() => {
@@ -47,6 +48,7 @@ describe('FilesStorageConsumer', () => {
 		}).compile();
 
 		filesStorageService = module.get(FilesStorageService);
+		previewService = module.get(PreviewService);
 		service = module.get(FilesStorageConsumer);
 	});
 
@@ -92,7 +94,7 @@ describe('FilesStorageConsumer', () => {
 					},
 				};
 				const responseData = [{ id: '1', sourceId: '2', name: 'test.txt' }];
-				filesStorageService.copyFilesOfParent.mockResolvedValue([responseData, responseData.length]);
+				filesStorageService.copyFilesOfParent.mockResolvedValueOnce([responseData, responseData.length]);
 				const response = await service.copyFilesOfParent(payload);
 				expect(response.message).toEqual(responseData);
 			});
@@ -116,7 +118,7 @@ describe('FilesStorageConsumer', () => {
 						storageLocation: StorageLocation.SCHOOL,
 					},
 				};
-				filesStorageService.copyFilesOfParent.mockResolvedValue([[], 0]);
+				filesStorageService.copyFilesOfParent.mockResolvedValueOnce([[], 0]);
 				const response = await service.copyFilesOfParent(payload);
 				expect(response.message).toEqual([]);
 			});
@@ -125,12 +127,13 @@ describe('FilesStorageConsumer', () => {
 
 	describe('fileRecordsOfParent()', () => {
 		describe('WHEN valid file exists', () => {
-			it('should call filesStorageService.fileRecordsOfParent with params', async () => {
+			it('should call filesStorageService.getFileRecordsOfParent and filesStorageService.getFileRecordsWithStatus with params', async () => {
 				const parentId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValue([[], 0]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
 				await service.getFilesOfParent(parentId);
-				expect(filesStorageService.getFileRecordsOfParent).toBeCalledWith(parentId);
+				expect(filesStorageService.getFileRecordsOfParent).toHaveBeenCalledWith(parentId);
+				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith([]);
 			});
 
 			it('should return array instances of FileRecordResponse', async () => {
@@ -139,8 +142,11 @@ describe('FilesStorageConsumer', () => {
 				const fileRecords = fileRecordTestFactory().buildList(3, {
 					parentId,
 				});
+				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValue([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
+
 				const response = await service.getFilesOfParent(parentId);
 				expect(response.message[0]).toBeInstanceOf(FileRecordResponse);
 			});
@@ -150,7 +156,9 @@ describe('FilesStorageConsumer', () => {
 			it('should return RpcMessage with empty array', async () => {
 				const parentId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValue([[], 0]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce([]);
+
 				const response = await service.getFilesOfParent(parentId);
 				expect(response).toStrictEqual({ message: [] });
 			});
@@ -163,7 +171,10 @@ describe('FilesStorageConsumer', () => {
 				const parentId = new ObjectId().toHexString();
 
 				const fileRecords = fileRecordTestFactory().buildList(3);
-				filesStorageService.getFileRecordsOfParent.mockResolvedValue([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+
+				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				return { parentId, fileRecords };
 			};
@@ -173,7 +184,15 @@ describe('FilesStorageConsumer', () => {
 
 				await service.deleteFilesOfParent(parentId);
 
-				expect(filesStorageService.getFileRecordsOfParent).toBeCalledWith(parentId);
+				expect(filesStorageService.getFileRecordsOfParent).toHaveBeenCalledWith(parentId);
+			});
+
+			it('should call previewService.deletePreviews with params', async () => {
+				const { parentId, fileRecords } = setup();
+
+				await service.deleteFilesOfParent(parentId);
+
+				expect(previewService.deletePreviews).toHaveBeenCalledWith(fileRecords);
 			});
 
 			it('should call filesStorageService.deleteFilesOfParent with params', async () => {
@@ -181,7 +200,15 @@ describe('FilesStorageConsumer', () => {
 
 				await service.deleteFilesOfParent(parentId);
 
-				expect(filesStorageService.deleteFilesOfParent).toBeCalledWith(fileRecords);
+				expect(filesStorageService.deleteFilesOfParent).toHaveBeenCalledWith(fileRecords);
+			});
+
+			it('should call filesStorageService.getFileRecordsWithStatus with params', async () => {
+				const { parentId, fileRecords } = setup();
+
+				await service.deleteFilesOfParent(parentId);
+
+				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith(fileRecords);
 			});
 
 			it('should return array instances of FileRecordResponse', async () => {
@@ -197,7 +224,8 @@ describe('FilesStorageConsumer', () => {
 			const setup = () => {
 				const parentId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValue([[], 0]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce([]);
 
 				return { parentId };
 			};
@@ -218,10 +246,21 @@ describe('FilesStorageConsumer', () => {
 				const recordId = new ObjectId().toHexString();
 
 				const fileRecord = fileRecordTestFactory().build();
-				filesStorageService.getFileRecord.mockResolvedValue(fileRecord);
+				filesStorageService.getFileRecord.mockResolvedValueOnce(fileRecord);
+
+				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(1);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				return { recordId, fileRecord };
 			};
+
+			it('should call previewService.deletePreviews with params', async () => {
+				const { recordId, fileRecord } = setup();
+
+				await service.deleteFiles([recordId]);
+
+				expect(previewService.deletePreviews).toHaveBeenCalledWith([fileRecord]);
+			});
 
 			it('should call filesStorageService.deleteFiles with params', async () => {
 				const { recordId, fileRecord } = setup();
@@ -229,8 +268,16 @@ describe('FilesStorageConsumer', () => {
 				await service.deleteFiles([recordId]);
 
 				const result = [fileRecord];
-				expect(filesStorageService.getFileRecord).toBeCalledWith(recordId);
-				expect(filesStorageService.delete).toBeCalledWith(result);
+				expect(filesStorageService.getFileRecord).toHaveBeenCalledWith(recordId);
+				expect(filesStorageService.delete).toHaveBeenCalledWith(result);
+			});
+
+			it('should call filesStorageService.getFileRecordsWithStatus with params', async () => {
+				const { recordId, fileRecord } = setup();
+
+				await service.deleteFiles([recordId]);
+
+				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith([fileRecord]);
 			});
 
 			it('should return array instances of FileRecordResponse', async () => {
@@ -246,7 +293,7 @@ describe('FilesStorageConsumer', () => {
 			const setup = () => {
 				const recordId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecord.mockRejectedValue(new Error('not found'));
+				filesStorageService.getFileRecord.mockRejectedValueOnce(new Error('not found'));
 
 				return { recordId };
 			};
@@ -265,7 +312,10 @@ describe('FilesStorageConsumer', () => {
 				const creatorId = new ObjectId().toHexString();
 
 				const fileRecords = fileRecordTestFactory().buildList(3, { creatorId });
-				filesStorageService.getFileRecordsByCreatorId.mockResolvedValue([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByCreatorId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+
+				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				return { creatorId, fileRecords };
 			};
@@ -275,8 +325,9 @@ describe('FilesStorageConsumer', () => {
 
 				await service.removeCreatorIdFromFileRecords(creatorId);
 
-				expect(filesStorageService.getFileRecordsByCreatorId).toBeCalledWith(creatorId);
-				expect(filesStorageService.removeCreatorIdFromFileRecords).toBeCalledWith(fileRecords);
+				expect(filesStorageService.getFileRecordsByCreatorId).toHaveBeenCalledWith(creatorId);
+				expect(filesStorageService.removeCreatorIdFromFileRecords).toHaveBeenCalledWith(fileRecords);
+				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith(fileRecords);
 			});
 
 			it('should return correct type', async () => {
@@ -295,7 +346,8 @@ describe('FilesStorageConsumer', () => {
 			const setup = () => {
 				const creatorId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecordsByCreatorId.mockResolvedValue([[], 0]);
+				filesStorageService.getFileRecordsByCreatorId.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce([]);
 
 				return { creatorId };
 			};

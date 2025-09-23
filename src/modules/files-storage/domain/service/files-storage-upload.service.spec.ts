@@ -4,17 +4,23 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ReadableStreamWithFileType } from 'file-type';
 import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileRecordParamsTestFactory, fileRecordTestFactory, readableStreamWithFileTypeFactory } from '../../testing';
+import {
+	fileDtoTestFactory,
+	FileRecordParamsTestFactory,
+	fileRecordTestFactory,
+	readableStreamWithFileTypeFactory,
+} from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FileRecordFactory } from '../file-record.factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { FileRecordSecurityCheck, ScanStatus } from '../security-check.vo';
+import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import FileType from './file-type.helper';
 import { FilesStorageService } from './files-storage.service';
 
@@ -96,7 +102,7 @@ describe('FilesStorageService upload methods', () => {
 
 			const fileSize = 3;
 
-			const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, 0, file.mimeType, params, userId);
+			const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
 			const expectedFileRecord = fileRecord.getProps();
 			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 			const detectedMimeType = 'image/tiff';
@@ -251,6 +257,7 @@ describe('FilesStorageService upload methods', () => {
 							isUploading: undefined,
 							createdAt: expect.any(Date),
 							updatedAt: expect.any(Date),
+							contentLastModifiedAt: expect.any(Date),
 						},
 						securityCheck: {
 							...expectedSecurityCheck,
@@ -547,6 +554,529 @@ describe('FilesStorageService upload methods', () => {
 				await service.uploadFile(userId, params, file);
 
 				expect(getMimeTypeSpy).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN stream emits error', () => {
+			const setup = () => {
+				const { parentInfo: params, fileRecords, parentId: userId } = FileRecordParamsTestFactory.build();
+
+				const file = fileDtoTestFactory().build();
+
+				const fileSize = 3;
+
+				const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
+				const expectedFileRecord = fileRecord.getProps();
+				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
+				const detectedMimeType = 'image/tiff';
+				expectedFileRecord.mimeType = detectedMimeType;
+
+				const expectedSecurityCheck = new FileRecordSecurityCheck({
+					reason: 'No scan result',
+					requestToken: undefined,
+					status: ScanStatus.ERROR,
+					updatedAt: new Date(),
+				});
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				const getFileRecordsOfParentSpy = jest
+					.spyOn(service, 'getFileRecordsOfParent')
+					.mockResolvedValue([[fileRecord], 1]);
+
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				file.data.on('data', () => {
+					file.data.emit('error', new Error('Stream error'));
+				});
+
+				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
+				fileRecordRepo.save.mockImplementation((fr) => {
+					if (fr instanceof FileRecord && !fr.id) {
+						const props = fr.getProps();
+						props.id = new ObjectId().toHexString();
+						fr = fileRecordTestFactory().build(props);
+					}
+
+					return Promise.resolve();
+				});
+
+				return {
+					params,
+					file,
+					userId,
+					getFileRecordsOfParentSpy,
+					fileSize,
+					expectedFileRecord,
+					expectedSecurityCheck,
+				};
+			};
+
+			it('should throw internal server error', async () => {
+				const { params, file, userId } = setup();
+
+				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(InternalServerErrorException);
+			});
+		});
+	});
+
+	describe('updateFileContents is called', () => {
+		describe('WHEN update is successfull', () => {
+			const setup = (mimeTypeProp?: string) => {
+				const mimeType = 'image/png';
+				const fileRecord = fileRecordTestFactory().build({ mimeType: mimeTypeProp ?? mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType: fileRecord.getMimeType(),
+				});
+				const mimeTypeSpy = jest
+					.spyOn(FileType, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				return {
+					mimeTypeSpy,
+					fileDto,
+					fileRecord,
+					mimeType,
+				};
+			};
+
+			it('should call getMimeType with correct params', async () => {
+				const { fileRecord, fileDto, mimeTypeSpy } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+
+				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(PassThrough));
+			});
+
+			it('should call fileRecordRepo.save ', async () => {
+				const { mimeType, fileRecord, fileDto } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+
+				const expectedFileRecord = fileRecord.getProps();
+				const expectedSecurityCheck = fileRecord.getSecurityCheckProps();
+
+				expect(fileRecordRepo.save).toHaveBeenLastCalledWith(
+					expect.objectContaining({
+						props: {
+							...expectedFileRecord,
+							mimeType: mimeType,
+							size: 3,
+							isUploading: undefined,
+							createdAt: expect.any(Date),
+							updatedAt: expect.any(Date),
+							contentLastModifiedAt: expect.any(Date),
+						},
+						securityCheck: {
+							...expectedSecurityCheck,
+							updatedAt: expect.any(Date),
+						},
+					})
+				);
+			});
+
+			it('should call storageClient.create with correct params', async () => {
+				const { fileRecord, fileDto } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+				const parentInfo = fileRecord.getParentInfo();
+
+				const filePath = [parentInfo.storageLocationId, fileRecord.id].join('/');
+				expect(storageClient.create).toHaveBeenCalledWith(filePath, fileDto);
+			});
+
+			it('should return an instance of FileRecord', async () => {
+				const { fileRecord, fileDto } = setup();
+
+				const result = await service.updateFileContents(fileRecord, fileDto);
+
+				expect(result).toMatchObject({
+					...fileRecord,
+				});
+			});
+
+			describe('Antivirus handling by upload ', () => {
+				describe('when useStreamToAntivirus is true, fileRecord is previewable and has not a collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('image/png');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.send).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is true, fileRecord is not previewable and has collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('text/plain');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.checkStream).toHaveBeenCalledWith(expect.any(PassThrough));
+						expect(antivirusService.send).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is true and fileRecord is not previewable and has no collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('audio/aac');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is false and fileRecord is previewable and has no collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('image/png');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('when useStreamToAntivirus is false and fileRecord is not previewable and has collabora mimeType', () => {
+					it('should call antivirusService.send with fileRecord', async () => {
+						const { fileRecord, fileDto } = setup('text/plain');
+						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+
+						await service.updateFileContents(fileRecord, fileDto);
+
+						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
+						expect(antivirusService.checkStream).not.toHaveBeenCalled();
+					});
+				});
+			});
+		});
+
+		describe('WHEN storageClient throws error', () => {
+			describe('when useStreamToAntivirus is true', () => {
+				const setup = () => {
+					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+
+					const mimeType = 'image/png';
+					const fileRecord = fileRecordTestFactory().build({ mimeType });
+					const fileDto = fileDtoTestFactory().build({
+						name: fileRecord.getName(),
+						mimeType,
+					});
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+					const error = new Error('test');
+					storageClient.create.mockRejectedValueOnce(error);
+
+					return {
+						error,
+						fileDto,
+						fileRecord,
+					};
+				};
+
+				it('should pass error', async () => {
+					const { fileDto, fileRecord, error } = setup();
+
+					await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(error);
+				});
+			});
+
+			describe('when useStreamToAntivirus is false', () => {
+				const setup = () => {
+					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+
+					const mimeType = 'image/png';
+					const fileRecord = fileRecordTestFactory().build({ mimeType });
+					const fileDTO = fileDtoTestFactory().build({
+						name: fileRecord.getName(),
+						mimeType,
+					});
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+					const error = new Error('test');
+					storageClient.create.mockRejectedValueOnce(error);
+
+					antivirusService.checkStream.mockResolvedValueOnce({
+						virus_detected: undefined,
+						virus_signature: undefined,
+						error: undefined,
+					});
+
+					return {
+						error,
+						fileDTO,
+						fileRecord,
+					};
+				};
+
+				it('should pass error and call storageClient.delete and fileRecordRepo.delete', async () => {
+					const { fileDTO, fileRecord, error } = setup();
+
+					await expect(service.updateFileContents(fileRecord, fileDTO)).rejects.toThrow(error);
+				});
+			});
+		});
+
+		describe('WHEN file is too big', () => {
+			const setup = () => {
+				jest.replaceProperty(config, 'FILES_STORAGE_MAX_FILE_SIZE', 0);
+
+				const mimeType = 'image/png';
+				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType,
+				});
+				const mimeTypeSpy = jest
+					.spyOn(FileType, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				return {
+					mimeTypeSpy,
+					fileDto,
+					fileRecord,
+					mimeType,
+				};
+			};
+
+			it('should pass error', async () => {
+				const { fileDto, fileRecord } = setup();
+
+				const expectedError = new BadRequestException(ErrorType.FILE_TOO_BIG);
+				await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(expectedError);
+			});
+		});
+
+		describe('WHEN file size is bigger than maxSecurityCheckFileSize', () => {
+			const setup = () => {
+				jest.replaceProperty(config, 'FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE', 0);
+
+				const mimeType = 'image/png';
+				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType,
+				});
+				const mimeTypeSpy = jest
+					.spyOn(FileType, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				return {
+					mimeTypeSpy,
+					fileDto,
+					fileRecord,
+					mimeType,
+				};
+			};
+
+			it('should call save with WONT_CHECK status', async () => {
+				const { fileDto, fileRecord } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+
+				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(
+					1,
+
+					expect.objectContaining({ securityCheck: expect.objectContaining({ status: 'wont_check' }) })
+				);
+			});
+
+			it('should not call antivirus send', async () => {
+				const { fileDto, fileRecord } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+
+				expect(antivirusService.send).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN antivirusService throws error', () => {
+			describe('when useStreamToAntivirus is true', () => {
+				const setup = () => {
+					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+					const mimeType = 'image/png';
+					const fileRecord = fileRecordTestFactory().build({ mimeType });
+					const fileDto = fileDtoTestFactory().build({
+						name: fileRecord.getName(),
+						mimeType,
+					});
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+					const error = new Error('test');
+					antivirusService.checkStream.mockRejectedValueOnce(error);
+
+					return {
+						fileDto,
+						fileRecord,
+						error,
+					};
+				};
+
+				it('should pass error', async () => {
+					const { fileDto, fileRecord, error } = setup();
+
+					await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(error);
+				});
+			});
+
+			describe('when useStreamToAntivirus is false', () => {
+				const setup = () => {
+					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+					const mimeType = 'image/png';
+					const fileRecord = fileRecordTestFactory().build({ mimeType });
+					const fileDto = fileDtoTestFactory().build({
+						name: fileRecord.getName(),
+						mimeType,
+					});
+					jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+					const error = new Error('test');
+					antivirusService.send.mockRejectedValueOnce(error);
+
+					return {
+						fileDto,
+						fileRecord,
+						error,
+					};
+				};
+
+				it('should pass error', async () => {
+					const { fileDto, fileRecord, error } = setup();
+
+					await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(error);
+				});
+			});
+		});
+
+		describe('WHEN getMimeType returns different mime type than original', () => {
+			const setup = () => {
+				const mimeType = 'image/png';
+				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType,
+				});
+				const mimeTypeSpy = jest
+					.spyOn(FileType, 'fileTypeStream')
+					.mockImplementationOnce((readable: ReadableStreamWithFileType) => {
+						const result = readableStreamWithFileTypeFactory.build({ readable: readable, fileType: { mime: 'other' } });
+
+						return Promise.resolve(result);
+					});
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				return {
+					mimeTypeSpy,
+					fileDto,
+					fileRecord,
+					mimeType,
+				};
+			};
+
+			it('should throw', async () => {
+				const { fileDto, fileRecord } = setup();
+
+				await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(
+					new BadRequestException(ErrorType.MIME_TYPE_MISMATCH)
+				);
+			});
+		});
+
+		describe('WHEN mime type cant be detected from stream', () => {
+			const setup = () => {
+				const mimeType = 'image/svg+xml';
+				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType,
+				});
+				const mimeTypeSpy = jest
+					.spyOn(FileType, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				return {
+					mimeTypeSpy,
+					fileDto,
+					fileRecord,
+					mimeType,
+				};
+			};
+
+			it('should use dto mime type', async () => {
+				const { fileDto, fileRecord, mimeType } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+
+				expect(fileRecordRepo.save).toHaveBeenCalledWith(expect.objectContaining({ mimeType }));
+			});
+
+			it('should not detect from stream', async () => {
+				const { fileDto, fileRecord, mimeTypeSpy } = setup();
+
+				await service.updateFileContents(fileRecord, fileDto);
+
+				expect(mimeTypeSpy).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN stream emits error', () => {
+			const setup = () => {
+				const mimeType = 'image/png';
+				const fileRecord = fileRecordTestFactory().build({ mimeType });
+				const fileDto = fileDtoTestFactory().build({
+					name: fileRecord.getName(),
+					mimeType,
+				});
+				fileDto.data.on('data', () => {
+					fileDto.data.emit('error', new Error('Stream error'));
+				});
+				jest.spyOn(FileType, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+
+				antivirusService.checkStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				return {
+					fileDto,
+					fileRecord,
+				};
+			};
+
+			it('should throw InternalServerErrorException', async () => {
+				const { fileRecord, fileDto } = setup();
+
+				await expect(service.updateFileContents(fileRecord, fileDto)).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});
