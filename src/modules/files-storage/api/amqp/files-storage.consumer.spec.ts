@@ -8,7 +8,7 @@ import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocat
 import { ENTITIES } from '../../files-storage.entity.imports';
 import { fileRecordTestFactory, fileRecordWithStatusTestFactory } from '../../testing';
 import { CopyFilesOfParentPayload } from '../dto';
-import { FileRecordConsumerResponse } from './dto/file-storage-consumer.response';
+import { FileRecordConsumerResponse } from './dto';
 import { FilesStorageConsumer } from './files-storage.consumer';
 
 describe('FilesStorageConsumer', () => {

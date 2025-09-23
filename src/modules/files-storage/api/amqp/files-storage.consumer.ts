@@ -6,9 +6,9 @@ import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { FilesStorageService, FileStorageActionsLoggable, PreviewService } from '../../domain';
 import { CopyFileResponse, CopyFilesOfParentPayload } from '../dto';
-import { FileRecordConsumerResponse } from './dto/file-storage-consumer.response';
+import { FileRecordConsumerResponse } from './dto';
 import { FilesStorageEvents, FilesStorageExchange } from './files-storage.exchange';
-import { FileRecordConsumerMapper } from './mapper/file-record-consumer.mapper';
+import { FileRecordConsumerMapper } from './mapper';
 
 @Injectable()
 export class FilesStorageConsumer {
