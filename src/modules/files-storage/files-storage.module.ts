@@ -22,6 +22,7 @@ const imports = [
 	}),
 	PreviewGeneratorProducerModule,
 ];
+
 const providers = [
 	FilesStorageService,
 	PreviewService,
@@ -29,7 +30,7 @@ const providers = [
 ];
 
 @Module({
-	imports: [...imports],
+	imports,
 	providers,
 	exports: [FilesStorageService, PreviewService],
 })

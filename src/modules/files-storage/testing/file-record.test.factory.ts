@@ -70,6 +70,24 @@ class FileRecordTestFactory {
 
 		return this;
 	}
+
+	public asOpenDocument(): this {
+		this.props.mimeType = 'application/vnd.oasis.opendocument.text';
+
+		return this;
+	}
+
+	public asPdf(): this {
+		this.props.mimeType = 'application/pdf';
+
+		return this;
+	}
+
+	public asApplicationOctetStream(): this {
+		this.props.mimeType = 'application/octet-stream';
+
+		return this;
+	}
 }
 
 export const fileRecordTestFactory = (): FileRecordTestFactory => new FileRecordTestFactory();

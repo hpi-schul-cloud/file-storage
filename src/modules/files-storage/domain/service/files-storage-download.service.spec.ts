@@ -11,9 +11,9 @@ import { ScanStatus } from '../../domain';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { ArchiveFactory } from '../factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileResponseBuilder } from '../mapper';
-import { ArchiveFactory } from './archive.factory';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {

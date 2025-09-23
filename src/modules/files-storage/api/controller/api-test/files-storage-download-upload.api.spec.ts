@@ -4,14 +4,14 @@ import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType } from '../../../domain';
-import FileType from '../../../domain/service/file-type.helper';
-import { FilesStorageTestModule } from '../../../files-storage-test.module';
+import FileTypeHelper from '../../../domain/service/file-type.helper';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
@@ -73,7 +73,7 @@ describe('files-storage controller (API)', () => {
 
 			const validId = new ObjectId().toHexString();
 
-			jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+			jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 			return { validId, loggedInClient, user: studentUser };
 		};
@@ -242,7 +242,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				const body = {
 					url: 'http://localhost/test.txt',
@@ -344,7 +344,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
@@ -448,7 +448,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
@@ -501,7 +501,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 					const expectedResponse1 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					const expectedResponse2 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
@@ -556,7 +556,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				const result = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -612,7 +612,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
@@ -668,7 +668,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
@@ -719,7 +719,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				const result = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -770,7 +770,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				const result1 = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -854,7 +854,7 @@ describe('files-storage controller (API)', () => {
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				return { loggedInClient };
 			};
@@ -876,7 +876,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				const fileApiClient = new TestApiClient(app, '');
 

@@ -2,12 +2,10 @@ import { EntityManager, EntityName, ObjectId, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
-import { ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
-import { FileRecord } from '../domain/file-record.do';
-import { FileRecordRepo } from '../domain/interface/file-record.repo.interface';
+import { FileRecord, FileRecordRepo, ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
+import { FileRecordScope } from './file-record-scope';
 import { FileRecordEntity } from './file-record.entity';
 import { FileRecordEntityMapper } from './mapper';
-import { FileRecordScope } from './scope/file-record-scope';
 
 @Injectable()
 export class FileRecordMikroOrmRepo implements FileRecordRepo {
