@@ -2,6 +2,7 @@ import { ErrorType } from '@modules/files-storage/domain';
 import {
 	BadRequestException,
 	ForbiddenException,
+	InternalServerErrorException,
 	NotFoundException,
 	PayloadTooLargeException,
 	UnauthorizedException,
@@ -16,7 +17,7 @@ describe('WopiErrorResponseMapper', () => {
 
 			const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-			expect(result).toBeInstanceOf(UnauthorizedException);
+			expect(result).toEqual(error);
 			expect(result.message).toBe(message);
 		});
 	});
@@ -28,19 +29,19 @@ describe('WopiErrorResponseMapper', () => {
 
 			const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-			expect(result).toBeInstanceOf(NotFoundException);
+			expect(result).toEqual(error);
 			expect(result.message).toBe(message);
 		});
 	});
 
-	describe('when error is internal server error', () => {
-		it('should return the original error', () => {
+	describe('when error is an error instance', () => {
+		it('should return an InternalServerErrorException', () => {
 			const message = 'Internal server error';
 			const error = new Error(message);
 
 			const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-			expect(result).toBeInstanceOf(Error);
+			expect(result).toEqual(new InternalServerErrorException(message, { cause: error }));
 			expect(result.message).toBe(message);
 		});
 	});
@@ -52,7 +53,7 @@ describe('WopiErrorResponseMapper', () => {
 
 			const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-			expect(result).toBeInstanceOf(UnauthorizedException);
+			expect(result).toEqual(new UnauthorizedException(message, { cause: error }));
 			expect(result.message).toBe(message);
 		});
 	});
@@ -65,7 +66,7 @@ describe('WopiErrorResponseMapper', () => {
 
 				const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-				expect(result).toBeInstanceOf(PayloadTooLargeException);
+				expect(result).toEqual(new PayloadTooLargeException(message, { cause: error }));
 				expect(result.message).toBe(message);
 			});
 		});
@@ -77,7 +78,7 @@ describe('WopiErrorResponseMapper', () => {
 
 				const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-				expect(result).toBeInstanceOf(BadRequestException);
+				expect(result).toEqual(new InternalServerErrorException(message, { cause: error }));
 				expect(result.message).toBe(message);
 			});
 		});
