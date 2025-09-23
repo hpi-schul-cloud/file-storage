@@ -1,8 +1,8 @@
 import { FileRecord, FilesStorageService, GetFileResponse } from '@modules/files-storage';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EntityId } from '@shared/domain/types/entity-id';
 import { Readable } from 'node:stream';
 import { WopiConfig } from '../wopi.config';
-import { WopiPayload } from './vo';
 
 @Injectable()
 export class WopiService {
@@ -11,22 +11,22 @@ export class WopiService {
 		private readonly filesStorageService: FilesStorageService
 	) {}
 
-	public async updateFileContents(wopiPayload: WopiPayload, readable: Readable): Promise<FileRecord> {
-		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
+	public async updateFileContents(fileRecordId: EntityId, readable: Readable): Promise<FileRecord> {
+		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, readable);
 
 		return updatedFileRecord;
 	}
 
-	public async getFile(wopiPayload: WopiPayload): Promise<GetFileResponse> {
-		const fileRecord = await this.filesStorageService.getFileRecord(wopiPayload.fileRecordId);
+	public async getFile(fileRecordId: EntityId): Promise<GetFileResponse> {
+		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		this.throwIfNotCollaboraEditable(fileRecord);
 		const fileResponse = await this.filesStorageService.downloadFile(fileRecord);
 
 		return fileResponse;
 	}
 
-	public async getFileRecord(fileRecordId: string): Promise<FileRecord> {
+	public async getFileRecord(fileRecordId: EntityId): Promise<FileRecord> {
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		this.throwIfNotCollaboraEditable(fileRecord);
 

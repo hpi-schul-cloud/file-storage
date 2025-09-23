@@ -38,8 +38,8 @@ export class WopiUc {
 	public async putFile(wopiToken: WopiAccessTokenParams, req: Request): Promise<FileRecord> {
 		this.ensureWopiEnabled();
 
-		const wopiPayload = await this.getWopiPayload(wopiToken);
-		const updatedFileRecord = await this.wopiService.updateFileContents(wopiPayload, req);
+		const wopiPayload = await this.resolveWopiPayloadByToken(wopiToken);
+		const updatedFileRecord = await this.wopiService.updateFileContents(wopiPayload.fileRecordId, req);
 
 		return updatedFileRecord;
 	}
@@ -71,7 +71,7 @@ export class WopiUc {
 	public async checkFileInfo(wopiToken: WopiAccessTokenParams): Promise<WopiFileInfoResponse> {
 		this.ensureWopiEnabled();
 
-		const wopiPayload = await this.getWopiPayload(wopiToken);
+		const wopiPayload = await this.resolveWopiPayloadByToken(wopiToken);
 		const fileRecord = await this.wopiService.getFileRecord(wopiPayload.fileRecordId);
 
 		const wopiUser = WopiUserFactory.build(wopiPayload);
@@ -87,8 +87,8 @@ export class WopiUc {
 	public async getFileStream(wopiToken: WopiAccessTokenParams): Promise<GetFileResponse> {
 		this.ensureWopiEnabled();
 
-		const wopiPayload = await this.getWopiPayload(wopiToken);
-		const fileResponse = await this.wopiService.getFile(wopiPayload);
+		const wopiPayload = await this.resolveWopiPayloadByToken(wopiToken);
+		const fileResponse = await this.wopiService.getFile(wopiPayload.fileRecordId);
 
 		return fileResponse;
 	}
@@ -101,7 +101,7 @@ export class WopiUc {
 		return payload;
 	}
 
-	private async getWopiPayload(wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
+	private async resolveWopiPayloadByToken(wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
 		const result = await this.authorizationClientAdapter.resolveToken(
 			wopiToken.access_token,
 			this.config.WOPI_TOKEN_TTL_IN_SECONDS
