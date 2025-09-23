@@ -1,6 +1,6 @@
 import { AuthorizationBodyParamsReferenceType } from '@infra/authorization-client';
 import { NotImplementedException } from '@nestjs/common';
-import { FileRecordParentType, StorageLocation } from '..';
+import { FileRecordParentType, StorageLocation } from '../interface';
 import { FilesStorageMapper } from './files-storage.mapper';
 
 describe('FilesStorageMapper', () => {
