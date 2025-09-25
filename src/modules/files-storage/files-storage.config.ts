@@ -1,4 +1,4 @@
-import { Configuration } from '@infra/configuration';
+import { ConfigProperty, Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
 import { S3Config } from '@infra/s3-client';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
@@ -37,7 +37,8 @@ export class FileStorageConfig {
 
 	@IsBoolean()
 	@StringToBoolean()
-	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+	@ConfigProperty('FEATURE_COLUMN_BOARD_COLLABORA_ENABLED')
+	FEATURE_COLLABORA_ENABLED!: boolean;
 
 	@IsNumber()
 	@StringToNumber()

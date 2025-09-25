@@ -18,12 +18,12 @@ import FileType from '../../../domain/service/file-type.helper';
 import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import {
-	authorizedCollaboraDocumentUrlParamsTestFactory,
-	fileRecordEntityFactory,
-	fileRecordSecurityCheckEmbeddableFactory,
-	GetFileResponseTestFactory,
-	wopiAccessTokenParamsTestFactory,
-	wopiPayloadTestFactory,
+    authorizedCollaboraDocumentUrlParamsTestFactory,
+    fileRecordEntityFactory,
+    fileRecordSecurityCheckEmbeddableFactory,
+    GetFileResponseTestFactory,
+    wopiAccessTokenParamsTestFactory,
+    wopiPayloadTestFactory,
 } from '../../../testing';
 import { EditorMode, WopiFileInfoResponse } from '../../dto';
 
@@ -74,7 +74,7 @@ describe('Wopi Controller (API)', () => {
 
 	afterEach(() => {
 		jest.resetAllMocks();
-		fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+		fileStorageConfig.FEATURE_COLLABORA_ENABLED = false;
 	});
 
 	describe('getAuthorizedCollaboraDocumentUrl', () => {
@@ -96,7 +96,7 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { query, loggedInClient, token, collaboraUrl };
 			};
@@ -133,7 +133,7 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { query, loggedInClient, token, collaboraUrl };
 			};
@@ -171,7 +171,7 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { query, loggedInClient };
 			};
@@ -203,7 +203,7 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { query, loggedInClient };
 			};
@@ -238,7 +238,7 @@ describe('Wopi Controller (API)', () => {
 				collaboraService.discoverUrl.mockResolvedValueOnce(collaboraUrl);
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { query, loggedInClient };
 			};
@@ -258,7 +258,7 @@ describe('Wopi Controller (API)', () => {
 				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = false;
 
 				return { query, loggedInClient };
 			};
@@ -325,7 +325,7 @@ describe('Wopi Controller (API)', () => {
 				authorizationClientAdapter.createToken.mockResolvedValueOnce(token);
 				collaboraService.discoverUrl.mockRejectedValueOnce(collaboraException);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { query, loggedInClient };
 			};
@@ -430,7 +430,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				const expectedResult = {
 					BaseFileName: fileRecord.name,
@@ -474,7 +474,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -500,7 +500,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -529,7 +529,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -548,7 +548,7 @@ describe('Wopi Controller (API)', () => {
 				const fileRecord = fileRecordEntityFactory.buildWithId();
 				const query = wopiAccessTokenParamsTestFactory().build();
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = false;
 
 				return { fileRecord, query };
 			};
@@ -573,7 +573,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -597,7 +597,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -621,7 +621,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, wopiPayload };
 			};
@@ -697,7 +697,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
@@ -730,7 +730,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse };
 			};
@@ -760,7 +760,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse };
 			};
@@ -793,7 +793,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse };
 			};
@@ -813,7 +813,7 @@ describe('Wopi Controller (API)', () => {
 				const accessToken = accessTokenResponseTestFactory().build().token;
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken(accessToken).build();
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = false;
 
 				return { fileRecord, query };
 			};
@@ -843,7 +843,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
@@ -871,7 +871,7 @@ describe('Wopi Controller (API)', () => {
 				const fileResponse = GetFileResponseTestFactory.build({ contentForReadable });
 				storageClient.get.mockResolvedValueOnce(fileResponse);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
@@ -900,7 +900,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, error };
 			};
@@ -971,7 +971,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
@@ -1015,7 +1015,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
@@ -1046,7 +1046,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = false;
 
 				return { fileRecord, query };
 			};
@@ -1077,7 +1077,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -1111,7 +1111,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 				fileStorageConfig.FILES_STORAGE_MAX_FILE_SIZE = 0; // Set a small max file size for testing
 
 				return { fileRecord, query, initialContentLastModifiedAt };
@@ -1142,7 +1142,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -1171,7 +1171,7 @@ describe('Wopi Controller (API)', () => {
 
 				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query };
 			};
@@ -1205,7 +1205,7 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, error };
 			};
@@ -1294,7 +1294,7 @@ describe('Wopi Controller (API)', () => {
 					stream.emit('error', new Error('Stream error'));
 				});
 
-				fileStorageConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
+				fileStorageConfig.FEATURE_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, initialContentLastModifiedAt, stream };
 			};
