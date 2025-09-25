@@ -1,3 +1,4 @@
+import { Configuration } from '@infra/configuration';
 import { StringToBoolean } from '@shared/transformer';
 import { IsBoolean, IsEnum } from 'class-validator';
 
@@ -12,6 +13,7 @@ export enum LoggerLogLevel {
 	debug = 'debug',
 }
 
+@Configuration()
 export class LoggerConfig {
 	@IsEnum(LoggerLogLevel)
 	LOGGER_LOG_LEVEL!: LoggerLogLevel;

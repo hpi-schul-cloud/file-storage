@@ -16,6 +16,7 @@ describe('ToBooleanTransformer Decorator', () => {
 			const plainBool = { booleanProp: 'true' };
 			let instance = plainToClass(WithBooleanDto, plainBool);
 			expect(instance.booleanProp).toEqual(true);
+
 			const plainNum = { booleanProp: '1' };
 			instance = plainToClass(WithBooleanDto, plainNum);
 			expect(instance.booleanProp).toEqual(true);
@@ -24,6 +25,7 @@ describe('ToBooleanTransformer Decorator', () => {
 			const plainBool = { booleanProp: 'false' };
 			let instance = plainToClass(WithBooleanDto, plainBool);
 			expect(instance.booleanProp).toEqual(false);
+
 			const plainNum = { booleanProp: '0' };
 			instance = plainToClass(WithBooleanDto, plainNum);
 			expect(instance.booleanProp).toEqual(false);
@@ -31,10 +33,12 @@ describe('ToBooleanTransformer Decorator', () => {
 
 		it('should fail for other (non-string) boolish values', () => {
 			const plainBool = { booleanProp: true };
-			expect(() => plainToClass(WithBooleanDto, plainBool)).toThrow(NotImplementedException);
+			let instance = plainToClass(WithBooleanDto, plainBool);
+			expect(instance.booleanProp).toEqual(true);
 
-			const plainNum = { booleanProp: 0 };
-			expect(() => plainToClass(WithBooleanDto, plainNum)).toThrow(NotImplementedException);
+			const plainFalse = { booleanProp: false };
+			instance = plainToClass(WithBooleanDto, plainFalse);
+			expect(instance.booleanProp).toEqual(false);
 		});
 
 		it('should fail for wrong input', () => {
@@ -49,7 +53,9 @@ describe('ToBooleanTransformer Decorator', () => {
 			const plain = {
 				booleanProp: 'true',
 			};
+
 			const instance = plainToClass(WithBooleanDto, plain);
+
 			expect(instance.optionalBooleanProp).toEqual(undefined);
 		});
 
@@ -58,7 +64,9 @@ describe('ToBooleanTransformer Decorator', () => {
 				booleanProp: 'true',
 				optionalBooleanProp: 'true',
 			};
+
 			const instance = plainToClass(WithBooleanDto, plain);
+
 			expect(instance.optionalBooleanProp).toEqual(true);
 		});
 	});

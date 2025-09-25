@@ -2,31 +2,31 @@ import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard'
 import { ApiValidationError } from '@infra/error';
 import { FileStorageConfig } from '@modules/files-storage/files-storage.config';
 import {
-	BadRequestException,
-	ConflictException,
-	Controller,
-	ForbiddenException,
-	Get,
-	HttpCode,
-	InternalServerErrorException,
-	NotFoundException,
-	Param,
-	PayloadTooLargeException,
-	Post,
-	Query,
-	Req,
-	StreamableFile,
-	UnauthorizedException,
+    BadRequestException,
+    ConflictException,
+    Controller,
+    ForbiddenException,
+    Get,
+    HttpCode,
+    InternalServerErrorException,
+    NotFoundException,
+    Param,
+    PayloadTooLargeException,
+    Post,
+    Query,
+    Req,
+    StreamableFile,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import {
-	AuthorizedCollaboraDocumentUrlParams,
-	AuthorizedCollaboraDocumentUrlResponse,
-	PutFileResponse,
-	SingleFileParams,
-	WopiAccessTokenParams,
-	WopiFileInfoResponse,
+    AuthorizedCollaboraDocumentUrlParams,
+    AuthorizedCollaboraDocumentUrlResponse,
+    PutFileResponse,
+    SingleFileParams,
+    WopiAccessTokenParams,
+    WopiFileInfoResponse,
 } from '../dto';
 import { PutFileResponseFactory } from '../factory';
 import { FilesStorageMapper, WopiErrorResponseMapper } from '../mapper';
@@ -41,7 +41,7 @@ export class WopiController {
 	) {}
 
 	private ensureWopiEnabled(): void {
-		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
+		if (!this.config.FEATURE_COLLABORA_ENABLED) {
 			throw new NotFoundException('WOPI feature is disabled');
 		}
 	}
