@@ -9,6 +9,10 @@ export interface WithConfigurationDecorator {
 	getConfigKeys(): string[];
 }
 
+/**
+ * Decorator to mark a class as a configuration class.
+ * @returns ClassDecorator
+ */
 export function Configuration() {
 	return function ConfigurationDecorator<T extends new (...args: any[]) => {}>(constructor: T): T {
 		return class extends constructor {
@@ -58,6 +62,11 @@ export function Configuration() {
 	};
 }
 
+/**
+ * Decorator to mark a class property as a configuration property.
+ * @param key Optional environment variable name to map to the decorated property.If not provided, the property name will be used.
+ * @returns PropertyDecorator
+ */
 export function ConfigProperty(key?: string): PropertyDecorator {
 	return function (target: any, propertyKey: string | symbol) {
 		target.__propertyAccessKeys ??= [];

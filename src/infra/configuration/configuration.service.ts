@@ -4,6 +4,12 @@ import { plainToClassFromExist } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { WithConfigurationDecorator } from './configuration.decorator';
 
+/**
+ * Service to load and validate configuration classes decorated with @Configuration()
+ * and properties decorated with @ConfigProperty() to take values from environment variables by other names.
+ * @see Configuration
+ * @see ConfigProperty
+ */
 @Injectable()
 export class ConfigurationService {
 	constructor(private readonly configService: ConfigService) {}
@@ -26,7 +32,7 @@ export class ConfigurationService {
 		const configKeys = configInstance.getConfigKeys();
 
 		configKeys.forEach((key) => {
-			const value = this.configService.get(String(key));
+			const value = this.configService.get(key);
 			if (value !== undefined && value !== null) {
 				(configInstance as WithConfigurationDecorator)[key] = value;
 			}

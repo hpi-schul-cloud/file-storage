@@ -34,7 +34,7 @@ export class ConfigurationModule {
 					inject: [ConfigurationService],
 				},
 			],
-			exports: [ConfigurationService, Constructor],
+			exports: [Constructor],
 			module: ConfigurationModule,
 		};
 	}
