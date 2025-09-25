@@ -11,6 +11,9 @@ import { Transform, TransformFnParams } from 'class-transformer';
 export function StringToBoolean(): PropertyDecorator {
 	return Transform((params: TransformFnParams) => {
 		const str = params.obj[params.key] as string;
+		if (str === undefined || str === null) {
+			return str;
+		}
 		if (['1', 'true', true].includes(str)) {
 			return true;
 		}
