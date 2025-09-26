@@ -108,13 +108,33 @@ export class FilesStorageUC {
 	}
 
 	// upload
-	public async upload(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
+	public async upload(
+		userId: EntityId,
+		params: FileRecordParams,
+		req: Request,
+		contentDisposition?: string
+	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req);
+		// Extract filename and mimetype from Content-Disposition header if present
+		let filename = 'unknown';
+		let mimeType = 'application/octet-stream';
+		if (contentDisposition) {
+			const filenameMatch = /filename="?([^";]+)"?/.exec(contentDisposition);
+			if (filenameMatch?.[1]) {
+				filename = filenameMatch[1];
+			}
+			const typeMatch = /mimeType="?([^";]+)"?/.exec(contentDisposition);
+			if (typeMatch?.[1]) {
+				mimeType = typeMatch[1];
+			}
+		}
+		console.log(`Extracted filename: ${filename}, mimeType: ${mimeType}`);
+		const fileDto = FileDtoBuilder.build(filename, req, mimeType);
+		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
