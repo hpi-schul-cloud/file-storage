@@ -8,12 +8,12 @@ export interface FileRecordStatus {
 	exceedsCollaboraEditableFileSize: boolean;
 }
 
-export interface CollaboraEditabilityStatus {
-	isCollaboraEditable: boolean;
-	exceedsCollaboraEditableFileSize: boolean;
-}
-
 export interface FileRecordWithStatus {
 	fileRecord: FileRecord;
 	status: FileRecordStatus;
+}
+
+export interface CollaboraEditabilityStatus {
+	isCollaboraEditable: boolean;
+	exceedsCollaboraEditableFileSize: boolean;
 }

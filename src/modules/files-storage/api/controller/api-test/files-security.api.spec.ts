@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { cleanupCollections } from '@testing/database';
@@ -7,8 +8,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import FileType from '../../../domain/service/file-type.helper';
-import { FilesStorageTestModule } from '../../../files-storage-test.module';
+import FileTypeHelper from '../../../domain/service/file-type.helper';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
 import { ScanResultParams } from '../../dto';
@@ -24,7 +24,7 @@ describe(`${baseRouteName} (api)`, () => {
 	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
-		jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+		jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 		const module: TestingModule = await Test.createTestingModule({
 			imports: [FilesStorageTestModule],
@@ -75,14 +75,15 @@ describe(`${baseRouteName} (api)`, () => {
 				parentType: FileRecordParentType.School,
 			});
 			const token = fileRecord.securityCheck.requestToken ?? '';
+
 			await em.persistAndFlush(fileRecord);
 			em.clear();
 
 			const response = await testApiClient.put(`/update-status/${token}`, scanResult);
 			const changedFileRecord = await em.findOneOrFail(FileRecordEntity, fileRecord.id);
 
-			expect(changedFileRecord.securityCheck.status).toStrictEqual('verified');
 			expect(response.status).toEqual(200);
+			expect(changedFileRecord.securityCheck.status).toStrictEqual('verified');
 		});
 	});
 });

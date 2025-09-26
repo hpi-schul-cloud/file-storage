@@ -47,7 +47,7 @@ import {
 	RenameFileParams,
 	SingleFileParams,
 } from '../dto';
-import { FilesStorageMapper } from '../mapper';
+import { StreamableFileMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
 
 @ApiTags('file')
@@ -213,7 +213,7 @@ export class FilesStorageController {
 			httpResponse.status(HttpStatus.OK);
 		}
 
-		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
+		const streamableFile = StreamableFileMapper.fromResponse(fileResponse);
 
 		return streamableFile;
 	}
