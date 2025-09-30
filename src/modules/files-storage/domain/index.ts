@@ -1,10 +1,11 @@
 export { FileDto } from './dto';
 export { ErrorType } from './error';
-export * from './factory';
+export { FileDtoBuilder, FileRecordFactory, ParentStatisticFactory } from './factory';
 export * from './file-record.do';
 export * from './interface';
+export { FileStorageActionsLoggable } from './loggable';
+export { FilesStorageMapper } from './mapper';
 export { FilesStorageService, PreviewService } from './service';
-export * from './vo';
 export {
 	FileRecordSecurityCheck,
 	FileRecordSecurityCheckProps,
@@ -12,5 +13,3 @@ export {
 	ParentStatisticProps,
 	ScanStatus,
 } from './vo';
-export * from './vo/wopi-access-token.vo';
-export * from './vo/wopi-payload.vo';
