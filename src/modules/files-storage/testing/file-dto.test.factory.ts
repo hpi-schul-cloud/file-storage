@@ -1,7 +1,6 @@
 import { DeepPartial } from 'fishery';
-import { Readable } from 'stream';
-import { FileDtoBuilder } from '../api/mapper';
-import { FileDto } from '../domain';
+import { Readable } from 'node:stream';
+import { FileDto, FileDtoBuilder } from '../domain';
 
 class FileDtoTestFactory {
 	props: FileDto = {

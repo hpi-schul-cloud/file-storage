@@ -7,9 +7,8 @@ import {
 import { Logger } from '@infra/logger';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
-import { FilesStorageService, StorageLocation } from '../../domain';
+import { FilesStorageMapper, FilesStorageService, StorageLocation } from '../../domain';
 import { StorageLocationParamsDto } from '../dto';
-import { FilesStorageMapper } from '../mapper';
 
 @Injectable()
 export class FilesStorageAdminUC {

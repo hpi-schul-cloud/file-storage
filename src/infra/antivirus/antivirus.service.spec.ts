@@ -99,7 +99,7 @@ describe('AntivirusService', () => {
 			it('should call scanStream', async () => {
 				const { readable } = setup();
 
-				await service.checkStream(readable);
+				await service.scanStream(readable);
 
 				expect(clamavConnection.scanStream).toHaveBeenCalledWith(readable);
 			});
@@ -122,7 +122,7 @@ describe('AntivirusService', () => {
 			it('should return scan result', async () => {
 				const { readable, expectedResult } = setup();
 
-				const result = await service.checkStream(readable);
+				const result = await service.scanStream(readable);
 
 				expect(result).toEqual(expectedResult);
 			});
@@ -146,7 +146,7 @@ describe('AntivirusService', () => {
 			it('should return scan result', async () => {
 				const { readable, expectedResult } = setup();
 
-				const result = await service.checkStream(readable);
+				const result = await service.scanStream(readable);
 
 				expect(result).toEqual(expectedResult);
 			});
@@ -168,7 +168,7 @@ describe('AntivirusService', () => {
 			it('should return scan result', async () => {
 				const { readable, expectedResult } = setup();
 
-				const result = await service.checkStream(readable);
+				const result = await service.scanStream(readable);
 
 				expect(result).toEqual(expectedResult);
 			});
@@ -186,7 +186,7 @@ describe('AntivirusService', () => {
 			it('should throw with InternalServerErrorException by error', async () => {
 				const { readable } = setup();
 
-				await expect(() => service.checkStream(readable)).rejects.toThrowError(InternalServerErrorException);
+				await expect(() => service.scanStream(readable)).rejects.toThrowError(InternalServerErrorException);
 			});
 		});
 	});

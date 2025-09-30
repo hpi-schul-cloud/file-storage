@@ -5,6 +5,7 @@ import { ApiValidationError } from '@infra/error';
 import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
+import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
@@ -15,7 +16,6 @@ import NodeClam from 'clamscan';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
 import FileType from '../../../domain/service/file-type.helper';
-import { FilesStorageTestModule } from '../../../files-storage-test.module';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
@@ -94,7 +94,7 @@ describe('File Controller (API) - preview', () => {
 		uploadPath = `/upload/school/${validId}/schools/${validId}`;
 
 		jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
-		antivirusService.checkStream.mockResolvedValueOnce({ virus_detected: false });
+		antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
 
 		return loggedInClient;
 	};

@@ -1,5 +1,4 @@
-import { ConfigProperty, Configuration } from '@infra/configuration';
-import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
+import { Configuration } from '@infra/configuration';
 import { S3Config } from '@infra/s3-client';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
@@ -35,27 +34,12 @@ export class FileStorageConfig {
 	@IsString()
 	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
 
-	@IsBoolean()
-	@StringToBoolean()
-	@ConfigProperty('FEATURE_COLUMN_BOARD_COLLABORA_ENABLED')
-	FEATURE_COLLABORA_ENABLED!: boolean;
-
+	/**
+	 * @deprecated is config from wopi module, but we need it here until we refactor isCollaboraEditable logic
+	 */
 	@IsNumber()
 	@StringToNumber()
 	COLLABORA_MAX_FILE_SIZE_IN_BYTES = 104857600;
-}
-
-@Configuration()
-export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
-	[key: string]: number;
-
-	@IsNumber()
-	@StringToNumber()
-	CORE_INCOMING_REQUEST_TIMEOUT_MS!: number;
-
-	@IsNumber()
-	@StringToNumber()
-	INCOMING_REQUEST_TIMEOUT_COPY_API_MS!: number;
 }
 
 export const createS3ModuleOptions = (config: FileStorageConfig): S3Config => {
