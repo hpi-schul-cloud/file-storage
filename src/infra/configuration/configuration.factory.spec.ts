@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StringToBoolean } from '@shared/transformer';
 import { IsBoolean, IsString } from 'class-validator';
 import { ConfigProperty, Configuration } from './configuration.decorator';
-import { ConfigurationService } from './configuration.service';
+import { ConfigurationFactory } from './configuration.factory';
 
 @Configuration()
 class TestConfig {
@@ -28,15 +28,14 @@ class TestConfig {
 	public testValueWithOutD1 = true;
 }
 
-describe(ConfigurationService.name, () => {
+describe(ConfigurationFactory.name, () => {
 	let module: TestingModule;
-	let service: ConfigurationService;
+	let configFactory: ConfigurationFactory;
 	let configService: DeepMocked<ConfigService>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			providers: [
-				ConfigurationService,
 				{
 					provide: ConfigService,
 					useValue: createMock<ConfigService>(),
@@ -44,8 +43,8 @@ describe(ConfigurationService.name, () => {
 			],
 		}).compile();
 
-		service = module.get<ConfigurationService>(ConfigurationService);
 		configService = module.get(ConfigService);
+		configFactory = new ConfigurationFactory(configService);
 	});
 
 	afterAll(async () => {
@@ -76,7 +75,7 @@ describe(ConfigurationService.name, () => {
 					return undefined;
 				});
 
-				const result = service.loadAndValidateConfigs(TestConfig);
+				const result = configFactory.loadAndValidateConfigs(TestConfig);
 
 				expect(result.TEST_VALUE).toEqual('test');
 				expect(result.testValueWithD).toEqual('testValueWithD');
@@ -103,7 +102,7 @@ describe(ConfigurationService.name, () => {
 					return undefined;
 				});
 
-				expect(() => service.loadAndValidateConfigs(TestConfig)).toThrow(/isString/);
+				expect(() => configFactory.loadAndValidateConfigs(TestConfig)).toThrow(/isString/);
 			});
 		});
 
@@ -115,7 +114,7 @@ describe(ConfigurationService.name, () => {
 			}
 
 			it('should throw error', () => {
-				expect(() => service.loadAndValidateConfigs(InvalidConfig)).toThrow(
+				expect(() => configFactory.loadAndValidateConfigs(InvalidConfig)).toThrow(
 					`The class InvalidConfig is not decorated with @Configuration()`
 				);
 			});

@@ -1,17 +1,15 @@
-import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClassFromExist } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { WithConfigurationDecorator } from './configuration.decorator';
 
 /**
- * Service to load and validate configuration classes decorated with @Configuration()
+ * Factory to load and validate configuration classes decorated with @Configuration()
  * and properties decorated with @ConfigProperty() to take values from environment variables by other names.
  * @see Configuration
  * @see ConfigProperty
  */
-@Injectable()
-export class ConfigurationService {
+export class ConfigurationFactory {
 	constructor(private readonly configService: ConfigService) {}
 
 	public loadAndValidateConfigs<T extends object>(Constructor: new () => T): T {
