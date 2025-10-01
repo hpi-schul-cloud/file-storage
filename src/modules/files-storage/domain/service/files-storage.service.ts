@@ -431,7 +431,7 @@ export class FilesStorageService {
 		await this.fileRecordRepo.save(fileRecords);
 	}
 
-	public async markForDeleteByStorageLocation(params: StorageLocationParams): Promise<number> {
+	public async deleteStorageLocationWithAllFiles(params: StorageLocationParams): Promise<number> {
 		const { storageLocation, storageLocationId } = params;
 		const result = await this.fileRecordRepo.markForDeleteByStorageLocation(storageLocation, storageLocationId);
 
@@ -447,6 +447,7 @@ export class FilesStorageService {
 	}
 
 	// TODO: gehört in den UseCase, repo Method ist vermutlich nicht notwendig, siehe UC.deleteAllFilesOfParent flow
+	// getFileRecordsMarkedForDeleteByParent(fileRecords)
 	public async restoreFilesOfParent(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 			parentInfo.storageLocation,

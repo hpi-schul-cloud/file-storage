@@ -174,7 +174,7 @@ describe('FilesStorageService delete methods', () => {
 			it('should call fileRecordRepo.markForDeleteByStorageLocation', async () => {
 				const { storageLocation, storageLocationId, params } = setup();
 
-				await service.markForDeleteByStorageLocation(params);
+				await service.deleteStorageLocationWithAllFiles(params);
 
 				expect(fileRecordRepo.markForDeleteByStorageLocation).toBeCalledWith(storageLocation, storageLocationId);
 			});
@@ -182,7 +182,7 @@ describe('FilesStorageService delete methods', () => {
 			it('should call storageClient.moveDirectoryToTrash', async () => {
 				const { storageLocationId, params } = setup();
 
-				await service.markForDeleteByStorageLocation(params);
+				await service.deleteStorageLocationWithAllFiles(params);
 
 				expect(storageClient.moveDirectoryToTrash).toBeCalledWith(storageLocationId);
 			});
@@ -190,7 +190,7 @@ describe('FilesStorageService delete methods', () => {
 			it('should return result', async () => {
 				const { params } = setup();
 
-				const resultValue = await service.markForDeleteByStorageLocation(params);
+				const resultValue = await service.deleteStorageLocationWithAllFiles(params);
 
 				expect(resultValue).toBe(1);
 			});
@@ -219,7 +219,7 @@ describe('FilesStorageService delete methods', () => {
 			it('should call Logger.error with expected props', async () => {
 				const { params, expectedProps } = setup();
 
-				await service.markForDeleteByStorageLocation(params);
+				await service.deleteStorageLocationWithAllFiles(params);
 
 				expect(domainErrorHandler.exec).toHaveBeenCalledWith(...expectedProps);
 			});
