@@ -331,18 +331,18 @@ export class FilesStorageService {
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
 		const pathToFile = fileRecord.createPath();
 		const file = await this.storageClient.get(pathToFile, bytesRange);
-		const response = FileResponseBuilder.build(file, fileRecord.getName());
+		const fileResponse = FileResponseBuilder.build(file, fileRecord.getName());
 
-		return response;
+		return fileResponse;
 	}
 
 	public async download(fileRecord: FileRecord, fileName: string, bytesRange?: string): Promise<GetFileResponse> {
 		this.checkFileName(fileRecord, fileName);
 		this.checkScanStatus(fileRecord);
 
-		const response = await this.downloadFile(fileRecord, bytesRange);
+		const fileResponse = await this.downloadFile(fileRecord, bytesRange);
 
-		return response;
+		return fileResponse;
 	}
 
 	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
@@ -441,7 +441,7 @@ export class FilesStorageService {
 			);
 		});
 
-		// TODO Rollback on error of moveDirectoryToTrash
+		// TODO: Rollback on error of moveDirectoryToTrash
 
 		return result;
 	}
@@ -454,9 +454,7 @@ export class FilesStorageService {
 			parentInfo.parentId
 		);
 
-		if (count > 0) {
-			await this.restoreFiles(fileRecords);
-		}
+		await this.restoreFiles(fileRecords);
 
 		return [fileRecords, count];
 	}
