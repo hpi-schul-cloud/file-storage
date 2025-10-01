@@ -366,15 +366,15 @@ export class FilesStorageService {
 		return fileResponse;
 	}
 
-	// delete
+	// delete and restore
 	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
 		const paths = FileRecord.getPaths(fileRecords);
 		await this.storageClient.moveToTrash(paths);
 	}
 
-	private async restoreFileRecords(fileRecords: FileRecord[]): Promise<void> {
-		FileRecord.unmarkForDelete(fileRecords);
-		await this.fileRecordRepo.save(fileRecords);
+	private async restoreBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
+		const paths = FileRecord.getPaths(fileRecords);
+		await this.storageClient.restore(paths);
 	}
 
 	private async deleteFileRecords(fileRecords: FileRecord[]): Promise<void> {
@@ -382,10 +382,9 @@ export class FilesStorageService {
 		await this.fileRecordRepo.save(fileRecords);
 	}
 
-	private deleteLog(fileRecords: FileRecord[]): void {
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
-		);
+	private async restoreFileRecords(fileRecords: FileRecord[]): Promise<void> {
+		FileRecord.unmarkForDelete(fileRecords);
+		await this.fileRecordRepo.save(fileRecords);
 	}
 
 	public async deleteFiles(fileRecords: FileRecord[]): Promise<void> {
@@ -398,6 +397,21 @@ export class FilesStorageService {
 			await this.deleteBinaryFiles(fileRecords);
 		} catch (error) {
 			this.restoreFileRecords(fileRecords);
+
+			throw error;
+		}
+	}
+
+	public async restoreFiles(fileRecords: FileRecord[]): Promise<void> {
+		this.restoreLog(fileRecords);
+		if (fileRecords.length === 0) return;
+
+		this.restoreFileRecords(fileRecords);
+
+		try {
+			await this.restoreBinaryFiles(fileRecords);
+		} catch (error) {
+			this.deleteFileRecords(fileRecords);
 
 			throw error;
 		}
@@ -423,23 +437,7 @@ export class FilesStorageService {
 		return result;
 	}
 
-	// restore
-	private async restoreFilesInFileStorageClient(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
-
-		await this.storageClient.restore(paths);
-	}
-
-	private async restoreWithRollbackByError(fileRecords: FileRecord[]): Promise<void> {
-		try {
-			await this.restoreFilesInFileStorageClient(fileRecords);
-		} catch (err) {
-			FileRecord.markForDelete(fileRecords);
-			await this.fileRecordRepo.save(fileRecords);
-			throw err;
-		}
-	}
-
+	// TODO: gehört in den UseCase
 	public async restoreFilesOfParent(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 			parentInfo.storageLocation,
@@ -448,21 +446,10 @@ export class FilesStorageService {
 		);
 
 		if (count > 0) {
-			await this.restore(fileRecords);
+			await this.restoreFiles(fileRecords);
 		}
 
 		return [fileRecords, count];
-	}
-
-	public async restore(fileRecords: FileRecord[]): Promise<void> {
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
-		);
-
-		FileRecord.unmarkForDelete(fileRecords);
-		await this.fileRecordRepo.save(fileRecords);
-
-		await this.restoreWithRollbackByError(fileRecords);
 	}
 
 	// copy
@@ -566,5 +553,17 @@ export class FilesStorageService {
 		const statistics = await this.fileRecordRepo.getStatisticByParentId(parentId);
 
 		return statistics;
+	}
+
+	private deleteLog(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
+		);
+	}
+
+	private restoreLog(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
+		);
 	}
 }

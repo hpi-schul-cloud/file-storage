@@ -320,7 +320,7 @@ export class FilesStorageUC {
 		const { parentType, parentId } = fileRecord.getParentInfo();
 
 		await this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.create);
-		await this.filesStorageService.restore([fileRecord]);
+		await this.filesStorageService.restoreFiles([fileRecord]);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);

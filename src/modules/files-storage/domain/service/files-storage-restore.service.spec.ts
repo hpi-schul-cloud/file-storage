@@ -225,7 +225,7 @@ describe('FilesStorageService restore methods', () => {
 				});
 				FileRecord.unmarkForDelete(unmarkedFileRecords);
 
-				await service.restore(fileRecords);
+				await service.restoreFiles(fileRecords);
 
 				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(1, unmarkedFileRecords);
 			});
@@ -234,7 +234,7 @@ describe('FilesStorageService restore methods', () => {
 				const { fileRecords } = setup();
 				const paths = FileRecord.getPaths(fileRecords);
 
-				await service.restore(fileRecords);
+				await service.restoreFiles(fileRecords);
 
 				expect(storageClient.restore).toHaveBeenCalledWith(paths);
 			});
@@ -252,7 +252,7 @@ describe('FilesStorageService restore methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.restore(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(service.restoreFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 			});
 		});
 
@@ -268,13 +268,13 @@ describe('FilesStorageService restore methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.restore(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(service.restoreFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 			});
 
 			it('should save the rollback', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.restore(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(service.restoreFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 
 				const expectedFileRecordProps = fileRecords.map((fileRecord) => {
 					const fileRecordProps = fileRecord.getProps();
