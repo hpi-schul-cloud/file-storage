@@ -199,7 +199,7 @@ describe('FilesStorageConsumer', () => {
 
 				await service.deleteFilesOfParent(parentId);
 
-				expect(filesStorageService.deleteFilesOfParent).toHaveBeenCalledWith(fileRecords);
+				expect(filesStorageService.deleteFiles).toHaveBeenCalledWith(fileRecords);
 			});
 
 			it('should return array instances of FileRecordResponse', async () => {
@@ -257,7 +257,7 @@ describe('FilesStorageConsumer', () => {
 
 				const result = [fileRecord];
 				expect(filesStorageService.getFileRecord).toHaveBeenCalledWith(recordId);
-				expect(filesStorageService.delete).toHaveBeenCalledWith(result);
+				expect(filesStorageService.deleteFiles).toHaveBeenCalledWith(result);
 			});
 
 			it('should return array instances of FileRecordResponse', async () => {

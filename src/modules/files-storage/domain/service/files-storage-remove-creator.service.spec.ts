@@ -103,7 +103,7 @@ describe('FilesStorageService delete methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.delete(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(service.deleteFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 			});
 		});
 	});

@@ -265,7 +265,7 @@ export class FilesStorageController {
 	@Delete('/delete/:storageLocation/:storageLocationId/:parentType/:parentId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteByParent(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.deleteFilesOfParent(params);
+		const response = await this.filesStorageUC.deleteAllFilesOfParent(params);
 
 		return response;
 	}

@@ -70,7 +70,7 @@ export class FilesStorageConsumer {
 		);
 
 		await this.previewService.deletePreviews(fileRecords);
-		await this.filesStorageService.deleteFilesOfParent(fileRecords);
+		await this.filesStorageService.deleteFiles(fileRecords);
 
 		const response = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, total);
 
@@ -91,7 +91,7 @@ export class FilesStorageConsumer {
 		);
 
 		await this.previewService.deletePreviews(fileRecords);
-		await this.filesStorageService.delete(fileRecords);
+		await this.filesStorageService.deleteFiles(fileRecords);
 
 		const response = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
 

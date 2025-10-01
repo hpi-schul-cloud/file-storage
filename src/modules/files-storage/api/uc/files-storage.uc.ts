@@ -260,12 +260,12 @@ export class FilesStorageUC {
 	}
 
 	// delete
-	public async deleteFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
+	public async deleteAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.delete);
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 
 		await this.previewService.deletePreviews(fileRecords);
-		await this.filesStorageService.deleteFilesOfParent(fileRecords);
+		await this.filesStorageService.deleteFiles(fileRecords);
 
 		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const response = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, count);
@@ -301,7 +301,7 @@ export class FilesStorageUC {
 
 	private async deletePreviewsAndFiles(fileRecords: FileRecord[]): Promise<void> {
 		await this.previewService.deletePreviews(fileRecords);
-		await this.filesStorageService.delete(fileRecords);
+		await this.filesStorageService.deleteFiles(fileRecords);
 	}
 
 	// restore

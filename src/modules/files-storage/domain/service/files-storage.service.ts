@@ -367,41 +367,39 @@ export class FilesStorageService {
 	}
 
 	// delete
-	private async deleteFilesInFilesStorageClient(fileRecords: FileRecord[]): Promise<void> {
+	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
 		const paths = FileRecord.getPaths(fileRecords);
-
 		await this.storageClient.moveToTrash(paths);
 	}
 
-	private async deleteWithRollbackByError(fileRecords: FileRecord[]): Promise<void> {
-		try {
-			await this.deleteFilesInFilesStorageClient(fileRecords);
-		} catch (error) {
-			this.rollbackFileRecords(fileRecords);
-
-			throw error;
-		}
-	}
-
-	private async rollbackFileRecords(fileRecords: FileRecord[]): Promise<void> {
+	private async restoreFileRecords(fileRecords: FileRecord[]): Promise<void> {
 		FileRecord.unmarkForDelete(fileRecords);
 		await this.fileRecordRepo.save(fileRecords);
 	}
 
-	public async delete(fileRecords: FileRecord[]): Promise<void> {
+	private async deleteFileRecords(fileRecords: FileRecord[]): Promise<void> {
+		FileRecord.markForDelete(fileRecords);
+		await this.fileRecordRepo.save(fileRecords);
+	}
+
+	private deleteLog(fileRecords: FileRecord[]): void {
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
 		);
-
-		FileRecord.markForDelete(fileRecords);
-		await this.fileRecordRepo.save(fileRecords);
-
-		await this.deleteWithRollbackByError(fileRecords);
 	}
 
-	public async deleteFilesOfParent(fileRecords: FileRecord[]): Promise<void> {
-		if (fileRecords.length > 0) {
-			await this.delete(fileRecords);
+	public async deleteFiles(fileRecords: FileRecord[]): Promise<void> {
+		this.deleteLog(fileRecords);
+		if (fileRecords.length === 0) return;
+
+		await this.deleteFileRecords(fileRecords);
+
+		try {
+			await this.deleteBinaryFiles(fileRecords);
+		} catch (error) {
+			this.restoreFileRecords(fileRecords);
+
+			throw error;
 		}
 	}
 
@@ -419,6 +417,8 @@ export class FilesStorageService {
 				new InternalServerErrorException('Error while moving directory to trash', { cause: error })
 			);
 		});
+
+		// TODO Rollback on error of moveDirectoryToTrash
 
 		return result;
 	}
