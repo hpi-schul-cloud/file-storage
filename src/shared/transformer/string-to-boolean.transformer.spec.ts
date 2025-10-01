@@ -12,6 +12,16 @@ describe('ToBooleanTransformer Decorator', () => {
 			optionalBooleanProp?: boolean;
 		}
 
+		it('should ignore undefined and null values', () => {
+			const plainUndefined = { booleanProp: undefined };
+			let instance = plainToClass(WithBooleanDto, plainUndefined);
+			expect(instance.booleanProp).toEqual(undefined);
+
+			const plainNull = { booleanProp: null };
+			instance = plainToClass(WithBooleanDto, plainNull);
+			expect(instance.booleanProp).toEqual(null);
+		});
+
 		it('should transform from string `1` and `true` to true', () => {
 			const plainBool = { booleanProp: 'true' };
 			let instance = plainToClass(WithBooleanDto, plainBool);
