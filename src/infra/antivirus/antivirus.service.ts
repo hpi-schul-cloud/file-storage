@@ -19,7 +19,7 @@ export class AntivirusService {
 		private readonly clamConnection: NodeClam
 	) {}
 
-	public async checkStream(stream: Readable): Promise<ScanResult> {
+	public async scanStream(stream: Readable): Promise<ScanResult> {
 		const scanResult: ScanResult = {
 			virus_detected: undefined,
 			virus_signature: undefined,

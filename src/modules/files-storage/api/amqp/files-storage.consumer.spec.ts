@@ -7,7 +7,8 @@ import { setupEntities } from '@testing/database';
 import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
 import { ENTITIES } from '../../files-storage.entity.imports';
 import { fileRecordTestFactory, fileRecordWithStatusTestFactory } from '../../testing';
-import { CopyFilesOfParentPayload, FileRecordResponse } from '../dto';
+import { CopyFilesOfParentPayload } from '../dto';
+import { FileRecordConsumerResponse } from './dto';
 import { FilesStorageConsumer } from './files-storage.consumer';
 
 describe('FilesStorageConsumer', () => {
@@ -125,18 +126,18 @@ describe('FilesStorageConsumer', () => {
 		});
 	});
 
-	describe('fileRecordsOfParent()', () => {
+	describe('getFilesOfParent()', () => {
 		describe('WHEN valid file exists', () => {
 			it('should call filesStorageService.getFileRecordsOfParent and filesStorageService.getFileRecordsWithStatus with params', async () => {
 				const parentId = new ObjectId().toHexString();
-
 				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+
 				await service.getFilesOfParent(parentId);
+
 				expect(filesStorageService.getFileRecordsOfParent).toHaveBeenCalledWith(parentId);
-				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith([]);
 			});
 
-			it('should return array instances of FileRecordResponse', async () => {
+			it('should return array instances of FileRecordConsumerResponse', async () => {
 				const parentId = new ObjectId().toHexString();
 
 				const fileRecords = fileRecordTestFactory().buildList(3, {
@@ -148,7 +149,8 @@ describe('FilesStorageConsumer', () => {
 				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				const response = await service.getFilesOfParent(parentId);
-				expect(response.message[0]).toBeInstanceOf(FileRecordResponse);
+
+				expect(response.message[0]).toBeInstanceOf(FileRecordConsumerResponse);
 			});
 		});
 
@@ -172,9 +174,6 @@ describe('FilesStorageConsumer', () => {
 
 				const fileRecords = fileRecordTestFactory().buildList(3);
 				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
-
-				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
-				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				return { parentId, fileRecords };
 			};
@@ -203,20 +202,12 @@ describe('FilesStorageConsumer', () => {
 				expect(filesStorageService.deleteFilesOfParent).toHaveBeenCalledWith(fileRecords);
 			});
 
-			it('should call filesStorageService.getFileRecordsWithStatus with params', async () => {
-				const { parentId, fileRecords } = setup();
-
-				await service.deleteFilesOfParent(parentId);
-
-				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith(fileRecords);
-			});
-
 			it('should return array instances of FileRecordResponse', async () => {
 				const { parentId } = setup();
 
 				const response = await service.deleteFilesOfParent(parentId);
 
-				expect(response.message[0]).toBeInstanceOf(FileRecordResponse);
+				expect(response.message[0]).toBeInstanceOf(FileRecordConsumerResponse);
 			});
 		});
 
@@ -248,9 +239,6 @@ describe('FilesStorageConsumer', () => {
 				const fileRecord = fileRecordTestFactory().build();
 				filesStorageService.getFileRecord.mockResolvedValueOnce(fileRecord);
 
-				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(1);
-				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
-
 				return { recordId, fileRecord };
 			};
 
@@ -272,20 +260,12 @@ describe('FilesStorageConsumer', () => {
 				expect(filesStorageService.delete).toHaveBeenCalledWith(result);
 			});
 
-			it('should call filesStorageService.getFileRecordsWithStatus with params', async () => {
-				const { recordId, fileRecord } = setup();
-
-				await service.deleteFiles([recordId]);
-
-				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith([fileRecord]);
-			});
-
 			it('should return array instances of FileRecordResponse', async () => {
 				const { recordId } = setup();
 
 				const response = await service.deleteFiles([recordId]);
 
-				expect(response.message[0]).toBeInstanceOf(FileRecordResponse);
+				expect(response.message[0]).toBeInstanceOf(FileRecordConsumerResponse);
 			});
 		});
 
@@ -327,7 +307,6 @@ describe('FilesStorageConsumer', () => {
 
 				expect(filesStorageService.getFileRecordsByCreatorId).toHaveBeenCalledWith(creatorId);
 				expect(filesStorageService.removeCreatorIdFromFileRecords).toHaveBeenCalledWith(fileRecords);
-				expect(filesStorageService.getFileRecordsWithStatus).toHaveBeenCalledWith(fileRecords);
 			});
 
 			it('should return correct type', async () => {
@@ -337,7 +316,17 @@ describe('FilesStorageConsumer', () => {
 
 				expect(result.message).toHaveLength(fileRecords.length);
 				expect(Object.keys(result.message[0])).toEqual(
-					expect.arrayContaining(['id', 'name', 'parentId', 'securityCheckStatus', 'size', 'mimeType', 'parentType'])
+					expect.arrayContaining([
+						'id',
+						'name',
+						'parentId',
+						'creatorId',
+						'parentType',
+						'isUploading',
+						'deletedSince',
+						'createdAt',
+						'updatedAt',
+					])
 				);
 			});
 		});
