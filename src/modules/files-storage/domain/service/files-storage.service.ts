@@ -346,15 +346,24 @@ export class FilesStorageService {
 	}
 
 	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+		// TODO: Prüfen ob hier nicht return; anstatt exception hingehört
 		if (fileRecords.length === 0) {
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		}
 
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
+		const fileArchiveResponse = this.buildArchiveResponse(files, fileRecords, archiveName);
 
+		return fileArchiveResponse;
+	}
+
+	private buildArchiveResponse(
+		files: GetFileResponse[],
+		fileRecords: FileRecord[],
+		archiveName: string
+	): GetFileResponse {
 		const archiveType = 'zip';
 		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, archiveType);
-
 		const fileResponse = FileResponseBuilder.build(
 			{
 				data: archive,
@@ -468,7 +477,7 @@ export class FilesStorageService {
 			return [[], 0];
 		}
 
-		const response = await this.copy(userId, fileRecords, targetParentInfo);
+		const response = await this.copyFilesToParent(userId, fileRecords, targetParentInfo);
 
 		return [response, count];
 	}
@@ -509,19 +518,12 @@ export class FilesStorageService {
 		}
 	}
 
-	public async copy(
+	public async copyFilesToParent(
 		userId: EntityId,
 		sourceFileRecords: FileRecord[],
 		targetParentInfo: ParentInfo
 	): Promise<CopyFileResult[]> {
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start copy of FileRecords', {
-				action: 'copy',
-				sourcePayload: sourceFileRecords,
-				targetPayload: targetParentInfo,
-			})
-		);
-
+		this.copyLog(sourceFileRecords, targetParentInfo);
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
 			try {
 				this.checkScanStatus(sourceFile);
@@ -553,6 +555,16 @@ export class FilesStorageService {
 		const statistics = await this.fileRecordRepo.getStatisticByParentId(parentId);
 
 		return statistics;
+	}
+
+	private copyLog(sourceFileRecords: FileRecord[], targetParentInfo: ParentInfo): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start copy of FileRecords', {
+				action: 'copy',
+				sourcePayload: sourceFileRecords,
+				targetPayload: targetParentInfo,
+			})
+		);
 	}
 
 	private deleteLog(fileRecords: FileRecord[]): void {

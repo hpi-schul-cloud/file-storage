@@ -369,7 +369,7 @@ export class FilesStorageUC {
 			),
 		]);
 
-		const response = await this.filesStorageService.copy(userId, [fileRecord], copyFileParams.target);
+		const response = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], copyFileParams.target);
 
 		return response[0];
 	}
