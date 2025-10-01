@@ -437,7 +437,7 @@ export class FilesStorageService {
 		return result;
 	}
 
-	// TODO: gehört in den UseCase
+	// TODO: gehört in den UseCase, repo Method ist vermutlich nicht notwendig, siehe UC.deleteAllFilesOfParent flow
 	public async restoreFilesOfParent(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 			parentInfo.storageLocation,

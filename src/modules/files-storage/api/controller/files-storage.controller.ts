@@ -302,7 +302,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@Post('/restore/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async restore(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.restoreFilesOfParent(params);
+		const response = await this.filesStorageUC.restoreAllFilesOfParent(params);
 
 		return response;
 	}

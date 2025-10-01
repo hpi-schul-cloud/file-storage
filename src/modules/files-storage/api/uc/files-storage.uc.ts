@@ -305,7 +305,7 @@ export class FilesStorageUC {
 	}
 
 	// restore
-	public async restoreFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
+	public async restoreAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create);
 		const [fileRecords, count] = await this.filesStorageService.restoreFilesOfParent(params);
 
