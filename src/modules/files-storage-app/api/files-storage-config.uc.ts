@@ -1,13 +1,13 @@
 import { FileStorageConfig } from '@modules/files-storage';
-import { WopiConfig } from '@modules/wopi';
 import { Injectable } from '@nestjs/common';
 import { FilesStorageConfigResponse } from './dto';
 import { ConfigResponseMapper } from './mapper.ts';
+import { WopiPublicApiConfig } from '@modules/wopi';
 
 @Injectable()
 export class FilesStorageConfigUc {
 	constructor(
-		private readonly wopiConfig: WopiConfig,
+		private readonly wopiConfig: WopiPublicApiConfig,
 		private readonly filesStorageConfig: FileStorageConfig
 	) {}
 
