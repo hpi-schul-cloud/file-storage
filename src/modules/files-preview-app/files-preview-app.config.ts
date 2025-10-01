@@ -1,8 +1,9 @@
+import { Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
-import { Injectable } from '@nestjs/common';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber, IsString, IsUrl } from 'class-validator';
 
+@Configuration()
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	[key: string]: number;
 
@@ -15,7 +16,7 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	INCOMING_REQUEST_TIMEOUT_COPY_API_MS!: number;
 }
 
-@Injectable()
+@Configuration()
 export class FilesPreviewAppConfig {
 	@IsUrl({ require_tld: false })
 	FILES_STORAGE_S3_ENDPOINT = 'http://localhost:9000/';
