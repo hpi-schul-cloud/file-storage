@@ -330,7 +330,11 @@ export class FilesStorageController {
 		@Body() copyFilesParam: CopyFilesOfParentParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<CopyFileListResponse> {
-		const [response, count] = await this.filesStorageUC.copyFilesOfParent(currentUser.userId, params, copyFilesParam);
+		const [response, count] = await this.filesStorageUC.copyFilesOfParent(
+			currentUser.userId,
+			params,
+			copyFilesParam.target
+		);
 
 		return new CopyFileListResponse(response, count);
 	}
@@ -347,7 +351,7 @@ export class FilesStorageController {
 		@Body() copyFileParam: CopyFileParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<CopyFileResponse> {
-		const response = await this.filesStorageUC.copyOneFile(currentUser.userId, params, copyFileParam);
+		const response = await this.filesStorageUC.copyOneFile(currentUser.userId, params, copyFileParam.target);
 
 		return response;
 	}

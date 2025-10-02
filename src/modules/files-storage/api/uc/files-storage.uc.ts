@@ -28,9 +28,7 @@ import {
 import { ToManyDifferentParentsException } from '../../loggable';
 import {
 	ArchiveFileParams,
-	CopyFileParams,
 	CopyFileResponse,
-	CopyFilesOfParentParams,
 	DownloadFileParams,
 	FileRecordListResponse,
 	FileRecordParams,
@@ -327,17 +325,15 @@ export class FilesStorageUC {
 	public async copyFilesOfParent(
 		userId: string,
 		params: FileRecordParams,
-		copyFilesParams: CopyFilesOfParentParams
+		targetParams: FileRecordParams
 	): Promise<Counted<CopyFileResponse[]>> {
-		const { target } = copyFilesParams;
-
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
-			this.checkPermission(target, FileStorageAuthorizationContext.create),
+			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByStorageLocationIdAndParentId(params);
-		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, target);
+		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
 		const copyFileResponses = CopyFileResponseBuilder.buildMany(copyFileResults);
 
 		return [copyFileResponses, count];
@@ -346,18 +342,17 @@ export class FilesStorageUC {
 	public async copyOneFile(
 		userId: string,
 		params: SingleFileParams,
-		copyFileParams: CopyFileParams
+		targetParams: FileRecordParams
 	): Promise<CopyFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const parentInfo = fileRecord.getParentInfo();
-		const { target } = copyFileParams;
 
 		await Promise.all([
 			this.checkPermission(parentInfo, FileStorageAuthorizationContext.create),
-			this.checkPermission(target, FileStorageAuthorizationContext.create),
+			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
-		const copyFileResult = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], target);
+		const copyFileResult = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
 
 		// TODO: Map to CopyFileResponse?
 		return copyFileResult[0];

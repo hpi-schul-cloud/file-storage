@@ -134,7 +134,7 @@ export class CopyFileParams {
 
 	@ApiProperty()
 	@IsString()
-	fileNamePrefix!: string;
+	fileNamePrefix!: string; // TODO: Wird nirgends verwendet, können wir das einfach raus werfen?
 }
 
 export class CopyFilesOfParentPayload {
