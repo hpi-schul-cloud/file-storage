@@ -76,10 +76,10 @@ export class FilesStorageUC {
 	}
 
 	private async checkPermission(
-		parentType: FileRecordParentType,
-		parentId: EntityId,
+		parentInfo: { parentType: FileRecordParentType; parentId: EntityId },
 		context: AuthorizationContextParams
 	): Promise<void> {
+		const { parentType, parentId } = parentInfo;
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
@@ -90,7 +90,7 @@ export class FilesStorageUC {
 
 		this.checkMaximumDifferentParents(uniqueParents);
 		const checkPermission = ([parentId, parentType]: [EntityId, FileRecordParentType]): Promise<void> =>
-			this.checkPermission(parentType, parentId, context);
+			this.checkPermission({ parentType, parentId }, context);
 		const permissionChecks = Array.from(uniqueParents, checkPermission);
 
 		await Promise.all(permissionChecks);
@@ -108,7 +108,7 @@ export class FilesStorageUC {
 	// upload
 	public async upload(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
 		await Promise.all([
-			this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create),
+			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
@@ -162,7 +162,7 @@ export class FilesStorageUC {
 	}
 
 	public async uploadFromUrl(userId: EntityId, params: FileRecordParams & FileUrlParams): Promise<FileRecordResponse> {
-		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create);
+		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 		await this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId);
 
 		const response = await this.getResponse(params);
@@ -214,9 +214,9 @@ export class FilesStorageUC {
 	// download
 	public async download(params: DownloadFileParams, bytesRange?: string): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const { parentType, parentId } = fileRecord.getParentInfo();
+		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.read);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
 
 		return this.filesStorageService.download(fileRecord, params.fileName, bytesRange);
 	}
@@ -235,9 +235,9 @@ export class FilesStorageUC {
 		bytesRange?: string
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const { parentType, parentId } = fileRecord.getParentInfo();
+		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.read);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
 		this.filesStorageService.checkFileName(fileRecord, params.fileName);
 
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
@@ -258,7 +258,7 @@ export class FilesStorageUC {
 
 	// delete
 	public async deleteAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
-		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.delete);
+		await this.checkPermission(params, FileStorageAuthorizationContext.delete);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 		await this.previewService.deletePreviews(fileRecords);
@@ -271,9 +271,9 @@ export class FilesStorageUC {
 
 	public async deleteOneFile(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const { parentType, parentId } = fileRecord.getParentInfo();
+		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.delete);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
 
 		await this.deletePreviewsAndFiles([fileRecord]);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -301,7 +301,7 @@ export class FilesStorageUC {
 
 	// restore
 	public async restoreAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
-		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create);
+		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
 		const [fileRecords, count] = await this.filesStorageService.restoreFilesOfParent(params);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -312,9 +312,9 @@ export class FilesStorageUC {
 
 	public async restoreOneFile(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecordMarkedForDelete(params.fileRecordId);
-		const { parentType, parentId } = fileRecord.getParentInfo();
+		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.create);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.create);
 
 		await this.filesStorageService.restoreFiles([fileRecord]);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -332,8 +332,8 @@ export class FilesStorageUC {
 		const { target } = copyFilesParams;
 
 		await Promise.all([
-			this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.create),
-			this.checkPermission(target.parentType, target.parentId, FileStorageAuthorizationContext.create),
+			this.checkPermission(params, FileStorageAuthorizationContext.create),
+			this.checkPermission(target, FileStorageAuthorizationContext.create),
 		]);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByStorageLocationIdAndParentId(params);
@@ -349,12 +349,12 @@ export class FilesStorageUC {
 		copyFileParams: CopyFileParams
 	): Promise<CopyFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const { parentType, parentId } = fileRecord.getParentInfo();
+		const parentInfo = fileRecord.getParentInfo();
 		const { target } = copyFileParams;
 
 		await Promise.all([
-			this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.create),
-			this.checkPermission(target.parentType, target.parentId, FileStorageAuthorizationContext.create),
+			this.checkPermission(parentInfo, FileStorageAuthorizationContext.create),
+			this.checkPermission(target, FileStorageAuthorizationContext.create),
 		]);
 
 		const copyFileResult = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], target);
@@ -366,9 +366,9 @@ export class FilesStorageUC {
 	// update
 	public async patchFilename(params: SingleFileParams, data: RenameFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const { parentType, parentId } = fileRecord.getParentInfo();
+		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkPermission(parentType, parentId, FileStorageAuthorizationContext.update);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.update);
 
 		const modifiedFileRecord = await this.filesStorageService.patchFilename(fileRecord, data.fileName);
 		const status = this.filesStorageService.getFileRecordStatus(modifiedFileRecord);
@@ -389,7 +389,7 @@ export class FilesStorageUC {
 		params: FileRecordParams,
 		pagination: PaginationParams
 	): Promise<FileRecordListResponse> {
-		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.read);
+		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
 		const [fileRecords, counted] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -405,7 +405,7 @@ export class FilesStorageUC {
 
 	// statistics
 	public async getParentStatistic(params: ParentParams): Promise<ParentStatisticResponse> {
-		await this.checkPermission(params.parentType, params.parentId, FileStorageAuthorizationContext.read);
+		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
 		const parentStatistic = await this.filesStorageService.getParentStatistic(params.parentId);
 		const parentStatisticResponse = ParentStatisticMapper.toParentStatisticResponse(parentStatistic);
