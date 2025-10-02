@@ -145,12 +145,7 @@ export class FilesStorageController {
 		@Headers('Range') bytesRange?: string,
 		@Headers('If-None-Match') etag?: string
 	): Promise<StreamableFile | void> {
-		const fileResponse = await this.filesStorageUC.downloadPreview(
-			currentUser.userId,
-			params,
-			previewParams,
-			bytesRange
-		);
+		const fileResponse = await this.filesStorageUC.downloadPreview(params, previewParams, bytesRange);
 
 		response.set({ ETag: fileResponse.etag });
 

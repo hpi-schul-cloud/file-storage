@@ -73,36 +73,6 @@ export class FilesStorageUC {
 		this.logger.setContext(FilesStorageUC.name);
 	}
 
-	private async checkPermission(
-		parentInfo: { parentType: FileRecordParentType; parentId: EntityId },
-		context: AuthorizationContextParams
-	): Promise<void> {
-		const { parentType, parentId } = parentInfo;
-		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
-
-		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
-	}
-
-	private async checkPermissions(fileRecords: FileRecord[], context: AuthorizationContextParams): Promise<void> {
-		const uniqueParents = FileRecord.getUniqueParents(fileRecords);
-
-		this.checkMaximumDifferentParents(uniqueParents);
-		const checkPermission = ([parentId, parentType]: [EntityId, FileRecordParentType]): Promise<void> =>
-			this.checkPermission({ parentType, parentId }, context);
-		const permissionChecks = Array.from(uniqueParents, checkPermission);
-
-		await Promise.all(permissionChecks);
-	}
-
-	private checkMaximumDifferentParents(parents: Map<EntityId, FileRecordParentType>): void {
-		const maximumOfDifferentParents = 1;
-		const parentIds = Array.from(parents.keys());
-
-		if (parentIds.length > maximumOfDifferentParents) {
-			throw new ToManyDifferentParentsException(parentIds, maximumOfDifferentParents);
-		}
-	}
-
 	// upload
 	public async upload(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
 		await Promise.all([
@@ -117,48 +87,6 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	private async checkStorageLocationCanRead(
-		storageLocation: StorageLocation,
-		storageLocationId: EntityId
-	): Promise<void> {
-		const referenceType = FilesStorageMapper.mapToAllowedStorageLocationType(storageLocation);
-		await this.authorizationClientAdapter.checkPermissionsByReference(
-			referenceType,
-			storageLocationId,
-			AuthorizationContextBuilder.read([])
-		);
-	}
-
-	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecord> {
-		const promise = new Promise<FileRecord>((resolve, reject) => {
-			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
-			let fileRecordPromise: Promise<FileRecord>;
-
-			bb.on('file', (_name, file, info) => {
-				const fileDto = FileDtoMapper.buildFromBusboyFileInfo(info, file);
-
-				fileRecordPromise = RequestContext.create(this.em, () => {
-					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
-
-					return record;
-				});
-			});
-
-			bb.on('finish', () => {
-				fileRecordPromise
-					.then((result) => resolve(result))
-					.catch((error) => {
-						req.unpipe(bb);
-						reject(new Error('Error by stream uploading', { cause: error }));
-					});
-			});
-
-			req.pipe(bb);
-		});
-
-		return promise;
-	}
-
 	public async uploadFromUrl(userId: EntityId, params: FileRecordParams & FileUrlParams): Promise<FileRecordResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 		await this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId);
@@ -171,42 +99,6 @@ export class FilesStorageUC {
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
 		return fileRecordResponse;
-	}
-
-	private async getResponse(
-		params: FileRecordParams & FileUrlParams
-	): Promise<AxiosResponse<internal.Readable, unknown>> {
-		const config: AxiosRequestConfig = {
-			headers: params.headers,
-			responseType: 'stream',
-		};
-
-		const encodedUrl = this.ensureEncodedUrl(params.url);
-
-		try {
-			const responseStream = this.httpService.get<internal.Readable>(encodedUrl, config);
-
-			const response = await firstValueFrom(responseStream);
-
-			/* istanbul ignore next */
-			response.data.on('error', (error) => {
-				this.domainErrorHandler.exec(error);
-			});
-
-			return response;
-		} catch (error) {
-			throw new NotFoundException(ErrorType.FILE_NOT_FOUND, { cause: error });
-		}
-	}
-
-	private ensureEncodedUrl(url: string): string {
-		const containsEncodedCharacters = (url: string): boolean => {
-			return /%[0-9A-Fa-f]{2}/.test(url);
-		};
-
-		const encodedUrl = containsEncodedCharacters(url) ? url : encodeURI(url);
-
-		return encodedUrl;
 	}
 
 	// download
@@ -227,7 +119,6 @@ export class FilesStorageUC {
 	}
 
 	public async downloadPreview(
-		userId: EntityId,
 		params: DownloadFileParams,
 		previewParams: PreviewParams,
 		bytesRange?: string
@@ -405,5 +296,115 @@ export class FilesStorageUC {
 		const parentStatisticResponse = ParentStatisticMapper.toParentStatisticResponse(parentStatistic);
 
 		return parentStatisticResponse;
+	}
+
+	// private stream helper
+	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecord> {
+		const promise = new Promise<FileRecord>((resolve, reject) => {
+			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
+			let fileRecordPromise: Promise<FileRecord>;
+
+			bb.on('file', (_name, file, info) => {
+				const fileDto = FileDtoMapper.buildFromBusboyFileInfo(info, file);
+
+				fileRecordPromise = RequestContext.create(this.em, () => {
+					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
+
+					return record;
+				});
+			});
+
+			bb.on('finish', () => {
+				fileRecordPromise
+					.then((result) => resolve(result))
+					.catch((error) => {
+						req.unpipe(bb);
+						reject(new Error('Error by stream uploading', { cause: error }));
+					});
+			});
+
+			req.pipe(bb);
+		});
+
+		return promise;
+	}
+
+	private async getResponse(
+		params: FileRecordParams & FileUrlParams
+	): Promise<AxiosResponse<internal.Readable, unknown>> {
+		const config: AxiosRequestConfig = {
+			headers: params.headers,
+			responseType: 'stream',
+		};
+
+		const encodedUrl = this.ensureEncodedUrl(params.url);
+
+		try {
+			const responseStream = this.httpService.get<internal.Readable>(encodedUrl, config);
+
+			const response = await firstValueFrom(responseStream);
+
+			/* istanbul ignore next */
+			response.data.on('error', (error) => {
+				this.domainErrorHandler.exec(error);
+			});
+
+			return response;
+		} catch (error) {
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND, { cause: error });
+		}
+	}
+
+	private ensureEncodedUrl(url: string): string {
+		const containsEncodedCharacters = (url: string): boolean => {
+			return /%[0-9A-Fa-f]{2}/.test(url);
+		};
+
+		const encodedUrl = containsEncodedCharacters(url) ? url : encodeURI(url);
+
+		return encodedUrl;
+	}
+
+	// private permission checks
+	private async checkPermission(
+		parentInfo: { parentType: FileRecordParentType; parentId: EntityId },
+		context: AuthorizationContextParams
+	): Promise<void> {
+		const { parentType, parentId } = parentInfo;
+		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
+
+		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
+	}
+
+	private async checkPermissions(fileRecords: FileRecord[], context: AuthorizationContextParams): Promise<void> {
+		const uniqueParents = FileRecord.getUniqueParents(fileRecords);
+
+		this.checkMaximumDifferentParents(uniqueParents);
+		const checkPermission = ([parentId, parentType]: [EntityId, FileRecordParentType]): Promise<void> =>
+			this.checkPermission({ parentType, parentId }, context);
+		const permissionChecks = Array.from(uniqueParents, checkPermission);
+
+		await Promise.all(permissionChecks);
+	}
+
+	private checkMaximumDifferentParents(parents: Map<EntityId, FileRecordParentType>): void {
+		const maximumOfDifferentParents = 1;
+		const parentIds = Array.from(parents.keys());
+
+		if (parentIds.length > maximumOfDifferentParents) {
+			throw new ToManyDifferentParentsException(parentIds, maximumOfDifferentParents);
+		}
+	}
+
+	private async checkStorageLocationCanRead(
+		storageLocation: StorageLocation,
+		storageLocationId: EntityId
+	): Promise<void> {
+		const referenceType = FilesStorageMapper.mapToAllowedStorageLocationType(storageLocation);
+		await this.authorizationClientAdapter.checkPermissionsByReference(
+			referenceType,
+			storageLocationId,
+			AuthorizationContextBuilder.read([])
+		);
 	}
 }
