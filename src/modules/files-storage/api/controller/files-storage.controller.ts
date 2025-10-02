@@ -112,7 +112,7 @@ export class FilesStorageController {
 	@Get('/download/:fileRecordId/:fileName')
 	public async download(
 		@Param() params: DownloadFileParams,
-		@CurrentUser() currentUser: ICurrentUser,
+		@CurrentUser() currentUser: ICurrentUser, // TODO: kann as entfernt werden?
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response,
 		@Headers('Range') bytesRange?: string
@@ -138,7 +138,7 @@ export class FilesStorageController {
 	@Get('/preview/:fileRecordId/:fileName')
 	public async downloadPreview(
 		@Param() params: DownloadFileParams,
-		@CurrentUser() currentUser: ICurrentUser,
+		@CurrentUser() currentUser: ICurrentUser, // TODO: kann as entfernt werden?
 		@Query() previewParams: PreviewParams,
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response,
