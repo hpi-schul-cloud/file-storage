@@ -514,6 +514,7 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
+	// TODO: Spannend ...vereinheitlichen
 	private async sendToAntiVirusService(fileRecord: FileRecord): Promise<void> {
 		if (fileRecord.isPending()) {
 			await this.antivirusService.send(fileRecord.getSecurityToken());
