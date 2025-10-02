@@ -192,7 +192,8 @@ export class FilesStorageUC {
 	public async restoreAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
-		const [fileRecords, count] = await this.filesStorageService.restoreFilesOfParent(params);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteOfParent(params.parentId);
+		await this.filesStorageService.restoreFiles(fileRecords);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
 
@@ -223,7 +224,7 @@ export class FilesStorageUC {
 			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByStorageLocationIdAndParentId(params);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
 		const copyFileResponses = CopyFileResponseBuilder.buildMany(copyFileResults);
 
@@ -243,10 +244,10 @@ export class FilesStorageUC {
 			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
-		const copyFileResult = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
+		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
+		const copyFileResponse = CopyFileResponseBuilder.build(copyFileResults[0]);
 
-		// TODO: Map to CopyFileResponse?
-		return copyFileResult[0];
+		return copyFileResponse;
 	}
 
 	// update

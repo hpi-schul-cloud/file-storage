@@ -49,6 +49,16 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		return result;
 	}
 
+	public async findMarkedForDeleteByParentId(
+		parentId: EntityId,
+		options?: FindOptions<FileRecordEntity>
+	): Promise<Counted<FileRecord[]>> {
+		const scope = new FileRecordScope().byParentId(parentId).byMarkedForDelete(true);
+		const result = await this.findAndCount(scope, options);
+
+		return result;
+	}
+
 	public async markForDeleteByStorageLocation(
 		storageLocation: StorageLocation,
 		storageLocationId: EntityId
@@ -59,38 +69,6 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 			.byStorageLocationId(new ObjectId(storageLocationId))
 			.byMarkedForDelete(false);
 		const result = await this.em.nativeUpdate(this.entityName, scope.query, { deletedSince: new Date() });
-
-		return result;
-	}
-
-	public async findByStorageLocationIdAndParentId(
-		storageLocation: StorageLocation,
-		storageLocationId: EntityId,
-		parentId: EntityId,
-		options?: FindOptions<FileRecordEntity>
-	): Promise<Counted<FileRecord[]>> {
-		const scope = new FileRecordScope()
-			.byStorageLocation(storageLocation)
-			.byStorageLocationId(storageLocationId)
-			.byParentId(parentId)
-			.byMarkedForDelete(false);
-		const result = await this.findAndCount(scope, options);
-
-		return result;
-	}
-
-	public async findByStorageLocationIdAndParentIdAndMarkedForDelete(
-		storageLocation: StorageLocation,
-		storageLocationId: EntityId,
-		parentId: EntityId,
-		options?: FindOptions<FileRecordEntity>
-	): Promise<Counted<FileRecord[]>> {
-		const scope = new FileRecordScope()
-			.byStorageLocation(storageLocation)
-			.byStorageLocationId(storageLocationId)
-			.byParentId(parentId)
-			.byMarkedForDelete(true);
-		const result = await this.findAndCount(scope, options);
 
 		return result;
 	}

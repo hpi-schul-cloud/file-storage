@@ -15,7 +15,7 @@ describe('Copy File Response Builder', () => {
 			const { id, sourceId, name } = setup();
 			const expectedResponse = new CopyFileResponse({ id, sourceId, name });
 
-			const result = CopyFileResponseBuilder.build(id, sourceId, name);
+			const result = CopyFileResponseBuilder.build({ id, sourceId, name });
 
 			expect(result).toEqual(expectedResponse);
 		});
@@ -34,7 +34,7 @@ describe('Copy File Response Builder', () => {
 			const { id, sourceId, name } = setup();
 			const expectedResponse = new CopyFileResponse({ id, sourceId, name });
 
-			const result = CopyFileResponseBuilder.build(id, sourceId, name);
+			const result = CopyFileResponseBuilder.build({ id, sourceId, name });
 
 			expect(result).toEqual(expectedResponse);
 		});

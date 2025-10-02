@@ -303,6 +303,10 @@ describe('FilesStorageService get methods', () => {
 		});
 	});
 
+	describe('getFileRecordsMarkedForDeleteOfParent is called', () => {
+		// TODO: Test is missing
+	});
+
 	describe('getFileRecordsByCreatorId is called', () => {
 		describe('WHEN valid files exist', () => {
 			const setup = () => {

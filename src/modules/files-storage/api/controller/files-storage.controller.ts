@@ -33,7 +33,6 @@ import {
 	CopyFileListResponse,
 	CopyFileParams,
 	CopyFileResponse,
-	CopyFilesOfParentParams,
 	DownloadFileParams,
 	FileParams,
 	FileRecordListResponse,
@@ -112,7 +111,6 @@ export class FilesStorageController {
 	@Get('/download/:fileRecordId/:fileName')
 	public async download(
 		@Param() params: DownloadFileParams,
-		@CurrentUser() currentUser: ICurrentUser, // TODO: kann as entfernt werden?
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response,
 		@Headers('Range') bytesRange?: string
@@ -138,7 +136,6 @@ export class FilesStorageController {
 	@Get('/preview/:fileRecordId/:fileName')
 	public async downloadPreview(
 		@Param() params: DownloadFileParams,
-		@CurrentUser() currentUser: ICurrentUser, // TODO: kann as entfernt werden?
 		@Query() previewParams: PreviewParams,
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response,
@@ -322,7 +319,7 @@ export class FilesStorageController {
 	@Post('/copy/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async copy(
 		@Param() params: FileRecordParams,
-		@Body() copyFilesParam: CopyFilesOfParentParams,
+		@Body() copyFilesParam: CopyFileParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<CopyFileListResponse> {
 		const [response, count] = await this.filesStorageUC.copyFilesOfParent(

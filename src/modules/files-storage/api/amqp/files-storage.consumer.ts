@@ -31,7 +31,7 @@ export class FilesStorageConsumer {
 		@RabbitPayload() { userId, source, target }: CopyFilesOfParentPayload
 	): Promise<RpcMessage<CopyFileResponse[]>> {
 		this.copyFilesOfParentLog();
-		const [fileRecords] = await this.filesStorageService.getFileRecordsByStorageLocationIdAndParentId(source);
+		const [fileRecords] = await this.filesStorageService.getFileRecordsOfParent(source.parentId);
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, target);
 
 		return { message: copyFileResults };

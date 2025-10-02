@@ -83,10 +83,7 @@ describe('FilesStorageConsumer', () => {
 					parentType: payload.source.parentType,
 				});
 
-				filesStorageService.getFileRecordsByStorageLocationIdAndParentId.mockResolvedValueOnce([
-					fileRecords,
-					fileRecords.length,
-				]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
 				const copyFileResults = fileRecords.map((sourceFileRecord) => ({
 					id: new ObjectId().toHexString(),
 					sourceId: sourceFileRecord.id,
@@ -118,7 +115,7 @@ describe('FilesStorageConsumer', () => {
 		describe('WHEN file not exists', () => {
 			const setup = () => {
 				const payload = buildCopyPayload();
-				filesStorageService.getFileRecordsByStorageLocationIdAndParentId.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
 				filesStorageService.copyFilesToParent.mockResolvedValueOnce([]);
 
 				return { payload };

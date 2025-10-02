@@ -76,24 +76,19 @@ export class FilesStorageService {
 		return countedFileRecords;
 	}
 
+	public async getFileRecordsMarkedForDeleteOfParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findMarkedForDeleteByParentId(parentId);
+
+		return countedFileRecords;
+	}
+
 	public async getFileRecordsByCreatorId(creatorId: EntityId): Promise<Counted<FileRecord[]>> {
 		const countedFileRecords = await this.fileRecordRepo.findByCreatorId(creatorId);
 
 		return countedFileRecords;
 	}
 
-	public async getFileRecordsByStorageLocationIdAndParentId(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
-		const countedFileRecords = await this.fileRecordRepo.findByStorageLocationIdAndParentId(
-			parentInfo.storageLocation,
-			parentInfo.storageLocationId,
-			parentInfo.parentId
-		);
-
-		return countedFileRecords;
-	}
-
 	// generate status
-
 	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
 		const scanStatus = fileRecord.scanStatus;
 		const previewStatus = fileRecord.getPreviewStatus();
@@ -254,14 +249,16 @@ export class FilesStorageService {
 		await this.throwOnIncompleteStream(streamCompletion);
 
 		const fileRecordSize = fileSizeObserver.getFileSize();
-
 		fileRecord.markAsUploaded(fileRecordSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
+		if (fileRecordSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
+			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
+		}
 
 		await this.fileRecordRepo.save(fileRecord);
 
-		if (!shouldStreamToAntiVirus) {
-			await this.sendToAntivirus(fileRecord);
+		if (!shouldStreamToAntiVirus && !fileRecord.isWontCheck()) {
+			await this.antivirusService.send(fileRecord.getSecurityToken());
 		}
 	}
 
@@ -278,17 +275,6 @@ export class FilesStorageService {
 			stream.on('end', resolve);
 			stream.on('error', reject);
 		});
-	}
-
-	private async sendToAntivirus(fileRecord: FileRecord): Promise<void> {
-		const maxSecurityCheckFileSize = this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE;
-
-		if (fileRecord.sizeInByte > maxSecurityCheckFileSize) {
-			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
-			await this.fileRecordRepo.save(fileRecord);
-		} else {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
-		}
 	}
 
 	// update
@@ -358,7 +344,6 @@ export class FilesStorageService {
 	}
 
 	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
-		// TODO: Prüfen ob hier nicht return; anstatt exception hingehört
 		if (fileRecords.length === 0) {
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		}
@@ -417,7 +402,7 @@ export class FilesStorageService {
 		try {
 			await this.deleteBinaryFiles(fileRecords);
 		} catch (error) {
-			this.restoreFileRecords(fileRecords);
+			await this.restoreFileRecords(fileRecords);
 
 			throw error;
 		}
@@ -427,12 +412,12 @@ export class FilesStorageService {
 		this.restoreLog(fileRecords);
 		if (fileRecords.length === 0) return;
 
-		this.restoreFileRecords(fileRecords);
+		await this.restoreFileRecords(fileRecords);
 
 		try {
 			await this.restoreBinaryFiles(fileRecords);
 		} catch (error) {
-			this.deleteFileRecords(fileRecords);
+			await this.deleteFileRecords(fileRecords);
 
 			throw error;
 		}
@@ -455,18 +440,6 @@ export class FilesStorageService {
 		});
 
 		return result;
-	}
-
-	public async restoreFilesOfParent(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
-		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
-			parentInfo.storageLocation,
-			parentInfo.storageLocationId,
-			parentInfo.parentId
-		);
-
-		await this.restoreFiles(fileRecords);
-
-		return [fileRecords, count];
 	}
 
 	public async copyFilesToParent(
@@ -514,13 +487,6 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	// TODO: Spannend ...vereinheitlichen
-	private async sendToAntiVirusService(fileRecord: FileRecord): Promise<void> {
-		if (fileRecord.isPending()) {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
-		}
-	}
-
 	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
 		try {
 			const copyFiles: CopyFiles = {
@@ -529,7 +495,9 @@ export class FilesStorageService {
 			};
 
 			await this.storageClient.copy([copyFiles]);
-			await this.sendToAntiVirusService(targetFile);
+			if (targetFile.isPending()) {
+				await this.antivirusService.send(targetFile.getSecurityToken());
+			}
 
 			const copyFileResult: CopyFileResult = { id: targetFile.id, sourceId: sourceFile.id, name: targetFile.getName() };
 
