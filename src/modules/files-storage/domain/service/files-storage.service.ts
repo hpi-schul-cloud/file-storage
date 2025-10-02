@@ -469,23 +469,6 @@ export class FilesStorageService {
 		return [fileRecords, count];
 	}
 
-	// copy
-	public async copyFilesOfParent(
-		userId: string,
-		sourceParentInfo: ParentInfo,
-		targetParentInfo: ParentInfo
-	): Promise<Counted<CopyFileResult[]>> {
-		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentId(
-			sourceParentInfo.storageLocation,
-			sourceParentInfo.storageLocationId,
-			sourceParentInfo.parentId
-		);
-
-		const response = await this.copyFilesToParent(userId, fileRecords, targetParentInfo);
-
-		return [response, count];
-	}
-
 	public async copyFilesToParent(
 		userId: EntityId,
 		sourceFileRecords: FileRecord[],

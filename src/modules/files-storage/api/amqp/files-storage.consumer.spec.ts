@@ -11,6 +11,27 @@ import { CopyFilesOfParentPayload } from '../dto';
 import { FileRecordConsumerResponse } from './dto';
 import { FilesStorageConsumer } from './files-storage.consumer';
 
+const buildCopyPayload = (): CopyFilesOfParentPayload => {
+	const storageLocationId: EntityId = new ObjectId().toHexString();
+	const payload: CopyFilesOfParentPayload = {
+		userId: new ObjectId().toHexString(),
+		source: {
+			parentId: new ObjectId().toHexString(),
+			parentType: FileRecordParentType.Course,
+			storageLocationId,
+			storageLocation: StorageLocation.SCHOOL,
+		},
+		target: {
+			parentId: new ObjectId().toHexString(),
+			parentType: FileRecordParentType.Course,
+			storageLocationId,
+			storageLocation: StorageLocation.SCHOOL,
+		},
+	};
+
+	return payload;
+};
+
 describe('FilesStorageConsumer', () => {
 	let module: TestingModule;
 	let filesStorageService: DeepMocked<FilesStorageService>;
@@ -54,73 +75,60 @@ describe('FilesStorageConsumer', () => {
 	});
 
 	describe('copyFilesOfParent()', () => {
-		const storageLocationId: EntityId = new ObjectId().toHexString();
 		describe('WHEN valid file exists', () => {
-			it('should call filesStorageService.copyFilesOfParent with params', async () => {
-				const payload: CopyFilesOfParentPayload = {
-					userId: new ObjectId().toHexString(),
-					source: {
-						parentId: new ObjectId().toHexString(),
-						parentType: FileRecordParentType.Course,
-						storageLocationId,
-						storageLocation: StorageLocation.SCHOOL,
-					},
-					target: {
-						parentId: new ObjectId().toHexString(),
-						parentType: FileRecordParentType.Course,
-						storageLocationId,
-						storageLocation: StorageLocation.SCHOOL,
-					},
-				};
-				await service.copyFilesOfParent(payload);
-				expect(filesStorageService.copyFilesOfParent).toBeCalledWith(payload.userId, payload.source, payload.target);
-			});
-			it('regular RPC handler should receive a valid RPC response', async () => {
-				const sourceCourseId = new ObjectId().toHexString();
-				const targetCourseId = new ObjectId().toHexString();
+			const setup = () => {
+				const payload = buildCopyPayload();
+				const fileRecords = fileRecordTestFactory().buildList(3, {
+					parentId: payload.source.parentId,
+					parentType: payload.source.parentType,
+				});
 
-				const payload: CopyFilesOfParentPayload = {
-					userId: new ObjectId().toHexString(),
-					source: {
-						parentId: sourceCourseId,
-						parentType: FileRecordParentType.Course,
-						storageLocationId,
-						storageLocation: StorageLocation.SCHOOL,
-					},
-					target: {
-						parentId: targetCourseId,
-						parentType: FileRecordParentType.Course,
-						storageLocationId,
-						storageLocation: StorageLocation.SCHOOL,
-					},
-				};
-				const responseData = [{ id: '1', sourceId: '2', name: 'test.txt' }];
-				filesStorageService.copyFilesOfParent.mockResolvedValueOnce([responseData, responseData.length]);
+				filesStorageService.getFileRecordsByStorageLocationIdAndParentId.mockResolvedValueOnce([
+					fileRecords,
+					fileRecords.length,
+				]);
+				const copyFileResults = fileRecords.map((sourceFileRecord) => ({
+					id: new ObjectId().toHexString(),
+					sourceId: sourceFileRecord.id,
+					name: sourceFileRecord.getName(),
+				}));
+
+				filesStorageService.copyFilesToParent.mockResolvedValueOnce(copyFileResults);
+
+				return { payload, copyFileResults };
+			};
+
+			it('should call filesStorageService.copyFilesOfParent with params', async () => {
+				const { payload } = setup();
+
+				await service.copyFilesOfParent(payload);
+
+				expect(filesStorageService.copyFilesToParent).toBeCalled();
+			});
+
+			it('regular RPC handler should receive a valid RPC response', async () => {
+				const { payload, copyFileResults } = setup();
+
 				const response = await service.copyFilesOfParent(payload);
-				expect(response.message).toEqual(responseData);
+
+				expect(response.message).toEqual(copyFileResults);
 			});
 		});
+
 		describe('WHEN file not exists', () => {
+			const setup = () => {
+				const payload = buildCopyPayload();
+				filesStorageService.getFileRecordsByStorageLocationIdAndParentId.mockResolvedValueOnce([[], 0]);
+				filesStorageService.copyFilesToParent.mockResolvedValueOnce([]);
+
+				return { payload };
+			};
+
 			it('should return RpcMessage with empty array', async () => {
-				const sourceCourseId = new ObjectId().toHexString();
-				const targetCourseId = new ObjectId().toHexString();
-				const payload = {
-					userId: new ObjectId().toHexString(),
-					source: {
-						parentId: sourceCourseId,
-						parentType: FileRecordParentType.Course,
-						storageLocationId,
-						storageLocation: StorageLocation.SCHOOL,
-					},
-					target: {
-						parentId: targetCourseId,
-						parentType: FileRecordParentType.Course,
-						storageLocationId,
-						storageLocation: StorageLocation.SCHOOL,
-					},
-				};
-				filesStorageService.copyFilesOfParent.mockResolvedValueOnce([[], 0]);
+				const { payload } = setup();
+
 				const response = await service.copyFilesOfParent(payload);
+
 				expect(response.message).toEqual([]);
 			});
 		});

@@ -4,7 +4,7 @@ import { RpcMessage } from '@infra/rabbitmq';
 import { CreateRequestContext, MikroORM } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
-import { FilesStorageService, FileStorageActionsLoggable, PreviewService } from '../../domain';
+import { FileRecord, FilesStorageService, FileStorageActionsLoggable, PreviewService } from '../../domain';
 import { CopyFileResponse, CopyFilesOfParentPayload } from '../dto';
 import { FileRecordConsumerResponse } from './dto';
 import { FilesStorageEvents, FilesStorageExchange } from './files-storage.exchange';
@@ -28,13 +28,13 @@ export class FilesStorageConsumer {
 	})
 	@CreateRequestContext()
 	public async copyFilesOfParent(
-		@RabbitPayload() payload: CopyFilesOfParentPayload
+		@RabbitPayload() { userId, source, target }: CopyFilesOfParentPayload
 	): Promise<RpcMessage<CopyFileResponse[]>> {
-		this.logger.debug(new FileStorageActionsLoggable('Start copy files of parent', { action: 'copyFilesOfParent' }));
-		const { userId, source, target } = payload;
-		const [response] = await this.filesStorageService.copyFilesOfParent(userId, source, target);
+		this.copyFilesOfParentLog();
+		const [fileRecords] = await this.filesStorageService.getFileRecordsByStorageLocationIdAndParentId(source);
+		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, target);
 
-		return { message: response };
+		return { message: copyFileResults };
 	}
 
 	@RabbitRPC({
@@ -45,11 +45,11 @@ export class FilesStorageConsumer {
 	@CreateRequestContext()
 	public async getFilesOfParent(@RabbitPayload() payload: EntityId): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
 		const [fileRecords, total] = await this.filesStorageService.getFileRecordsOfParent(payload);
-		this.logger.debug(new FileStorageActionsLoggable('Start get files of parent', { action: 'getFilesOfParent' }));
+		this.getFilesOfParentLog(fileRecords);
 
-		const response = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, total);
+		const fileRecordListResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, total);
 
-		return { message: response.data };
+		return { message: fileRecordListResponse.data };
 	}
 
 	@RabbitRPC({
@@ -62,19 +62,14 @@ export class FilesStorageConsumer {
 		@RabbitPayload() payload: EntityId
 	): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
 		const [fileRecords, total] = await this.filesStorageService.getFileRecordsOfParent(payload);
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start delete files of parent', {
-				action: 'deleteFilesOfParent',
-				sourcePayload: fileRecords,
-			})
-		);
+		this.deleteFilesOfParentLog(fileRecords);
 
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFiles(fileRecords);
 
-		const response = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, total);
+		const fileRecordResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, total);
 
-		return { message: response.data };
+		return { message: fileRecordResponse.data };
 	}
 
 	@RabbitRPC({
@@ -86,16 +81,17 @@ export class FilesStorageConsumer {
 	public async deleteFiles(@RabbitPayload() payload: EntityId[]): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
 		const promise = payload.map((fileRecordId) => this.filesStorageService.getFileRecord(fileRecordId));
 		const fileRecords = await Promise.all(promise);
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start delete of files', { action: 'deleteFiles', sourcePayload: fileRecords })
-		);
+		this.deleteFilesLog(fileRecords);
 
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFiles(fileRecords);
 
-		const response = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
+		const fileRecordListResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(
+			fileRecords,
+			fileRecords.length
+		);
 
-		return { message: response.data };
+		return { message: fileRecordListResponse.data };
 	}
 
 	@RabbitRPC({
@@ -108,17 +104,52 @@ export class FilesStorageConsumer {
 		@RabbitPayload() payload: EntityId
 	): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
 		const [fileRecords] = await this.filesStorageService.getFileRecordsByCreatorId(payload);
+		this.removeCreatorIdLog(fileRecords);
+
+		await this.filesStorageService.removeCreatorIdFromFileRecords(fileRecords);
+
+		const fileRecordListResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(
+			fileRecords,
+			fileRecords.length
+		);
+
+		return { message: fileRecordListResponse.data };
+	}
+
+	private deleteFilesLog(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start delete of files', { action: 'deleteFiles', sourcePayload: fileRecords })
+		);
+	}
+
+	private deleteFilesOfParentLog(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start delete files of parent', {
+				action: 'deleteFilesOfParent',
+				sourcePayload: fileRecords,
+			})
+		);
+	}
+
+	private removeCreatorIdLog(fileRecords: FileRecord[]): void {
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start remove creator for files', {
 				action: 'removeCreatorIdFromFileRecords',
 				sourcePayload: fileRecords,
 			})
 		);
+	}
 
-		await this.filesStorageService.removeCreatorIdFromFileRecords(fileRecords);
+	private getFilesOfParentLog(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start get files of parent', {
+				action: 'getFilesOfParent',
+				sourcePayload: fileRecords,
+			})
+		);
+	}
 
-		const response = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, fileRecords.length);
-
-		return { message: response.data };
+	private copyFilesOfParentLog(): void {
+		this.logger.debug(new FileStorageActionsLoggable('Start copy files of parent', { action: 'copyFilesOfParent' }));
 	}
 }
