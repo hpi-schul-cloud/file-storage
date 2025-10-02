@@ -1,7 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
-import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
@@ -11,6 +10,7 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { fileRecordTestFactory } from '../../testing';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
+import { StorageLocationDeleteLoggableException } from '../loggable';
 import { FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
@@ -206,12 +206,7 @@ describe('FilesStorageService delete methods', () => {
 				fileRecordRepo.markForDeleteByStorageLocation.mockResolvedValueOnce(1);
 				storageClient.moveDirectoryToTrash.mockRejectedValueOnce(error);
 
-				const expectedProps = [
-					new InternalServerErrorException(
-						'Error while moving directory to trash',
-						ErrorUtils.createHttpExceptionOptions(error)
-					),
-				];
+				const expectedProps = [new StorageLocationDeleteLoggableException(params, error)];
 
 				return { storageLocation, storageLocationId, params, expectedProps };
 			};

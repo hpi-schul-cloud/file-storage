@@ -27,7 +27,7 @@ import {
 	GetFileResponse,
 	StorageLocationParams,
 } from '../interface';
-import { FileStorageActionsLoggable } from '../loggable';
+import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { fileTypeStream } from './file-type.helper';
@@ -436,18 +436,15 @@ export class FilesStorageService {
 		const result = await this.fileRecordRepo.markForDeleteByStorageLocation(storageLocation, storageLocationId);
 
 		this.storageClient.moveDirectoryToTrash(storageLocationId).catch((error) => {
-			this.domainErrorHandler.exec(
-				new InternalServerErrorException('Error while moving directory to trash', { cause: error })
-			);
+			this.domainErrorHandler.exec(new StorageLocationDeleteLoggableException(params, error));
+			/*****************************************************************************
+			 * We do not want a rollback of the file records. Need to be fixed manually. *
+			 *****************************************************************************/
 		});
-
-		// TODO: Rollback on error of moveDirectoryToTrash
 
 		return result;
 	}
 
-	// TODO: gehört in den UseCase, repo Method ist vermutlich nicht notwendig, siehe UC.deleteAllFilesOfParent flow
-	// getFileRecordsMarkedForDeleteByParent(fileRecords)
 	public async restoreFilesOfParent(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
 		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
 			parentInfo.storageLocation,
@@ -472,13 +469,43 @@ export class FilesStorageService {
 			sourceParentInfo.parentId
 		);
 
-		if (count === 0) {
-			return [[], 0];
-		}
-
 		const response = await this.copyFilesToParent(userId, fileRecords, targetParentInfo);
 
 		return [response, count];
+	}
+
+	public async copyFilesToParent(
+		userId: EntityId,
+		sourceFileRecords: FileRecord[],
+		targetParentInfo: ParentInfo
+	): Promise<CopyFileResult[]> {
+		this.copyLog(sourceFileRecords, targetParentInfo);
+		if (sourceFileRecords.length === 0) return [];
+
+		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
+			try {
+				this.checkScanStatus(sourceFile);
+
+				const targetFile = await this.copyFileRecord(sourceFile, targetParentInfo, userId);
+				const copyFileResult = await this.copyFilesWithRollbackOnError(sourceFile, targetFile);
+
+				return copyFileResult;
+			} catch (error) {
+				this.domainErrorHandler.exec(
+					new InternalServerErrorException(`copy file failed for source fileRecordId ${sourceFile.id}`, {
+						cause: error,
+					})
+				);
+
+				const copyFileResult: CopyFileResult = { id: undefined, sourceId: sourceFile.id, name: sourceFile.getName() };
+
+				return copyFileResult;
+			}
+		});
+
+		const settledPromises = await Promise.all(promises);
+
+		return settledPromises;
 	}
 
 	private async copyFileRecord(
@@ -515,38 +542,6 @@ export class FilesStorageService {
 			await this.fileRecordRepo.delete([targetFile]);
 			throw error;
 		}
-	}
-
-	public async copyFilesToParent(
-		userId: EntityId,
-		sourceFileRecords: FileRecord[],
-		targetParentInfo: ParentInfo
-	): Promise<CopyFileResult[]> {
-		this.copyLog(sourceFileRecords, targetParentInfo);
-		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
-			try {
-				this.checkScanStatus(sourceFile);
-
-				const targetFile = await this.copyFileRecord(sourceFile, targetParentInfo, userId);
-				const copyFileResult = await this.copyFilesWithRollbackOnError(sourceFile, targetFile);
-
-				return copyFileResult;
-			} catch (error) {
-				this.domainErrorHandler.exec(
-					new InternalServerErrorException(`copy file failed for source fileRecordId ${sourceFile.id}`, {
-						cause: error,
-					})
-				);
-
-				const copyFileResult: CopyFileResult = { id: undefined, sourceId: sourceFile.id, name: sourceFile.getName() };
-
-				return copyFileResult;
-			}
-		});
-
-		const settledPromises = await Promise.all(promises);
-
-		return settledPromises;
 	}
 
 	// statistics
