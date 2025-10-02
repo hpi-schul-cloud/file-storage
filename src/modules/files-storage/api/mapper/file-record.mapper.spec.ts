@@ -45,12 +45,10 @@ describe('FilesStorageMapper', () => {
 		it('should contains props [data, total, skip, limit]', () => {
 			const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
 
-			const result = FileRecordMapper.mapToFileRecordListResponse(
-				fileRecordsWithStatus,
-				fileRecordsWithStatus.length,
-				0,
-				5
-			);
+			const result = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, fileRecordsWithStatus.length, {
+				skip: 0,
+				limit: 5,
+			});
 
 			expect(result).toEqual(
 				expect.objectContaining({

@@ -386,13 +386,12 @@ export class FilesStorageUC {
 	): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
-		const [fileRecords, counted] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
 			fileRecordWithStatus,
-			counted,
-			pagination.skip,
-			pagination.limit
+			count,
+			pagination
 		);
 
 		return fileRecordListResponse;

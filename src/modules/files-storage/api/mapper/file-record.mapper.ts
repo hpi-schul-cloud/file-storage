@@ -1,5 +1,5 @@
 import { FileRecord, FileRecordStatus, FileRecordWithStatus, StorageLocationParams } from '../../domain';
-import { DeleteByStorageLocationResponse, FileRecordListResponse, FileRecordResponse } from '../dto';
+import { DeleteByStorageLocationResponse, FileRecordListResponse, FileRecordResponse, PaginationParams } from '../dto';
 
 export class FileRecordMapper {
 	public static mapToFileRecordResponse(fileRecord: FileRecord, status: FileRecordStatus): FileRecordResponse {
@@ -11,13 +11,17 @@ export class FileRecordMapper {
 	public static mapToFileRecordListResponse(
 		fileRecordsWithStatus: FileRecordWithStatus[],
 		total: number,
-		skip?: number,
-		limit?: number
+		paginationParams?: PaginationParams
 	): FileRecordListResponse {
 		const responseFileRecords = fileRecordsWithStatus.map((fileRecord) =>
 			FileRecordMapper.mapToFileRecordResponse(fileRecord.fileRecord, fileRecord.status)
 		);
-		const response = new FileRecordListResponse(responseFileRecords, total, skip, limit);
+		const response = new FileRecordListResponse(
+			responseFileRecords,
+			total,
+			paginationParams?.skip,
+			paginationParams?.limit
+		);
 
 		return response;
 	}
