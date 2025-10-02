@@ -82,6 +82,18 @@ export class FilesStorageService {
 		return countedFileRecords;
 	}
 
+	public async getFileRecordsByStorageLocationIdAndParentId(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findByStorageLocationIdAndParentId(
+			parentInfo.storageLocation,
+			parentInfo.storageLocationId,
+			parentInfo.parentId
+		);
+
+		return countedFileRecords;
+	}
+
+	// generate status
+
 	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
 		const scanStatus = fileRecord.scanStatus;
 		const previewStatus = fileRecord.getPreviewStatus();
