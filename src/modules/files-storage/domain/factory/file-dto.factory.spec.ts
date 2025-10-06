@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 import { FileDto } from '../dto';
-import { FileDtoFactory } from './file-dto.builder';
+import { FileDtoFactory } from './file-dto.factory';
 
 describe('FileDtoFactory', () => {
 	describe('create', () => {
