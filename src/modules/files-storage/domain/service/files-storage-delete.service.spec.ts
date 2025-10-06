@@ -8,6 +8,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
+import { ErrorType } from '../error';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
 import { StorageLocationDeleteLoggableException } from '../loggable';
@@ -158,7 +159,7 @@ describe('FilesStorageService delete methods', () => {
 		});
 	});
 
-	describe('deleteByStorageLocation', () => {
+	describe('deleteStorageLocationWithAllFiles', () => {
 		describe('WHEN valid files exists', () => {
 			const setup = () => {
 				const storageLocation = StorageLocation.SCHOOL;
@@ -208,7 +209,7 @@ describe('FilesStorageService delete methods', () => {
 
 				const expectedProps = [new StorageLocationDeleteLoggableException(params, error)];
 
-				return { storageLocation, storageLocationId, params, expectedProps };
+				return { storageLocation, storageLocationId, params, expectedProps, error };
 			};
 
 			it('should call Logger.error with expected props', async () => {
@@ -216,7 +217,22 @@ describe('FilesStorageService delete methods', () => {
 
 				await service.deleteStorageLocationWithAllFiles(params);
 
-				expect(domainErrorHandler.exec).toHaveBeenCalledWith(...expectedProps);
+				await expect(domainErrorHandler.exec).toHaveBeenCalledWith(...expectedProps);
+			});
+
+			it('should call Logger.error with expected props', () => {
+				const { params, error } = setup();
+
+				const loggable = new StorageLocationDeleteLoggableException(params, error);
+				const message = loggable.getLogMessage();
+
+				expect(message).toBeDefined();
+				expect(message.type).toEqual(ErrorType.INTERNAL_SERVER_ERROR_STORAGE_LOCATION_DELETE);
+				expect(message.data).toEqual({
+					storageLocationId: params.storageLocationId,
+					storageLocation: params.storageLocation,
+					originalMessage: 'Error while moving directory to trash',
+				});
 			});
 		});
 	});
