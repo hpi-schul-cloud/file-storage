@@ -20,9 +20,8 @@ export function Configuration() {
 				super(...args);
 				const proxyInstance = new Proxy(this, {
 					set: (target: any, prop: string | symbol, value: unknown): true => {
-						const propertyAccessKeys: PropertyAccessKey[] = this.getPropertyAccessKeys();
-						const propKey =
-							propertyAccessKeys.find((item: PropertyAccessKey) => item.key === prop)?.propertyKey ?? prop;
+						const propertyAccessKeys = this.getPropertyAccessKeys();
+						const propKey = propertyAccessKeys.find((item) => item.key === prop)?.propertyKey ?? prop;
 						if (propKey) {
 							target[propKey] = value;
 						}
@@ -41,8 +40,8 @@ export function Configuration() {
 
 			public getConfigKeys(): string[] {
 				const objectKeys = Object.keys(this);
-				const propertyAccessKeys: PropertyAccessKey[] = this.getPropertyAccessKeys();
-				const keys = propertyAccessKeys.map((item: PropertyAccessKey) => item.key ?? item.propertyKey);
+				const propertyAccessKeys = this.getPropertyAccessKeys();
+				const keys = propertyAccessKeys.map((item) => item.key ?? item.propertyKey);
 
 				for (const key of objectKeys) {
 					if (!propertyAccessKeys.some((item) => item.propertyKey === key)) {
