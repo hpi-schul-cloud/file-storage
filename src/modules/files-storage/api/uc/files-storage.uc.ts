@@ -44,7 +44,7 @@ import {
 	SingleFileParams,
 } from '../dto';
 import {
-	CopyFileResponseBuilder,
+	CopyFileResponseFactory,
 	FileDtoMapper,
 	FileRecordMapper,
 	ParentStatisticMapper,
@@ -226,7 +226,7 @@ export class FilesStorageUC {
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
-		const copyFileResponses = CopyFileResponseBuilder.buildMany(copyFileResults);
+		const copyFileResponses = CopyFileResponseFactory.createMany(copyFileResults);
 
 		return [copyFileResponses, count];
 	}
@@ -245,7 +245,7 @@ export class FilesStorageUC {
 		]);
 
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
-		const copyFileResponse = CopyFileResponseBuilder.build(copyFileResults[0]);
+		const copyFileResponse = CopyFileResponseFactory.create(copyFileResults[0]);
 
 		return copyFileResponse;
 	}

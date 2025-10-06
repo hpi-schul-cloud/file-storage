@@ -1,5 +1,5 @@
 import { CopyFileResponse } from '../dto';
-import { CopyFileResponseBuilder } from './copy-file-response.builder';
+import { CopyFileResponseFactory } from './copy-file-response.factory';
 
 describe('Copy File Response Builder', () => {
 	describe('when build is called with a defined id', () => {
@@ -15,7 +15,7 @@ describe('Copy File Response Builder', () => {
 			const { id, sourceId, name } = setup();
 			const expectedResponse = new CopyFileResponse({ id, sourceId, name });
 
-			const result = CopyFileResponseBuilder.build({ id, sourceId, name });
+			const result = CopyFileResponseFactory.create({ id, sourceId, name });
 
 			expect(result).toEqual(expectedResponse);
 		});
@@ -34,7 +34,7 @@ describe('Copy File Response Builder', () => {
 			const { id, sourceId, name } = setup();
 			const expectedResponse = new CopyFileResponse({ id, sourceId, name });
 
-			const result = CopyFileResponseBuilder.build({ id, sourceId, name });
+			const result = CopyFileResponseFactory.create({ id, sourceId, name });
 
 			expect(result).toEqual(expectedResponse);
 		});

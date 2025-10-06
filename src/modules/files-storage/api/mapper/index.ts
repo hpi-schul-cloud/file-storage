@@ -1,4 +1,4 @@
-export * from './copy-file-response.builder';
+export * from './copy-file-response.factory';
 export * from './file-dto.mapper';
 export * from './file-record.mapper';
 export * from './parent-statistic.mapper';
