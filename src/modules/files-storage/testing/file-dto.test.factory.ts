@@ -13,7 +13,7 @@ class FileDtoTestFactory {
 		const props = { ...this.props, ...params };
 		const data = params.data ?? props.data;
 
-		const fileDto = FileDtoBuilder.build(
+		const fileDto = FileDtoBuilder.create(
 			params.name ?? props.name,
 			data as Readable,
 			params.mimeType ?? props.mimeType

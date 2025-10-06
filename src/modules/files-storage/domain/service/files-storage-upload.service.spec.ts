@@ -17,7 +17,7 @@ import {
 } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileDtoBuilder, FileRecordFactory } from '../factory';
+import { FileDtoFactory, FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
@@ -1035,9 +1035,9 @@ describe('FilesStorageService upload methods', () => {
 				readable.on('data', () => {
 					readable.emit('error', new Error('Stream error'));
 				});
-				const file = FileDtoBuilder.build(fileRecord.getName(), readable, mimeType);
+				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
 				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
-				jest.spyOn(FileDtoBuilder, 'build').mockImplementationOnce(() => {
+				jest.spyOn(FileDtoFactory, 'create').mockImplementationOnce(() => {
 					return file;
 				});
 

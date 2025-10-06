@@ -28,7 +28,7 @@ describe('File Builder', () => {
 			it('should return file from request', () => {
 				const { response, expectedFile, name } = setup();
 
-				const result = FileDtoMapper.buildFromAxiosResponse(name, response);
+				const result = FileDtoMapper.mapFromAxiosResponse(name, response);
 
 				expect(result).toEqual(expectedFile);
 			});
@@ -54,7 +54,7 @@ describe('File Builder', () => {
 			it('should return file with default mime type', () => {
 				const { response, expectedFile, name } = setup();
 
-				const result = FileDtoMapper.buildFromAxiosResponse(name, response);
+				const result = FileDtoMapper.mapFromAxiosResponse(name, response);
 
 				expect(result).toEqual(expectedFile);
 			});
@@ -77,7 +77,7 @@ describe('File Builder', () => {
 		it('should return file from busboy fileInfo', () => {
 			const { busboyFileInfo, readable, expectedFile } = setup();
 
-			const result = FileDtoMapper.buildFromBusboyFileInfo(busboyFileInfo, readable);
+			const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable);
 
 			expect(result).toEqual(expectedFile);
 		});

@@ -92,7 +92,7 @@ export class FilesStorageUC {
 		await this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId);
 
 		const response = await this.getResponse(params);
-		const fileDto = FileDtoMapper.buildFromAxiosResponse(params.fileName, response);
+		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -306,7 +306,7 @@ export class FilesStorageUC {
 			let fileRecordPromise: Promise<FileRecord>;
 
 			bb.on('file', (_name, file, info) => {
-				const fileDto = FileDtoMapper.buildFromBusboyFileInfo(info, file);
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					const record = this.filesStorageService.uploadFile(userId, params, fileDto);

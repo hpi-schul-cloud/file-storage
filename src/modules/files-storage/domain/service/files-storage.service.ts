@@ -15,7 +15,7 @@ import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileDtoBuilder, FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { ArchiveFactory, FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
@@ -142,7 +142,7 @@ export class FilesStorageService {
 		const { mimeType, stream } = await this.detectMimeType(readable, fileRecord.mimeType);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
-		const file = FileDtoBuilder.build(fileRecord.getName(), stream, mimeType);
+		const file = FileDtoFactory.create(fileRecord.getName(), stream, mimeType);
 		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
