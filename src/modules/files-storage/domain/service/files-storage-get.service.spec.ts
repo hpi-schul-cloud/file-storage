@@ -303,8 +303,64 @@ describe('FilesStorageService get methods', () => {
 		});
 	});
 
-	describe('getFileRecordsMarkedForDeleteOfParent is called', () => {
-		// TODO: Test is missing
+	describe('getFileRecordsMarkedForDeleteOfParent()', () => {
+		describe('WHEN valid files exist', () => {
+			const setup = () => {
+				const { parentId, fileRecords } = buildFileRecordsWithParams();
+				fileRecords.forEach((record) => record.markForDelete());
+				fileRecordRepo.findMarkedForDeleteByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+
+				return { parentId, fileRecords };
+			};
+
+			it('should call findByParentId with right parameters', async () => {
+				const { parentId } = setup();
+
+				await service.getFileRecordsMarkedForDeleteOfParent(parentId);
+
+				expect(fileRecordRepo.findMarkedForDeleteByParentId).toHaveBeenNthCalledWith(1, parentId);
+			});
+
+			it('should return the matched fileRecord', async () => {
+				const { parentId, fileRecords } = setup();
+
+				const result = await service.getFileRecordsMarkedForDeleteOfParent(parentId);
+
+				expect(result).toEqual([fileRecords, 3]);
+			});
+		});
+
+		describe('WHEN repository throws an error', () => {
+			const setup = () => {
+				const { parentId, fileRecords } = buildFileRecordsWithParams();
+				fileRecords.forEach((record) => record.markForDelete());
+				fileRecordRepo.findMarkedForDeleteByParentId.mockRejectedValueOnce(new Error('bla'));
+
+				return { parentId };
+			};
+
+			it('should pass the error', async () => {
+				const { parentId } = setup();
+
+				await expect(service.getFileRecordsMarkedForDeleteOfParent(parentId)).rejects.toThrow(new Error('bla'));
+			});
+		});
+
+		describe('WHEN no marked files exist', () => {
+			const setup = () => {
+				const { parentId } = buildFileRecordsWithParams();
+				fileRecordRepo.findMarkedForDeleteByParentId.mockResolvedValueOnce([[], 0]);
+
+				return { parentId };
+			};
+			it('should return an empty array', async () => {
+				const { parentId } = setup();
+
+				const result = await service.getFileRecordsMarkedForDeleteOfParent(parentId);
+
+				expect(result).toEqual([[], 0]);
+			});
+		});
 	});
 
 	describe('getFileRecordsByCreatorId is called', () => {
