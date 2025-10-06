@@ -1,6 +1,8 @@
+import { Configuration } from '@infra/configuration';
 import { StringToBoolean } from '@shared/transformer';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
+@Configuration()
 export class DatabaseConfig {
 	@IsString()
 	DB_URL!: string;
