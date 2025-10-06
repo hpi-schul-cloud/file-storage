@@ -5,8 +5,8 @@ import { FileDto } from '../../domain';
 import { busboyFileInfoTestFactory } from '../../testing';
 import { FileDtoMapper } from './file-dto.mapper';
 
-describe('File Builder', () => {
-	describe('buildFromAxiosResponse', () => {
+describe('FileDtoMapper', () => {
+	describe('mapFromAxiosResponse', () => {
 		describe('when response has content-type header', () => {
 			const setup = () => {
 				const name = 'test.txt';
@@ -61,7 +61,7 @@ describe('File Builder', () => {
 		});
 	});
 
-	describe('buildFromBusboyFileInfo', () => {
+	describe('mapFromBusboyFileInfo', () => {
 		const setup = () => {
 			const readable = Readable.from('abc');
 			const busboyFileInfo = busboyFileInfoTestFactory().build();
