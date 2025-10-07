@@ -231,7 +231,7 @@ describe('FilesStorageService delete methods', () => {
 				expect(message.data).toEqual({
 					storageLocationId: params.storageLocationId,
 					storageLocation: params.storageLocation,
-					originalMessage: 'Error while moving directory to trash',
+					originalMessage: 'Error while moving directory to trash.',
 				});
 			});
 		});

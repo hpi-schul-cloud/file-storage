@@ -20,7 +20,7 @@ export class StorageLocationDeleteLoggableException extends InternalServerErrorE
 			data: {
 				storageLocationId,
 				storageLocation,
-				originalMessage: 'Error while moving directory to trash',
+				originalMessage: 'Error while moving directory to trash.',
 			},
 		};
 

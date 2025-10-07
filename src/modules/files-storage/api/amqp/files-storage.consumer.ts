@@ -30,8 +30,9 @@ export class FilesStorageConsumer {
 	public async copyFilesOfParent(
 		@RabbitPayload() { userId, source, target }: CopyFilesOfParentPayload
 	): Promise<RpcMessage<CopyFileResponse[]>> {
-		this.logStartCopyFilesOfParent();
 		const [fileRecords] = await this.filesStorageService.getFileRecordsOfParent(source.parentId);
+		this.logStartCopyFilesOfParent(fileRecords);
+
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, target);
 
 		return { message: copyFileResults };
@@ -79,17 +80,13 @@ export class FilesStorageConsumer {
 	})
 	@CreateRequestContext()
 	public async deleteFiles(@RabbitPayload() payload: EntityId[]): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
-		const promise = payload.map((fileRecordId) => this.filesStorageService.getFileRecord(fileRecordId));
-		const fileRecords = await Promise.all(promise);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecords(payload);
 		this.logStartDeleteFiles(fileRecords);
 
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFiles(fileRecords);
 
-		const fileRecordListResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(
-			fileRecords,
-			fileRecords.length
-		);
+		const fileRecordListResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, count);
 
 		return { message: fileRecordListResponse.data };
 	}
@@ -149,7 +146,12 @@ export class FilesStorageConsumer {
 		);
 	}
 
-	private logStartCopyFilesOfParent(): void {
-		this.logger.debug(new FileStorageActionsLoggable('Start copy files of parent', { action: 'copyFilesOfParent' }));
+	private logStartCopyFilesOfParent(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start copy files of parent', {
+				action: 'copyFilesOfParent',
+				sourcePayload: fileRecords,
+			})
+		);
 	}
 }
