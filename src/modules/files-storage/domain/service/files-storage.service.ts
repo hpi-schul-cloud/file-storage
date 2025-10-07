@@ -394,7 +394,7 @@ export class FilesStorageService {
 	}
 
 	public async deleteFiles(fileRecords: FileRecord[]): Promise<void> {
-		this.deleteLog(fileRecords);
+		this.logDelete(fileRecords);
 		if (fileRecords.length === 0) return;
 
 		await this.deleteFileRecords(fileRecords);
@@ -409,7 +409,7 @@ export class FilesStorageService {
 	}
 
 	public async restoreFiles(fileRecords: FileRecord[]): Promise<void> {
-		this.restoreLog(fileRecords);
+		this.logRestore(fileRecords);
 		if (fileRecords.length === 0) return;
 
 		await this.restoreFileRecords(fileRecords);
@@ -447,7 +447,7 @@ export class FilesStorageService {
 		sourceFileRecords: FileRecord[],
 		targetParentInfo: ParentInfo
 	): Promise<CopyFileResult[]> {
-		this.copyLog(sourceFileRecords, targetParentInfo);
+		this.logCopy(sourceFileRecords, targetParentInfo);
 		if (sourceFileRecords.length === 0) return [];
 
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
@@ -515,7 +515,7 @@ export class FilesStorageService {
 		return statistics;
 	}
 
-	private copyLog(sourceFileRecords: FileRecord[], targetParentInfo: ParentInfo): void {
+	private logCopy(sourceFileRecords: FileRecord[], targetParentInfo: ParentInfo): void {
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start copy of FileRecords', {
 				action: 'copy',
@@ -525,13 +525,13 @@ export class FilesStorageService {
 		);
 	}
 
-	private deleteLog(fileRecords: FileRecord[]): void {
+	private logDelete(fileRecords: FileRecord[]): void {
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
 		);
 	}
 
-	private restoreLog(fileRecords: FileRecord[]): void {
+	private logRestore(fileRecords: FileRecord[]): void {
 		this.logger.debug(
 			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
 		);
