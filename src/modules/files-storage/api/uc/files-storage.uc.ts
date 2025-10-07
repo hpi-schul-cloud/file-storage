@@ -138,8 +138,8 @@ export class FilesStorageUC {
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-
 		const parentInfo = this.getOnlyOneParentInfo(fileRecords);
+
 		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
 
 		const fileResponse = await this.filesStorageService.downloadFilesAsArchive(fileRecords, params.archiveName);
@@ -175,8 +175,8 @@ export class FilesStorageUC {
 
 	public async deleteMultipleFilesOfParent(params: MultiFileParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-
 		const parentInfo = this.getOnlyOneParentInfo(fileRecords);
+
 		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
 
 		await this.deletePreviewsAndFiles(fileRecords);
