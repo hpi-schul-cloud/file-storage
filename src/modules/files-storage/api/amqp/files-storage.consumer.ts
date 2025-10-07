@@ -28,12 +28,16 @@ export class FilesStorageConsumer {
 	})
 	@CreateRequestContext()
 	public async copyFilesOfParent(
-		@RabbitPayload() { userId, source, target }: CopyFilesOfParentPayload
+		@RabbitPayload() payload: CopyFilesOfParentPayload
 	): Promise<RpcMessage<CopyFileResponse[]>> {
-		const [fileRecords] = await this.filesStorageService.getFileRecordsOfParent(source.parentId);
+		const [fileRecords] = await this.filesStorageService.getFileRecordsOfParent(payload.source.parentId);
 		this.logStartCopyFilesOfParent(fileRecords);
 
-		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, target);
+		const copyFileResults = await this.filesStorageService.copyFilesToParent(
+			payload.userId,
+			fileRecords,
+			payload.target
+		);
 
 		return { message: copyFileResults };
 	}
