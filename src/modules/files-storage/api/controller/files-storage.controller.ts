@@ -177,7 +177,7 @@ export class FilesStorageController {
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response
 	): Promise<StreamableFile | void> {
-		const data = await this.filesStorageUC.downloadFilesAsArchive(params);
+		const data = await this.filesStorageUC.downloadFilesOfParentAsArchive(params);
 
 		const streamableFile = this.streamFileToClient(req, data, response);
 
@@ -283,7 +283,7 @@ export class FilesStorageController {
 	@Delete('/delete')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.deleteMultipleFiles(params);
+		const response = await this.filesStorageUC.deleteMultipleFilesOfParent(params);
 
 		return response;
 	}

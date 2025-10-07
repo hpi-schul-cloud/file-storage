@@ -5,7 +5,7 @@ import { ErrorType } from '../domain';
 
 export class ToManyDifferentParentsException extends BadRequestException implements Loggable {
 	constructor(
-		private readonly parentIds: EntityId[],
+		private readonly parentInfos: { parentId: EntityId }[],
 		private readonly numberOfAllowedParents: number
 	) {
 		super();
@@ -16,9 +16,9 @@ export class ToManyDifferentParentsException extends BadRequestException impleme
 			type: ErrorType.TO_MANY_DIFFERENT_PARENTS,
 			stack: this.stack,
 			data: {
-				parentIds: this.parentIds.toString(),
+				parentInfos: this.parentInfos.toString(),
 				numberOfAllowedParents: this.numberOfAllowedParents,
-				numberOfParents: this.parentIds.length,
+				numberOfParents: this.parentInfos.length,
 			},
 		};
 

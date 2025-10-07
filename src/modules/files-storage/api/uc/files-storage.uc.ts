@@ -7,8 +7,9 @@ import {
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
+import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -22,10 +23,10 @@ import {
 	FilesStorageMapper,
 	FilesStorageService,
 	GetFileResponse,
+	ParentInfo,
 	PreviewService,
 	StorageLocation,
 } from '../../domain';
-import { ToManyDifferentParentsException } from '../../loggable';
 import {
 	ArchiveFileParams,
 	CopyFileResponse,
@@ -135,10 +136,11 @@ export class FilesStorageUC {
 		return fileResponse;
 	}
 
-	public async downloadFilesAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
+	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 
-		await this.checkPermissions(fileRecords, FileStorageAuthorizationContext.read);
+		const parentInfo = this.getOnlyOneParentInfo(fileRecords);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
 
 		const fileResponse = await this.filesStorageService.downloadFilesAsArchive(fileRecords, params.archiveName);
 
@@ -149,7 +151,7 @@ export class FilesStorageUC {
 	public async deleteAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.delete);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFiles(fileRecords);
 		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -171,10 +173,11 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	public async deleteMultipleFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
+	public async deleteMultipleFilesOfParent(params: MultiFileParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 
-		await this.checkPermissions(fileRecords, FileStorageAuthorizationContext.delete);
+		const parentInfo = this.getOnlyOneParentInfo(fileRecords);
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -192,7 +195,7 @@ export class FilesStorageUC {
 	public async restoreAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteOfParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteByParent(params.parentId);
 		await this.filesStorageService.restoreFiles(fileRecords);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
@@ -224,7 +227,7 @@ export class FilesStorageUC {
 			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
 		const copyFileResponses = CopyFileResponseFactory.createMany(copyFileResults);
 
@@ -278,7 +281,7 @@ export class FilesStorageUC {
 	): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsOfParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
 			fileRecordWithStatus,
@@ -299,7 +302,7 @@ export class FilesStorageUC {
 		return parentStatisticResponse;
 	}
 
-	// private stream helper
+	// private: stream helper
 	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecord> {
 		const promise = new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
@@ -366,7 +369,7 @@ export class FilesStorageUC {
 		return encodedUrl;
 	}
 
-	// private permission checks
+	// private: permission checks
 	private async checkPermission(
 		parentInfo: { parentType: FileRecordParentType; parentId: EntityId },
 		context: AuthorizationContextParams
@@ -377,23 +380,15 @@ export class FilesStorageUC {
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
 	}
 
-	private async checkPermissions(fileRecords: FileRecord[], context: AuthorizationContextParams): Promise<void> {
-		const uniqueParents = FileRecord.getUniqueParents(fileRecords);
+	private getOnlyOneParentInfo(fileRecords: FileRecord[]): ParentInfo {
+		const uniqueParentInfos = FileRecord.getUniqueParentInfos(fileRecords);
 
-		this.checkMaximumDifferentParents(uniqueParents);
-		const checkPermission = ([parentId, parentType]: [EntityId, FileRecordParentType]): Promise<void> =>
-			this.checkPermission({ parentType, parentId }, context);
-		const permissionChecks = Array.from(uniqueParents, checkPermission);
-
-		await Promise.all(permissionChecks);
-	}
-
-	private checkMaximumDifferentParents(parents: Map<EntityId, FileRecordParentType>): void {
-		const maximumOfDifferentParents = 1;
-		const parentIds = Array.from(parents.keys());
-
-		if (parentIds.length > maximumOfDifferentParents) {
-			throw new ToManyDifferentParentsException(parentIds, maximumOfDifferentParents);
+		if (uniqueParentInfos.length > 1) {
+			throw new ToManyDifferentParentsException(uniqueParentInfos, 1);
+		} else if (uniqueParentInfos.length === 0) {
+			throw new BadRequestException(ErrorType.FILE_NOT_FOUND);
+		} else {
+			return uniqueParentInfos[0];
 		}
 	}
 

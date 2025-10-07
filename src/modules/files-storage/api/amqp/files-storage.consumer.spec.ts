@@ -83,7 +83,7 @@ describe('FilesStorageConsumer', () => {
 					parentType: payload.source.parentType,
 				});
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
 				const copyFileResults = fileRecords.map((sourceFileRecord) => ({
 					id: new ObjectId().toHexString(),
 					sourceId: sourceFileRecord.id,
@@ -115,7 +115,7 @@ describe('FilesStorageConsumer', () => {
 		describe('WHEN file not exists', () => {
 			const setup = () => {
 				const payload = buildCopyPayload();
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[], 0]);
 				filesStorageService.copyFilesToParent.mockResolvedValueOnce([]);
 
 				return { payload };
@@ -135,11 +135,11 @@ describe('FilesStorageConsumer', () => {
 		describe('WHEN valid file exists', () => {
 			it('should call filesStorageService.getFileRecordsOfParent and filesStorageService.getFileRecordsWithStatus with params', async () => {
 				const parentId = new ObjectId().toHexString();
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[], 0]);
 
 				await service.getFilesOfParent(parentId);
 
-				expect(filesStorageService.getFileRecordsOfParent).toHaveBeenCalledWith(parentId);
+				expect(filesStorageService.getFileRecordsByParent).toHaveBeenCalledWith(parentId);
 			});
 
 			it('should return array instances of FileRecordConsumerResponse', async () => {
@@ -150,7 +150,7 @@ describe('FilesStorageConsumer', () => {
 				});
 				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
 				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				const response = await service.getFilesOfParent(parentId);
@@ -163,7 +163,7 @@ describe('FilesStorageConsumer', () => {
 			it('should return RpcMessage with empty array', async () => {
 				const parentId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[], 0]);
 				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce([]);
 
 				const response = await service.getFilesOfParent(parentId);
@@ -178,7 +178,7 @@ describe('FilesStorageConsumer', () => {
 				const parentId = new ObjectId().toHexString();
 
 				const fileRecords = fileRecordTestFactory().buildList(3);
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
 
 				return { parentId, fileRecords };
 			};
@@ -188,7 +188,7 @@ describe('FilesStorageConsumer', () => {
 
 				await service.deleteFilesOfParent(parentId);
 
-				expect(filesStorageService.getFileRecordsOfParent).toHaveBeenCalledWith(parentId);
+				expect(filesStorageService.getFileRecordsByParent).toHaveBeenCalledWith(parentId);
 			});
 
 			it('should call previewService.deletePreviews with params', async () => {
@@ -220,7 +220,7 @@ describe('FilesStorageConsumer', () => {
 			const setup = () => {
 				const parentId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecordsOfParent.mockResolvedValueOnce([[], 0]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[], 0]);
 				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce([]);
 
 				return { parentId };

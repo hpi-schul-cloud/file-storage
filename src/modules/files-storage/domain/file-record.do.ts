@@ -126,18 +126,20 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return format;
 	}
 
-	public static getUniqueParents(fileRecords: FileRecord[]): Map<EntityId, FileRecordParentType> {
-		const parentMap = new Map<EntityId, FileRecordParentType>();
+	public static getUniqueParentInfos(fileRecords: FileRecord[]): ParentInfo[] {
+		const parentMap = new Map<EntityId, ParentInfo>();
 
 		for (const fileRecord of fileRecords) {
-			const { parentType, parentId } = fileRecord.getParentInfo();
+			const parentInfo = fileRecord.getParentInfo();
 
-			if (!parentMap.has(parentId)) {
-				parentMap.set(parentId, parentType);
+			if (!parentMap.has(parentInfo.parentId)) {
+				parentMap.set(parentInfo.parentId, parentInfo);
 			}
 		}
 
-		return parentMap;
+		const parentInfos = Array.from(parentMap.values());
+
+		return parentInfos;
 	}
 
 	public getSecurityCheckProps(): FileRecordSecurityCheckProps {

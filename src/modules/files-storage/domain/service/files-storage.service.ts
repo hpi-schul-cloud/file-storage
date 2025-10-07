@@ -70,13 +70,13 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async getFileRecordsOfParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
+	public async getFileRecordsByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
 		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId);
 
 		return countedFileRecords;
 	}
 
-	public async getFileRecordsMarkedForDeleteOfParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
+	public async getFileRecordsMarkedForDeleteByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
 		const countedFileRecords = await this.fileRecordRepo.findMarkedForDeleteByParentId(parentId);
 
 		return countedFileRecords;
@@ -197,7 +197,7 @@ export class FilesStorageService {
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
 		let fileName = file.name;
 
-		const [fileRecordsOfParent, count] = await this.getFileRecordsOfParent(parentInfo.parentId);
+		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
 		if (count > 0) {
 			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
 		}
@@ -286,7 +286,7 @@ export class FilesStorageService {
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
 		const parentInfo = fileRecord.getParentInfo();
-		const [fileRecords] = await this.getFileRecordsOfParent(parentInfo.parentId);
+		const [fileRecords] = await this.getFileRecordsByParent(parentInfo.parentId);
 
 		this.checkDuplicatedNames(fileRecords, fileName);
 		fileRecord.setName(fileName);
