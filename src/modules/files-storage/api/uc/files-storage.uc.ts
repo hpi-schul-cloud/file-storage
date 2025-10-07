@@ -152,7 +152,7 @@ export class FilesStorageUC {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		const parentInfo = params;
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
+		await this.checkDeletePermission(parentInfo);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -165,7 +165,7 @@ export class FilesStorageUC {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
+		await this.checkDeletePermission(parentInfo);
 
 		await this.deletePreviewsAndFiles([fileRecord]);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -178,7 +178,7 @@ export class FilesStorageUC {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 		const parentInfo = this.getOnlyOneParentInfo(fileRecords);
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
+		await this.checkDeletePermission(parentInfo);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -379,6 +379,13 @@ export class FilesStorageUC {
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
+	}
+
+	private async checkDeletePermission(parentInfo: {
+		parentType: FileRecordParentType;
+		parentId: EntityId;
+	}): Promise<void> {
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
 	}
 
 	private getOnlyOneParentInfo(fileRecords: FileRecord[]): ParentInfo {
