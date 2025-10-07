@@ -149,11 +149,12 @@ export class FilesStorageUC {
 
 	// delete
 	public async deleteAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
-		await this.checkPermission(params, FileStorageAuthorizationContext.delete);
-
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
-		await this.previewService.deletePreviews(fileRecords);
-		await this.filesStorageService.deleteFiles(fileRecords);
+		const parentInfo = params;
+
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
+
+		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(fileRecordsWithStatus, count);
 
