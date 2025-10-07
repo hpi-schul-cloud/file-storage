@@ -383,7 +383,7 @@ export class FilesStorageService {
 		await this.storageClient.restore(paths);
 	}
 
-	private async deleteFileRecords(fileRecords: FileRecord[]): Promise<void> {
+	private async markFileRecordsForDelete(fileRecords: FileRecord[]): Promise<void> {
 		FileRecord.markForDelete(fileRecords);
 		await this.fileRecordRepo.save(fileRecords);
 	}
@@ -397,7 +397,7 @@ export class FilesStorageService {
 		this.logDelete(fileRecords);
 		if (fileRecords.length === 0) return;
 
-		await this.deleteFileRecords(fileRecords);
+		await this.markFileRecordsForDelete(fileRecords);
 
 		try {
 			await this.deleteBinaryFiles(fileRecords);
@@ -417,7 +417,7 @@ export class FilesStorageService {
 		try {
 			await this.restoreBinaryFiles(fileRecords);
 		} catch (error) {
-			await this.deleteFileRecords(fileRecords);
+			await this.markFileRecordsForDelete(fileRecords);
 
 			throw error;
 		}
