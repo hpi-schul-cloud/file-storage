@@ -13,7 +13,7 @@ import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { ArchiveFactory } from '../factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { FileResponseBuilder } from '../mapper';
+import { FileResponseFactory } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {
@@ -94,7 +94,7 @@ describe('FilesStorageService download methods', () => {
 				const fileName = fileRecord.getName();
 
 				const fileResponse = createMock<GetFile>();
-				const expectedResponse = FileResponseBuilder.build(fileResponse, fileRecord.getName());
+				const expectedResponse = FileResponseFactory.create(fileResponse, fileRecord.getName());
 
 				spy = jest.spyOn(service, 'downloadFile').mockResolvedValueOnce(expectedResponse);
 
@@ -190,7 +190,7 @@ describe('FilesStorageService download methods', () => {
 				const fileResponse = createMock<GetFile>();
 
 				storageClient.get.mockResolvedValueOnce(fileResponse);
-				const expectedResponse = FileResponseBuilder.build(fileResponse, fileRecord.getName());
+				const expectedResponse = FileResponseFactory.create(fileResponse, fileRecord.getName());
 
 				return { fileRecord, expectedResponse };
 			};
@@ -242,7 +242,7 @@ describe('FilesStorageService download methods', () => {
 			});
 
 			const fileResponses = fileRecords.map((fileRecord) => {
-				return FileResponseBuilder.build(fileResponse, fileRecord.getName());
+				return FileResponseFactory.create(fileResponse, fileRecord.getName());
 			});
 
 			const spyDownloadFile = jest.spyOn(service, 'downloadFile');

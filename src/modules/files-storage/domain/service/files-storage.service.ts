@@ -28,7 +28,7 @@ import {
 	StorageLocationParams,
 } from '../interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
-import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
+import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { fileTypeStream } from './file-type.helper';
 
@@ -329,7 +329,7 @@ export class FilesStorageService {
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
 		const pathToFile = fileRecord.createPath();
 		const file = await this.storageClient.get(pathToFile, bytesRange);
-		const fileResponse = FileResponseBuilder.build(file, fileRecord.getName());
+		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
 		return fileResponse;
 	}
@@ -349,25 +349,8 @@ export class FilesStorageService {
 		}
 
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
-		const fileArchiveResponse = this.buildArchiveResponse(files, fileRecords, archiveName);
-
-		return fileArchiveResponse;
-	}
-
-	private buildArchiveResponse(
-		files: GetFileResponse[],
-		fileRecords: FileRecord[],
-		archiveName: string
-	): GetFileResponse {
-		const archiveType = 'zip';
-		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, archiveType);
-		const fileResponse = FileResponseBuilder.build(
-			{
-				data: archive,
-				contentType: `application/${archiveType}`,
-			},
-			`${archiveName}.${archiveType}`
-		);
+		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger);
+		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
 		return fileResponse;
 	}

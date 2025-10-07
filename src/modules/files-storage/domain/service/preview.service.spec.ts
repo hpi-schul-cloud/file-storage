@@ -10,7 +10,7 @@ import { FileRecordParamsTestFactory, fileRecordTestFactory, GetFileTestFactory 
 import { ErrorType } from '../error';
 import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
-import { FileResponseBuilder } from '../mapper';
+import { FileResponseFactory } from '../mapper';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
@@ -99,7 +99,7 @@ describe('PreviewService', () => {
 
 						const fileNameWithoutExtension = fileRecord.getName().split('.')[0];
 						const name = `${fileNameWithoutExtension}.${format}`;
-						const previewFileResponse = FileResponseBuilder.build(previewFile, name);
+						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
@@ -168,7 +168,7 @@ describe('PreviewService', () => {
 
 						const fileNameWithoutExtension = fileRecord.getName().split('.')[0];
 						const name = `${fileNameWithoutExtension}.${format}`;
-						const previewFileResponse = FileResponseBuilder.build(previewFile, name);
+						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
@@ -244,7 +244,7 @@ describe('PreviewService', () => {
 
 						const fileNameWithoutExtension = fileRecord.getName().split('.')[0];
 						const name = `${fileNameWithoutExtension}.${format}`;
-						const previewFileResponse = FileResponseBuilder.build(previewFile, name);
+						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
@@ -292,7 +292,7 @@ describe('PreviewService', () => {
 
 						const fileNameWithoutExtension = fileRecord.getName().split('.')[0];
 						const name = `${fileNameWithoutExtension}.${format}`;
-						const previewFileResponse = FileResponseBuilder.build(previewFile, name);
+						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
@@ -357,7 +357,7 @@ describe('PreviewService', () => {
 
 						const fileNameWithoutExtension = fileRecord.getName().split('.')[0];
 						const name = `${fileNameWithoutExtension}.${format}`;
-						const previewFileResponse = FileResponseBuilder.build(previewFile, name);
+						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
@@ -433,7 +433,7 @@ describe('PreviewService', () => {
 
 						const fileNameWithoutExtension = fileRecord.getName().split('.')[0];
 						const name = `${fileNameWithoutExtension}.${format}`;
-						const previewFileResponse = FileResponseBuilder.build(previewFile, name);
+						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);

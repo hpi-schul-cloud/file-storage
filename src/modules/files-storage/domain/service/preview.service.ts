@@ -7,7 +7,7 @@ import { ErrorType } from '../error';
 import { FileRecord, PreviewStatus } from '../file-record.do';
 import { GetFileResponse, PreviewFileParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
-import { FileResponseBuilder, PreviewFileOptionsMapper } from '../mapper';
+import { FileResponseFactory, PreviewFileOptionsMapper } from '../mapper';
 
 @Injectable()
 export class PreviewService {
@@ -71,7 +71,7 @@ export class PreviewService {
 		const name = fileRecord.getPreviewName(previewParams.outputFormat);
 		const file = await this.storageClient.get(previewFilePath, bytesRange);
 
-		const response = FileResponseBuilder.build(file, name);
+		const response = FileResponseFactory.create(file, name);
 
 		return response;
 	}
