@@ -242,7 +242,7 @@ describe('FilesStorageConsumer', () => {
 				const recordId = new ObjectId().toHexString();
 
 				const fileRecord = fileRecordTestFactory().build();
-				filesStorageService.getFileRecord.mockResolvedValueOnce(fileRecord);
+				filesStorageService.getFileRecords.mockResolvedValueOnce([[fileRecord], 1]);
 
 				return { recordId, fileRecord };
 			};
@@ -261,7 +261,7 @@ describe('FilesStorageConsumer', () => {
 				await service.deleteFiles([recordId]);
 
 				const result = [fileRecord];
-				expect(filesStorageService.getFileRecord).toHaveBeenCalledWith(recordId);
+				expect(filesStorageService.getFileRecords).toHaveBeenCalledWith([recordId]);
 				expect(filesStorageService.deleteFiles).toHaveBeenCalledWith(result);
 			});
 
@@ -278,7 +278,7 @@ describe('FilesStorageConsumer', () => {
 			const setup = () => {
 				const recordId = new ObjectId().toHexString();
 
-				filesStorageService.getFileRecord.mockRejectedValueOnce(new Error('not found'));
+				filesStorageService.getFileRecords.mockRejectedValueOnce(new Error('not found'));
 
 				return { recordId };
 			};
