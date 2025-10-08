@@ -44,13 +44,7 @@ import {
 	ScanResultParams,
 	SingleFileParams,
 } from '../dto';
-import {
-	CopyFileResponseFactory,
-	FileDtoMapper,
-	FileRecordMapper,
-	ParentStatisticMapper,
-	PreviewBuilder,
-} from '../mapper';
+import { FileDtoMapper, FileRecordMapper, ParentStatisticMapper, PreviewBuilder } from '../mapper';
 
 export const FileStorageAuthorizationContext = {
 	create: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_CREATE]),
@@ -230,9 +224,8 @@ export class FilesStorageUC {
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
-		const copyFileResponses = CopyFileResponseFactory.createMany(copyFileResults);
 
-		return [copyFileResponses, count];
+		return [copyFileResults, count];
 	}
 
 	public async copyOneFile(
@@ -249,9 +242,8 @@ export class FilesStorageUC {
 		]);
 
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
-		const copyFileResponse = CopyFileResponseFactory.create(copyFileResults[0]);
 
-		return copyFileResponse;
+		return copyFileResults[0];
 	}
 
 	// update
