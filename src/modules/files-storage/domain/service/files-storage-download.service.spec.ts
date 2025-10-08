@@ -269,7 +269,7 @@ describe('FilesStorageService download methods', () => {
 
 			await service.downloadFilesAsArchive(fileRecords, archiveName);
 
-			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger, 'zip');
+			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger);
 			expect(archiveFactorySpy).toHaveBeenCalledTimes(1);
 		});
 
