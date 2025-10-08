@@ -9,7 +9,7 @@ import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -394,7 +394,7 @@ export class FilesStorageUC {
 		if (uniqueParentInfos.length > 1) {
 			throw new ToManyDifferentParentsException(uniqueParentInfos, 1);
 		} else if (uniqueParentInfos.length === 0) {
-			throw new BadRequestException(ErrorType.FILE_NOT_FOUND);
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		} else {
 			return uniqueParentInfos[0];
 		}
