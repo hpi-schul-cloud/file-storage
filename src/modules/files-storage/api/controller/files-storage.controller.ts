@@ -257,7 +257,7 @@ export class FilesStorageController {
 	@Delete('/delete/:storageLocation/:storageLocationId/:parentType/:parentId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteByParent(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.deleteAllFilesOfParent(params);
+		const response = await this.filesStorageUC.deleteFilesOfParent(params);
 
 		return response;
 	}
@@ -270,7 +270,7 @@ export class FilesStorageController {
 	@Delete('/delete/:fileRecordId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.deleteOneFile(params);
+		const response = await this.filesStorageUC.deleteFile(params);
 
 		return response;
 	}
@@ -294,7 +294,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@Post('/restore/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async restore(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.restoreAllFilesOfParent(params);
+		const response = await this.filesStorageUC.restoreFilesOfParent(params);
 
 		return response;
 	}
@@ -305,7 +305,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@Post('/restore/:fileRecordId')
 	public async restoreFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.restoreOneFile(params);
+		const response = await this.filesStorageUC.restoreFile(params);
 
 		return response;
 	}
@@ -343,7 +343,7 @@ export class FilesStorageController {
 		@Body() copyFileParam: CopyFileParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<CopyFileResponse> {
-		const response = await this.filesStorageUC.copyOneFile(currentUser.userId, params, copyFileParam.target);
+		const response = await this.filesStorageUC.copyFile(currentUser.userId, params, copyFileParam.target);
 
 		return response;
 	}

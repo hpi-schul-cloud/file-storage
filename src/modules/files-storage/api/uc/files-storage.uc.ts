@@ -142,7 +142,7 @@ export class FilesStorageUC {
 	}
 
 	// delete
-	public async deleteAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
+	public async deleteFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		const parentInfo = params;
 
@@ -155,7 +155,7 @@ export class FilesStorageUC {
 		return fileRecordListResponse;
 	}
 
-	public async deleteOneFile(params: SingleFileParams): Promise<FileRecordResponse> {
+	public async deleteFile(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const parentInfo = fileRecord.getParentInfo();
 
@@ -187,7 +187,7 @@ export class FilesStorageUC {
 	}
 
 	// restore
-	public async restoreAllFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
+	public async restoreFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteByParent(params.parentId);
@@ -198,7 +198,7 @@ export class FilesStorageUC {
 		return fileRecordListResponse;
 	}
 
-	public async restoreOneFile(params: SingleFileParams): Promise<FileRecordResponse> {
+	public async restoreFile(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecordMarkedForDelete(params.fileRecordId);
 		const parentInfo = fileRecord.getParentInfo();
 
@@ -228,7 +228,7 @@ export class FilesStorageUC {
 		return [copyFileResults, count];
 	}
 
-	public async copyOneFile(
+	public async copyFile(
 		userId: string,
 		params: SingleFileParams,
 		targetParams: FileRecordParams
