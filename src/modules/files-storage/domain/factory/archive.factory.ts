@@ -7,7 +7,7 @@ import { GetFileResponse } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 
 export class ArchiveFactory {
-	public static createArchive(
+	public static create(
 		files: GetFileResponse[],
 		fileRecords: FileRecord[],
 		logger?: Logger,

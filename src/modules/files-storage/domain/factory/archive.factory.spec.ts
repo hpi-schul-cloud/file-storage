@@ -23,7 +23,7 @@ describe('ArchiveFactory', () => {
 		const files = [createFileResponse('file1.txt', 'hello'), createFileResponse('file2.txt', 'world')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
+		const archive = ArchiveFactory.create(files, fileRecords, logger, 'zip');
 
 		const chunks: Buffer[] = [];
 		archive.on('data', (chunk) => chunks.push(chunk));
@@ -39,7 +39,7 @@ describe('ArchiveFactory', () => {
 		const files = [createFileResponse('file.txt', 'test')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
+		const archive = ArchiveFactory.create(files, fileRecords, logger, 'zip');
 
 		const warning = { code: 'ENOENT' };
 		archive.emit('warning', warning);
@@ -51,7 +51,7 @@ describe('ArchiveFactory', () => {
 		const files = [createFileResponse('file.txt', 'test')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
+		const archive = ArchiveFactory.create(files, fileRecords, logger, 'zip');
 
 		expect(() => {
 			archive.emit('warning', { code: 'OTHER', message: 'Some error' });
@@ -62,7 +62,7 @@ describe('ArchiveFactory', () => {
 		const files = [createFileResponse('file.txt', 'test')];
 		const fileRecords: FileRecord[] = [];
 
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
+		const archive = ArchiveFactory.create(files, fileRecords, logger, 'zip');
 
 		expect(() => {
 			archive.emit('error', new Error('archive error'));

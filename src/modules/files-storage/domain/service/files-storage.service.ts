@@ -349,7 +349,7 @@ export class FilesStorageService {
 		}
 
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
-		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger);
+		const archive = ArchiveFactory.create(files, fileRecords, this.logger);
 		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
 		return fileResponse;

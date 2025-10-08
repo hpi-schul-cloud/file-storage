@@ -22,7 +22,7 @@ export class ArchiveTestFactory {
 	public static build(done: (err?: unknown) => void, chunks: Buffer[] = [], logger?: Logger): archiver.Archiver {
 		const files = [createFileResponse('file1.txt', 'hello'), createFileResponse('file2.txt', 'world')];
 		const fileRecords: FileRecord[] = [];
-		const archive = ArchiveFactory.createArchive(files, fileRecords, logger, 'zip');
+		const archive = ArchiveFactory.create(files, fileRecords, logger, 'zip');
 
 		archive.on('data', (chunk) => chunks.push(chunk));
 		archive.on('error', (err) => done(err));
