@@ -12,11 +12,12 @@ export class ToManyDifferentParentsException extends BadRequestException impleme
 	}
 
 	public getLogMessage(): ErrorLogMessage {
-		const message: ErrorLogMessage = {
+		const parentInfoIds = this.parentInfos.map((info) => info.parentId);
+		const message = {
 			type: ErrorType.TO_MANY_DIFFERENT_PARENTS,
 			stack: this.stack,
 			data: {
-				parentInfos: this.parentInfos.toString(),
+				parentInfos: parentInfoIds.toString(),
 				numberOfAllowedParents: this.numberOfAllowedParents,
 				numberOfParents: this.parentInfos.length,
 			},
