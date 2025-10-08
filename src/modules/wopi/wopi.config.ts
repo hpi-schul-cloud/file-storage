@@ -7,7 +7,7 @@ export class WopiPublicApiConfig {
 	@IsBoolean()
 	@StringToBoolean()
 	@ConfigProperty()
-	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = false;
+	FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 	@IsNumber()
 	@StringToNumber()
