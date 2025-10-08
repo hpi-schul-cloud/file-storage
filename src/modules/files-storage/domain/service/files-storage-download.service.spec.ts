@@ -265,7 +265,7 @@ describe('FilesStorageService download methods', () => {
 
 		it('calls archiveFactory with correct params', async () => {
 			const { fileRecords, archiveName, fileResponses } = setup();
-			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'createArchive');
+			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'create');
 
 			await service.downloadFilesAsArchive(fileRecords, archiveName);
 

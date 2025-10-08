@@ -478,7 +478,7 @@ export class FilesStorageService {
 			};
 
 			await this.storageClient.copy([copyFiles]);
-			if (targetFile.isPending()) {
+			if (targetFile.isPending() || targetFile.hasSecurityErrorStatus()) {
 				await this.antivirusService.send(targetFile.getSecurityToken());
 			}
 

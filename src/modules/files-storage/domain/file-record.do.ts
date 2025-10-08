@@ -184,6 +184,10 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.securityCheck.hasScanStatusWontCheck();
 	}
 
+	public hasSecurityErrorStatus(): boolean {
+		return this.securityCheck.hasErrorStatus();
+	}
+
 	public markForDelete(): void {
 		this.props.deletedSince = new Date();
 	}

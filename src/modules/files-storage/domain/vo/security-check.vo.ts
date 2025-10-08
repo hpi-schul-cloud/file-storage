@@ -87,6 +87,12 @@ export class FileRecordSecurityCheck implements FileRecordSecurityCheckProps {
 		return isVerified;
 	}
 
+	public hasErrorStatus(): boolean {
+		const hasErrorStatus = this.status === ScanStatus.ERROR;
+
+		return hasErrorStatus;
+	}
+
 	public copy(): FileRecordSecurityCheck {
 		const copy = new FileRecordSecurityCheck({
 			status: this.status,
