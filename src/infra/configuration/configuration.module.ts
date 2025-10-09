@@ -1,10 +1,9 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { ConfigModule, ConfigModuleOptions } from '@nestjs/config';
-import { Configuration } from './configuration.service';
+import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
+import { ConfigurationFactory } from './configuration.factory';
 
 const getEnvConfig = (): ConfigModuleOptions => {
 	const envConfig = {
-		isGlobal: true,
 		cache: true,
 		envFilePath: '.env',
 		ignoreEnvFile: false,
@@ -27,14 +26,18 @@ export class ConfigurationModule {
 		return {
 			imports: [ConfigModule.forRoot(getEnvConfig())],
 			providers: [
-				Configuration,
 				{
 					provide: Constructor,
-					useFactory: (config: Configuration): T => config.getAllValidConfigsByType(Constructor),
-					inject: [Configuration],
+					useFactory: (configService: ConfigService): T => {
+						const factory = new ConfigurationFactory(configService);
+						const config = factory.loadAndValidateConfigs(Constructor);
+
+						return config;
+					},
+					inject: [ConfigService],
 				},
 			],
-			exports: [Configuration, Constructor],
+			exports: [Constructor],
 			module: ConfigurationModule,
 		};
 	}

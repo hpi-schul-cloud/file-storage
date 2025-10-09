@@ -68,123 +68,7 @@ describe('FilesStorageService copy methods', () => {
 		expect(service).toBeDefined();
 	});
 
-	describe('copyFilesOfParent is called', () => {
-		describe('WHEN files exist and copyFiles copied files successfully', () => {
-			let spy: jest.SpyInstance;
-
-			afterEach(() => {
-				spy.mockRestore();
-			});
-
-			const setup = () => {
-				const {
-					fileRecords: sourceFileRecords,
-					parentInfo: sourceParentInfo,
-					parentId: userId,
-				} = FileRecordParamsTestFactory.build();
-				const { fileRecords: targetFileRecords, parentInfo: targetParentInfo } = FileRecordParamsTestFactory.build();
-
-				fileRecordRepo.findByStorageLocationIdAndParentId.mockResolvedValueOnce([
-					sourceFileRecords,
-					sourceFileRecords.length,
-				]);
-				spy = jest.spyOn(service, 'copy');
-				spy.mockResolvedValueOnce(targetFileRecords);
-
-				return {
-					sourceParentInfo,
-					targetParentInfo,
-					sourceFileRecords,
-					targetFileRecords,
-					userId,
-				};
-			};
-
-			it('should call findBySchoolIdAndParentId onces with correctly params', async () => {
-				const { userId, sourceParentInfo, targetParentInfo } = setup();
-
-				await service.copyFilesOfParent(userId, sourceParentInfo, targetParentInfo);
-
-				expect(fileRecordRepo.findByStorageLocationIdAndParentId).toHaveBeenNthCalledWith(
-					1,
-					sourceParentInfo.storageLocation,
-					sourceParentInfo.storageLocationId,
-					sourceParentInfo.parentId
-				);
-			});
-
-			it('should call copy with correct params', async () => {
-				const { userId, sourceParentInfo, targetParentInfo, sourceFileRecords } = setup();
-
-				await service.copyFilesOfParent(userId, sourceParentInfo, targetParentInfo);
-
-				expect(service.copy).toHaveBeenCalledWith(userId, sourceFileRecords, targetParentInfo);
-			});
-
-			it('should return file records and count', async () => {
-				const { userId, sourceParentInfo, targetParentInfo, targetFileRecords } = setup();
-
-				const responseData = await service.copyFilesOfParent(userId, sourceParentInfo, targetParentInfo);
-
-				expect(responseData[0]).toEqual(targetFileRecords);
-				expect(responseData[1]).toEqual(targetFileRecords.length);
-			});
-		});
-
-		describe('WHEN no file is found', () => {
-			const setup = () => {
-				const { fileRecords, parentInfo: sourceParentInfo, parentId: userId } = FileRecordParamsTestFactory.build();
-				const { parentInfo: targetParentInfo } = FileRecordParamsTestFactory.build();
-
-				fileRecordRepo.findByStorageLocationIdAndParentId.mockResolvedValueOnce([[], 0]);
-
-				return { sourceParentInfo, targetParentInfo, fileRecords, userId };
-			};
-
-			it('should return empty response if entities not found', async () => {
-				const { userId, sourceParentInfo, targetParentInfo } = setup();
-
-				const result = await service.copyFilesOfParent(userId, sourceParentInfo, targetParentInfo);
-
-				expect(result).toEqual([[], 0]);
-			});
-		});
-
-		describe('WHEN copy throws error', () => {
-			let spy: jest.SpyInstance;
-
-			afterEach(() => {
-				spy.mockRestore();
-			});
-
-			const setup = () => {
-				const {
-					fileRecords: sourceFileRecords,
-					parentInfo: sourceParentInfo,
-					parentId: userId,
-				} = FileRecordParamsTestFactory.build();
-				const { parentInfo: targetParentInfo } = FileRecordParamsTestFactory.build();
-				const error = new Error('test');
-
-				fileRecordRepo.findByStorageLocationIdAndParentId.mockResolvedValueOnce([
-					sourceFileRecords,
-					sourceFileRecords.length,
-				]);
-				spy = jest.spyOn(service, 'copy');
-				spy.mockRejectedValueOnce(error);
-
-				return { sourceParentInfo, targetParentInfo, userId, error };
-			};
-
-			it('should pass error', async () => {
-				const { userId, sourceParentInfo, targetParentInfo, error } = setup();
-
-				await expect(service.copyFilesOfParent(userId, sourceParentInfo, targetParentInfo)).rejects.toThrow(error);
-			});
-		});
-	});
-
-	describe('copy is called', () => {
+	describe('copyFilesToParent()', () => {
 		describe('WHEN files copied successfully and security status is VERIFIED', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo: sourceParentInfo } = FileRecordParamsTestFactory.build();
@@ -202,7 +86,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should call save with file record', async () => {
 				const { sourceFile, targetFile, sourceParentInfo, userId } = setup();
 
-				await service.copy(userId, [sourceFile], sourceParentInfo);
+				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
 				expect(fileRecordRepo.save).toBeCalledWith(targetFile);
 			});
@@ -210,7 +94,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should call copy with correct params', async () => {
 				const { sourceFile, targetFile, sourceParentInfo, userId } = setup();
 
-				await service.copy(userId, [sourceFile], sourceParentInfo);
+				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
 				const expectedParams: CopyFiles = {
 					sourcePath: sourceFile.createPath(),
@@ -223,7 +107,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should return file response array', async () => {
 				const { sourceFile, sourceParentInfo, userId, fileResponse } = setup();
 
-				const result = await service.copy(userId, [sourceFile], sourceParentInfo);
+				const result = await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
 				expect(result).toEqual([fileResponse]);
 			});
@@ -231,7 +115,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should not send request token of copied file to antivirus service', async () => {
 				const { sourceFile, sourceParentInfo, userId } = setup();
 
-				await service.copy(userId, [sourceFile], sourceParentInfo);
+				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
 				expect(antivirusService.send).toHaveBeenCalledTimes(0);
 			});
@@ -252,7 +136,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should send request token of copied file to antivirus service', async () => {
 				const { sourceFile, sourceParentInfo, userId } = setup();
 
-				await service.copy(userId, [sourceFile], sourceParentInfo);
+				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
 				expect(antivirusService.send).toBeCalledTimes(1);
 			});
@@ -270,7 +154,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should return failed file record (=without new id)', async () => {
 				const { fileRecord, sourceParentInfo, userId } = setup();
 
-				const result = await service.copy(userId, [fileRecord], sourceParentInfo);
+				const result = await service.copyFilesToParent(userId, [fileRecord], sourceParentInfo);
 				const expected = { sourceId: fileRecord.id, name: fileRecord.getName() };
 
 				expect(result[0]).toEqual(expected);
@@ -295,7 +179,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should return failed file record (=without new id)', async () => {
 				const { fileRecord, parentInfo, userId } = setup();
 
-				const results = await service.copy(userId, [fileRecord], parentInfo);
+				const results = await service.copyFilesToParent(userId, [fileRecord], parentInfo);
 				const result = results[0];
 
 				expect(result.id).toBeDefined();
@@ -324,7 +208,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should return one file response and one failed file response', async () => {
 				const { sourceFile1, sourceFile2, parentInfo, userId, fileResponse2 } = setup();
 
-				const [result1, result2] = await service.copy(userId, [sourceFile1, sourceFile2], parentInfo);
+				const [result1, result2] = await service.copyFilesToParent(userId, [sourceFile1, sourceFile2], parentInfo);
 
 				expect(result1.id).toBeDefined();
 
@@ -360,7 +244,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should delete target file record', async () => {
 				const { sourceFile, targetFile, parentInfo, userId, expectedResponse } = setup();
 
-				const result = await service.copy(userId, [sourceFile], parentInfo);
+				const result = await service.copyFilesToParent(userId, [sourceFile], parentInfo);
 
 				expect(result).toEqual(expectedResponse);
 				expect(fileRecordRepo.delete).toBeCalledWith([targetFile]);
@@ -387,7 +271,7 @@ describe('FilesStorageService copy methods', () => {
 			it('should delete file record', async () => {
 				const { sourceFile, targetFile, parentInfo, userId, expectedResponse } = setup();
 
-				const result = await service.copy(userId, [sourceFile], parentInfo);
+				const result = await service.copyFilesToParent(userId, [sourceFile], parentInfo);
 
 				expect(result).toEqual(expectedResponse);
 				expect(fileRecordRepo.delete).toHaveBeenCalledWith([targetFile]);

@@ -7,9 +7,8 @@ import {
 import { Logger } from '@infra/logger';
 import { Injectable } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
-import { FilesStorageService, StorageLocation } from '../../domain';
+import { FilesStorageMapper, FilesStorageService, StorageLocation } from '../../domain';
 import { StorageLocationParamsDto } from '../dto';
-import { FilesStorageMapper } from '../mapper';
 
 @Injectable()
 export class FilesStorageAdminUC {
@@ -28,7 +27,7 @@ export class FilesStorageAdminUC {
 		]);
 
 		await this.checkPermission(params.storageLocation, params.storageLocationId, contextForAllowOnlyInstanceOperation);
-		const result = await this.filesStorageAdminService.markForDeleteByStorageLocation(params);
+		const result = await this.filesStorageAdminService.deleteStorageLocationWithAllFiles(params);
 
 		return result;
 	}

@@ -1,5 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService, ScanResult } from '@infra/antivirus';
+import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
@@ -12,7 +13,6 @@ import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
-import { DomainErrorHandler } from '@infra/error';
 
 const buildFileRecord = () => {
 	const parentId = new ObjectId().toHexString();
@@ -88,7 +88,7 @@ describe('FilesStorageService update methods', () => {
 				const fileRecord = fileRecords[0];
 				const fileName = 'renamed';
 
-				spy = jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValueOnce([fileRecords, 1]);
+				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([fileRecords, 1]);
 
 				return {
 					fileName,
@@ -132,7 +132,7 @@ describe('FilesStorageService update methods', () => {
 				const fileName = 'renamed';
 
 				const spyGetFilesOfParent = jest
-					.spyOn(service, 'getFileRecordsOfParent')
+					.spyOn(service, 'getFileRecordsByParent')
 					.mockResolvedValueOnce([[fileRecord], 1]);
 				fileRecordRepo.save.mockRejectedValueOnce(new Error('bla'));
 
@@ -162,7 +162,7 @@ describe('FilesStorageService update methods', () => {
 				const fileRecord = fileRecords[0];
 				const fileName = fileRecords[0].getName();
 
-				spy = jest.spyOn(service, 'getFileRecordsOfParent').mockResolvedValueOnce([fileRecords, 1]);
+				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([fileRecords, 1]);
 
 				return {
 					fileName,

@@ -448,19 +448,19 @@ describe('FileRecord', () => {
 					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
 				];
 
-				const result = FileRecord.getUniqueParents(fileRecords);
+				const result = FileRecord.getUniqueParentInfos(fileRecords);
 
-				expect(result.size).toBe(2);
-				expect(result.get('id1')).toBe(FileRecordParentType.User);
-				expect(result.get('id2')).toBe(FileRecordParentType.School);
+				expect(result.length).toBe(2);
+				expect(result[0]).toEqual(fileRecords[0].getParentInfo());
+				expect(result[1]).toEqual(fileRecords[1].getParentInfo());
 			});
 		});
 
 		describe('WHEN fileRecords is empty', () => {
 			it('should return an empty map if fileRecords is empty', () => {
-				const result = FileRecord.getUniqueParents([]);
+				const result = FileRecord.getUniqueParentInfos([]);
 
-				expect(result.size).toBe(0);
+				expect(result.length).toBe(0);
 			});
 		});
 	});

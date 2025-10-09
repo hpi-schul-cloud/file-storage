@@ -1,0 +1,37 @@
+/* eslint-disable max-classes-per-file */
+import { accessTokenRegex } from '@infra/authorization-client';
+import { ApiProperty } from '@nestjs/swagger';
+import { EntityId } from '@shared/domain/types';
+import { IsEnum, IsMongoId, IsString, Matches, MaxLength } from 'class-validator';
+
+export enum EditorMode {
+	EDIT = 'edit',
+	VIEW = 'view',
+}
+
+export class AuthorizedCollaboraDocumentUrlParams {
+	@ApiProperty()
+	@IsMongoId()
+	fileRecordId!: EntityId;
+
+	@ApiProperty({ enum: EditorMode, enumName: 'EditorMode' })
+	@IsEnum(EditorMode)
+	editorMode!: EditorMode;
+
+	@ApiProperty()
+	@IsString()
+	@MaxLength(100)
+	userDisplayName!: string;
+}
+
+export class WopiAccessTokenParams {
+	@ApiProperty()
+	@Matches(accessTokenRegex, { message: 'Token must be a valid string.' })
+	access_token!: string;
+}
+
+export class SingleFileParams {
+	@ApiProperty()
+	@IsMongoId()
+	fileRecordId!: EntityId;
+}

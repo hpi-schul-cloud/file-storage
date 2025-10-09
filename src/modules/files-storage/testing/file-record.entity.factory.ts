@@ -12,6 +12,18 @@ class FileRecordEntityFactory extends EntityFactory<FileRecordEntity, FileRecord
 	public withDeletedSince(date?: Date): this {
 		return this.params({ deletedSince: date ?? yesterday });
 	}
+
+	public asOpenDocument(): this {
+		return this.params({ mimeType: 'application/vnd.oasis.opendocument.text' });
+	}
+
+	public asPdf(): this {
+		return this.params({ mimeType: 'application/pdf' });
+	}
+
+	public setSize(size: number): this {
+		return this.params({ size });
+	}
 }
 
 export const fileRecordEntityFactory = FileRecordEntityFactory.define(

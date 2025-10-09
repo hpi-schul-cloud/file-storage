@@ -13,21 +13,9 @@ export interface FileRecordRepo {
 
 	findByParentId(parentId: EntityId, options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
 
+	findMarkedForDeleteByParentId(parentId: EntityId, options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
+
 	markForDeleteByStorageLocation(storageLocation: StorageLocation, storageLocationId: EntityId): Promise<number>;
-
-	findByStorageLocationIdAndParentId(
-		storageLocation: StorageLocation,
-		storageLocationId: EntityId,
-		parentId: EntityId,
-		options?: FindOptions<FileRecord>
-	): Promise<Counted<FileRecord[]>>;
-
-	findByStorageLocationIdAndParentIdAndMarkedForDelete(
-		storageLocation: StorageLocation,
-		storageLocationId: EntityId,
-		parentId: EntityId,
-		options?: FindOptions<FileRecord>
-	): Promise<Counted<FileRecord[]>>;
 
 	findBySecurityCheckRequestToken(token: string): Promise<FileRecord>;
 

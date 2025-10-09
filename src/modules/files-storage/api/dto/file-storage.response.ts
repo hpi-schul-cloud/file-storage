@@ -2,8 +2,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityId } from '@shared/domain/types';
 import { DecodeHtmlEntities } from '@shared/transformer';
-import { FileRecord, PreviewStatus, ScanStatus } from '../../domain';
-import { FileRecordParentType, FileRecordStatus, StorageLocation } from '../../domain/interface';
+import {
+	CopyFileResult,
+	FileRecord,
+	FileRecordParentType,
+	FileRecordStatus,
+	PreviewStatus,
+	ScanStatus,
+	StorageLocation,
+} from '../../domain';
 import { PaginationResponse } from './pagination.response';
 
 export class FileRecordResponse {
@@ -88,7 +95,7 @@ export class FileRecordListResponse extends PaginationResponse<FileRecordRespons
 	data: FileRecordResponse[];
 }
 
-export class CopyFileResponse {
+export class CopyFileResponse implements CopyFileResult {
 	constructor(data: CopyFileResponse) {
 		this.id = data.id;
 		this.sourceId = data.sourceId;

@@ -15,23 +15,21 @@ import { PassThrough, Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
+import { ArchiveFactory, FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
 	CopyFileResult,
 	FILE_RECORD_REPO,
 	FileRecordRepo,
+	FileRecordStatus,
 	FileRecordWithStatus,
 	GetFileResponse,
 	StorageLocationParams,
 } from '../interface';
-import { FileStorageActionsLoggable } from '../loggable';
-import { FileResponseBuilder, ScanResultDtoMapper } from '../mapper';
-
-import { FileRecordFactory, StreamFileSizeObserver } from '../factory';
-import { FileRecordStatus } from '../interface';
+import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
+import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { ArchiveFactory } from './archive.factory';
 import { fileTypeStream } from './file-type.helper';
 
 @Injectable()
@@ -72,8 +70,14 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async getFileRecordsOfParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
+	public async getFileRecordsByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
 		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId);
+
+		return countedFileRecords;
+	}
+
+	public async getFileRecordsMarkedForDeleteByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findMarkedForDeleteByParentId(parentId);
 
 		return countedFileRecords;
 	}
@@ -84,6 +88,7 @@ export class FilesStorageService {
 		return countedFileRecords;
 	}
 
+	// generate status
 	public getFileRecordStatus(fileRecord: FileRecord): FileRecordStatus {
 		const scanStatus = fileRecord.scanStatus;
 		const previewStatus = fileRecord.getPreviewStatus();
@@ -98,6 +103,17 @@ export class FilesStorageService {
 		return status;
 	}
 
+	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
+		const status = {
+			isCollaboraEditable: fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(
+				this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES
+			),
+		};
+
+		return status;
+	}
+
 	public getFileRecordsWithStatus(fileRecords: FileRecord[]): FileRecordWithStatus[] {
 		return fileRecords.map((fileRecord) => ({
 			fileRecord,
@@ -105,37 +121,29 @@ export class FilesStorageService {
 		}));
 	}
 
-	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
-		const { COLLABORA_MAX_FILE_SIZE_IN_BYTES } = this.config;
-		const status = {
-			isCollaboraEditable: fileRecord.isCollaboraEditable(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
-			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(COLLABORA_MAX_FILE_SIZE_IN_BYTES),
-		};
-
-		return status;
-	}
-
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const { fileRecord, stream } = await this.createFileRecordWithResolvedName(file, parentInfo, userId);
+		const fileName = await this.resolveFileName(file, parentInfo);
+		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+
 		// MimeType Detection consumes part of the stream, so the restored stream is passed on
+		// remapped need to be removed, see this.updateFileContents
 		file.data = stream;
 		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
 
-		await this.createFileInStorageAndDeleteOnError(fileRecord, file);
+		await this.storeAndScanFileWithRollback(fileRecord, file);
 
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, file: FileDto): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(file);
+	public async updateFileContents(fileRecord: FileRecord, readable: Readable): Promise<FileRecord> {
+		const { mimeType, stream } = await this.detectMimeType(readable, fileRecord.mimeType);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		file.data = stream;
-
-		await this.storeAndScanFile(file, fileRecord);
+		const file = FileDtoFactory.create(fileRecord.getName(), stream, mimeType);
+		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
 	}
@@ -146,30 +154,20 @@ export class FilesStorageService {
 		}
 	}
 
-	private async createFileRecordWithResolvedName(
-		file: FileDto,
-		parentInfo: ParentInfo,
-		userId: EntityId
-	): Promise<{ fileRecord: FileRecord; stream: Readable }> {
-		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file);
-
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
-
-		return { fileRecord, stream };
-	}
-
-	private async detectMimeType(file: FileDto): Promise<{ mimeType: string; stream: Readable }> {
-		if (this.isStreamMimeTypeDetectionPossible(file.mimeType)) {
-			const source = this.createPipedStream(file.data);
+	private async detectMimeType(
+		data: Readable,
+		expectedMimeType: string
+	): Promise<{ mimeType: string; stream: Readable }> {
+		if (this.isStreamMimeTypeDetectionPossible(expectedMimeType)) {
+			const source = this.createPipedStream(data);
 			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
 
-			const mimeType = detectedMimeType ?? file.mimeType;
+			const mimeType = detectedMimeType ?? expectedMimeType;
 
 			return { mimeType, stream };
 		}
 
-		return { mimeType: file.mimeType, stream: file.data };
+		return { mimeType: expectedMimeType, stream: data };
 	}
 
 	private createPipedStream(data: Readable): PassThrough {
@@ -199,7 +197,7 @@ export class FilesStorageService {
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
 		let fileName = file.name;
 
-		const [fileRecordsOfParent, count] = await this.getFileRecordsOfParent(parentInfo.parentId);
+		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
 		if (count > 0) {
 			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
 		}
@@ -207,9 +205,9 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private async createFileInStorageAndDeleteOnError(fileRecord: FileRecord, file: FileDto): Promise<void> {
+	private async storeAndScanFileWithRollback(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		try {
-			await this.storeAndScanFile(file, fileRecord);
+			await this.storeAndScanFile(fileRecord, file);
 		} catch (error) {
 			const filePath = fileRecord.createPath();
 
@@ -220,22 +218,27 @@ export class FilesStorageService {
 		}
 	}
 
-	private async storeAndScanFile(file: FileDto, fileRecord: FileRecord): Promise<void> {
+	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const shouldStreamToAntiVirus =
+			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
+
+		return shouldStreamToAntiVirus;
+	}
+
+	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		const streamCompletion = this.awaitStreamCompletion(file.data);
-		const useStreamToAntivirus = this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS;
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
-		const status = this.getCollaboraEditabilityStatus(fileRecord);
 
-		const shouldStreamToAntiVirus =
-			useStreamToAntivirus && (fileRecord.isPreviewPossible() || status.isCollaboraEditable);
+		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
-			const streamToAntivirus = this.createPipedStream(file.data);
+			const pipedStream = this.createPipedStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.checkStream(streamToAntivirus),
+				this.antivirusService.scanStream(pipedStream),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);
@@ -246,14 +249,16 @@ export class FilesStorageService {
 		await this.throwOnIncompleteStream(streamCompletion);
 
 		const fileRecordSize = fileSizeObserver.getFileSize();
-
-		fileRecord.markAsUploaded(fileRecordSize, this.getMaxFileSize());
+		fileRecord.markAsUploaded(fileRecordSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
+		if (fileRecordSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
+			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
+		}
 
 		await this.fileRecordRepo.save(fileRecord);
 
-		if (!shouldStreamToAntiVirus) {
-			await this.sendToAntivirus(fileRecord);
+		if (!shouldStreamToAntiVirus && !fileRecord.isWontCheck()) {
+			await this.antivirusService.send(fileRecord.getSecurityToken());
 		}
 	}
 
@@ -272,29 +277,6 @@ export class FilesStorageService {
 		});
 	}
 
-	private async sendToAntivirus(fileRecord: FileRecord): Promise<void> {
-		const maxSecurityCheckFileSize = this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE;
-
-		if (fileRecord.sizeInByte > maxSecurityCheckFileSize) {
-			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
-			await this.fileRecordRepo.save(fileRecord);
-		} else {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
-		}
-	}
-
-	public getMaxFileSize(): number {
-		const maxFileSize = this.config.FILES_STORAGE_MAX_FILE_SIZE;
-
-		return maxFileSize;
-	}
-
-	public getCollaboraMaxFileSize(): number {
-		const collaboraMaxFileSize = this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
-
-		return collaboraMaxFileSize;
-	}
-
 	// update
 	private checkDuplicatedNames(fileRecords: FileRecord[], newFileName: string): void {
 		if (fileRecords.find((item) => item.hasName(newFileName))) {
@@ -304,7 +286,7 @@ export class FilesStorageService {
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
 		const parentInfo = fileRecord.getParentInfo();
-		const [fileRecords] = await this.getFileRecordsOfParent(parentInfo.parentId);
+		const [fileRecords] = await this.getFileRecordsByParent(parentInfo.parentId);
 
 		this.checkDuplicatedNames(fileRecords, fileName);
 		fileRecord.setName(fileName);
@@ -347,18 +329,18 @@ export class FilesStorageService {
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
 		const pathToFile = fileRecord.createPath();
 		const file = await this.storageClient.get(pathToFile, bytesRange);
-		const response = FileResponseBuilder.build(file, fileRecord.getName());
+		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
-		return response;
+		return fileResponse;
 	}
 
 	public async download(fileRecord: FileRecord, fileName: string, bytesRange?: string): Promise<GetFileResponse> {
 		this.checkFileName(fileRecord, fileName);
 		this.checkScanStatus(fileRecord);
 
-		const response = await this.downloadFile(fileRecord, bytesRange);
+		const fileResponse = await this.downloadFile(fileRecord, bytesRange);
 
-		return response;
+		return fileResponse;
 	}
 
 	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
@@ -367,57 +349,60 @@ export class FilesStorageService {
 		}
 
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
-
-		const archiveType = 'zip';
-		const archive = ArchiveFactory.createArchive(files, fileRecords, this.logger, archiveType);
-
-		const fileResponse = FileResponseBuilder.build(
-			{
-				data: archive,
-				contentType: `application/${archiveType}`,
-			},
-			`${archiveName}.${archiveType}`
-		);
+		const archive = ArchiveFactory.create(files, fileRecords, this.logger);
+		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
 		return fileResponse;
 	}
 
-	// delete
-	private async deleteFilesInFilesStorageClient(fileRecords: FileRecord[]): Promise<void> {
+	// delete and restore
+	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
 		const paths = FileRecord.getPaths(fileRecords);
-
 		await this.storageClient.moveToTrash(paths);
 	}
 
-	private async deleteWithRollbackByError(fileRecords: FileRecord[]): Promise<void> {
+	private async restoreBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
+		const paths = FileRecord.getPaths(fileRecords);
+		await this.storageClient.restore(paths);
+	}
+
+	private async markFileRecordsForDelete(fileRecords: FileRecord[]): Promise<void> {
+		FileRecord.markForDelete(fileRecords);
+		await this.fileRecordRepo.save(fileRecords);
+	}
+
+	private async restoreFileRecords(fileRecords: FileRecord[]): Promise<void> {
+		FileRecord.unmarkForDelete(fileRecords);
+		await this.fileRecordRepo.save(fileRecords);
+	}
+
+	public async deleteFiles(fileRecords: FileRecord[]): Promise<void> {
+		this.logDelete(fileRecords);
+		if (fileRecords.length === 0) return;
+
+		await this.markFileRecordsForDelete(fileRecords);
+
 		try {
-			await this.deleteFilesInFilesStorageClient(fileRecords);
+			await this.deleteBinaryFiles(fileRecords);
 		} catch (error) {
-			this.rollbackFileRecords(fileRecords);
+			await this.restoreFileRecords(fileRecords);
 
 			throw error;
 		}
 	}
 
-	private async rollbackFileRecords(fileRecords: FileRecord[]): Promise<void> {
-		FileRecord.unmarkForDelete(fileRecords);
-		await this.fileRecordRepo.save(fileRecords);
-	}
+	public async restoreFiles(fileRecords: FileRecord[]): Promise<void> {
+		this.logRestore(fileRecords);
+		if (fileRecords.length === 0) return;
 
-	public async delete(fileRecords: FileRecord[]): Promise<void> {
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
-		);
+		await this.restoreFileRecords(fileRecords);
 
-		FileRecord.markForDelete(fileRecords);
-		await this.fileRecordRepo.save(fileRecords);
+		try {
+			await this.restoreBinaryFiles(fileRecords);
+		} catch (error) {
+			await this.markFileRecordsForDelete(fileRecords);
 
-		await this.deleteWithRollbackByError(fileRecords);
-	}
-
-	public async deleteFilesOfParent(fileRecords: FileRecord[]): Promise<void> {
-		if (fileRecords.length > 0) {
-			await this.delete(fileRecords);
+			throw error;
 		}
 	}
 
@@ -426,130 +411,27 @@ export class FilesStorageService {
 		await this.fileRecordRepo.save(fileRecords);
 	}
 
-	public async markForDeleteByStorageLocation(params: StorageLocationParams): Promise<number> {
+	public async deleteStorageLocationWithAllFiles(params: StorageLocationParams): Promise<number> {
 		const { storageLocation, storageLocationId } = params;
 		const result = await this.fileRecordRepo.markForDeleteByStorageLocation(storageLocation, storageLocationId);
 
 		this.storageClient.moveDirectoryToTrash(storageLocationId).catch((error) => {
-			this.domainErrorHandler.exec(
-				new InternalServerErrorException('Error while moving directory to trash', { cause: error })
-			);
+			this.domainErrorHandler.exec(new StorageLocationDeleteLoggableException(params, error));
+			/*****************************************************************************
+			 * We do not want a rollback of the file records. Need to be fixed manually. *
+			 *****************************************************************************/
 		});
 
 		return result;
 	}
 
-	// restore
-	private async restoreFilesInFileStorageClient(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
-
-		await this.storageClient.restore(paths);
-	}
-
-	private async restoreWithRollbackByError(fileRecords: FileRecord[]): Promise<void> {
-		try {
-			await this.restoreFilesInFileStorageClient(fileRecords);
-		} catch (err) {
-			FileRecord.markForDelete(fileRecords);
-			await this.fileRecordRepo.save(fileRecords);
-			throw err;
-		}
-	}
-
-	public async restoreFilesOfParent(parentInfo: ParentInfo): Promise<Counted<FileRecord[]>> {
-		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
-			parentInfo.storageLocation,
-			parentInfo.storageLocationId,
-			parentInfo.parentId
-		);
-
-		if (count > 0) {
-			await this.restore(fileRecords);
-		}
-
-		return [fileRecords, count];
-	}
-
-	public async restore(fileRecords: FileRecord[]): Promise<void> {
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
-		);
-
-		FileRecord.unmarkForDelete(fileRecords);
-		await this.fileRecordRepo.save(fileRecords);
-
-		await this.restoreWithRollbackByError(fileRecords);
-	}
-
-	// copy
-	public async copyFilesOfParent(
-		userId: string,
-		sourceParentInfo: ParentInfo,
-		targetParentInfo: ParentInfo
-	): Promise<Counted<CopyFileResult[]>> {
-		const [fileRecords, count] = await this.fileRecordRepo.findByStorageLocationIdAndParentId(
-			sourceParentInfo.storageLocation,
-			sourceParentInfo.storageLocationId,
-			sourceParentInfo.parentId
-		);
-
-		if (count === 0) {
-			return [[], 0];
-		}
-
-		const response = await this.copy(userId, fileRecords, targetParentInfo);
-
-		return [response, count];
-	}
-
-	private async copyFileRecord(
-		sourceFile: FileRecord,
-		targetParentInfo: ParentInfo,
-		userId: EntityId
-	): Promise<FileRecord> {
-		const fileRecord = FileRecordFactory.copy(sourceFile, userId, targetParentInfo);
-		await this.fileRecordRepo.save(fileRecord);
-
-		return fileRecord;
-	}
-
-	private async sendToAntiVirusService(fileRecord: FileRecord): Promise<void> {
-		if (fileRecord.isPending()) {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
-		}
-	}
-
-	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
-		try {
-			const copyFiles: CopyFiles = {
-				sourcePath: sourceFile.createPath(),
-				targetPath: targetFile.createPath(),
-			};
-
-			await this.storageClient.copy([copyFiles]);
-			await this.sendToAntiVirusService(targetFile);
-
-			const copyFileResult: CopyFileResult = { id: targetFile.id, sourceId: sourceFile.id, name: targetFile.getName() };
-
-			return copyFileResult;
-		} catch (error) {
-			await this.fileRecordRepo.delete([targetFile]);
-			throw error;
-		}
-	}
-
-	public async copy(
+	public async copyFilesToParent(
 		userId: EntityId,
 		sourceFileRecords: FileRecord[],
 		targetParentInfo: ParentInfo
 	): Promise<CopyFileResult[]> {
-		this.logger.debug(
-			new FileStorageActionsLoggable('Start copy of FileRecords', {
-				action: 'copy',
-				sourcePayload: sourceFileRecords,
-				targetPayload: targetParentInfo,
-			})
-		);
+		this.logCopy(sourceFileRecords, targetParentInfo);
+		if (sourceFileRecords.length === 0) return [];
 
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
 			try {
@@ -577,10 +459,64 @@ export class FilesStorageService {
 		return settledPromises;
 	}
 
+	private async copyFileRecord(
+		sourceFile: FileRecord,
+		targetParentInfo: ParentInfo,
+		userId: EntityId
+	): Promise<FileRecord> {
+		const fileRecord = FileRecordFactory.copy(sourceFile, userId, targetParentInfo);
+		await this.fileRecordRepo.save(fileRecord);
+
+		return fileRecord;
+	}
+
+	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
+		try {
+			const copyFiles: CopyFiles = {
+				sourcePath: sourceFile.createPath(),
+				targetPath: targetFile.createPath(),
+			};
+
+			await this.storageClient.copy([copyFiles]);
+			if (targetFile.isPending() || targetFile.hasSecurityErrorStatus()) {
+				await this.antivirusService.send(targetFile.getSecurityToken());
+			}
+
+			const copyFileResult: CopyFileResult = { id: targetFile.id, sourceId: sourceFile.id, name: targetFile.getName() };
+
+			return copyFileResult;
+		} catch (error) {
+			await this.fileRecordRepo.delete([targetFile]);
+			throw error;
+		}
+	}
+
 	// statistics
 	public async getParentStatistic(parentId: EntityId): Promise<ParentStatistic> {
 		const statistics = await this.fileRecordRepo.getStatisticByParentId(parentId);
 
 		return statistics;
+	}
+
+	private logCopy(sourceFileRecords: FileRecord[], targetParentInfo: ParentInfo): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start copy of FileRecords', {
+				action: 'copy',
+				sourcePayload: sourceFileRecords,
+				targetPayload: targetParentInfo,
+			})
+		);
+	}
+
+	private logDelete(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start of FileRecords deletion', { action: 'delete', sourcePayload: fileRecords })
+		);
+	}
+
+	private logRestore(fileRecords: FileRecord[]): void {
+		this.logger.debug(
+			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
+		);
 	}
 }

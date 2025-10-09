@@ -33,7 +33,6 @@ import {
 	CopyFileListResponse,
 	CopyFileParams,
 	CopyFileResponse,
-	CopyFilesOfParentParams,
 	DownloadFileParams,
 	FileParams,
 	FileRecordListResponse,
@@ -48,7 +47,7 @@ import {
 	RenameFileParams,
 	SingleFileParams,
 } from '../dto';
-import { FilesStorageMapper } from '../mapper';
+import { StreamableFileMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
 
 @ApiTags('file')
@@ -112,7 +111,6 @@ export class FilesStorageController {
 	@Get('/download/:fileRecordId/:fileName')
 	public async download(
 		@Param() params: DownloadFileParams,
-		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response,
 		@Headers('Range') bytesRange?: string
@@ -138,19 +136,13 @@ export class FilesStorageController {
 	@Get('/preview/:fileRecordId/:fileName')
 	public async downloadPreview(
 		@Param() params: DownloadFileParams,
-		@CurrentUser() currentUser: ICurrentUser,
 		@Query() previewParams: PreviewParams,
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response,
 		@Headers('Range') bytesRange?: string,
 		@Headers('If-None-Match') etag?: string
 	): Promise<StreamableFile | void> {
-		const fileResponse = await this.filesStorageUC.downloadPreview(
-			currentUser.userId,
-			params,
-			previewParams,
-			bytesRange
-		);
+		const fileResponse = await this.filesStorageUC.downloadPreview(params, previewParams, bytesRange);
 
 		response.set({ ETag: fileResponse.etag });
 
@@ -185,7 +177,7 @@ export class FilesStorageController {
 		@Req() req: Request,
 		@Res({ passthrough: true }) response: Response
 	): Promise<StreamableFile | void> {
-		const data = await this.filesStorageUC.downloadFilesAsArchive(params);
+		const data = await this.filesStorageUC.downloadFilesOfParentAsArchive(params);
 
 		const streamableFile = this.streamFileToClient(req, data, response);
 
@@ -214,7 +206,7 @@ export class FilesStorageController {
 			httpResponse.status(HttpStatus.OK);
 		}
 
-		const streamableFile = FilesStorageMapper.mapToStreamableFile(fileResponse);
+		const streamableFile = StreamableFileMapper.fromResponse(fileResponse);
 
 		return streamableFile;
 	}
@@ -278,7 +270,7 @@ export class FilesStorageController {
 	@Delete('/delete/:fileRecordId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.deleteOneFile(params);
+		const response = await this.filesStorageUC.deleteFile(params);
 
 		return response;
 	}
@@ -291,7 +283,7 @@ export class FilesStorageController {
 	@Delete('/delete')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.deleteMultipleFiles(params);
+		const response = await this.filesStorageUC.deleteMultipleFilesOfParent(params);
 
 		return response;
 	}
@@ -313,7 +305,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@Post('/restore/:fileRecordId')
 	public async restoreFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.restoreOneFile(params);
+		const response = await this.filesStorageUC.restoreFile(params);
 
 		return response;
 	}
@@ -327,10 +319,14 @@ export class FilesStorageController {
 	@Post('/copy/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async copy(
 		@Param() params: FileRecordParams,
-		@Body() copyFilesParam: CopyFilesOfParentParams,
+		@Body() copyFilesParam: CopyFileParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<CopyFileListResponse> {
-		const [response, count] = await this.filesStorageUC.copyFilesOfParent(currentUser.userId, params, copyFilesParam);
+		const [response, count] = await this.filesStorageUC.copyFilesOfParent(
+			currentUser.userId,
+			params,
+			copyFilesParam.target
+		);
 
 		return new CopyFileListResponse(response, count);
 	}
@@ -347,7 +343,7 @@ export class FilesStorageController {
 		@Body() copyFileParam: CopyFileParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<CopyFileResponse> {
-		const response = await this.filesStorageUC.copyOneFile(currentUser.userId, params, copyFileParam);
+		const response = await this.filesStorageUC.copyFile(currentUser.userId, params, copyFileParam.target);
 
 		return response;
 	}
