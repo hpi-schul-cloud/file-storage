@@ -260,7 +260,7 @@ describe('FilesStorageService get methods', () => {
 		});
 	});
 
-	describe('getFileRecordsOfParent is called', () => {
+	describe('getFileRecordsByParent()', () => {
 		describe('WHEN valid files exist', () => {
 			const setup = () => {
 				const { parentId, fileRecords } = buildFileRecordsWithParams();
@@ -272,7 +272,7 @@ describe('FilesStorageService get methods', () => {
 			it('should call findBySchoolIdAndParentId with right parameters', async () => {
 				const { parentId } = setup();
 
-				await service.getFileRecordsOfParent(parentId);
+				await service.getFileRecordsByParent(parentId);
 
 				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId);
 			});
@@ -280,7 +280,7 @@ describe('FilesStorageService get methods', () => {
 			it('should return the matched fileRecord', async () => {
 				const { parentId, fileRecords } = setup();
 
-				const result = await service.getFileRecordsOfParent(parentId);
+				const result = await service.getFileRecordsByParent(parentId);
 
 				expect(result).toEqual([fileRecords, 3]);
 			});
@@ -298,7 +298,67 @@ describe('FilesStorageService get methods', () => {
 			it('should pass the error', async () => {
 				const { parentId } = setup();
 
-				await expect(service.getFileRecordsOfParent(parentId)).rejects.toThrow(new Error('bla'));
+				await expect(service.getFileRecordsByParent(parentId)).rejects.toThrow(new Error('bla'));
+			});
+		});
+	});
+
+	describe('getFileRecordsMarkedForDeleteOfParent()', () => {
+		describe('WHEN valid files exist', () => {
+			const setup = () => {
+				const { parentId, fileRecords } = buildFileRecordsWithParams();
+				fileRecords.forEach((record) => record.markForDelete());
+				fileRecordRepo.findMarkedForDeleteByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+
+				return { parentId, fileRecords };
+			};
+
+			it('should call findByParentId with right parameters', async () => {
+				const { parentId } = setup();
+
+				await service.getFileRecordsMarkedForDeleteByParent(parentId);
+
+				expect(fileRecordRepo.findMarkedForDeleteByParentId).toHaveBeenNthCalledWith(1, parentId);
+			});
+
+			it('should return the matched fileRecord', async () => {
+				const { parentId, fileRecords } = setup();
+
+				const result = await service.getFileRecordsMarkedForDeleteByParent(parentId);
+
+				expect(result).toEqual([fileRecords, 3]);
+			});
+		});
+
+		describe('WHEN repository throws an error', () => {
+			const setup = () => {
+				const { parentId, fileRecords } = buildFileRecordsWithParams();
+				fileRecords.forEach((record) => record.markForDelete());
+				fileRecordRepo.findMarkedForDeleteByParentId.mockRejectedValueOnce(new Error('bla'));
+
+				return { parentId };
+			};
+
+			it('should pass the error', async () => {
+				const { parentId } = setup();
+
+				await expect(service.getFileRecordsMarkedForDeleteByParent(parentId)).rejects.toThrow(new Error('bla'));
+			});
+		});
+
+		describe('WHEN no marked files exist', () => {
+			const setup = () => {
+				const { parentId } = buildFileRecordsWithParams();
+				fileRecordRepo.findMarkedForDeleteByParentId.mockResolvedValueOnce([[], 0]);
+
+				return { parentId };
+			};
+			it('should return an empty array', async () => {
+				const { parentId } = setup();
+
+				const result = await service.getFileRecordsMarkedForDeleteByParent(parentId);
+
+				expect(result).toEqual([[], 0]);
 			});
 		});
 	});

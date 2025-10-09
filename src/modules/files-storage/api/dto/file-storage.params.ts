@@ -121,20 +121,10 @@ export class RenameFileParams {
 	fileName!: string;
 }
 
-export class CopyFilesOfParentParams {
-	@ApiProperty()
-	@ValidateNested()
-	target!: FileRecordParams;
-}
-
 export class CopyFileParams {
 	@ApiProperty()
 	@ValidateNested()
 	target!: FileRecordParams;
-
-	@ApiProperty()
-	@IsString()
-	fileNamePrefix!: string;
 }
 
 export class CopyFilesOfParentPayload {

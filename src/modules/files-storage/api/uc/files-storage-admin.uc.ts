@@ -27,7 +27,7 @@ export class FilesStorageAdminUC {
 		]);
 
 		await this.checkPermission(params.storageLocation, params.storageLocationId, contextForAllowOnlyInstanceOperation);
-		const result = await this.filesStorageAdminService.markForDeleteByStorageLocation(params);
+		const result = await this.filesStorageAdminService.deleteStorageLocationWithAllFiles(params);
 
 		return result;
 	}

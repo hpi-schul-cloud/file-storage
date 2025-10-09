@@ -5,8 +5,8 @@ import { FileDto } from '../../domain';
 import { busboyFileInfoTestFactory } from '../../testing';
 import { FileDtoMapper } from './file-dto.mapper';
 
-describe('File Builder', () => {
-	describe('buildFromAxiosResponse', () => {
+describe('FileDtoMapper', () => {
+	describe('mapFromAxiosResponse', () => {
 		describe('when response has content-type header', () => {
 			const setup = () => {
 				const name = 'test.txt';
@@ -28,7 +28,7 @@ describe('File Builder', () => {
 			it('should return file from request', () => {
 				const { response, expectedFile, name } = setup();
 
-				const result = FileDtoMapper.buildFromAxiosResponse(name, response);
+				const result = FileDtoMapper.mapFromAxiosResponse(name, response);
 
 				expect(result).toEqual(expectedFile);
 			});
@@ -54,14 +54,14 @@ describe('File Builder', () => {
 			it('should return file with default mime type', () => {
 				const { response, expectedFile, name } = setup();
 
-				const result = FileDtoMapper.buildFromAxiosResponse(name, response);
+				const result = FileDtoMapper.mapFromAxiosResponse(name, response);
 
 				expect(result).toEqual(expectedFile);
 			});
 		});
 	});
 
-	describe('buildFromBusboyFileInfo', () => {
+	describe('mapFromBusboyFileInfo', () => {
 		const setup = () => {
 			const readable = Readable.from('abc');
 			const busboyFileInfo = busboyFileInfoTestFactory().build();
@@ -77,7 +77,7 @@ describe('File Builder', () => {
 		it('should return file from busboy fileInfo', () => {
 			const { busboyFileInfo, readable, expectedFile } = setup();
 
-			const result = FileDtoMapper.buildFromBusboyFileInfo(busboyFileInfo, readable);
+			const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable);
 
 			expect(result).toEqual(expectedFile);
 		});

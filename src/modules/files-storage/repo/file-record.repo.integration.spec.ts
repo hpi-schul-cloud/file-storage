@@ -248,6 +248,87 @@ describe('FileRecordRepo', () => {
 		});
 	});
 
+	describe('findMarkedForDeleteByParentId', () => {
+		const setup = () => {
+			const parentId1 = new ObjectId().toHexString();
+			const fileRecords1 = fileRecordEntityFactory.withDeletedSince().buildList(3, {
+				parentType: FileRecordParentType.Task,
+				parentId: parentId1,
+			});
+
+			const parentId2 = new ObjectId().toHexString();
+			const fileRecords2 = fileRecordEntityFactory.withDeletedSince().buildList(3, {
+				parentType: FileRecordParentType.Task,
+				parentId: parentId2,
+			});
+
+			const notMarkedForDeleteFileRecords = fileRecordEntityFactory.buildList(3, {
+				parentType: FileRecordParentType.Task,
+				parentId: parentId1,
+			});
+
+			return { fileRecords1, fileRecords2, notMarkedForDeleteFileRecords, parentId1 };
+		};
+
+		it('should work with pagination limit', async () => {
+			const { fileRecords1, parentId1 } = setup();
+			await em.persistAndFlush([...fileRecords1]);
+			em.clear();
+
+			const pagination = { limit: 1 };
+			const [result, count] = await repo.findMarkedForDeleteByParentId(parentId1, { pagination });
+
+			expect(count).toEqual(3);
+			expect(result.length).toEqual(1);
+		});
+
+		it('should work with pagination skip', async () => {
+			const { fileRecords1, parentId1 } = setup();
+			await em.persistAndFlush([...fileRecords1]);
+			em.clear();
+
+			const pagination = { skip: 1 };
+			const [result, count] = await repo.findMarkedForDeleteByParentId(parentId1, { pagination });
+
+			expect(count).toEqual(3);
+			expect(result.length).toEqual(2);
+		});
+
+		it('should only find searched parent', async () => {
+			const { fileRecords1, fileRecords2, parentId1 } = setup();
+
+			await em.persistAndFlush([...fileRecords1, ...fileRecords2]);
+			em.clear();
+
+			const [results, count] = await repo.findMarkedForDeleteByParentId(parentId1);
+
+			expect(count).toEqual(3);
+			expect(results).toHaveLength(3);
+			expect(
+				results.map((o) => {
+					const props = o.getProps();
+
+					return props.parentId;
+				})
+			).toEqual([parentId1, parentId1, parentId1]);
+		});
+
+		it('should ignore deletedSince', async () => {
+			const { fileRecords1, notMarkedForDeleteFileRecords, parentId1 } = setup();
+
+			await em.persistAndFlush([...fileRecords1, ...notMarkedForDeleteFileRecords]);
+			em.clear();
+
+			const [results, count] = await repo.findMarkedForDeleteByParentId(parentId1);
+
+			expect(count).toEqual(3);
+			expect(results).toHaveLength(3);
+			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
+				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
+			);
+		});
+	});
+
 	describe('markForDeleteByStorageLocation', () => {
 		describe('when there are many data records with different storageLocationId', () => {
 			const setup = async () => {
@@ -301,231 +382,6 @@ describe('FileRecordRepo', () => {
 
 				expect(result).toEqual(0);
 			});
-		});
-	});
-
-	describe('findByStorageLocationIdAndParentId', () => {
-		const parentId1 = new ObjectId().toHexString();
-		const storageLocationId1 = new ObjectId().toHexString();
-		let fileRecords1: FileRecordEntity[];
-
-		beforeEach(() => {
-			fileRecords1 = fileRecordEntityFactory.buildList(3, {
-				storageLocationId: storageLocationId1,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId1,
-			});
-		});
-
-		// TODO: the next 2 pagination test are for private stuff and must be repeated in all or outsource
-		it('should work with pagination limit', async () => {
-			await em.persistAndFlush([...fileRecords1]);
-			em.clear();
-
-			const pagination = { limit: 1 };
-			const [fileRecords, count] = await repo.findByStorageLocationIdAndParentId(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1,
-				{
-					pagination,
-				}
-			);
-
-			expect(count).toEqual(3);
-			expect(fileRecords.length).toEqual(1);
-		});
-
-		it('should work with pagination skip', async () => {
-			await em.persistAndFlush([...fileRecords1]);
-			em.clear();
-
-			const pagination = { skip: 1 };
-			const [fileRecords, count] = await repo.findByStorageLocationIdAndParentId(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1,
-				{
-					pagination,
-				}
-			);
-
-			expect(count).toEqual(3);
-			expect(fileRecords.length).toEqual(2);
-		});
-
-		it('should only find searched parent', async () => {
-			const parentId2 = new ObjectId().toHexString();
-			const fileRecords2 = fileRecordEntityFactory.buildList(3, {
-				storageLocationId: storageLocationId1,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId2,
-			});
-
-			await em.persistAndFlush([...fileRecords1, ...fileRecords2]);
-			em.clear();
-
-			const [results, count] = await repo.findByStorageLocationIdAndParentId(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1
-			);
-
-			expect(count).toEqual(3);
-			expect(results).toHaveLength(3);
-			expect(
-				results.map((o) => {
-					const props = o.getProps();
-
-					return props.parentId;
-				})
-			).toEqual([parentId1, parentId1, parentId1]);
-		});
-
-		it('should only find searched school', async () => {
-			const storageLocationId2 = new ObjectId().toHexString();
-			const fileRecords2 = fileRecordEntityFactory.buildList(3, {
-				storageLocationId: storageLocationId2,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId1,
-			});
-
-			await em.persistAndFlush([...fileRecords1, ...fileRecords2]);
-			em.clear();
-
-			const [results, count] = await repo.findByStorageLocationIdAndParentId(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1
-			);
-
-			expect(count).toEqual(3);
-			expect(results).toHaveLength(3);
-			expect(
-				results.map((o) => {
-					const parentInfo = o.getParentInfo();
-
-					return parentInfo.storageLocationId;
-				})
-			).toEqual([storageLocationId1, storageLocationId1, storageLocationId1]);
-		});
-
-		it('should ignore deletedSince', async () => {
-			const fileRecordsExpired = fileRecordEntityFactory.withDeletedSince().buildList(3, {
-				storageLocationId: storageLocationId1,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId1,
-			});
-
-			await em.persistAndFlush([...fileRecords1, ...fileRecordsExpired]);
-			em.clear();
-
-			const [results, count] = await repo.findByStorageLocationIdAndParentId(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1
-			);
-
-			expect(count).toEqual(3);
-			expect(results).toHaveLength(3);
-			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
-			);
-		});
-	});
-
-	describe('findBySchoolIdAndParentIdAndMarkedForDelete', () => {
-		const parentId1 = new ObjectId().toHexString();
-		const storageLocationId1 = new ObjectId().toHexString();
-		let fileRecords1: FileRecordEntity[];
-
-		beforeEach(() => {
-			fileRecords1 = fileRecordEntityFactory.withDeletedSince().buildList(3, {
-				storageLocationId: storageLocationId1,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId1,
-			});
-		});
-
-		it('should only find searched parent', async () => {
-			const parentId2 = new ObjectId().toHexString();
-
-			const fileRecords2 = fileRecordEntityFactory.withDeletedSince().buildList(3, {
-				storageLocationId: storageLocationId1,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId2,
-			});
-
-			await em.persistAndFlush([...fileRecords1, ...fileRecords2]);
-			em.clear();
-
-			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1
-			);
-
-			expect(count).toEqual(3);
-			expect(results).toHaveLength(3);
-			expect(
-				results.map((o) => {
-					const props = o.getProps();
-
-					return props.parentId;
-				})
-			).toEqual([parentId1, parentId1, parentId1]);
-		});
-
-		it('should only find searched school', async () => {
-			const storageLocationId2 = new ObjectId().toHexString();
-
-			const fileRecords2 = fileRecordEntityFactory.withDeletedSince().buildList(3, {
-				storageLocationId: storageLocationId2,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId1,
-			});
-
-			await em.persistAndFlush([...fileRecords1, ...fileRecords2]);
-			em.clear();
-
-			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1
-			);
-
-			expect(count).toEqual(3);
-			expect(results).toHaveLength(3);
-			expect(
-				results.map((o) => {
-					const parentInfo = o.getParentInfo();
-
-					return parentInfo.storageLocationId;
-				})
-			).toEqual([storageLocationId1, storageLocationId1, storageLocationId1]);
-		});
-
-		it('should ingnore if deletedSince is undefined', async () => {
-			const fileRecordsExpired = fileRecordEntityFactory.buildList(3, {
-				storageLocationId: storageLocationId1,
-				parentType: FileRecordParentType.Task,
-				parentId: parentId1,
-			});
-
-			await em.persistAndFlush([...fileRecords1, ...fileRecordsExpired]);
-			em.clear();
-
-			const [results, count] = await repo.findByStorageLocationIdAndParentIdAndMarkedForDelete(
-				StorageLocation.SCHOOL,
-				storageLocationId1,
-				parentId1
-			);
-
-			expect(count).toEqual(3);
-			expect(results).toHaveLength(3);
-			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
-			);
 		});
 	});
 

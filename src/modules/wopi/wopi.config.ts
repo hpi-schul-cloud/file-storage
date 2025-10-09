@@ -1,4 +1,3 @@
-
 import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsInt, IsNumber, IsUrl } from 'class-validator';

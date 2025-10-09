@@ -12,7 +12,7 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
  * and instead just use the plain object ids.
  */
 @Entity({ tableName: 'filerecords' })
-@Index({ properties: ['storageLocation', 'storageLocationId', 'parentId'], options: { background: true } })
+@Index({ properties: ['storageLocation', 'storageLocationId'], options: { background: true } })
 // https://github.com/mikro-orm/mikro-orm/issues/1230
 @Index({ options: { 'securityCheck.requestToken': 1 } })
 export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRecordProps {

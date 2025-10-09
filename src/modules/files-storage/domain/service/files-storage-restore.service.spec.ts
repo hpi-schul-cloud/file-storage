@@ -79,129 +79,6 @@ describe('FilesStorageService restore methods', () => {
 		expect(service).toBeDefined();
 	});
 
-	describe('restoreFilesOfParent is called', () => {
-		describe('WHEN valid files exist', () => {
-			let spy: jest.SpyInstance;
-
-			afterEach(() => {
-				spy.mockRestore();
-			});
-
-			const setup = () => {
-				const { params, fileRecords } = buildFileRecordsWithParams();
-
-				fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete.mockResolvedValueOnce([
-					fileRecords,
-					fileRecords.length,
-				]);
-				spy = jest.spyOn(service, 'restore').mockResolvedValueOnce();
-
-				return { params, fileRecords };
-			};
-
-			it('should call repo method findBySchoolIdAndParentIdAndMarkedForDelete with correct params', async () => {
-				const { params } = setup();
-
-				await service.restoreFilesOfParent(params);
-
-				expect(fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete).toHaveBeenCalledWith(
-					params.storageLocation,
-					params.storageLocationId,
-					params.parentId
-				);
-			});
-
-			it('should call service restore with correct params', async () => {
-				const { params, fileRecords } = setup();
-
-				await service.restoreFilesOfParent(params);
-
-				expect(spy).toHaveBeenCalledWith(fileRecords);
-			});
-
-			it('should return counted fileRecords', async () => {
-				const { params, fileRecords } = setup();
-
-				const result = await service.restoreFilesOfParent(params);
-
-				expect(result).toEqual([fileRecords, 3]);
-			});
-		});
-
-		describe('WHEN no files exist', () => {
-			let spy: jest.SpyInstance;
-
-			afterEach(() => {
-				spy.mockRestore();
-			});
-
-			const setup = () => {
-				const { params } = buildFileRecordsWithParams();
-
-				fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete.mockResolvedValueOnce([[], 0]);
-				spy = jest.spyOn(service, 'restore').mockResolvedValueOnce();
-
-				return { params };
-			};
-
-			it('should skip service restore call', async () => {
-				const { params } = setup();
-
-				await service.restoreFilesOfParent(params);
-
-				expect(spy).toHaveBeenCalledTimes(0);
-			});
-		});
-
-		describe('WHEN repository throws an error', () => {
-			let spy: jest.SpyInstance;
-
-			afterEach(() => {
-				spy.mockRestore();
-			});
-
-			const setup = () => {
-				const { params } = buildFileRecordsWithParams();
-				const error = new Error('bla');
-
-				fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete.mockRejectedValueOnce(error);
-				spy = jest.spyOn(service, 'restore').mockResolvedValueOnce();
-
-				return { params, error };
-			};
-
-			it('should pass the error', async () => {
-				const { params, error } = setup();
-
-				await expect(service.restoreFilesOfParent(params)).rejects.toThrowError(error);
-			});
-		});
-
-		describe('WHEN service throws an error', () => {
-			let spy: jest.SpyInstance;
-
-			afterEach(() => {
-				spy.mockRestore();
-			});
-
-			const setup = () => {
-				const { params, fileRecords } = buildFileRecordsWithParams();
-				const error = new Error('bla');
-
-				fileRecordRepo.findByStorageLocationIdAndParentIdAndMarkedForDelete.mockResolvedValueOnce([fileRecords, 3]);
-				spy = jest.spyOn(service, 'restore').mockRejectedValueOnce(error);
-
-				return { params, error };
-			};
-
-			it('should pass the error', async () => {
-				const { params, error } = setup();
-
-				await expect(service.restoreFilesOfParent(params)).rejects.toThrowError(error);
-			});
-		});
-	});
-
 	describe('restore is called', () => {
 		describe('WHEN valid files exist', () => {
 			const setup = () => {
@@ -225,7 +102,7 @@ describe('FilesStorageService restore methods', () => {
 				});
 				FileRecord.unmarkForDelete(unmarkedFileRecords);
 
-				await service.restore(fileRecords);
+				await service.restoreFiles(fileRecords);
 
 				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(1, unmarkedFileRecords);
 			});
@@ -234,7 +111,7 @@ describe('FilesStorageService restore methods', () => {
 				const { fileRecords } = setup();
 				const paths = FileRecord.getPaths(fileRecords);
 
-				await service.restore(fileRecords);
+				await service.restoreFiles(fileRecords);
 
 				expect(storageClient.restore).toHaveBeenCalledWith(paths);
 			});
@@ -252,7 +129,7 @@ describe('FilesStorageService restore methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.restore(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(() => service.restoreFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 			});
 		});
 
@@ -268,13 +145,13 @@ describe('FilesStorageService restore methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.restore(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(service.restoreFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 			});
 
 			it('should save the rollback', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.restore(fileRecords)).rejects.toThrow(new Error('bla'));
+				await expect(service.restoreFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 
 				const expectedFileRecordProps = fileRecords.map((fileRecord) => {
 					const fileRecordProps = fileRecord.getProps();
