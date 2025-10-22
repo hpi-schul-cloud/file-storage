@@ -85,7 +85,7 @@
       kubeconfig: ~/.kube/config
       namespace: "{{ NAMESPACE }}"
       template: file-storage-pod-monitor.yml.j2
-      state: 'absent'
+      state: 'present'
     when: WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
     tags:
       - prometheus
