@@ -1,14 +1,14 @@
 /* istanbul ignore file */
-/* eslint-disable no-console */
 import { NestFactory } from '@nestjs/core';
 
 // register source-map-support for debugging
 import { install as sourceMapInstall } from 'source-map-support';
 
 // application imports
-import { LoggerConfig } from '@infra/logger';
+import { Logger, LoggerConfig } from '@infra/logger';
+import { MetricsModule } from '@infra/metrics';
 import { FilesStorageAppModule } from '@modules/files-storage-app';
-import { createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
+import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
 
 async function bootstrap(): Promise<void> {
 	sourceMapInstall();
@@ -29,12 +29,21 @@ async function bootstrap(): Promise<void> {
 
 	nestApp.setGlobalPrefix(basePath);
 	await nestApp.init();
-	nestApp.listen(port);
+	nestApp.listen(port, async () => {
+		const logger = await nestApp.resolve(Logger);
+		const a = new AppStartLoggable({ appName: 'Files Storage Server', port, basePath });
+		logger.setContext('FILES_STORAGE_APP');
+		logger.info(a);
+	});
 
-	console.log('#################################');
-	console.log(`### Start Files Storage Server   ###`);
-	console.log(`### Port:     ${port}            ###`);
-	console.log(`### Base path: ${basePath}           ###`);
-	console.log('#################################');
+	const metricsPort = 9090;
+	const metricsApp = await NestFactory.create(MetricsModule);
+
+	await metricsApp.listen(metricsPort, async () => {
+		const logger = await metricsApp.resolve(Logger);
+		const a = new AppStartLoggable({ appName: 'Metrics Server', port: metricsPort });
+		logger.setContext('METRICS');
+		logger.info(a);
+	});
 }
 void bootstrap();
