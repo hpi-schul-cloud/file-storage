@@ -590,8 +590,11 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
 
+				// Emit error when the stream starts being read
 				file.data.on('data', () => {
-					file.data.emit('error', new Error('Stream error'));
+					setImmediate(() => {
+						file.data.emit('error', new Error('Stream error'));
+					});
 				});
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
@@ -1029,9 +1032,14 @@ describe('FilesStorageService upload methods', () => {
 				const mimeType = 'image/png';
 				const fileRecord = fileRecordTestFactory().build({ mimeType });
 				const readable = Readable.from('abc');
+
+				// Emit error when the stream starts being read
 				readable.on('data', () => {
-					readable.emit('error', new Error('Stream error'));
+					setImmediate(() => {
+						readable.emit('error', new Error('Stream error'));
+					});
 				});
+
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
 				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
 				jest.spyOn(FileDtoFactory, 'create').mockImplementationOnce(() => {

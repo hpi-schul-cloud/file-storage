@@ -146,7 +146,7 @@ describe('FilesStorageService update methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecord, fileName } = setup();
 
-				await expect(service.patchFilename(fileRecord, fileName)).rejects.toThrowError(new Error('bla'));
+				await expect(service.patchFilename(fileRecord, fileName)).rejects.toThrow(new Error('bla'));
 			});
 		});
 
@@ -176,7 +176,7 @@ describe('FilesStorageService update methods', () => {
 				const { fileRecord, fileName } = setup();
 				const expectedError = new ConflictException(ErrorType.FILE_NAME_EXISTS);
 
-				await expect(service.patchFilename(fileRecord, fileName)).rejects.toThrowError(expectedError);
+				await expect(service.patchFilename(fileRecord, fileName)).rejects.toThrow(expectedError);
 				expect(fileRecordRepo.save).toHaveBeenCalledTimes(0);
 			});
 		});
@@ -317,7 +317,7 @@ describe('FilesStorageService update methods', () => {
 			it('should pass the not found exception', async () => {
 				const { scanResult, token, error } = setup();
 
-				await expect(service.updateSecurityStatus(token, scanResult)).rejects.toThrowError(error);
+				await expect(service.updateSecurityStatus(token, scanResult)).rejects.toThrow(error);
 			});
 		});
 
@@ -337,7 +337,7 @@ describe('FilesStorageService update methods', () => {
 			it('should pass the exception', async () => {
 				const { scanResult, token, error } = setup();
 
-				await expect(service.updateSecurityStatus(token, scanResult)).rejects.toThrowError(error);
+				await expect(service.updateSecurityStatus(token, scanResult)).rejects.toThrow(error);
 			});
 		});
 	});

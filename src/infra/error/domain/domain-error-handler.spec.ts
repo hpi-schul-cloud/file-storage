@@ -118,7 +118,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(rndObject);
 
-				expect(logger.error).toBeCalledWith(expect.any(ErrorLoggable));
+				expect(logger.error).toHaveBeenCalledWith(expect.any(ErrorLoggable));
 			});
 		});
 
@@ -134,7 +134,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(error);
 
-				expect(logger.error).toBeCalledWith(error);
+				expect(logger.error).toHaveBeenCalledWith(error);
 			});
 		});
 
@@ -151,7 +151,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(error);
 
-				expect(logger.error).toBeCalledWith(loggable);
+				expect(logger.error).toHaveBeenCalledWith(loggable);
 			});
 		});
 
@@ -169,7 +169,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(error);
 
-				expect(logger.error).toBeCalledWith(loggable);
+				expect(logger.error).toHaveBeenCalledWith(loggable);
 			});
 		});
 
@@ -186,7 +186,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(loggable);
 
-				expect(logger.error).toBeCalledWith(loggable);
+				expect(logger.error).toHaveBeenCalledWith(loggable);
 			});
 		});
 
@@ -202,7 +202,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(loggable);
 
-				expect(logger.error).toBeCalledWith(loggable);
+				expect(logger.error).toHaveBeenCalledWith(loggable);
 			});
 		});
 
@@ -219,7 +219,7 @@ describe('GlobalErrorFilter', () => {
 
 				domainErrorHandler.exec(axiosLoggable);
 
-				expect(logger.error).toBeCalledWith(axiosLoggable);
+				expect(logger.error).toHaveBeenCalledWith(axiosLoggable);
 			});
 		});
 	});

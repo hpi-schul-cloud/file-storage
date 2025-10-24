@@ -88,7 +88,7 @@ describe('FilesStorageService copy methods', () => {
 
 				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
-				expect(fileRecordRepo.save).toBeCalledWith(targetFile);
+				expect(fileRecordRepo.save).toHaveBeenCalledWith(targetFile);
 			});
 
 			it('should call copy with correct params', async () => {
@@ -101,7 +101,7 @@ describe('FilesStorageService copy methods', () => {
 					targetPath: targetFile.createPath(),
 				};
 
-				expect(storageClient.copy).toBeCalledWith([expectedParams]);
+				expect(storageClient.copy).toHaveBeenCalledWith([expectedParams]);
 			});
 
 			it('should return file response array', async () => {
@@ -138,7 +138,7 @@ describe('FilesStorageService copy methods', () => {
 
 				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
-				expect(antivirusService.send).toBeCalledTimes(1);
+				expect(antivirusService.send).toHaveBeenCalledTimes(1);
 			});
 		});
 
@@ -247,7 +247,7 @@ describe('FilesStorageService copy methods', () => {
 				const result = await service.copyFilesToParent(userId, [sourceFile], parentInfo);
 
 				expect(result).toEqual(expectedResponse);
-				expect(fileRecordRepo.delete).toBeCalledWith([targetFile]);
+				expect(fileRecordRepo.delete).toHaveBeenCalledWith([targetFile]);
 			});
 		});
 

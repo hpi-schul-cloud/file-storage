@@ -83,7 +83,7 @@ describe('AntivirusService', () => {
 			it('should throw with InternalServerErrorException by error', async () => {
 				const { requestToken } = setup();
 
-				await expect(() => service.send(requestToken)).rejects.toThrowError(InternalServerErrorException);
+				await expect(service.send(requestToken)).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});
@@ -186,7 +186,7 @@ describe('AntivirusService', () => {
 			it('should throw with InternalServerErrorException by error', async () => {
 				const { readable } = setup();
 
-				await expect(() => service.scanStream(readable)).rejects.toThrowError(InternalServerErrorException);
+				await expect(service.scanStream(readable)).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});

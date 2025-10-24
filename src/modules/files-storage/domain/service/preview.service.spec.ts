@@ -500,7 +500,7 @@ describe('PreviewService', () => {
 				it('passes error', async () => {
 					const { fileRecord, previewFileParams, error } = setup();
 
-					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrowError(error);
+					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrow(error);
 				});
 			});
 
@@ -538,7 +538,7 @@ describe('PreviewService', () => {
 				it('passes error', async () => {
 					const { fileRecord, previewFileParams, error } = setup();
 
-					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrowError(error);
+					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrow(error);
 				});
 			});
 
@@ -576,7 +576,7 @@ describe('PreviewService', () => {
 				it('calls download with correct params', async () => {
 					const { fileRecord, previewFileParams, error } = setup();
 
-					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrowError(error);
+					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrow(error);
 				});
 			});
 
@@ -614,7 +614,7 @@ describe('PreviewService', () => {
 				it('calls download with correct params', async () => {
 					const { fileRecord, previewFileParams, error } = setup();
 
-					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrowError(error);
+					await expect(previewService.download(fileRecord, previewFileParams)).rejects.toThrow(error);
 				});
 			});
 		});
@@ -669,7 +669,7 @@ describe('PreviewService', () => {
 			it('should throw error', async () => {
 				const { fileRecord, error } = setup();
 
-				await expect(previewService.deletePreviews([fileRecord])).rejects.toThrowError(error);
+				await expect(previewService.deletePreviews([fileRecord])).rejects.toThrow(error);
 			});
 		});
 	});
