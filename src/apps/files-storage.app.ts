@@ -32,9 +32,9 @@ async function bootstrap(): Promise<void> {
 	await nestApp.init();
 	nestApp.listen(port, async () => {
 		const logger = await nestApp.resolve(Logger);
-		const a = new AppStartLoggable({ appName: 'Files Storage Server', port, basePath });
+		const appStartLoggable = new AppStartLoggable({ appName: 'Files Storage Server', port, basePath });
 		logger.setContext('FILES_STORAGE_APP');
-		logger.info(a);
+		logger.info(appStartLoggable);
 	});
 
 	const metricsPort = 9090;
@@ -42,9 +42,9 @@ async function bootstrap(): Promise<void> {
 
 	await metricsApp.listen(metricsPort, async () => {
 		const logger = await metricsApp.resolve(Logger);
-		const a = new AppStartLoggable({ appName: 'Metrics Server', port: metricsPort });
+		const appStartLoggable = new AppStartLoggable({ appName: 'Metrics Server', port: metricsPort });
 		logger.setContext('METRICS');
-		logger.info(a);
+		logger.info(appStartLoggable);
 	});
 }
 void bootstrap();
