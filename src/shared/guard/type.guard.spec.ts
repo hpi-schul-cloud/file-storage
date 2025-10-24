@@ -144,19 +144,19 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT a number', () => {
 			it('should return false', () => {
-				expect(() => TypeGuard.checkNumber(undefined)).toThrowError('Type is not a number');
+				expect(() => TypeGuard.checkNumber(undefined)).toThrow('Type is not a number');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkNumber(null)).toThrowError('Type is not a number');
+				expect(() => TypeGuard.checkNumber(null)).toThrow('Type is not a number');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkNumber({})).toThrowError('Type is not a number');
+				expect(() => TypeGuard.checkNumber({})).toThrow('Type is not a number');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkNumber('string')).toThrowError('Type is not a number');
+				expect(() => TypeGuard.checkNumber('string')).toThrow('Type is not a number');
 			});
 		});
 	});
@@ -204,19 +204,19 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT a string', () => {
 			it('should return false', () => {
-				expect(() => TypeGuard.checkString(undefined)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString(undefined)).toThrow('Type is not a string');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkString(null)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString(null)).toThrow('Type is not a string');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkString({})).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString({})).toThrow('Type is not a string');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkString(1)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkString(1)).toThrow('Type is not a string');
 			});
 		});
 	});
@@ -282,30 +282,30 @@ describe('TypeGuard', () => {
 			it('should throw an error', () => {
 				const error = buildError();
 
-				expect(() => TypeGuard.checkStringOfStrings(undefined, ['string'])).toThrowError(error);
+				expect(() => TypeGuard.checkStringOfStrings(undefined, ['string'])).toThrow(error);
 			});
 
 			it('should throw an error', () => {
 				const error = buildError();
 
-				expect(() => TypeGuard.checkStringOfStrings(null, ['string'])).toThrowError(error);
+				expect(() => TypeGuard.checkStringOfStrings(null, ['string'])).toThrow(error);
 			});
 
 			it('should throw an error', () => {
 				const error = buildError();
 
-				expect(() => TypeGuard.checkStringOfStrings({}, ['string'])).toThrowError(error);
+				expect(() => TypeGuard.checkStringOfStrings({}, ['string'])).toThrow(error);
 			});
 
 			it('should throw an error', () => {
 				const error = buildError();
-				expect(() => TypeGuard.checkStringOfStrings(1, ['string'])).toThrowError(error);
+				expect(() => TypeGuard.checkStringOfStrings(1, ['string'])).toThrow(error);
 			});
 
 			it('should throw an error', () => {
 				const error = buildError();
 
-				expect(() => TypeGuard.checkStringOfStrings('string', [''])).toThrowError(error);
+				expect(() => TypeGuard.checkStringOfStrings('string', [''])).toThrow(error);
 			});
 		});
 	});
@@ -353,19 +353,19 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT an array', () => {
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray(undefined)).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray(undefined)).toThrow('Type is not an array.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray(null)).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray(null)).toThrow('Type is not an array.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray({})).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray({})).toThrow('Type is not an array.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArray(1)).toThrowError('Type is not an array.');
+				expect(() => TypeGuard.checkArray(1)).toThrow('Type is not an array.');
 			});
 		});
 	});
@@ -417,23 +417,23 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT an array', () => {
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArrayWithElements([])).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkArrayWithElements([])).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArrayWithElements(undefined)).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkArrayWithElements(undefined)).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArrayWithElements(null)).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkArrayWithElements(null)).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArrayWithElements({})).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkArrayWithElements({})).toThrow('Type is not an array with elements.');
 			});
 
 			it('should throw an error', () => {
-				expect(() => TypeGuard.checkArrayWithElements(1)).toThrowError('Type is not an array with elements.');
+				expect(() => TypeGuard.checkArrayWithElements(1)).toThrow('Type is not an array with elements.');
 			});
 		});
 	});
@@ -489,19 +489,19 @@ describe('TypeGuard', () => {
 
 		describe('when passing type of value is NOT an object', () => {
 			it('should return false', () => {
-				expect(() => TypeGuard.checkDefinedObject(undefined)).toThrowError('Type is not an object');
+				expect(() => TypeGuard.checkDefinedObject(undefined)).toThrow('Type is not an object');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkDefinedObject(null)).toThrowError('Type is not an object');
+				expect(() => TypeGuard.checkDefinedObject(null)).toThrow('Type is not an object');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkDefinedObject([])).toThrowError('Type is not an object');
+				expect(() => TypeGuard.checkDefinedObject([])).toThrow('Type is not an object');
 			});
 
 			it('should return false', () => {
-				expect(() => TypeGuard.checkDefinedObject('string')).toThrowError('Type is not an object');
+				expect(() => TypeGuard.checkDefinedObject('string')).toThrow('Type is not an object');
 			});
 		});
 	});
@@ -542,17 +542,17 @@ describe('TypeGuard', () => {
 		describe('when param contract is not fullfilled', () => {
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.getValueFromObjectKey({ xyz: 'abc' }, undefined)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.getValueFromObjectKey({ xyz: 'abc' }, undefined)).toThrow('Type is not a string');
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.getValueFromObjectKey({ xyz: 'abc' }, null)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.getValueFromObjectKey({ xyz: 'abc' }, null)).toThrow('Type is not a string');
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.getValueFromObjectKey({ xyz: 'abc' }, 1)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.getValueFromObjectKey({ xyz: 'abc' }, 1)).toThrow('Type is not a string');
 			});
 		});
 	});
@@ -597,21 +597,21 @@ describe('TypeGuard', () => {
 		describe('when param contract is not fullfilled', () => {
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, undefined)).toThrowError(
+				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, undefined)).toThrow(
 					'Type is not an array with elements.'
 				);
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, null)).toThrowError(
+				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, null)).toThrow(
 					'Type is not an array with elements.'
 				);
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, 1)).toThrowError(
+				expect(() => TypeGuard.getValueFromDeepObjectKey({ x1: { x2: 'abc' } }, 1)).toThrow(
 					'Type is not an array with elements.'
 				);
 			});
@@ -663,44 +663,44 @@ describe('TypeGuard', () => {
 
 		describe('when passing value and key do not match', () => {
 			it('should be throw an error', () => {
-				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, 'zzz')).toThrowError('Object has no zzz.');
+				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, 'zzz')).toThrow('Object has no zzz.');
 			});
 
 			it('should be throw an error', () => {
-				expect(() => TypeGuard.checkKeyInObject([], 'zzz')).toThrowError('Type is not an object.');
+				expect(() => TypeGuard.checkKeyInObject([], 'zzz')).toThrow('Type is not an object.');
 			});
 
 			it('should be throw an error', () => {
-				expect(() => TypeGuard.checkKeyInObject('string', 'zzz')).toThrowError('Type is not an object.');
+				expect(() => TypeGuard.checkKeyInObject('string', 'zzz')).toThrow('Type is not an object.');
 			});
 
 			it('should be throw an error', () => {
-				expect(() => TypeGuard.checkKeyInObject(1, 'zzz')).toThrowError('Type is not an object.');
+				expect(() => TypeGuard.checkKeyInObject(1, 'zzz')).toThrow('Type is not an object.');
 			});
 
 			it('should be throw an error', () => {
-				expect(() => TypeGuard.checkKeyInObject(null, 'zzz')).toThrowError('Type is not an object.');
+				expect(() => TypeGuard.checkKeyInObject(null, 'zzz')).toThrow('Type is not an object.');
 			});
 
 			it('should be throw an error', () => {
-				expect(() => TypeGuard.checkKeyInObject(undefined, 'zzz')).toThrowError('Type is not an object.');
+				expect(() => TypeGuard.checkKeyInObject(undefined, 'zzz')).toThrow('Type is not an object.');
 			});
 		});
 
 		describe('when param contract is not fullfilled', () => {
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, undefined)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, undefined)).toThrow('Type is not a string');
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, null)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, null)).toThrow('Type is not a string');
 			});
 
 			it('should be throw an error', () => {
 				// @ts-expect-error test-case
-				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, 1)).toThrowError('Type is not a string');
+				expect(() => TypeGuard.checkKeyInObject({ xyz: 'abc' }, 1)).toThrow('Type is not a string');
 			});
 		});
 	});
@@ -728,7 +728,7 @@ describe('TypeGuard', () => {
 			it('should throw an error', () => {
 				const example: ExampleObjectType = { id: 1, name: 'John Doe' };
 
-				expect(() => TypeGuard.checkKeysInInstance(example, ['email'])).toThrowError(
+				expect(() => TypeGuard.checkKeysInInstance(example, ['email'])).toThrow(
 					'Object lacks these properties: email.'
 				);
 			});
@@ -736,7 +736,7 @@ describe('TypeGuard', () => {
 			it('should throw an error', () => {
 				const example: ExampleObjectType = { id: 1, name: 'John Doe' };
 
-				expect(() => TypeGuard.checkKeysInInstance(example, ['email'])).toThrowError(
+				expect(() => TypeGuard.checkKeysInInstance(example, ['email'])).toThrow(
 					'Object lacks these properties: email.'
 				);
 			});
@@ -756,7 +756,7 @@ describe('TypeGuard', () => {
 			it('should throw an error', () => {
 				const example: ExampleObjectType = { id: 1, name: 'John Doe' };
 
-				expect(() => TypeGuard.requireKeys(example, ['email'])).toThrowError('Object lacks these properties: email.');
+				expect(() => TypeGuard.requireKeys(example, ['email'])).toThrow('Object lacks these properties: email.');
 			});
 		});
 	});

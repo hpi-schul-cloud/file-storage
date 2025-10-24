@@ -66,7 +66,7 @@ describe('PreviewGeneratorConsumer', () => {
 
 			await service.generatePreview(payload);
 
-			expect(previewGeneratorService.generatePreview).toBeCalledWith(payload);
+			expect(previewGeneratorService.generatePreview).toHaveBeenCalledWith(payload);
 		});
 
 		it('should return expected value', async () => {

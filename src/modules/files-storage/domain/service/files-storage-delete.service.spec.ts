@@ -4,7 +4,6 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
@@ -149,7 +148,7 @@ describe('FilesStorageService delete methods', () => {
 			it('should pass error and rollback filerecords', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.deleteFiles(fileRecords)).rejects.toThrow(new InternalServerErrorException('bla'));
+				await expect(service.deleteFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 
 				FileRecord.markForDelete(fileRecords);
 				expect(fileRecordRepo.save).toHaveBeenNthCalledWith(1, fileRecords);
@@ -177,7 +176,7 @@ describe('FilesStorageService delete methods', () => {
 
 				await service.deleteStorageLocationWithAllFiles(params);
 
-				expect(fileRecordRepo.markForDeleteByStorageLocation).toBeCalledWith(storageLocation, storageLocationId);
+				expect(fileRecordRepo.markForDeleteByStorageLocation).toHaveBeenCalledWith(storageLocation, storageLocationId);
 			});
 
 			it('should call storageClient.moveDirectoryToTrash', async () => {
@@ -185,7 +184,7 @@ describe('FilesStorageService delete methods', () => {
 
 				await service.deleteStorageLocationWithAllFiles(params);
 
-				expect(storageClient.moveDirectoryToTrash).toBeCalledWith(storageLocationId);
+				expect(storageClient.moveDirectoryToTrash).toHaveBeenCalledWith(storageLocationId);
 			});
 
 			it('should return result', async () => {

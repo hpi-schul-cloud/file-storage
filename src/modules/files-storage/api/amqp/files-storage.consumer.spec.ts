@@ -100,7 +100,7 @@ describe('FilesStorageConsumer', () => {
 
 				await service.copyFilesOfParent(payload);
 
-				expect(filesStorageService.copyFilesToParent).toBeCalled();
+				expect(filesStorageService.copyFilesToParent).toHaveBeenCalled();
 			});
 
 			it('regular RPC handler should receive a valid RPC response', async () => {

@@ -39,7 +39,7 @@ describe('FilesStorageMapper', () => {
 			const exec = () => {
 				FilesStorageMapper.mapToAllowedAuthorizationEntityType('' as FileRecordParentType);
 			};
-			expect(exec).toThrowError(NotImplementedException);
+			expect(exec).toThrow(NotImplementedException);
 		});
 	});
 
@@ -58,7 +58,7 @@ describe('FilesStorageMapper', () => {
 			const exec = () => {
 				FilesStorageMapper.mapToAllowedStorageLocationType('' as StorageLocation);
 			};
-			expect(exec).toThrowError(NotImplementedException);
+			expect(exec).toThrow(NotImplementedException);
 		});
 	});
 });

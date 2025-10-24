@@ -78,7 +78,7 @@ describe('FilesStorageService delete methods', () => {
 
 				await service.removeCreatorIdFromFileRecords(fileRecords);
 
-				expect(spy).toBeCalledWith(fileRecords);
+				expect(spy).toHaveBeenCalledWith(fileRecords);
 				expect(fileRecordRepo.save).toHaveBeenCalledWith(fileRecords);
 			});
 

@@ -93,7 +93,9 @@ describe('CollaboraService', () => {
 				const setup = () => {
 					const mimeType = 'application/vnd.oasis.opendocument.text';
 					const response = axiosResponseFactory.build({ data: 'Invalid XML', status: 200 });
-					const error = new Error('missing root element');
+					const error = Object.assign(new Error('missing root element'), {
+						locator: { lineNumber: 0 },
+					});
 
 					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(of(response));
@@ -105,10 +107,16 @@ describe('CollaboraService', () => {
 				};
 
 				it('should throw InternalServerErrorException when discovery fails', async () => {
-					const { mimeType, error } = setup();
+					const { mimeType } = setup();
 
 					await expect(service.discoverUrl(mimeType)).rejects.toThrow(
-						new InternalServerErrorException('DISCOVERY_SERVER_FAILED', { cause: error })
+						expect.objectContaining({
+							message: 'DISCOVERY_SERVER_FAILED',
+							cause: expect.objectContaining({
+								message: 'missing root element',
+								locator: { lineNumber: 0 },
+							}),
+						})
 					);
 				});
 			});

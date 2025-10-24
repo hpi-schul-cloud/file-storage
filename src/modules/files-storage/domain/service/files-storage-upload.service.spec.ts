@@ -60,6 +60,7 @@ describe('FilesStorageService upload methods', () => {
 						FILES_STORAGE_MAX_FILE_SIZE: 10,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10,
 						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
+						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
 					}),
 				},
 				{
@@ -588,8 +589,12 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ readable: file.data });
+				jest
+					.spyOn(FileTypeHelper, 'fileTypeStream')
+					.mockImplementationOnce(() => Promise.resolve(readableStreamWithFileType));
 
+				// Emit error when the stream starts being read
 				file.data.on('data', () => {
 					file.data.emit('error', new Error('Stream error'));
 				});
@@ -979,7 +984,7 @@ describe('FilesStorageService upload methods', () => {
 				const { readable, fileRecord } = setup();
 
 				await expect(service.updateFileContents(fileRecord, readable)).rejects.toThrow(
-					new BadRequestException(ErrorType.MIME_TYPE_MISMATCH)
+					new ConflictException(ErrorType.MIME_TYPE_MISMATCH)
 				);
 			});
 		});
@@ -1029,11 +1034,17 @@ describe('FilesStorageService upload methods', () => {
 				const mimeType = 'image/png';
 				const fileRecord = fileRecordTestFactory().build({ mimeType });
 				const readable = Readable.from('abc');
+
+				// Emit error when the stream starts being read
 				readable.on('data', () => {
 					readable.emit('error', new Error('Stream error'));
 				});
+
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ readable: readable });
+				jest
+					.spyOn(FileTypeHelper, 'fileTypeStream')
+					.mockImplementationOnce(() => Promise.resolve(readableStreamWithFileType));
 				jest.spyOn(FileDtoFactory, 'create').mockImplementationOnce(() => {
 					return file;
 				});

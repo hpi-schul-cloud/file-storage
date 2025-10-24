@@ -164,13 +164,13 @@ describe(S3ClientAdapter.name, () => {
 			it('should throw NotFoundException', async () => {
 				const { pathToFile } = setup('NoSuchKey');
 
-				await expect(service.get(pathToFile)).rejects.toThrowError(NotFoundException);
+				await expect(service.get(pathToFile)).rejects.toThrow(NotFoundException);
 			});
 
 			it('should throw error', async () => {
 				const { pathToFile } = setup('Unknown Error');
 
-				await expect(service.get(pathToFile)).rejects.toThrowError(InternalServerErrorException);
+				await expect(service.get(pathToFile)).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});
@@ -227,8 +227,8 @@ describe(S3ClientAdapter.name, () => {
 
 				await service.create(pathToFile, file);
 
-				expect(service.createBucket).toBeCalled();
-				expect(createSpy).toBeCalledTimes(2);
+				expect(service.createBucket).toHaveBeenCalled();
+				expect(createSpy).toHaveBeenCalledTimes(2);
 
 				restoreMocks();
 			});
@@ -239,7 +239,10 @@ describe(S3ClientAdapter.name, () => {
 				const { file } = createFile();
 				const { pathToFile } = createParameter();
 				const error = new Error('Connection Error');
-				const expectedError = new InternalServerErrorException('S3ClientAdapter:create', { cause: error });
+				const expectedError = new InternalServerErrorException('S3ClientAdapter:create', {
+					cause: error,
+					description: undefined,
+				});
 
 				const uploadDoneMock = jest.spyOn(Upload.prototype, 'done').mockRejectedValueOnce(error);
 
@@ -308,7 +311,7 @@ describe(S3ClientAdapter.name, () => {
 				// @ts-expect-error should run into error
 				client.send.mockRejectedValue(new S3ServiceException({ name: 'Test error' }));
 
-				await expect(service.moveToTrash([pathToFile])).rejects.toThrowError(InternalServerErrorException);
+				await expect(service.moveToTrash([pathToFile])).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});
@@ -455,7 +458,7 @@ describe(S3ClientAdapter.name, () => {
 				it('should return InternalServerErrorException', async () => {
 					const { pathToFile, expectedError } = setup();
 
-					await expect(service.moveDirectoryToTrash(pathToFile)).rejects.toThrowError(expectedError);
+					await expect(service.moveDirectoryToTrash(pathToFile)).rejects.toThrow(expectedError);
 				});
 			});
 		});
@@ -497,7 +500,7 @@ describe(S3ClientAdapter.name, () => {
 				// @ts-expect-error should run into error
 				client.send.mockRejectedValue(new S3ServiceException({ name: 'Test error' }));
 
-				await expect(service.delete([pathToFile])).rejects.toThrowError(InternalServerErrorException);
+				await expect(service.delete([pathToFile])).rejects.toThrow(InternalServerErrorException);
 			});
 		});
 	});
@@ -684,7 +687,7 @@ describe(S3ClientAdapter.name, () => {
 			it('should return InternalServerErrorException', async () => {
 				const { pathToFile, expectedError } = setup();
 
-				await expect(service.deleteDirectory(pathToFile)).rejects.toThrowError(expectedError);
+				await expect(service.deleteDirectory(pathToFile)).rejects.toThrow(expectedError);
 			});
 		});
 
@@ -716,7 +719,7 @@ describe(S3ClientAdapter.name, () => {
 			it('should return InternalServerErrorException', async () => {
 				const { pathToFile, expectedError } = setup();
 
-				await expect(service.deleteDirectory(pathToFile)).rejects.toThrowError(expectedError);
+				await expect(service.deleteDirectory(pathToFile)).rejects.toThrow(expectedError);
 			});
 		});
 	});
@@ -757,8 +760,12 @@ describe(S3ClientAdapter.name, () => {
 		});
 
 		it('should throw an InternalServerErrorException by error', async () => {
+			const { pathToFile } = setup();
+
 			// @ts-expect-error should run into error
-			await expect(service.restore(undefined)).rejects.toThrowError(InternalServerErrorException);
+			client.send.mockRejectedValue(new Error('Test error'));
+
+			await expect(service.restore([pathToFile])).rejects.toThrow(InternalServerErrorException);
 		});
 	});
 
@@ -792,8 +799,12 @@ describe(S3ClientAdapter.name, () => {
 		});
 
 		it('should throw an InternalServerErrorException by error', async () => {
+			const { pathsToCopy } = setup();
+
 			// @ts-expect-error should run into error
-			await expect(service.copy(undefined)).rejects.toThrowError(InternalServerErrorException);
+			client.send.mockRejectedValue(new Error('Test error'));
+
+			await expect(service.copy(pathsToCopy)).rejects.toThrow(InternalServerErrorException);
 		});
 	});
 
