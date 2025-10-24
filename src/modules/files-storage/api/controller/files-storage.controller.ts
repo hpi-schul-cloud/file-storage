@@ -221,6 +221,18 @@ export class FilesStorageController {
 		return streamableFile;
 	}
 
+	@ApiOperation({ summary: 'Get file record meta data by file record id.' })
+	@ApiResponse({ status: 200, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 404, type: NotFoundException })
+	@Get('/:fileRecordId')
+	public async getFileRecord(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.getFileRecord(params);
+
+		return response;
+	}
+
 	@ApiOperation({ summary: 'Get a list of file meta data of a parent entityId.' })
 	@ApiResponse({ status: 200, type: FileRecordListResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
