@@ -21,7 +21,7 @@ export class RequestResponseMetricLabel {
 
 	constructor(request: Request, response: Response) {
 		this.method = request.method;
-		this.base_url = request.baseUrl;
+		this.base_url = request.url;
 		this.status_code = response.statusCode;
 
 		this.full_path = this.base_url;
