@@ -60,6 +60,7 @@ describe('FilesStorageService upload methods', () => {
 						FILES_STORAGE_MAX_FILE_SIZE: 10,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10,
 						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
+						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
 					}),
 				},
 				{
@@ -588,13 +589,14 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ readable: file.data });
+				jest
+					.spyOn(FileTypeHelper, 'fileTypeStream')
+					.mockImplementationOnce(() => Promise.resolve(readableStreamWithFileType));
 
 				// Emit error when the stream starts being read
 				file.data.on('data', () => {
-					setImmediate(() => {
-						file.data.emit('error', new Error('Stream error'));
-					});
+					file.data.emit('error', new Error('Stream error'));
 				});
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
@@ -1035,13 +1037,14 @@ describe('FilesStorageService upload methods', () => {
 
 				// Emit error when the stream starts being read
 				readable.on('data', () => {
-					setImmediate(() => {
-						readable.emit('error', new Error('Stream error'));
-					});
+					readable.emit('error', new Error('Stream error'));
 				});
 
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ readable: readable });
+				jest
+					.spyOn(FileTypeHelper, 'fileTypeStream')
+					.mockImplementationOnce(() => Promise.resolve(readableStreamWithFileType));
 				jest.spyOn(FileDtoFactory, 'create').mockImplementationOnce(() => {
 					return file;
 				});
