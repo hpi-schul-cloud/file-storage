@@ -268,6 +268,18 @@ export class FilesStorageUC {
 	}
 
 	// get
+	public async getFileRecord(params: SingleFileParams): Promise<FileRecordResponse> {
+		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
+		const parentInfo = fileRecord.getParentInfo();
+
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
+
+		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
+
+		return fileRecordResponse;
+	}
+
 	public async getFileRecordsOfParent(
 		params: FileRecordParams,
 		pagination: PaginationParams
