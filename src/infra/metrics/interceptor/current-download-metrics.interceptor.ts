@@ -4,22 +4,7 @@ import { finalize } from 'rxjs/operators';
 import { MetricsService } from '../metrics.service';
 
 @Injectable()
-export class CurrentUploadGaugeInterceptor implements NestInterceptor {
-	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-		MetricsService.currentUploadsGauge.inc();
-		const uploadDurationTimer = MetricsService.uploadDurationHistogram.startTimer();
-
-		return next.handle().pipe(
-			finalize(() => {
-				MetricsService.currentUploadsGauge.dec();
-				uploadDurationTimer();
-			})
-		);
-	}
-}
-
-@Injectable()
-export class CurrentDownloadGaugeInterceptor implements NestInterceptor {
+export class CurrentDownloadMetricsInterceptor implements NestInterceptor {
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		MetricsService.currentDownloadsGauge.inc();
 		const downloadDurationTimer = MetricsService.downloadDurationHistogram.startTimer();

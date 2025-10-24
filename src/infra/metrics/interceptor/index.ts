@@ -1,2 +1,5 @@
-export * from './prometheus-gauge.interceptor';
-export * from './prometheus-rate.interceptor';
+export * from './current-download-metrics.interceptor';
+export * from './current-upload-metrics.interceptor';
+export * from './download-rate-metrics.interceptor';
+export * from './response-time-metrics.interceptort';
+export * from './upload-rate-metrics.interceptor';

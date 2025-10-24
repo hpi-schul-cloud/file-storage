@@ -46,6 +46,24 @@ export class MetricsService implements OnModuleInit {
 		buckets: [0.1, 0.5, 1, 2, 5, 10, 20, 50],
 	});
 
+	public static readonly uploadSizeHistogram = new Histogram({
+		name: 'file_storage_upload_size_bytes',
+		help: 'Upload size in bytes',
+		buckets: [100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000],
+	});
+
+	public static readonly downloadSizeHistogram = new Histogram({
+		name: 'file_storage_download_size_bytes',
+		help: 'Download size in bytes',
+		buckets: [100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000],
+	});
+
+	public static readonly responseTimeMetricHistogram = new Histogram({
+		name: 'sc_api_response_time_in_seconds',
+		help: 'SC API response time in seconds',
+		labelNames: ['method', 'base_url', 'full_path', 'route_path', 'status_code'],
+	});
+
 	public async getMetrics(): Promise<string> {
 		const metrics = await register.metrics();
 

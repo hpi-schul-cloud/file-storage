@@ -6,7 +6,7 @@ import { install as sourceMapInstall } from 'source-map-support';
 
 // application imports
 import { Logger, LoggerConfig } from '@infra/logger';
-import { MetricsModule } from '@infra/metrics';
+import { MetricsModule, ResponseTimeMetricsInterceptor } from '@infra/metrics';
 import { FilesStorageAppModule } from '@modules/files-storage-app';
 import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
 
@@ -21,6 +21,7 @@ async function bootstrap(): Promise<void> {
 	const config = nestApp.get(LoggerConfig);
 
 	nestApp.use(createRequestLoggerMiddleware(config.LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED));
+	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());
 
 	enableOpenApiDocs(nestApp, 'api/v3/docs');
 
