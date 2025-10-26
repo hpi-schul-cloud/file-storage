@@ -165,6 +165,18 @@ jobs:
     steps:
       - run: echo "deploy was successful"
 
+  cy-e2e-tests:
+    needs:
+      - branch_meta
+      - deploy
+    uses: hpi-schul-cloud/e2e-system-tests/.github/workflows/remote-workflow.yml@main
+    with:
+      ref: ${{ needs.branch_meta.outputs.branch }}
+      repo: file-storage
+      browser: chrome
+    secrets:
+      service-account-token: ${{ secrets.CYPRESS_ONEPWD_SERVICE_ACCOUNT_TOKEN }}
+
   trivy-vulnerability-scanning:
     needs:
       - build_and_push
@@ -192,15 +204,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-results.sarif'
-
-  cy-e2e-tests:
-    needs:
-      - branch_meta
-      - deploy
-    uses: hpi-schul-cloud/e2e-system-tests/.github/workflows/remote-workflow.yml@main
-    with:
-      ref: ${{ needs.branch_meta.outputs.branch }}
-      repo: file-storage
-      browser: chrome
-    secrets:
-      service-account-token: ${{ secrets.CYPRESS_ONEPWD_SERVICE_ACCOUNT_TOKEN }}
