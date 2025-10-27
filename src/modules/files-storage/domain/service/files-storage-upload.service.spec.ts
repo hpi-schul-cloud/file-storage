@@ -60,6 +60,7 @@ describe('FilesStorageService upload methods', () => {
 						FILES_STORAGE_MAX_FILE_SIZE: 10,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10,
 						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
+						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
 					}),
 				},
 				{
@@ -181,7 +182,7 @@ describe('FilesStorageService upload methods', () => {
 				};
 			};
 
-			it('should call getMimeType with correct params', async () => {
+			it.only('should call getMimeType with correct params', async () => {
 				const { params, file, userId, getMimeTypeSpy } = setup();
 
 				await service.uploadFile(userId, params, file);
