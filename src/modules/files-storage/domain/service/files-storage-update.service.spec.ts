@@ -85,6 +85,7 @@ describe('FilesStorageService update methods', () => {
 
 			const setup = () => {
 				const { fileRecords, parentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const fileRecord = fileRecords[0]!;
 				const fileName = 'renamed';
 
@@ -159,6 +160,7 @@ describe('FilesStorageService update methods', () => {
 
 			const setup = () => {
 				const { fileRecords, parentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const fileRecord = fileRecords[0]!;
 				const fileName = fileRecord.getName();
 

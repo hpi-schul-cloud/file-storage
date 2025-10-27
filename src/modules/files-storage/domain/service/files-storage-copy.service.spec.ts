@@ -72,6 +72,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN files copied successfully and security status is VERIFIED', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo: sourceParentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sourceFile = fileRecords[0]!;
 				sourceFile.updateSecurityCheckStatus(ScanStatus.VERIFIED, 'verified');
 				const targetFile = FileRecordFactory.copy(sourceFile, userId, sourceParentInfo);
@@ -124,6 +125,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN source files scan status is PENDING', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo: sourceParentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sourceFile = fileRecords[0]!;
 				sourceFile.updateSecurityCheckStatus(ScanStatus.PENDING, 'not yet scanned');
 				const targetFile = FileRecordFactory.copy(sourceFile, userId, sourceParentInfo);
@@ -145,6 +147,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN source files scan status is BLOCKED', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo: sourceParentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const fileRecord = fileRecords[0]!;
 				fileRecord.updateSecurityCheckStatus(ScanStatus.BLOCKED, 'blocked');
 
@@ -180,6 +183,7 @@ describe('FilesStorageService copy methods', () => {
 				const { fileRecord, parentInfo, userId } = setup();
 
 				const results = await service.copyFilesToParent(userId, [fileRecord], parentInfo);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const result = results[0]!;
 
 				expect(result.id).toBeDefined();
@@ -194,7 +198,9 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN copying two files and one file record save throws error', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sourceFile1 = fileRecords[0]!;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sourceFile2 = fileRecords[2]!;
 				const error = new Error('test');
 
@@ -210,15 +216,18 @@ describe('FilesStorageService copy methods', () => {
 
 				const [result1, result2] = await service.copyFilesToParent(userId, [sourceFile1, sourceFile2], parentInfo);
 
-				expect(result1!.id).toBeDefined();
+				// @ts-expect-error Testcase
+				expect(result1.id).toBeDefined();
 
 				const fileResponse1: CopyFileResult = {
-					id: result1!.id,
+					// @ts-expect-error Testcase
+					id: result1.id,
 					sourceId: sourceFile1.id,
 					name: sourceFile1.getName(),
 				};
 
-				expect(result1!.id).not.toEqual(sourceFile1.id);
+				// @ts-expect-error Testcase
+				expect(result1.id).not.toEqual(sourceFile1.id);
 				expect(result1).toEqual(fileResponse1);
 				expect(result2).toEqual(fileResponse2);
 			});
@@ -227,6 +236,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN storage client throws error', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sourceFile = fileRecords[0]!;
 				sourceFile.updateSecurityCheckStatus(ScanStatus.VERIFIED, 'verified');
 				const targetFile = FileRecordFactory.copy(sourceFile, userId, parentInfo);
@@ -254,6 +264,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN anti virus service throws error', () => {
 			const setup = () => {
 				const { fileRecords, parentId: userId, parentInfo } = FileRecordParamsTestFactory.build();
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const sourceFile = fileRecords[0]!;
 				sourceFile.updateSecurityCheckStatus(ScanStatus.PENDING, 'not yet scanned');
 				const targetFile = FileRecordFactory.copy(sourceFile, userId, parentInfo);

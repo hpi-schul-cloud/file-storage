@@ -110,7 +110,8 @@ describe(`${baseRouteName} (api)`, () => {
 				size: 100,
 			});
 			// Set a different size for the second record for a more robust test
-			fileRecords[1]!.size = 200;
+			// @ts-expect-error Testcase
+			fileRecords[1].size = 200;
 
 			await em.persistAndFlush(fileRecords);
 			em.clear();

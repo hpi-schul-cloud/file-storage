@@ -191,8 +191,10 @@ describe('BaseFactory', () => {
 			});
 			const users = factory.buildList(2);
 			expect(users[0]).toBeInstanceOf(User);
-			expect(users[0]!.email).toEqual('joe-1@example.com');
-			expect(users[1]!.email).toEqual('joe-2@example.com');
+			// @ts-ignore Testcase
+			expect(users[0].email).toEqual('joe-1@example.com');
+			// @ts-ignore Testcase
+			expect(users[1].email).toEqual('joe-2@example.com');
 		});
 
 		it('should override properties', () => {
@@ -203,8 +205,10 @@ describe('BaseFactory', () => {
 				};
 			});
 			const users = factory.buildList(2, { nickName: `stewie` });
-			expect(users[0]!.nickName).toEqual('stewie');
-			expect(users[1]!.nickName).toEqual('stewie');
+			// @ts-ignore Testcase
+			expect(users[0].nickName).toEqual('stewie');
+			// @ts-ignore Testcase
+			expect(users[1].nickName).toEqual('stewie');
 		});
 	});
 });

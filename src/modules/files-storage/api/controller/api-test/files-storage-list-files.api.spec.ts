@@ -205,7 +205,8 @@ describe(`${baseRouteName} (api)`, () => {
 			const ids: EntityId[] = resultData.map((o) => o.id);
 
 			expect(response.total).toEqual(3);
-			expect(ids.sort()).toEqual([fileRecords[0]!.id, fileRecords[1]!.id, fileRecords[2]!.id].sort());
+			// @ts-expect-error Testcase
+			expect(ids.sort()).toEqual([fileRecords[0].id, fileRecords[1].id, fileRecords[2].id].sort());
 		});
 	});
 });
