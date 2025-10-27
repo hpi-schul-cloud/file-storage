@@ -4,7 +4,7 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReadableStreamWithFileType } from 'file-type';
 import { PassThrough, Readable } from 'node:stream';
@@ -60,7 +60,6 @@ describe('FilesStorageService upload methods', () => {
 						FILES_STORAGE_MAX_FILE_SIZE: 10,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10,
 						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
-						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
 					}),
 				},
 				{
@@ -589,12 +588,8 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ readable: file.data });
-				jest
-					.spyOn(FileTypeHelper, 'fileTypeStream')
-					.mockImplementationOnce(() => Promise.resolve(readableStreamWithFileType));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
 
-				// Emit error when the stream starts being read
 				file.data.on('data', () => {
 					file.data.emit('error', new Error('Stream error'));
 				});
@@ -1034,17 +1029,11 @@ describe('FilesStorageService upload methods', () => {
 				const mimeType = 'image/png';
 				const fileRecord = fileRecordTestFactory().build({ mimeType });
 				const readable = Readable.from('abc');
-
-				// Emit error when the stream starts being read
 				readable.on('data', () => {
 					readable.emit('error', new Error('Stream error'));
 				});
-
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ readable: readable });
-				jest
-					.spyOn(FileTypeHelper, 'fileTypeStream')
-					.mockImplementationOnce(() => Promise.resolve(readableStreamWithFileType));
+				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
 				jest.spyOn(FileDtoFactory, 'create').mockImplementationOnce(() => {
 					return file;
 				});
