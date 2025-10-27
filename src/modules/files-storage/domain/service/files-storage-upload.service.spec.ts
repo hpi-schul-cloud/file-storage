@@ -182,7 +182,7 @@ describe('FilesStorageService upload methods', () => {
 				};
 			};
 
-			it.only('should call getMimeType with correct params', async () => {
+			it('should call getMimeType with correct params', async () => {
 				const { params, file, userId, getMimeTypeSpy } = setup();
 
 				await service.uploadFile(userId, params, file);
@@ -290,13 +290,13 @@ describe('FilesStorageService upload methods', () => {
 
 			describe('Antivirus handling by upload ', () => {
 				describe('when useStreamToAntivirus is true', () => {
-					it('should call antivirusService.send with fileRecord', async () => {
+					it('should call antivirusService.scanStream with PassThrough stream', async () => {
 						const { params, file, userId } = setup();
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
 						await service.uploadFile(userId, params, file);
 
-						expect(antivirusService.scanStream).toHaveBeenCalledWith(file);
+						expect(antivirusService.scanStream).toHaveBeenCalledWith(expect.any(PassThrough));
 					});
 				});
 
