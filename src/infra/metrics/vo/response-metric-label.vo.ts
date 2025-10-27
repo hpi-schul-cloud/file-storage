@@ -21,14 +21,14 @@ export class RequestResponseMetricLabel {
 
 	constructor(request: Request, response: Response) {
 		this.method = request.method;
-		this.base_url = request.url;
+		this.base_url = request.baseUrl;
 		this.status_code = response.statusCode;
 
 		this.full_path = this.base_url;
 
 		if (this.hasPath(request.route)) {
 			this.route_path = request.route.path;
-			this.full_path += this.route_path;
+			this.full_path = this.route_path;
 		}
 	}
 
