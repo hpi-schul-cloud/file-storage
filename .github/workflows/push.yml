@@ -173,8 +173,8 @@ jobs:
     with:
       ref: ${{ needs.branch_meta.outputs.branch }}
       repo: file-storage
-    secrets:
-      service-account-token: ${{ secrets.CYPRESS_ONEPWD_SERVICE_ACCOUNT_TOKEN }}
+    # secrets:
+    #   service-account-token: ${{ secrets.CYPRESS_ONEPWD_SERVICE_ACCOUNT_TOKEN }}
 
   trivy-vulnerability-scanning:
     needs:
