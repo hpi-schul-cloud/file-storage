@@ -85,7 +85,7 @@ describe('FilesStorageService update methods', () => {
 
 			const setup = () => {
 				const { fileRecords, parentInfo } = FileRecordParamsTestFactory.build();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 				const fileName = 'renamed';
 
 				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([fileRecords, 1]);
@@ -159,8 +159,8 @@ describe('FilesStorageService update methods', () => {
 
 			const setup = () => {
 				const { fileRecords, parentInfo } = FileRecordParamsTestFactory.build();
-				const fileRecord = fileRecords[0];
-				const fileName = fileRecords[0].getName();
+				const fileRecord = fileRecords[0]!;
+				const fileName = fileRecord.getName();
 
 				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([fileRecords, 1]);
 

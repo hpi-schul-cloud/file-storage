@@ -243,6 +243,7 @@ describe('FileRecordRepo', () => {
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
+				// @ts-expect-error Testcase
 				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
 			);
 		});
@@ -324,6 +325,7 @@ describe('FileRecordRepo', () => {
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
 			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
+				// @ts-expect-error Testcase
 				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
 			);
 		});

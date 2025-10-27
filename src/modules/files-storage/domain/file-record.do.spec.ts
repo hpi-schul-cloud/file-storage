@@ -219,9 +219,9 @@ describe('FileRecord', () => {
 
 			FileRecord.removeCreatorId(fileRecords);
 
-			expect(fileRecords[0].getProps().creatorId).toEqual(undefined);
-			expect(fileRecords[1].getProps().creatorId).toEqual(undefined);
-			expect(fileRecords[2].getProps().creatorId).toEqual(undefined);
+			expect(fileRecords[0]!.getProps().creatorId).toEqual(undefined);
+			expect(fileRecords[1]!.getProps().creatorId).toEqual(undefined);
+			expect(fileRecords[2]!.getProps().creatorId).toEqual(undefined);
 		});
 	});
 
@@ -237,9 +237,9 @@ describe('FileRecord', () => {
 
 			FileRecord.markForDelete(fileRecords);
 
-			expect(fileRecords[0].getProps().deletedSince).toEqual(expect.any(Date));
-			expect(fileRecords[1].getProps().deletedSince).toEqual(expect.any(Date));
-			expect(fileRecords[2].getProps().deletedSince).toEqual(expect.any(Date));
+			expect(fileRecords[0]!.getProps().deletedSince).toEqual(expect.any(Date));
+			expect(fileRecords[1]!.getProps().deletedSince).toEqual(expect.any(Date));
+			expect(fileRecords[2]!.getProps().deletedSince).toEqual(expect.any(Date));
 		});
 	});
 
@@ -255,9 +255,9 @@ describe('FileRecord', () => {
 
 			FileRecord.unmarkForDelete(fileRecords);
 
-			expect(fileRecords[0].getProps().deletedSince).toEqual(undefined);
-			expect(fileRecords[1].getProps().deletedSince).toEqual(undefined);
-			expect(fileRecords[2].getProps().deletedSince).toEqual(undefined);
+			expect(fileRecords[0]!.getProps().deletedSince).toEqual(undefined);
+			expect(fileRecords[1]!.getProps().deletedSince).toEqual(undefined);
+			expect(fileRecords[2]!.getProps().deletedSince).toEqual(undefined);
 		});
 	});
 
@@ -451,8 +451,8 @@ describe('FileRecord', () => {
 				const result = FileRecord.getUniqueParentInfos(fileRecords);
 
 				expect(result.length).toBe(2);
-				expect(result[0]).toEqual(fileRecords[0].getParentInfo());
-				expect(result[1]).toEqual(fileRecords[1].getParentInfo());
+				expect(result[0]).toEqual(fileRecords[0]!.getParentInfo());
+				expect(result[1]).toEqual(fileRecords[1]!.getParentInfo());
 			});
 		});
 

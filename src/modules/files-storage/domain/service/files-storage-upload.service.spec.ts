@@ -97,7 +97,7 @@ describe('FilesStorageService upload methods', () => {
 			const file = createMock<FileDto>();
 			const readable = Readable.from('abc');
 			file.data = readable;
-			file.name = fileRecords[0].getName();
+			file.name = fileRecords[0]!.getName();
 			file.mimeType = props.mimeType;
 
 			const fileSize = 3;

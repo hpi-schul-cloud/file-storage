@@ -90,7 +90,7 @@ describe('FilesStorageService download methods', () => {
 		describe('WHEN file is downloaded successfully', () => {
 			const setup = () => {
 				const { fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 				const fileName = fileRecord.getName();
 
 				const fileResponse = createMock<GetFile>();
@@ -121,7 +121,7 @@ describe('FilesStorageService download methods', () => {
 		describe('WHEN param file name is not matching found file name', () => {
 			const setup = () => {
 				const { fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 				const fileName = 'paramsFileName';
 
 				spy = jest.spyOn(service, 'downloadFile');
@@ -142,7 +142,7 @@ describe('FilesStorageService download methods', () => {
 		describe('WHEN file records scan status is BLOCKED', () => {
 			const setup = () => {
 				const { fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 				fileRecord.updateSecurityCheckStatus(ScanStatus.BLOCKED, 'blocked');
 				const fileName = fileRecord.getName();
 
@@ -164,7 +164,7 @@ describe('FilesStorageService download methods', () => {
 		describe('WHEN download throws error', () => {
 			const setup = () => {
 				const { fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 				const fileName = fileRecord.getName();
 				const error = new Error('test');
 
@@ -185,7 +185,7 @@ describe('FilesStorageService download methods', () => {
 		describe('WHEN file is downloaded successfully', () => {
 			const setup = () => {
 				const { fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 
 				const fileResponse = createMock<GetFile>();
 
@@ -217,7 +217,7 @@ describe('FilesStorageService download methods', () => {
 		describe('WHEN get throws error', () => {
 			const setup = () => {
 				const { fileRecords } = buildFileRecordsWithParams();
-				const fileRecord = fileRecords[0];
+				const fileRecord = fileRecords[0]!;
 				const error = new Error('test');
 
 				storageClient.get.mockRejectedValueOnce(error);
@@ -246,9 +246,9 @@ describe('FilesStorageService download methods', () => {
 			});
 
 			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
-			spyDownloadFile.mockResolvedValueOnce(fileResponses[0]);
-			spyDownloadFile.mockResolvedValueOnce(fileResponses[1]);
-			spyDownloadFile.mockResolvedValueOnce(fileResponses[2]);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[0]!);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[1]!);
+			spyDownloadFile.mockResolvedValueOnce(fileResponses[2]!);
 
 			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse };
 		};
