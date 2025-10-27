@@ -30,13 +30,14 @@ const createParameter = () => {
 describe(S3ClientAdapter.name, () => {
 	let service: S3ClientAdapter;
 	let client: DeepMocked<S3Client>;
+	let errorHandler: DeepMocked<DomainErrorHandler>;
 
 	beforeAll(() => {
 		const { config } = createParameter();
 
 		const logger = createMock<Logger>();
 		const configuration = createMock<S3Config>(config);
-		const errorHandler = createMock<DomainErrorHandler>();
+		errorHandler = createMock<DomainErrorHandler>();
 		client = createMock<S3Client>({
 			config: {
 				endpoint: () => {
@@ -695,7 +696,10 @@ describe(S3ClientAdapter.name, () => {
 			const setup = () => {
 				const { pathToFile } = createParameter();
 				const filePath = 'directory/test.txt';
-				const error = new Error('S3ClientAdapter:delete');
+				const error = new InternalServerErrorException('S3ClientAdapter:delete', {
+					cause: undefined,
+					description: undefined,
+				});
 
 				const expectedResponse = createListObjectsV2CommandOutput.build({
 					Contents: [{ Key: filePath }],
@@ -782,29 +786,50 @@ describe(S3ClientAdapter.name, () => {
 			return { pathsToCopy, bucket };
 		};
 
-		it('should call send() of client with copy objects', async () => {
-			const { pathsToCopy, bucket } = setup();
+		describe('when client send resolves successfully', () => {
+			it('should call send() of client with copy objects', async () => {
+				const { pathsToCopy, bucket } = setup();
 
-			await service.copy(pathsToCopy);
+				await service.copy(pathsToCopy);
 
-			expect(client.send).toHaveBeenCalledWith(
-				expect.objectContaining({
-					input: {
-						Bucket: bucket,
-						CopySource: `${bucket}/trash/test/text.txt`,
-						Key: 'test/text.txt',
-					},
-				})
-			);
+				expect(client.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						input: {
+							Bucket: bucket,
+							CopySource: `${bucket}/trash/test/text.txt`,
+							Key: 'test/text.txt',
+						},
+					})
+				);
+			});
 		});
 
-		it('should throw an InternalServerErrorException by error', async () => {
-			const { pathsToCopy } = setup();
+		describe('when client send rejects with error', () => {
+			it('should return empty array', async () => {
+				const { pathsToCopy } = setup();
 
-			// @ts-expect-error should run into error
-			client.send.mockRejectedValue(new Error('Test error'));
+				// @ts-expect-error should run into error
+				client.send.mockRejectedValueOnce(new Error('Test error'));
 
-			await expect(service.copy(pathsToCopy)).rejects.toThrow(InternalServerErrorException);
+				const result = await service.copy(pathsToCopy);
+
+				expect(result).toEqual([]);
+			});
+
+			it('should call errorHandler.exec when promises are rejected', async () => {
+				const { pathsToCopy } = setup();
+
+				// @ts-expect-error should run into error
+				client.send.mockRejectedValueOnce(new Error('Test error'));
+
+				await service.copy(pathsToCopy);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'S3ClientAdapter:copy:settledPromises',
+					})
+				);
+			});
 		});
 	});
 
