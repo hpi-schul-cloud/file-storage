@@ -18,14 +18,15 @@ import { BuildOptions, DeepPartial, Factory, GeneratorFn, HookFn } from 'fishery
  * @template U The properties interface of the entity
  * @template I The transient parameters that your factory supports
  * @template C The class of the factory object being created.
+ * @template P The type of the params (defaults to DeepPartial<U>)
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class EntityFactory<T extends U, U extends object, I = any, C = U> {
-	protected readonly propsFactory: Factory<U, I, C>;
+export class EntityFactory<T extends U, U extends object, I = any, C = U, P = DeepPartial<U>> {
+	protected readonly propsFactory: Factory<U, I, C, P>;
 
 	constructor(
 		private readonly EntityClass: new () => T,
-		propsFactory: Factory<U, I, C>
+		propsFactory: Factory<U, I, C, P>
 	) {
 		this.propsFactory = propsFactory;
 	}
@@ -36,17 +37,25 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	 * @template U The properties interface of the entity
 	 * @template I The transient parameters that your factory supports
 	 * @template C The class of the factory object being created.
+	 * @template P The type of the params (defaults to DeepPartial<U>)
 	 * @param EntityClass The constructor of the entity to be built.
 	 * @param generator Your factory function - see `Factory.define()` in thoughtbot/fishery
 	 * @returns
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public static define<T extends U, U extends object, I = any, C = U, F = EntityFactory<T, U, I, C>>(
-		this: new (EntityClass: new () => T, propsFactory: Factory<U, I, C>) => F,
+	public static define<
+		T extends U,
+		U extends object,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		I = any,
+		C = U,
+		P = DeepPartial<U>,
+		F = EntityFactory<T, U, I, C, P>,
+	>(
+		this: new (EntityClass: new () => T, propsFactory: Factory<U, I, C, P>) => F,
 		EntityClass: new () => T,
-		generator: GeneratorFn<U, I, C>
+		generator: GeneratorFn<U, I, C, P>
 	): F {
-		const propsFactory = Factory.define<U, I, C>(generator);
+		const propsFactory = Factory.define<U, I, C, P>(generator);
 		const factory = new this(EntityClass, propsFactory);
 
 		return factory;
@@ -57,7 +66,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	 * @param params
 	 * @returns an entity
 	 */
-	public build(params?: DeepPartial<U>, options: BuildOptions<U, I> = {}): T {
+	public build(params?: P, options: BuildOptions<U, I> = {}): T {
 		const props = this.propsFactory.build(params, options);
 		const entity = new this.EntityClass();
 		Object.assign(entity, props);
@@ -71,7 +80,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	 * @param id
 	 * @returns an entity
 	 */
-	public buildWithId(params?: DeepPartial<U>, id?: string, options: BuildOptions<U, I> = {}): T {
+	public buildWithId(params?: P, id?: string, options: BuildOptions<U, I> = {}): T {
 		const entity = this.build(params, options) as { _id: ObjectId; id: EntityId };
 		const generatedId = new ObjectId(id);
 		const entityWithId = Object.assign(entity, { _id: generatedId, id: generatedId.toHexString() });
@@ -85,7 +94,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	 * @param params
 	 * @returns a list of entities
 	 */
-	public buildList(number: number, params?: DeepPartial<U>, options: BuildOptions<U, I> = {}): T[] {
+	public buildList(number: number, params?: P, options: BuildOptions<U, I> = {}): T[] {
 		const list: T[] = [];
 		for (let i = 0; i < number; i += 1) {
 			list.push(this.build(params, options));
@@ -94,7 +103,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 		return list;
 	}
 
-	public buildListWithId(number: number, params?: DeepPartial<U>, options: BuildOptions<U, I> = {}): T[] {
+	public buildListWithId(number: number, params?: P, options: BuildOptions<U, I> = {}): T[] {
 		const list: T[] = [];
 		for (let i = 0; i < number; i += 1) {
 			list.push(this.buildWithId(params, undefined, options));
@@ -132,7 +141,7 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 	 * @param params
 	 * @returns a new factory
 	 */
-	public params(params: DeepPartial<U>): this {
+	public params(params: P): this {
 		const newPropsFactory = this.propsFactory.params(params);
 		const newFactory = this.clone(newPropsFactory);
 
@@ -158,8 +167,8 @@ export class EntityFactory<T extends U, U extends object, I = any, C = U> {
 		this.propsFactory.rewindSequence();
 	}
 
-	protected clone<F extends EntityFactory<T, U, I, C>>(this: F, propsFactory: Factory<U, I, C>): F {
-		const copy = new (this.constructor as new (EntityClass: new () => T, propsFactory: Factory<U, I, C>) => F)(
+	protected clone<F extends EntityFactory<T, U, I, C, P>>(this: F, propsFactory: Factory<U, I, C, P>): F {
+		const copy = new (this.constructor as new (EntityClass: new () => T, propsFactory: Factory<U, I, C, P>) => F)(
 			this.EntityClass,
 			propsFactory
 		);
