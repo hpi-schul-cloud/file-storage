@@ -7,12 +7,10 @@ import { MetricsService } from '../metrics.service';
 export class CurrentDownloadMetricsInterceptor implements NestInterceptor {
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		MetricsService.currentDownloadsGauge.inc();
-		const downloadDurationTimer = MetricsService.downloadDurationHistogram.startTimer();
 
 		return next.handle().pipe(
 			finalize(() => {
 				MetricsService.currentDownloadsGauge.dec();
-				downloadDurationTimer();
 			})
 		);
 	}
