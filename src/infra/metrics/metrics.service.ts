@@ -4,7 +4,7 @@ import { MetricConfig } from './metrics.config';
 
 @Injectable()
 export class MetricsService implements OnModuleInit {
-	constructor(private config: MetricConfig) {}
+	constructor(private readonly config: MetricConfig) {}
 
 	public onModuleInit(): void {
 		if (this.config.METRICS_COLLECT_DEFAULT) {
