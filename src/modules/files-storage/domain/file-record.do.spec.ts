@@ -164,7 +164,7 @@ describe('FileRecord', () => {
 		it('should throw an error for invalid MIME types', () => {
 			const mimeType = 'image';
 
-			expect(() => FileRecord.getFormat(mimeType)).toThrowError(`could not get format from mime type: ${mimeType}`);
+			expect(() => FileRecord.getFormat(mimeType)).toThrow(`could not get format from mime type: ${mimeType}`);
 		});
 	});
 
@@ -275,7 +275,7 @@ describe('FileRecord', () => {
 			const fileRecord = fileRecordTestFactory().build();
 
 			expect(() => fileRecord.setName('')).toThrow(BadRequestException);
-			expect(() => fileRecord.setName('')).toThrowError(ErrorType.FILE_NAME_EMPTY);
+			expect(() => fileRecord.setName('')).toThrow(ErrorType.FILE_NAME_EMPTY);
 		});
 	});
 
@@ -386,7 +386,7 @@ describe('FileRecord', () => {
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
 			// @ts-expect-error test only
 
-			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrowError(ErrorType.FILE_IS_EMPTY);
+			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(ErrorType.FILE_IS_EMPTY);
 		});
 
 		it('should throw BadRequestException if size exceeds maxSizeInByte', () => {
@@ -398,7 +398,7 @@ describe('FileRecord', () => {
 			// @ts-expect-error test only
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
 			// @ts-expect-error test only
-			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrowError(ErrorType.FILE_TOO_BIG);
+			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(ErrorType.FILE_TOO_BIG);
 		});
 	});
 

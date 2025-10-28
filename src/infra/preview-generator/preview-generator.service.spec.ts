@@ -1,10 +1,11 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
-import { InternalServerErrorException, UnprocessableEntityException } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { ErrorType } from './interface/error-status.enum';
+import { PreviewNotPossibleException } from './loggable/preview-exception';
 import { FILE_STORAGE_CLIENT, PreviewGeneratorService } from './preview-generator.service';
 
 let streamMock = jest.fn();
@@ -123,7 +124,7 @@ describe('PreviewGeneratorService', () => {
 
 						await service.generatePreview(params);
 
-						expect(s3ClientAdapter.get).toBeCalledWith(params.originFilePath);
+						expect(s3ClientAdapter.get).toHaveBeenCalledWith(params.originFilePath);
 					});
 
 					it('should call imagemagicks resize method', async () => {
@@ -255,8 +256,8 @@ describe('PreviewGeneratorService', () => {
 					it('should throw UnprocessableEntityException', async () => {
 						const { params } = setup();
 
-						const error = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
-						await expect(service.generatePreview(params)).rejects.toThrowError(error);
+						const error = new PreviewNotPossibleException(params);
+						await expect(service.generatePreview(params)).rejects.toThrow(error);
 					});
 				});
 
@@ -264,8 +265,8 @@ describe('PreviewGeneratorService', () => {
 					it('should throw UnprocessableEntityException', async () => {
 						const { params } = setup('text/plain');
 
-						const error = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
-						await expect(service.generatePreview(params)).rejects.toThrowError(error);
+						const error = new PreviewNotPossibleException(params);
+						await expect(service.generatePreview(params)).rejects.toThrow(error);
 					});
 				});
 			});
@@ -334,7 +335,7 @@ describe('PreviewGeneratorService', () => {
 			it('should throw error', async () => {
 				const { params, expectedError } = setup();
 
-				await expect(service.generatePreview(params)).rejects.toThrowError(expectedError);
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
 			});
 
 			it('should have external error in getLogMessage', async () => {
@@ -369,7 +370,7 @@ describe('PreviewGeneratorService', () => {
 			it('should throw error', async () => {
 				const { params, expectedError } = setup();
 
-				await expect(service.generatePreview(params)).rejects.toThrowError(expectedError);
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
 			});
 		});
 	});

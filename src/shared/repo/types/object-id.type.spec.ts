@@ -32,7 +32,7 @@ describe(ObjectIdType.name, () => {
 
 				const conversion = () => propType.convertToDatabaseValue(invalidEntityId, platform);
 
-				expect(conversion).toThrowError();
+				expect(conversion).toThrow();
 			});
 		});
 
@@ -42,7 +42,7 @@ describe(ObjectIdType.name, () => {
 
 				const conversion = () => propType.convertToDatabaseValue(entityId, invalidPlatform);
 
-				expect(conversion).toThrowError();
+				expect(conversion).toThrow();
 			});
 		});
 	});
@@ -71,7 +71,7 @@ describe(ObjectIdType.name, () => {
 
 				const conversion = () => propType.convertToJSValue(objectId, invalidPlatform);
 
-				expect(conversion).toThrowError();
+				expect(conversion).toThrow();
 			});
 		});
 	});

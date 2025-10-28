@@ -135,7 +135,7 @@ describe('FilesStorageService download methods', () => {
 				const error = new NotFoundException(ErrorType.FILE_NOT_FOUND);
 
 				await expect(service.download(fileRecord, fileName)).rejects.toThrow(error);
-				expect(service.downloadFile).toBeCalledTimes(0);
+				expect(service.downloadFile).toHaveBeenCalledTimes(0);
 			});
 		});
 

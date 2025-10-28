@@ -100,7 +100,7 @@ describe('RpcMessageProducer', () => {
 				const { params, spy, error } = setup();
 
 				await expect(service.testRequest(params)).rejects.toThrow(ErrorMapper.mapRpcErrorResponseToDomainError(error));
-				expect(spy).toBeCalled();
+				expect(spy).toHaveBeenCalled();
 			});
 		});
 
@@ -121,8 +121,8 @@ describe('RpcMessageProducer', () => {
 			it('should call error mapper and throw with error', async () => {
 				const { params, spy, error } = setup();
 
-				await expect(service.testRequest(params)).rejects.toThrowError(error);
-				expect(spy).not.toBeCalled();
+				await expect(service.testRequest(params)).rejects.toThrow(error);
+				expect(spy).not.toHaveBeenCalled();
 			});
 		});
 	});

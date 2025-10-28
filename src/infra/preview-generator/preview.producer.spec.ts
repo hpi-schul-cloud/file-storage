@@ -1,7 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
-import { InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ErrorMapper } from '../rabbitmq';
 import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
@@ -118,10 +117,8 @@ describe('PreviewProducer', () => {
 			it('should call error mapper and throw with error', async () => {
 				const { params, spy, error } = setup();
 
-				await expect(service.generate(params)).rejects.toThrowError(
-					new InternalServerErrorException(null, { cause: error })
-				);
-				expect(spy).toBeCalled();
+				await expect(service.generate(params)).rejects.toThrow(ErrorMapper.mapRpcErrorResponseToDomainError(error));
+				expect(spy).toHaveBeenCalled();
 			});
 		});
 	});
