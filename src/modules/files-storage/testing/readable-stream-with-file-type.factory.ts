@@ -9,10 +9,22 @@ interface ReadableStreamWithFileTypeProps {
 
 class ReadableStreamWithFileTypeImp extends Readable implements ReadableStreamWithFileType {
 	fileType?: FileTypeResult;
+	private data: Buffer;
+	private index = 0;
 
 	constructor(props: ReadableStreamWithFileTypeProps) {
 		super();
 		this.fileType = props.fileType;
+		this.data = Buffer.from('abc');
+	}
+
+	public _read(): void {
+		if (this.index < this.data.length) {
+			this.push(this.data.slice(this.index, this.index + 1));
+			this.index++;
+		} else {
+			this.push(null);
+		}
 	}
 }
 

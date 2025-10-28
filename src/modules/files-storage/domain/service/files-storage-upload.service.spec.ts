@@ -4,7 +4,7 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReadableStreamWithFileType } from 'file-type';
 import { PassThrough, Readable } from 'node:stream';
@@ -60,6 +60,7 @@ describe('FilesStorageService upload methods', () => {
 						FILES_STORAGE_MAX_FILE_SIZE: 10,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10,
 						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
+						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
 					}),
 				},
 				{
@@ -290,13 +291,13 @@ describe('FilesStorageService upload methods', () => {
 
 			describe('Antivirus handling by upload ', () => {
 				describe('when useStreamToAntivirus is true', () => {
-					it('should call antivirusService.send with fileRecord', async () => {
+					it('should call antivirusService.scanStream with PassThrough stream', async () => {
 						const { params, file, userId } = setup();
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
 						await service.uploadFile(userId, params, file);
 
-						expect(antivirusService.scanStream).toHaveBeenCalledWith(file);
+						expect(antivirusService.scanStream).toHaveBeenCalledWith(expect.any(PassThrough));
 					});
 				});
 
@@ -980,7 +981,7 @@ describe('FilesStorageService upload methods', () => {
 				const { readable, fileRecord } = setup();
 
 				await expect(service.updateFileContents(fileRecord, readable)).rejects.toThrow(
-					new BadRequestException(ErrorType.MIME_TYPE_MISMATCH)
+					new ConflictException(ErrorType.MIME_TYPE_MISMATCH)
 				);
 			});
 		});

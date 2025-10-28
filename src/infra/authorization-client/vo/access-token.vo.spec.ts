@@ -33,7 +33,7 @@ describe('AccessToken', () => {
 			it('should throw an error', () => {
 				const { token } = setup();
 
-				expect(() => new AccessToken({ token })).toThrowError();
+				expect(() => new AccessToken({ token })).toThrow();
 			});
 		});
 	});

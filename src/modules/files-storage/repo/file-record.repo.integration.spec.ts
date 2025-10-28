@@ -105,7 +105,7 @@ describe('FileRecordRepo', () => {
 		it('should find an entity by its id', async () => {
 			const notExistingId = new ObjectId().toHexString();
 
-			await expect(repo.findOneByIdMarkedForDelete(notExistingId)).rejects.toThrowError();
+			await expect(repo.findOneByIdMarkedForDelete(notExistingId)).rejects.toThrow();
 		});
 
 		it('should ingnore if deletedSince is undefined', async () => {
@@ -116,7 +116,7 @@ describe('FileRecordRepo', () => {
 
 			const exec = () => repo.findOneByIdMarkedForDelete(fileRecord.id);
 
-			await expect(exec).rejects.toThrowError();
+			await expect(exec).rejects.toThrow();
 		});
 	});
 
