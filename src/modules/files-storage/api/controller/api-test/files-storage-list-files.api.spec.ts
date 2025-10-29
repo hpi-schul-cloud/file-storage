@@ -194,6 +194,7 @@ describe(`${baseRouteName} (api)`, () => {
 				storageLocationId: validId,
 				parentType: FileRecordParentType.School,
 			});
+			const expectedIds = fileRecords.map((record) => record.id);
 
 			await em.persistAndFlush([...otherFileRecords, ...fileRecords]);
 			em.clear();
@@ -205,8 +206,7 @@ describe(`${baseRouteName} (api)`, () => {
 			const ids: EntityId[] = resultData.map((o) => o.id);
 
 			expect(response.total).toEqual(3);
-			// @ts-expect-error Testcase
-			expect(ids.sort()).toEqual([fileRecords[0].id, fileRecords[1].id, fileRecords[2].id].sort());
+			expect(ids.sort()).toEqual([...expectedIds].sort());
 		});
 	});
 });

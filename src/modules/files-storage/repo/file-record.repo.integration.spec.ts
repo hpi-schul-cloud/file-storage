@@ -9,8 +9,6 @@ import { FileRecordEntity } from './file-record.entity';
 import { FileRecordMikroOrmRepo } from './file-record.repo';
 import { FileRecordEntityMapper } from './mapper';
 
-const sortFunction = (a: string, b: string) => a.localeCompare(b);
-
 describe('FileRecordRepo', () => {
 	let module: TestingModule;
 	let repo: FileRecordMikroOrmRepo;
@@ -239,13 +237,11 @@ describe('FileRecordRepo', () => {
 			em.clear();
 
 			const [results, count] = await repo.findByParentId(parentId1);
+			const expectedIds = fileRecords1.map((record) => record.id);
 
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
-			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				// @ts-expect-error Testcase
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
-			);
+			expect(results.map((result) => result.id)).toEqual(expect.arrayContaining(expectedIds));
 		});
 	});
 
@@ -321,13 +317,11 @@ describe('FileRecordRepo', () => {
 			em.clear();
 
 			const [results, count] = await repo.findMarkedForDeleteByParentId(parentId1);
+			const expectedIds = fileRecords1.map((record) => record.id);
 
 			expect(count).toEqual(3);
 			expect(results).toHaveLength(3);
-			expect(results.map((o) => o.id).sort(sortFunction)).toEqual(
-				// @ts-expect-error Testcase
-				[fileRecords1[0].id, fileRecords1[1].id, fileRecords1[2].id].sort(sortFunction)
-			);
+			expect(results.map((result) => result.id)).toEqual(expect.arrayContaining(expectedIds));
 		});
 	});
 

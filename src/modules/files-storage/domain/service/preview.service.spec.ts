@@ -2,11 +2,10 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { ObjectId } from '@mikro-orm/mongodb';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
-import { FileRecordParamsTestFactory, fileRecordTestFactory, GetFileTestFactory } from '../../testing';
+import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
@@ -16,19 +15,13 @@ import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 
 const buildFileRecordWithParams = (mimeType: string, scanStatus?: ScanStatus) => {
-	const parentId = new ObjectId().toHexString();
-	const storageLocationId = new ObjectId().toHexString();
-
-	const fileRecord = fileRecordTestFactory().withScanStatus(scanStatus).build({
-		parentId,
-		storageLocationId,
+	const parentInfo = ParentInfoTestFactory.build({});
+	const fileRecord = fileRecordTestFactory().withScanStatus(scanStatus).withParentInfo(parentInfo).build({
 		name: 'text.png',
 		mimeType,
 	});
 
-	const params = FileRecordParamsTestFactory.buildFromInput({ parentId, storageLocationId });
-
-	return { params, fileRecord, parentId };
+	return { params: parentInfo, fileRecord, parentId: parentInfo.parentId };
 };
 
 const defaultPreviewParams = {

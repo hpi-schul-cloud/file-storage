@@ -132,8 +132,7 @@ describe('FilesStorageService get methods', () => {
 				const fileRecords = [fileRecord1, fileRecord2];
 				fileRecordRepo.findMultipleById.mockResolvedValueOnce([fileRecords, 2]);
 
-				// @ts-ignore Testcase
-				const fileRecordIds = [fileRecords[0].id, fileRecords[1].id];
+				const fileRecordIds = [fileRecord1.id, fileRecord2.id];
 
 				return { fileRecordIds, fileRecords };
 			};

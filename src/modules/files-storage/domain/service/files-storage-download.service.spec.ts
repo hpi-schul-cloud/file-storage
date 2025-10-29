@@ -89,9 +89,7 @@ describe('FilesStorageService download methods', () => {
 
 		describe('WHEN file is downloaded successfully', () => {
 			const setup = () => {
-				const { fileRecords } = buildFileRecordsWithParams();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const fileRecord = fileRecordTestFactory().build();
 				const fileName = fileRecord.getName();
 
 				const fileResponse = createMock<GetFile>();
@@ -121,9 +119,7 @@ describe('FilesStorageService download methods', () => {
 
 		describe('WHEN param file name is not matching found file name', () => {
 			const setup = () => {
-				const { fileRecords } = buildFileRecordsWithParams();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const fileRecord = fileRecordTestFactory().build();
 				const fileName = 'paramsFileName';
 
 				spy = jest.spyOn(service, 'downloadFile');
@@ -143,9 +139,7 @@ describe('FilesStorageService download methods', () => {
 
 		describe('WHEN file records scan status is BLOCKED', () => {
 			const setup = () => {
-				const { fileRecords } = buildFileRecordsWithParams();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const fileRecord = fileRecordTestFactory().build();
 				fileRecord.updateSecurityCheckStatus(ScanStatus.BLOCKED, 'blocked');
 				const fileName = fileRecord.getName();
 
@@ -166,9 +160,7 @@ describe('FilesStorageService download methods', () => {
 
 		describe('WHEN download throws error', () => {
 			const setup = () => {
-				const { fileRecords } = buildFileRecordsWithParams();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const fileRecord = fileRecordTestFactory().build();
 				const fileName = fileRecord.getName();
 				const error = new Error('test');
 
@@ -188,10 +180,7 @@ describe('FilesStorageService download methods', () => {
 	describe('downloadFile is called', () => {
 		describe('WHEN file is downloaded successfully', () => {
 			const setup = () => {
-				const { fileRecords } = buildFileRecordsWithParams();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
-
+				const fileRecord = fileRecordTestFactory().build();
 				const fileResponse = createMock<GetFile>();
 
 				storageClient.get.mockResolvedValueOnce(fileResponse);
@@ -221,9 +210,7 @@ describe('FilesStorageService download methods', () => {
 
 		describe('WHEN get throws error', () => {
 			const setup = () => {
-				const { fileRecords } = buildFileRecordsWithParams();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const fileRecord = fileRecordTestFactory().build();
 				const error = new Error('test');
 
 				storageClient.get.mockRejectedValueOnce(error);
@@ -247,17 +234,13 @@ describe('FilesStorageService download methods', () => {
 				data: Readable.from('test data'),
 			});
 
-			const fileResponses = fileRecords.map((fileRecord) => {
-				return FileResponseFactory.create(fileResponse, fileRecord.getName());
-			});
-
 			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
-			// @ts-ignore Testcase
-			spyDownloadFile.mockResolvedValueOnce(fileResponses[0]);
-			// @ts-ignore Testcase
-			spyDownloadFile.mockResolvedValueOnce(fileResponses[1]);
-			// @ts-ignore Testcase
-			spyDownloadFile.mockResolvedValueOnce(fileResponses[2]);
+			const fileResponses = fileRecords.map((fileRecord) => {
+				const response = FileResponseFactory.create(fileResponse, fileRecord.getName());
+				spyDownloadFile.mockResolvedValueOnce(response);
+
+				return response;
+			});
 
 			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse };
 		};

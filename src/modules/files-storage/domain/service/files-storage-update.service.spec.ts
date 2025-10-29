@@ -8,7 +8,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import _ from 'lodash';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
@@ -84,17 +84,17 @@ describe('FilesStorageService update methods', () => {
 			});
 
 			const setup = () => {
-				const { fileRecords, parentInfo } = FileRecordParamsTestFactory.build();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const parentInfo = ParentInfoTestFactory.build({});
+				const fileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
+
 				const fileName = 'renamed';
 
-				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([fileRecords, 1]);
+				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([[fileRecord], 1]);
 
 				return {
 					fileName,
 					fileRecord,
-					fileRecords,
+					fileRecords: [fileRecord],
 					params: parentInfo,
 				};
 			};
@@ -159,17 +159,16 @@ describe('FilesStorageService update methods', () => {
 			});
 
 			const setup = () => {
-				const { fileRecords, parentInfo } = FileRecordParamsTestFactory.build();
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const fileRecord = fileRecords[0]!;
+				const parentInfo = ParentInfoTestFactory.build({});
+				const fileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				const fileName = fileRecord.getName();
 
-				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([fileRecords, 1]);
+				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([[fileRecord], 1]);
 
 				return {
 					fileName,
 					fileRecord,
-					fileRecords,
+					fileRecords: [fileRecord],
 					params: parentInfo,
 				};
 			};
