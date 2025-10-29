@@ -15,7 +15,7 @@ const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();
 	const storageLocationId = new ObjectId().toHexString();
 
-	const fileRecords = fileRecordTestFactory().buildList(3, { parentId, storageLocationId });
+	const fileRecords = [...fileRecordTestFactory().buildList(3, { parentId, storageLocationId })];
 
 	return { fileRecords, parentId, creatorId };
 };
@@ -127,12 +127,10 @@ describe('FilesStorageService get methods', () => {
 	describe('getFileRecords is called', () => {
 		describe('WHEN valid files exists', () => {
 			const setup = () => {
-				const { fileRecord: fileRecord1 } = buildFileRecord();
-				const { fileRecord: fileRecord2 } = buildFileRecord();
-				const fileRecords = [fileRecord1, fileRecord2];
-				fileRecordRepo.findMultipleById.mockResolvedValueOnce([fileRecords, 2]);
+				const fileRecords = fileRecordTestFactory().buildList(2);
+				fileRecordRepo.findMultipleById.mockResolvedValueOnce([[...fileRecords], 2]);
 
-				const fileRecordIds = [fileRecord1.id, fileRecord2.id];
+				const fileRecordIds = fileRecords.map((file) => file.id);
 
 				return { fileRecordIds, fileRecords };
 			};

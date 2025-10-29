@@ -83,7 +83,7 @@ describe('FilesStorageConsumer', () => {
 					parentType: payload.source.parentType,
 				});
 
-				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[...fileRecords], fileRecords.length]);
 				const copyFileResults = fileRecords.map((sourceFileRecord) => ({
 					id: new ObjectId().toHexString(),
 					sourceId: sourceFileRecord.id,
@@ -150,7 +150,7 @@ describe('FilesStorageConsumer', () => {
 				});
 				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
 
-				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[...fileRecords], fileRecords.length]);
 				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);
 
 				const response = await service.getFilesOfParent(parentId);
@@ -178,7 +178,7 @@ describe('FilesStorageConsumer', () => {
 				const parentId = new ObjectId().toHexString();
 
 				const fileRecords = fileRecordTestFactory().buildList(3);
-				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByParent.mockResolvedValueOnce([[...fileRecords], fileRecords.length]);
 
 				return { parentId, fileRecords };
 			};
@@ -297,7 +297,7 @@ describe('FilesStorageConsumer', () => {
 				const creatorId = new ObjectId().toHexString();
 
 				const fileRecords = fileRecordTestFactory().buildList(3, { creatorId });
-				filesStorageService.getFileRecordsByCreatorId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				filesStorageService.getFileRecordsByCreatorId.mockResolvedValueOnce([[...fileRecords], fileRecords.length]);
 
 				const fileRecordsWithStatus = fileRecordWithStatusTestFactory().buildList(3);
 				filesStorageService.getFileRecordsWithStatus.mockReturnValueOnce(fileRecordsWithStatus);

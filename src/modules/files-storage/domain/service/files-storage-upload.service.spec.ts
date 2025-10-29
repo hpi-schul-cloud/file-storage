@@ -94,15 +94,12 @@ describe('FilesStorageService upload methods', () => {
 	describe('uploadFile is called', () => {
 		const createUploadFileParams = (props: { mimeType: string } = { mimeType: 'dto-mime-type' }) => {
 			const parentInfo = ParentInfoTestFactory.build();
-			const fileRecord1 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-			const fileRecord2 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-			const fileRecord3 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-			const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
+			const fileRecords = fileRecordTestFactory().withParentInfo(parentInfo).buildList(3);
 
 			const file = createMock<FileDto>();
 			const readable = Readable.from('abc');
 			file.data = readable;
-			file.name = fileRecord1.getName();
+			file.name = fileRecords[0].getName();
 			file.mimeType = props.mimeType;
 
 			const fileSize = 3;
@@ -114,7 +111,7 @@ describe('FilesStorageService upload methods', () => {
 				parentInfo.parentId
 			);
 			const expectedFileRecord = fileRecord.getProps();
-			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
+			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates([...fileRecords], fileRecord.getName());
 			const detectedMimeType = 'image/tiff';
 			expectedFileRecord.mimeType = detectedMimeType;
 
@@ -572,10 +569,7 @@ describe('FilesStorageService upload methods', () => {
 		describe('WHEN stream emits error', () => {
 			const setup = () => {
 				const parentInfo = ParentInfoTestFactory.build();
-				const fileRecord1 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-				const fileRecord2 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-				const fileRecord3 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
+				const fileRecords = fileRecordTestFactory().withParentInfo(parentInfo).buildList(2);
 				const file = fileDtoTestFactory().build();
 
 				const fileSize = 3;
@@ -587,7 +581,7 @@ describe('FilesStorageService upload methods', () => {
 					parentInfo.parentId
 				);
 				const expectedFileRecord = fileRecord.getProps();
-				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
+				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates([...fileRecords], fileRecord.getName());
 				const detectedMimeType = 'image/tiff';
 				expectedFileRecord.mimeType = detectedMimeType;
 

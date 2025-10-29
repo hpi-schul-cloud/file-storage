@@ -16,7 +16,7 @@ const buildFileRecordsWithParams = () => {
 	const parentInfo = ParentInfoTestFactory.build();
 
 	const yesterday = new Date(Date.now() - 86400000);
-	const fileRecords = fileRecordTestFactory().withDeletedSince(yesterday).withParentInfo(parentInfo).buildList(3);
+	const fileRecords = [...fileRecordTestFactory().withDeletedSince(yesterday).withParentInfo(parentInfo).buildList(3)];
 
 	return { params: parentInfo, fileRecords, parentId: parentInfo.parentId };
 };

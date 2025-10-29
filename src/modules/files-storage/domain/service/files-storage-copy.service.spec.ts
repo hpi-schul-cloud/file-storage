@@ -201,8 +201,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN copying two files and one file record save throws error', () => {
 			const setup = () => {
 				const parentInfo = ParentInfoTestFactory.build();
-				const sourceFile1 = fileRecordTestFactory().withParentInfo(parentInfo).build();
-				const sourceFile2 = fileRecordTestFactory().withParentInfo(parentInfo).build();
+				const [sourceFile1, sourceFile2] = fileRecordTestFactory().withParentInfo(parentInfo).buildList(2);
 				const error = new Error('test');
 
 				fileRecordRepo.save.mockResolvedValueOnce().mockRejectedValueOnce(error);
@@ -238,10 +237,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN storage client throws error', () => {
 			const setup = () => {
 				const parentInfo = ParentInfoTestFactory.build();
-				const sourceFile = fileRecordTestFactory().build({
-					parentId: parentInfo.parentId,
-					storageLocationId: parentInfo.storageLocationId,
-				});
+				const sourceFile = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				sourceFile.updateSecurityCheckStatus(ScanStatus.VERIFIED, 'verified');
 				const targetFile = FileRecordFactory.copy(sourceFile, parentInfo.parentId, parentInfo);
 
@@ -268,10 +264,7 @@ describe('FilesStorageService copy methods', () => {
 		describe('WHEN anti virus service throws error', () => {
 			const setup = () => {
 				const parentInfo = ParentInfoTestFactory.build();
-				const sourceFile = fileRecordTestFactory().build({
-					parentId: parentInfo.parentId,
-					storageLocationId: parentInfo.storageLocationId,
-				});
+				const sourceFile = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				sourceFile.updateSecurityCheckStatus(ScanStatus.PENDING, 'not yet scanned');
 				const targetFile = FileRecordFactory.copy(sourceFile, parentInfo.parentId, parentInfo);
 

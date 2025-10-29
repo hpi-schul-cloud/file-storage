@@ -209,7 +209,7 @@ describe('FileRecord', () => {
 	describe('FileRecord.resolveFileNameDuplicates', () => {
 		const setup = () => {
 			const creatorId = new ObjectId().toHexString();
-			const fileRecords = fileRecordTestFactory().buildList(3, { creatorId });
+			const fileRecords = [...fileRecordTestFactory().buildList(3, { creatorId })];
 
 			return { fileRecords, creatorId };
 		};
@@ -229,7 +229,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.markForDelete', () => {
 		const setup = () => {
-			const fileRecords = fileRecordTestFactory().buildList(3);
+			const fileRecords = [...fileRecordTestFactory().buildList(3)];
 
 			return { fileRecords };
 		};
@@ -249,7 +249,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.unmarkForDelete', () => {
 		const setup = () => {
-			const fileRecords = fileRecordTestFactory().withDeletedSince().buildList(3);
+			const fileRecords = [...fileRecordTestFactory().withDeletedSince().buildList(3)];
 
 			return { fileRecords };
 		};
@@ -305,8 +305,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.getPaths', () => {
 		it('should return paths for all file records', () => {
-			const fileRecord1 = fileRecordTestFactory().build();
-			const fileRecord2 = fileRecordTestFactory().build();
+			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
 			const path1 = fileRecord1.createPath();
 			const path2 = fileRecord2.createPath();
 
@@ -448,16 +447,18 @@ describe('FileRecord', () => {
 	describe('getUniqueParents', () => {
 		describe('WHEN filerRecords has parent duplicates', () => {
 			it('should return a map with unique parentId as key and parentType as value', () => {
-				const fileRecord1 = fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' });
-				const fileRecord2 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
-				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' });
+				const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2, {
+					parentType: FileRecordParentType.User,
+					parentId: 'id1',
+				});
+				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
 				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
 
 				const result = FileRecord.getUniqueParentInfos(fileRecords);
 
 				expect(result.length).toBe(2);
 				expect(result[0]).toEqual(fileRecord1.getParentInfo());
-				expect(result[1]).toEqual(fileRecord2.getParentInfo());
+				expect(result[1]).toEqual(fileRecord3.getParentInfo());
 			});
 		});
 
