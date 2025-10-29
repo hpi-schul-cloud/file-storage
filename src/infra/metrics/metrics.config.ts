@@ -6,5 +6,5 @@ import { IsBoolean } from 'class-validator';
 export class MetricConfig {
 	@IsBoolean()
 	@StringToBoolean()
-	METRICS_COLLECT_DEFAULT = true;
+	COLLECT_DEFAULT_METRICS = true;
 }

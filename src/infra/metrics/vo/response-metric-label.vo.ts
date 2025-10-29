@@ -1,5 +1,5 @@
 import { ValueObject } from '@shared/domain/value-object.decorator';
-import { IsEnum, IsNumber, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Request, Response } from 'express';
 
 @ValueObject()
@@ -14,7 +14,8 @@ export class RequestResponseMetricLabel {
 	public readonly full_path!: string;
 
 	@IsString()
-	public readonly route_path!: string;
+	@IsOptional()
+	public readonly route_path?: string;
 
 	@IsNumber()
 	public readonly status_code!: number;
@@ -28,7 +29,7 @@ export class RequestResponseMetricLabel {
 
 		if (this.hasPath(request.route)) {
 			this.route_path = request.route.path;
-			this.full_path = this.route_path;
+			this.full_path = this.base_url + this.route_path;
 		}
 	}
 

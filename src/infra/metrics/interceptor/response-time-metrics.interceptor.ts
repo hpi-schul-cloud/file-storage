@@ -10,9 +10,10 @@ export class ResponseTimeMetricsInterceptor implements NestInterceptor {
 		const time = Date.now();
 		const request = context.switchToHttp().getRequest<Request>();
 		const response = context.switchToHttp().getResponse<Response>();
-		const labels = RequestResponseMetricLabelFactory.create(request, response);
+		const label = RequestResponseMetricLabelFactory.create(request, response);
+		const timeInSeconds = time / 1000;
 
-		MetricsService.responseTimeMetricHistogram.observe(labels, time / 1000);
+		MetricsService.responseTimeMetricHistogram.observe(label, timeInSeconds);
 
 		return next.handle().pipe();
 	}
