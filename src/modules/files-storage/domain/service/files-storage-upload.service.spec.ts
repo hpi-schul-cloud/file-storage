@@ -93,7 +93,7 @@ describe('FilesStorageService upload methods', () => {
 
 	describe('uploadFile is called', () => {
 		const createUploadFileParams = (props: { mimeType: string } = { mimeType: 'dto-mime-type' }) => {
-			const parentInfo = ParentInfoTestFactory.build({});
+			const parentInfo = ParentInfoTestFactory.build();
 			const fileRecord1 = fileRecordTestFactory().withParentInfo(parentInfo).build();
 			const fileRecord2 = fileRecordTestFactory().withParentInfo(parentInfo).build();
 			const fileRecord3 = fileRecordTestFactory().withParentInfo(parentInfo).build();
@@ -571,7 +571,7 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN stream emits error', () => {
 			const setup = () => {
-				const parentInfo = ParentInfoTestFactory.build({});
+				const parentInfo = ParentInfoTestFactory.build();
 				const fileRecord1 = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				const fileRecord2 = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				const fileRecord3 = fileRecordTestFactory().withParentInfo(parentInfo).build();

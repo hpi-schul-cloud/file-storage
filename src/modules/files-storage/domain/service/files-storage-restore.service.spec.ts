@@ -13,7 +13,7 @@ import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {
-	const parentInfo = ParentInfoTestFactory.build({});
+	const parentInfo = ParentInfoTestFactory.build();
 
 	const yesterday = new Date(Date.now() - 86400000);
 	const fileRecords = fileRecordTestFactory().withDeletedSince(yesterday).withParentInfo(parentInfo).buildList(3);

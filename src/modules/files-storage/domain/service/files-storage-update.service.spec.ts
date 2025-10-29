@@ -84,7 +84,7 @@ describe('FilesStorageService update methods', () => {
 			});
 
 			const setup = () => {
-				const parentInfo = ParentInfoTestFactory.build({});
+				const parentInfo = ParentInfoTestFactory.build();
 				const fileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
 
 				const fileName = 'renamed';
@@ -159,7 +159,7 @@ describe('FilesStorageService update methods', () => {
 			});
 
 			const setup = () => {
-				const parentInfo = ParentInfoTestFactory.build({});
+				const parentInfo = ParentInfoTestFactory.build();
 				const fileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				const fileName = fileRecord.getName();
 

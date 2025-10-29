@@ -15,7 +15,7 @@ import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 
 const buildFileRecordWithParams = (mimeType: string, scanStatus?: ScanStatus) => {
-	const parentInfo = ParentInfoTestFactory.build({});
+	const parentInfo = ParentInfoTestFactory.build();
 	const fileRecord = fileRecordTestFactory().withScanStatus(scanStatus).withParentInfo(parentInfo).build({
 		name: 'text.png',
 		mimeType,
