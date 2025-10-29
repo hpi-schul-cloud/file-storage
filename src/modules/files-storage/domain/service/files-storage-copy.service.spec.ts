@@ -221,18 +221,15 @@ describe('FilesStorageService copy methods', () => {
 
 				const [result1, result2] = await service.copyFilesToParent(userId, [sourceFile1, sourceFile2], parentInfo);
 
-				// @ts-expect-error Testcase
-				expect(result1.id).toBeDefined();
+				expect(result1?.id).toBeDefined();
 
 				const fileResponse1: CopyFileResult = {
-					// @ts-expect-error Testcase
-					id: result1.id,
+					id: result1?.id,
 					sourceId: sourceFile1.id,
 					name: sourceFile1.getName(),
 				};
 
-				// @ts-expect-error Testcase
-				expect(result1.id).not.toEqual(sourceFile1.id);
+				expect(result1?.id).not.toEqual(sourceFile1.id);
 				expect(result1).toEqual(fileResponse1);
 				expect(result2).toEqual(fileResponse2);
 			});
