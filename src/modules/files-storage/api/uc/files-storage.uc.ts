@@ -246,6 +246,7 @@ export class FilesStorageUC {
 
 		if (!result) {
 			// This case is not possible with the current implementation. When filerecord is not found, an 404 error is thrown before.
+			/* istanbul ignore next */
 			throw new InternalServerErrorException(ErrorType.NO_SOURCE_FILE_RECORDS_PROVIDED);
 		}
 
