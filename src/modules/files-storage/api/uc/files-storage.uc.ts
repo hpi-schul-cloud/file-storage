@@ -245,6 +245,7 @@ export class FilesStorageUC {
 		const result = copyFileResults[0];
 
 		if (!result) {
+			// This case is not possible with the current implementation. When filerecord ist not found, an 404 error is thrown before.
 			throw new InternalServerErrorException(ErrorType.NO_SOURCE_FILE_RECORDS_PROVIDED);
 		}
 

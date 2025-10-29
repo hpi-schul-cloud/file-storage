@@ -264,6 +264,15 @@ describe(`${baseRouteName} (api)`, () => {
 				]);
 				expect(response.status).toEqual(400);
 			});
+
+			it('should return status 400 for not found fileRecordId', async () => {
+				const { loggedInClient, copyFileParams } = setup();
+				const fileRecordId = new ObjectId().toHexString();
+
+				const response = await loggedInClient.post(`/copy/${fileRecordId}`, copyFileParams);
+
+				expect(response.status).toEqual(404);
+			});
 		});
 
 		describe(`with valid request data`, () => {
