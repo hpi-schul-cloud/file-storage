@@ -1,6 +1,7 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
 import { RequestLoggingInterceptor } from '@infra/core/interceptor';
 import { ApiValidationError } from '@infra/error';
+import { CurrentDownloadMetricsInterceptor, CurrentUploadMetricsInterceptor } from '@infra/metrics';
 import {
 	BadRequestException,
 	Body,
@@ -80,6 +81,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(CurrentUploadMetricsInterceptor)
 	@Post('/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async upload(
 		@Body() _: FileParams,
@@ -108,6 +110,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 406, type: NotAcceptableException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiHeader({ name: 'Range', required: false })
+	@UseInterceptors(CurrentDownloadMetricsInterceptor)
 	@Get('/download/:fileRecordId/:fileName')
 	public async download(
 		@Param() params: DownloadFileParams,
