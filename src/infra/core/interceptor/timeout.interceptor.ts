@@ -23,13 +23,12 @@ export class TimeoutInterceptor implements NestInterceptor {
 
 		// type of requestTimeoutEnvironmentName is always invalid and can be different
 		const timeoutMS = this.config[requestTimeoutEnvironmentName] ?? this.config[this.defaultConfigKey];
-
-		TypeGuard.checkNumber(timeoutMS);
+		const validTimeoutMS = TypeGuard.checkNumber(timeoutMS);
 
 		const { url } = context.switchToHttp().getRequest<Request>();
 
 		return next.handle().pipe(
-			timeout(timeoutMS),
+			timeout(validTimeoutMS),
 			catchError((err: Error) => {
 				if (err instanceof TimeoutError) {
 					return throwError(() => new RequestTimeoutException(url));

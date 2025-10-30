@@ -320,7 +320,7 @@ describe('FilesStorageConsumer', () => {
 				const result = await service.removeCreatorIdFromFileRecords(creatorId);
 
 				expect(result.message).toHaveLength(fileRecords.length);
-				expect(Object.keys(result.message[0])).toEqual(
+				expect(Object.keys(result.message[0] ?? {})).toEqual(
 					expect.arrayContaining([
 						'id',
 						'name',

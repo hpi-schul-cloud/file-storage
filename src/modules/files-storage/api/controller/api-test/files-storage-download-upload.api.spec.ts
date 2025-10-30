@@ -333,6 +333,17 @@ describe('files-storage controller (API)', () => {
 				]);
 				expect(response.status).toEqual(400);
 			});
+
+			it('should return status 404 for file not found at url', async () => {
+				const { validId, loggedInClient } = setup();
+
+				const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, {
+					url: 'http://localhost:3000/file/download/invalid-id/invalid-file.txt',
+					fileName: 'invalid-file.txt',
+				});
+
+				expect(response.status).toEqual(404);
+			});
 		});
 
 		describe(`with valid request data`, () => {

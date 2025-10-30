@@ -211,17 +211,19 @@ describe('FileRecord', () => {
 			const creatorId = new ObjectId().toHexString();
 			const fileRecords = fileRecordTestFactory().buildList(3, { creatorId });
 
-			return { fileRecords };
+			return { fileRecords, creatorId };
 		};
 
 		it('should mark files for delete', () => {
-			const { fileRecords } = setup();
+			const { fileRecords, creatorId } = setup();
+
+			const creatorIdsBeforeRemove = fileRecords.map((record) => record.getProps().creatorId);
+			expect(creatorIdsBeforeRemove).toEqual([creatorId, creatorId, creatorId]);
 
 			FileRecord.removeCreatorId(fileRecords);
 
-			expect(fileRecords[0].getProps().creatorId).toEqual(undefined);
-			expect(fileRecords[1].getProps().creatorId).toEqual(undefined);
-			expect(fileRecords[2].getProps().creatorId).toEqual(undefined);
+			const creatorIdsAfterRemove = fileRecords.map((record) => record.getProps().creatorId);
+			expect(creatorIdsAfterRemove).toEqual([undefined, undefined, undefined]);
 		});
 	});
 
@@ -235,11 +237,13 @@ describe('FileRecord', () => {
 		it('should mark files for delete', () => {
 			const { fileRecords } = setup();
 
+			const deletedSinceBeforeMark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceBeforeMark).toEqual([undefined, undefined, undefined]);
+
 			FileRecord.markForDelete(fileRecords);
 
-			expect(fileRecords[0].getProps().deletedSince).toEqual(expect.any(Date));
-			expect(fileRecords[1].getProps().deletedSince).toEqual(expect.any(Date));
-			expect(fileRecords[2].getProps().deletedSince).toEqual(expect.any(Date));
+			const deletedSinceAfterMark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceAfterMark).toEqual([expect.any(Date), expect.any(Date), expect.any(Date)]);
 		});
 	});
 
@@ -253,11 +257,13 @@ describe('FileRecord', () => {
 		it('should mark files for delete', () => {
 			const { fileRecords } = setup();
 
+			const deletedSinceBeforeUnmark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceBeforeUnmark).toEqual([expect.any(Date), expect.any(Date), expect.any(Date)]);
+
 			FileRecord.unmarkForDelete(fileRecords);
 
-			expect(fileRecords[0].getProps().deletedSince).toEqual(undefined);
-			expect(fileRecords[1].getProps().deletedSince).toEqual(undefined);
-			expect(fileRecords[2].getProps().deletedSince).toEqual(undefined);
+			const deletedSinceAfterUnmark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceAfterUnmark).toEqual([undefined, undefined, undefined]);
 		});
 	});
 
@@ -299,8 +305,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.getPaths', () => {
 		it('should return paths for all file records', () => {
-			const fileRecord1 = fileRecordTestFactory().build();
-			const fileRecord2 = fileRecordTestFactory().build();
+			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
 			const path1 = fileRecord1.createPath();
 			const path2 = fileRecord2.createPath();
 
@@ -442,17 +447,18 @@ describe('FileRecord', () => {
 	describe('getUniqueParents', () => {
 		describe('WHEN filerRecords has parent duplicates', () => {
 			it('should return a map with unique parentId as key and parentType as value', () => {
-				const fileRecords = [
-					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
-					fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' }),
-					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
-				];
+				const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2, {
+					parentType: FileRecordParentType.User,
+					parentId: 'id1',
+				});
+				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
+				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
 
 				const result = FileRecord.getUniqueParentInfos(fileRecords);
 
 				expect(result.length).toBe(2);
-				expect(result[0]).toEqual(fileRecords[0].getParentInfo());
-				expect(result[1]).toEqual(fileRecords[1].getParentInfo());
+				expect(result[0]).toEqual(fileRecord1.getParentInfo());
+				expect(result[1]).toEqual(fileRecord3.getParentInfo());
 			});
 		});
 
