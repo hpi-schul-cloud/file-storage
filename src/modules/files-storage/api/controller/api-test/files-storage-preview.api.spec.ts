@@ -151,7 +151,7 @@ describe('File Controller (API) - preview', () => {
 
 					expect(result.validationErrors).toEqual([
 						{
-							errors: ['width must be one of the following values: 500'],
+							errors: ['width must be one of the following values: 50, 150, 500'],
 							field: ['width'],
 						},
 					]);
