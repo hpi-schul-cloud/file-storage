@@ -191,9 +191,7 @@ describe('BaseFactory', () => {
 			});
 			const users = factory.buildList(2);
 			expect(users[0]).toBeInstanceOf(User);
-			// @ts-ignore Testcase
 			expect(users[0].email).toEqual('joe-1@example.com');
-			// @ts-ignore Testcase
 			expect(users[1].email).toEqual('joe-2@example.com');
 		});
 
@@ -205,9 +203,7 @@ describe('BaseFactory', () => {
 				};
 			});
 			const users = factory.buildList(2, { nickName: `stewie` });
-			// @ts-ignore Testcase
 			expect(users[0].nickName).toEqual('stewie');
-			// @ts-ignore Testcase
 			expect(users[1].nickName).toEqual('stewie');
 		});
 	});
