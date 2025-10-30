@@ -22,7 +22,6 @@
 		"strictFunctionTypes": true,
 		"strictPropertyInitialization": true,
 		"skipLibCheck": true,
-		"noUncheckedIndexedAccess": true,
 		"paths": {
 			"@shared/*": ["./shared/*"],
 			"@infra/*": ["./infra/*"],
