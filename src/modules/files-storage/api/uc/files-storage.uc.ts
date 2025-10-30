@@ -9,7 +9,7 @@ import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -242,8 +242,15 @@ export class FilesStorageUC {
 		]);
 
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
+		const result = copyFileResults[0];
 
-		return copyFileResults[0];
+		if (!result) {
+			// This case is not possible with the current implementation. When filerecord is not found, an 404 error is thrown before.
+			/* istanbul ignore next */
+			throw new InternalServerErrorException(ErrorType.NO_SOURCE_FILE_RECORDS_PROVIDED);
+		}
+
+		return result;
 	}
 
 	// update
@@ -394,14 +401,15 @@ export class FilesStorageUC {
 
 	private extractSingleParentInfoOrThrow(fileRecords: FileRecord[]): ParentInfo {
 		const uniqueParentInfos = FileRecord.getUniqueParentInfos(fileRecords);
+		const parentInfo = uniqueParentInfos[0];
 
 		if (uniqueParentInfos.length > 1) {
 			throw new ToManyDifferentParentsException(uniqueParentInfos, 1);
-		} else if (uniqueParentInfos.length === 0) {
+		} else if (!parentInfo) {
 			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
-		} else {
-			return uniqueParentInfos[0];
 		}
+
+		return parentInfo;
 	}
 
 	private async checkStorageLocationCanRead(

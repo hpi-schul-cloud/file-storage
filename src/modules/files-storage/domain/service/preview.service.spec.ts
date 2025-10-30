@@ -2,11 +2,10 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { ObjectId } from '@mikro-orm/mongodb';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
-import { FileRecordParamsTestFactory, fileRecordTestFactory, GetFileTestFactory } from '../../testing';
+import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
@@ -16,19 +15,13 @@ import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 
 const buildFileRecordWithParams = (mimeType: string, scanStatus?: ScanStatus) => {
-	const parentId = new ObjectId().toHexString();
-	const storageLocationId = new ObjectId().toHexString();
-
-	const fileRecord = fileRecordTestFactory().withScanStatus(scanStatus).build({
-		parentId,
-		storageLocationId,
+	const parentInfo = ParentInfoTestFactory.build();
+	const fileRecord = fileRecordTestFactory().withScanStatus(scanStatus).withParentInfo(parentInfo).build({
 		name: 'text.png',
 		mimeType,
 	});
 
-	const params = FileRecordParamsTestFactory.buildFromInput({ parentId, storageLocationId });
-
-	return { params, fileRecord, parentId };
+	return { params: parentInfo, fileRecord, parentId: parentInfo.parentId };
 };
 
 const defaultPreviewParams = {
@@ -92,7 +85,7 @@ describe('PreviewService', () => {
 							...defaultPreviewParamsWithWidth,
 							forceUpdate: true,
 						};
-						const format = previewParams.outputFormat.split('/')[1];
+						const format = 'webp';
 
 						const previewFile = GetFileTestFactory.build();
 						s3ClientAdapter.get.mockResolvedValueOnce(previewFile);
@@ -161,7 +154,7 @@ describe('PreviewService', () => {
 							...defaultPreviewParamsWithWidth,
 							forceUpdate: true,
 						};
-						const format = previewParams.outputFormat.split('/')[1];
+						const format = 'webp';
 
 						const previewFile = GetFileTestFactory.build();
 						s3ClientAdapter.get.mockRejectedValueOnce(error).mockResolvedValueOnce(previewFile);
@@ -236,7 +229,7 @@ describe('PreviewService', () => {
 							...defaultPreviewParamsWithWidth,
 							forceUpdate: true,
 						};
-						const format = previewParams.outputFormat.split('/')[1];
+						const format = 'webp';
 
 						const previewFile = GetFileTestFactory.build();
 						const notFoundException = new NotFoundException();
@@ -285,7 +278,7 @@ describe('PreviewService', () => {
 							...defaultPreviewParamsWithWidth,
 							forceUpdate: false,
 						};
-						const format = previewParams.outputFormat.split('/')[1];
+						const format = 'webp';
 
 						const previewFile = GetFileTestFactory.build();
 						s3ClientAdapter.get.mockResolvedValueOnce(previewFile);
@@ -350,7 +343,7 @@ describe('PreviewService', () => {
 							...defaultPreviewParamsWithWidth,
 							forceUpdate: false,
 						};
-						const format = previewParams.outputFormat.split('/')[1];
+						const format = 'webp';
 
 						const previewFile = GetFileTestFactory.build();
 						s3ClientAdapter.get.mockRejectedValueOnce(error).mockResolvedValueOnce(previewFile);
@@ -425,7 +418,7 @@ describe('PreviewService', () => {
 							...defaultPreviewParamsWithWidth,
 							forceUpdate: true,
 						};
-						const format = previewParams.outputFormat.split('/')[1];
+						const format = 'webp';
 
 						const previewFile = GetFileTestFactory.build();
 						const notFoundException = new NotFoundException();
@@ -469,8 +462,8 @@ describe('PreviewService', () => {
 			describe('WHEN MIME Type is not supported', () => {
 				const setup = () => {
 					const bytesRange = 'bytes=0-100';
-					const mimeType = 'application/zip';
-					const format = mimeType.split('/')[1];
+					const format = 'zip';
+					const mimeType = `application/${format}`;
 					const { fileRecord } = buildFileRecordWithParams(mimeType);
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
@@ -507,8 +500,8 @@ describe('PreviewService', () => {
 			describe('WHEN scan status is pending', () => {
 				const setup = () => {
 					const bytesRange = 'bytes=0-100';
-					const mimeType = 'image/png';
-					const format = mimeType.split('/')[1];
+					const format = 'png';
+					const mimeType = `image/${format}`;
 					const { fileRecord } = buildFileRecordWithParams(mimeType, ScanStatus.PENDING);
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
@@ -545,8 +538,8 @@ describe('PreviewService', () => {
 			describe('WHEN scan status is error', () => {
 				const setup = () => {
 					const bytesRange = 'bytes=0-100';
-					const mimeType = 'image/png';
-					const format = mimeType.split('/')[1];
+					const format = 'png';
+					const mimeType = `image/${format}`;
 					const { fileRecord } = buildFileRecordWithParams(mimeType, ScanStatus.ERROR);
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
@@ -583,8 +576,8 @@ describe('PreviewService', () => {
 			describe('WHEN scan status is blocked', () => {
 				const setup = () => {
 					const bytesRange = 'bytes=0-100';
-					const mimeType = 'image/png';
-					const format = mimeType.split('/')[1];
+					const format = 'png';
+					const mimeType = `image/${format}`;
 					const { fileRecord } = buildFileRecordWithParams(mimeType, ScanStatus.BLOCKED);
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 

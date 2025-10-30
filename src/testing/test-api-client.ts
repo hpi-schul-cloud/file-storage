@@ -1,3 +1,4 @@
+import { CreateJwtPayload } from '@infra/auth-guard';
 import { INestApplication } from '@nestjs/common';
 import type { Server } from 'node:net';
 import supertest, { Response } from 'supertest';
@@ -108,14 +109,18 @@ export class TestApiClient {
 	}
 
 	public loginByUser(account: AccountEntity, user: UserEntity): this {
-		const jwt = JwtAuthenticationFactory.createJwt({
+		const jwtParams: CreateJwtPayload = {
 			accountId: account.id,
 			userId: user.id,
 			schoolId: user.school.toHexString(),
-			roles: [user.roles[0].id.toString()],
+			roles: [],
 			support: false,
 			isExternalUser: false,
-		});
+		};
+		const roleId = user.roles[0]?.id.toString();
+		if (roleId) jwtParams.roles.push(roleId);
+
+		const jwt = JwtAuthenticationFactory.createJwt(jwtParams);
 
 		return new (this.constructor as new (app: INestApplication, baseRoute: string, authValue: string) => this)(
 			this.app,

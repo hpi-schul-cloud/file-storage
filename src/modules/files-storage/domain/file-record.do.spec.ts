@@ -8,25 +8,62 @@ import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
 	describe('exceedsCollaboraEditableFileSize', () => {
-		it('should return false if file size is less than collaboraMaxFileSizeInBytes', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const maxSize = fileRecord.sizeInByte + 1;
+		describe('when file has Collabora-compatible MIME type and exceeds max size', () => {
+			it('should return true', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecord.sizeInByte - 1;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(true);
+			});
 		});
 
-		it('should return false if file size is equal to collaboraMaxFileSizeInBytes', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const maxSize = fileRecord.sizeInByte;
+		describe('when file has Collabora-compatible MIME type but does not exceed max size', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecord.sizeInByte + 1;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
 		});
 
-		it('should return true if file size is greater than collaboraMaxFileSizeInBytes', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const maxSize = fileRecord.sizeInByte - 1;
+		describe('when file does have Collabora-compatible MIME type and equals collaboraMaxFileSizeInBytes', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecord.sizeInByte;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(true);
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file does not have Collabora-compatible MIME type and exceeds max size', () => {
+			it('should return false even if it exceeds max size', () => {
+				const fileRecord = fileRecordTestFactory().build({
+					mimeType: 'image/png',
+				});
+				const maxSize = fileRecord.sizeInByte - 1;
+
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file does not have Collabora-compatible MIME type and does not exceed max size', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({
+					mimeType: 'image/png',
+				});
+				const maxSize = fileRecord.sizeInByte + 1;
+
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file does not have Collabora-compatible MIME type and equals collaboraMaxFileSizeInBytes', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: 'image/png' });
+				const maxSize = fileRecord.sizeInByte;
+
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
 		});
 	});
 
@@ -211,17 +248,19 @@ describe('FileRecord', () => {
 			const creatorId = new ObjectId().toHexString();
 			const fileRecords = fileRecordTestFactory().buildList(3, { creatorId });
 
-			return { fileRecords };
+			return { fileRecords, creatorId };
 		};
 
 		it('should mark files for delete', () => {
-			const { fileRecords } = setup();
+			const { fileRecords, creatorId } = setup();
+
+			const creatorIdsBeforeRemove = fileRecords.map((record) => record.getProps().creatorId);
+			expect(creatorIdsBeforeRemove).toEqual([creatorId, creatorId, creatorId]);
 
 			FileRecord.removeCreatorId(fileRecords);
 
-			expect(fileRecords[0].getProps().creatorId).toEqual(undefined);
-			expect(fileRecords[1].getProps().creatorId).toEqual(undefined);
-			expect(fileRecords[2].getProps().creatorId).toEqual(undefined);
+			const creatorIdsAfterRemove = fileRecords.map((record) => record.getProps().creatorId);
+			expect(creatorIdsAfterRemove).toEqual([undefined, undefined, undefined]);
 		});
 	});
 
@@ -235,11 +274,13 @@ describe('FileRecord', () => {
 		it('should mark files for delete', () => {
 			const { fileRecords } = setup();
 
+			const deletedSinceBeforeMark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceBeforeMark).toEqual([undefined, undefined, undefined]);
+
 			FileRecord.markForDelete(fileRecords);
 
-			expect(fileRecords[0].getProps().deletedSince).toEqual(expect.any(Date));
-			expect(fileRecords[1].getProps().deletedSince).toEqual(expect.any(Date));
-			expect(fileRecords[2].getProps().deletedSince).toEqual(expect.any(Date));
+			const deletedSinceAfterMark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceAfterMark).toEqual([expect.any(Date), expect.any(Date), expect.any(Date)]);
 		});
 	});
 
@@ -253,11 +294,13 @@ describe('FileRecord', () => {
 		it('should mark files for delete', () => {
 			const { fileRecords } = setup();
 
+			const deletedSinceBeforeUnmark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceBeforeUnmark).toEqual([expect.any(Date), expect.any(Date), expect.any(Date)]);
+
 			FileRecord.unmarkForDelete(fileRecords);
 
-			expect(fileRecords[0].getProps().deletedSince).toEqual(undefined);
-			expect(fileRecords[1].getProps().deletedSince).toEqual(undefined);
-			expect(fileRecords[2].getProps().deletedSince).toEqual(undefined);
+			const deletedSinceAfterUnmark = fileRecords.map((record) => record.getProps().deletedSince);
+			expect(deletedSinceAfterUnmark).toEqual([undefined, undefined, undefined]);
 		});
 	});
 
@@ -299,8 +342,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.getPaths', () => {
 		it('should return paths for all file records', () => {
-			const fileRecord1 = fileRecordTestFactory().build();
-			const fileRecord2 = fileRecordTestFactory().build();
+			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
 			const path1 = fileRecord1.createPath();
 			const path2 = fileRecord2.createPath();
 
@@ -442,17 +484,18 @@ describe('FileRecord', () => {
 	describe('getUniqueParents', () => {
 		describe('WHEN filerRecords has parent duplicates', () => {
 			it('should return a map with unique parentId as key and parentType as value', () => {
-				const fileRecords = [
-					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
-					fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' }),
-					fileRecordTestFactory().build({ parentType: FileRecordParentType.User, parentId: 'id1' }),
-				];
+				const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2, {
+					parentType: FileRecordParentType.User,
+					parentId: 'id1',
+				});
+				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
+				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
 
 				const result = FileRecord.getUniqueParentInfos(fileRecords);
 
 				expect(result.length).toBe(2);
-				expect(result[0]).toEqual(fileRecords[0].getParentInfo());
-				expect(result[1]).toEqual(fileRecords[1].getParentInfo());
+				expect(result[0]).toEqual(fileRecord1.getParentInfo());
+				expect(result[1]).toEqual(fileRecord3.getParentInfo());
 			});
 		});
 

@@ -102,15 +102,16 @@ describe(`${baseRouteName} (api)`, () => {
 
 			const validId = new ObjectId().toHexString();
 
-			const fileRecords = fileRecordEntityFactory.buildList(2, {
+			const fileRecordParams = {
 				storageLocation: StorageLocation.SCHOOL,
 				storageLocationId: validId,
 				parentId: validId,
 				parentType: FileRecordParentType.School,
-				size: 100,
-			});
+			};
+			const fileRecord1 = fileRecordEntityFactory.setSize(100).build(fileRecordParams);
 			// Set a different size for the second record for a more robust test
-			fileRecords[1].size = 200;
+			const fileRecord2 = fileRecordEntityFactory.setSize(200).build(fileRecordParams);
+			const fileRecords = [fileRecord1, fileRecord2];
 
 			await em.persistAndFlush(fileRecords);
 			em.clear();

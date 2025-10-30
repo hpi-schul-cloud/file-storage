@@ -116,7 +116,7 @@ describe('Decorators', () => {
 				const expectedCurrentUser = {
 					accountId: teacherAccount.id,
 					isExternalUser: false,
-					roles: [teacherUser.roles[0].id],
+					roles: [...teacherUser.roles.map((role) => role.id)],
 					schoolId: teacherUser.school.toHexString(),
 					support: false,
 					userId: teacherUser.id,
