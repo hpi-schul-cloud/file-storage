@@ -73,7 +73,7 @@ describe('FilesStorageService delete methods', () => {
 	describe('delete is called', () => {
 		describe('WHEN valid files exists', () => {
 			const setup = () => {
-				const fileRecords = [...fileRecordTestFactory().buildList(3)];
+				const fileRecords = fileRecordTestFactory().buildList(3);
 
 				fileRecordRepo.save.mockResolvedValueOnce();
 
@@ -132,13 +132,13 @@ describe('FilesStorageService delete methods', () => {
 			it('should pass the error', async () => {
 				const { fileRecords } = setup();
 
-				await expect(service.deleteFiles([...fileRecords])).rejects.toThrow(new Error('bla'));
+				await expect(service.deleteFiles(fileRecords)).rejects.toThrow(new Error('bla'));
 			});
 		});
 
 		describe('WHEN filestorage client throw an error', () => {
 			const setup = () => {
-				const fileRecords = [...fileRecordTestFactory().buildList(3)];
+				const fileRecords = fileRecordTestFactory().buildList(3);
 
 				storageClient.moveToTrash.mockRejectedValueOnce(new Error('bla'));
 

@@ -65,7 +65,7 @@ describe('FilesStorageService delete methods', () => {
 	describe('removeCreatorIdFromFileRecord is called', () => {
 		describe('WHEN valid files exists', () => {
 			const setup = () => {
-				const fileRecords = [...fileRecordTestFactory().buildList(3)];
+				const fileRecords = fileRecordTestFactory().buildList(3);
 
 				fileRecordRepo.findByCreatorId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
 				const spy = jest.spyOn(FileRecord, 'removeCreatorId');
@@ -93,7 +93,7 @@ describe('FilesStorageService delete methods', () => {
 
 		describe('WHEN repository throw an error', () => {
 			const setup = () => {
-				const fileRecords = [...fileRecordTestFactory().buildList(3)];
+				const fileRecords = fileRecordTestFactory().buildList(3);
 
 				fileRecordRepo.save.mockRejectedValueOnce(new Error('bla'));
 

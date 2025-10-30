@@ -111,7 +111,7 @@ describe('FilesStorageService upload methods', () => {
 				parentInfo.parentId
 			);
 			const expectedFileRecord = fileRecord.getProps();
-			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates([...fileRecords], fileRecord.getName());
+			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 			const detectedMimeType = 'image/tiff';
 			expectedFileRecord.mimeType = detectedMimeType;
 
@@ -581,7 +581,7 @@ describe('FilesStorageService upload methods', () => {
 					parentInfo.parentId
 				);
 				const expectedFileRecord = fileRecord.getProps();
-				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates([...fileRecords], fileRecord.getName());
+				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 				const detectedMimeType = 'image/tiff';
 				expectedFileRecord.mimeType = detectedMimeType;
 

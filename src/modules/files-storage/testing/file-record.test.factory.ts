@@ -1,5 +1,4 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import { Tuple } from '@shared/type';
 import { DeepPartial } from 'fishery';
 import { randomUUID } from 'node:crypto';
 import {
@@ -45,14 +44,14 @@ class FileRecordTestFactory {
 		return fileRecord;
 	}
 
-	public buildList<N extends number>(number: N, params: DeepPartial<FileRecordProps> = {}): Tuple<FileRecord, N> {
+	public buildList(number: number, params: DeepPartial<FileRecordProps> = {}): FileRecord[] {
 		const fileRecords: FileRecord[] = [];
 		for (let i = 0; i < number; i += 1) {
 			const fileRecord = this.build(params);
 			fileRecords.push(fileRecord);
 		}
 
-		return fileRecords as Tuple<FileRecord, N>;
+		return fileRecords;
 	}
 
 	public withDeletedSince(date?: Date): this {

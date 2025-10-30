@@ -20,7 +20,7 @@ const buildFileRecordsWithParams = () => {
 	const parentId = new ObjectId().toHexString();
 	const storageLocationId = new ObjectId().toHexString();
 
-	const fileRecords = [...fileRecordTestFactory().buildList(3, { parentId, storageLocationId })];
+	const fileRecords = fileRecordTestFactory().buildList(3, { parentId, storageLocationId });
 
 	return { fileRecords, parentId };
 };

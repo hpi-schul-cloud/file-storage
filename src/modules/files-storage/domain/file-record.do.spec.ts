@@ -209,7 +209,7 @@ describe('FileRecord', () => {
 	describe('FileRecord.resolveFileNameDuplicates', () => {
 		const setup = () => {
 			const creatorId = new ObjectId().toHexString();
-			const fileRecords = [...fileRecordTestFactory().buildList(3, { creatorId })];
+			const fileRecords = fileRecordTestFactory().buildList(3, { creatorId });
 
 			return { fileRecords, creatorId };
 		};
@@ -229,7 +229,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.markForDelete', () => {
 		const setup = () => {
-			const fileRecords = [...fileRecordTestFactory().buildList(3)];
+			const fileRecords = fileRecordTestFactory().buildList(3);
 
 			return { fileRecords };
 		};
@@ -249,7 +249,7 @@ describe('FileRecord', () => {
 
 	describe('FileRecord.unmarkForDelete', () => {
 		const setup = () => {
-			const fileRecords = [...fileRecordTestFactory().withDeletedSince().buildList(3)];
+			const fileRecords = fileRecordTestFactory().withDeletedSince().buildList(3);
 
 			return { fileRecords };
 		};
