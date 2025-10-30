@@ -8,25 +8,62 @@ import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
 	describe('exceedsCollaboraEditableFileSize', () => {
-		it('should return false if file size is less than collaboraMaxFileSizeInBytes', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const maxSize = fileRecord.sizeInByte + 1;
+		describe('when file has Collabora-compatible MIME type and exceeds max size', () => {
+			it('should return true', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecord.sizeInByte - 1;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(true);
+			});
 		});
 
-		it('should return false if file size is equal to collaboraMaxFileSizeInBytes', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const maxSize = fileRecord.sizeInByte;
+		describe('when file has Collabora-compatible MIME type but does not exceed max size', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecord.sizeInByte + 1;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
 		});
 
-		it('should return true if file size is greater than collaboraMaxFileSizeInBytes', () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const maxSize = fileRecord.sizeInByte - 1;
+		describe('when file does have Collabora-compatible MIME type and equals collaboraMaxFileSizeInBytes', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: CollaboraMimeTypes.DOCX });
+				const maxSize = fileRecord.sizeInByte;
 
-			expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(true);
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file does not have Collabora-compatible MIME type and exceeds max size', () => {
+			it('should return false even if it exceeds max size', () => {
+				const fileRecord = fileRecordTestFactory().build({
+					mimeType: 'image/png',
+				});
+				const maxSize = fileRecord.sizeInByte - 1;
+
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file does not have Collabora-compatible MIME type and does not exceed max size', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({
+					mimeType: 'image/png',
+				});
+				const maxSize = fileRecord.sizeInByte + 1;
+
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
+		});
+
+		describe('when file does not have Collabora-compatible MIME type and equals collaboraMaxFileSizeInBytes', () => {
+			it('should return false', () => {
+				const fileRecord = fileRecordTestFactory().build({ mimeType: 'image/png' });
+				const maxSize = fileRecord.sizeInByte;
+
+				expect(fileRecord.exceedsCollaboraEditableFileSize(maxSize)).toBe(false);
+			});
 		});
 	});
 
