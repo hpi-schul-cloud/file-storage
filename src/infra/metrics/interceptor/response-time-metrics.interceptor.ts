@@ -15,6 +15,6 @@ export class ResponseTimeMetricsInterceptor implements NestInterceptor {
 
 		MetricsService.responseTimeMetricHistogram.observe(label, timeInSeconds);
 
-		return next.handle().pipe();
+		return next.handle();
 	}
 }
