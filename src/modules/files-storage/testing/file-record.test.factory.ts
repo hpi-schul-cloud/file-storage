@@ -7,6 +7,7 @@ import {
 	FileRecordParentType,
 	FileRecordProps,
 	FileRecordSecurityCheck,
+	ParentInfo,
 	ScanStatus,
 	StorageLocation,
 } from '../domain';
@@ -67,6 +68,14 @@ class FileRecordTestFactory {
 			requestToken: randomUUID(),
 			updatedAt: new Date(Date.now() - 1000),
 		});
+
+		return this;
+	}
+
+	public withParentInfo(parentInfo: ParentInfo): this {
+		this.props.parentId = parentInfo.parentId;
+		this.props.parentType = parentInfo.parentType;
+		this.props.storageLocationId = parentInfo.storageLocationId;
 
 		return this;
 	}

@@ -11,8 +11,8 @@ import { PassThrough, Readable } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import {
 	fileDtoTestFactory,
-	FileRecordParamsTestFactory,
 	fileRecordTestFactory,
+	ParentInfoTestFactory,
 	readableStreamWithFileTypeFactory,
 } from '../../testing';
 import { FileDto } from '../dto';
@@ -93,7 +93,8 @@ describe('FilesStorageService upload methods', () => {
 
 	describe('uploadFile is called', () => {
 		const createUploadFileParams = (props: { mimeType: string } = { mimeType: 'dto-mime-type' }) => {
-			const { parentInfo: params, fileRecords, parentId: userId } = FileRecordParamsTestFactory.build();
+			const parentInfo = ParentInfoTestFactory.build();
+			const fileRecords = fileRecordTestFactory().withParentInfo(parentInfo).buildList(3);
 
 			const file = createMock<FileDto>();
 			const readable = Readable.from('abc');
@@ -103,7 +104,12 @@ describe('FilesStorageService upload methods', () => {
 
 			const fileSize = 3;
 
-			const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
+			const fileRecord = FileRecordFactory.buildFromExternalInput(
+				file.name,
+				file.mimeType,
+				parentInfo,
+				parentInfo.parentId
+			);
 			const expectedFileRecord = fileRecord.getProps();
 			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 			const detectedMimeType = 'image/tiff';
@@ -125,10 +131,10 @@ describe('FilesStorageService upload methods', () => {
 			});
 
 			return {
-				params,
+				params: parentInfo,
 				file,
 				fileSize,
-				userId,
+				userId: parentInfo.parentId,
 				fileRecord,
 				expectedFileRecord,
 				expectedSecurityCheck,
@@ -562,13 +568,18 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN stream emits error', () => {
 			const setup = () => {
-				const { parentInfo: params, fileRecords, parentId: userId } = FileRecordParamsTestFactory.build();
-
+				const parentInfo = ParentInfoTestFactory.build();
+				const fileRecords = fileRecordTestFactory().withParentInfo(parentInfo).buildList(2);
 				const file = fileDtoTestFactory().build();
 
 				const fileSize = 3;
 
-				const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, params, userId);
+				const fileRecord = FileRecordFactory.buildFromExternalInput(
+					file.name,
+					file.mimeType,
+					parentInfo,
+					parentInfo.parentId
+				);
 				const expectedFileRecord = fileRecord.getProps();
 				expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());
 				const detectedMimeType = 'image/tiff';
@@ -607,9 +618,9 @@ describe('FilesStorageService upload methods', () => {
 				});
 
 				return {
-					params,
+					params: parentInfo,
 					file,
-					userId,
+					userId: parentInfo.parentId,
 					fileSize,
 					expectedFileRecord,
 					expectedSecurityCheck,

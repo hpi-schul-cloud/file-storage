@@ -3,10 +3,9 @@ import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileRecordParamsTestFactory, fileRecordTestFactory } from '../../testing';
+import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FileRecordFactory } from '../factory';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
@@ -14,15 +13,12 @@ import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {
-	const parentId = new ObjectId().toHexString();
-	const storageLocationId = new ObjectId().toHexString();
+	const parentInfo = ParentInfoTestFactory.build();
 
 	const yesterday = new Date(Date.now() - 86400000);
-	const fileRecords = fileRecordTestFactory().withDeletedSince(yesterday).buildList(3, { parentId, storageLocationId });
+	const fileRecords = fileRecordTestFactory().withDeletedSince(yesterday).withParentInfo(parentInfo).buildList(3);
 
-	const params = FileRecordParamsTestFactory.buildFromInput({ parentId, storageLocationId });
-
-	return { params, fileRecords, parentId };
+	return { params: parentInfo, fileRecords, parentId: parentInfo.parentId };
 };
 
 describe('FilesStorageService restore methods', () => {
