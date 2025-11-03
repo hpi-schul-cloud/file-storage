@@ -6,6 +6,8 @@ import { MetricConfig } from './metrics.config';
 export class MetricsService implements OnModuleInit {
 	constructor(private readonly config: MetricConfig) {}
 
+	private static maxConcurrentUploads = 0;
+
 	public onModuleInit(): void {
 		if (this.config.COLLECT_DEFAULT_METRICS) {
 			collectDefaultMetrics();
@@ -21,6 +23,11 @@ export class MetricsService implements OnModuleInit {
 	public static readonly totalUploadsGauge = new Gauge({
 		name: 'file_storage_total_uploads_per_period',
 		help: 'Total number of uploads in the current collection period',
+	});
+
+	public static readonly maxConcurrentUploadsGauge = new Gauge({
+		name: 'file_storage_max_concurrent_uploads',
+		help: 'Maximum number of concurrent uploads in the current collection period',
 	});
 
 	public static readonly currentDownloadsGauge = new Gauge({
@@ -44,8 +51,28 @@ export class MetricsService implements OnModuleInit {
 		this.totalUploadsGauge.inc();
 	}
 
+	public static async updateMaxConcurrentUploads(): Promise<void> {
+		const currentMetric = await this.currentUploadsGauge.get();
+		let currentValue = 0;
+
+		// Handle the metric object structure
+		if (currentMetric?.values?.length > 0) {
+			currentValue = currentMetric.values[0].value as number;
+		}
+
+		if (currentValue > this.maxConcurrentUploads) {
+			this.maxConcurrentUploads = currentValue;
+			this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
+		}
+	}
+
 	public static resetTotalUploads(): void {
 		this.totalUploadsGauge.set(0);
+	}
+
+	public static resetMaxConcurrentUploads(): void {
+		this.maxConcurrentUploads = 0;
+		this.maxConcurrentUploadsGauge.set(0);
 	}
 
 	private static setupMetricsReset(): void {
@@ -57,6 +84,7 @@ export class MetricsService implements OnModuleInit {
 			// Schedule reset after metrics are returned
 			setImmediate(() => {
 				MetricsService.resetTotalUploads();
+				MetricsService.resetMaxConcurrentUploads();
 			});
 
 			return metrics;
