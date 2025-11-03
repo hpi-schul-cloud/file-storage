@@ -7,6 +7,7 @@ export class MetricsService implements OnModuleInit {
 	constructor(private readonly config: MetricConfig) {}
 
 	private static maxConcurrentUploads = 0;
+	private static currentUploadsCount = 0;
 
 	public onModuleInit(): void {
 		if (this.config.COLLECT_DEFAULT_METRICS) {
@@ -47,21 +48,24 @@ export class MetricsService implements OnModuleInit {
 		return metrics;
 	}
 
+	public static incrementCurrentUploads(): void {
+		this.currentUploadsCount++;
+		this.currentUploadsGauge.inc();
+		this.updateMaxConcurrentUploads();
+	}
+
+	public static decrementCurrentUploads(): void {
+		this.currentUploadsCount--;
+		this.currentUploadsGauge.dec();
+	}
+
 	public static updateTotalUploads(): void {
 		this.totalUploadsGauge.inc();
 	}
 
-	public static async updateMaxConcurrentUploads(): Promise<void> {
-		const currentMetric = await this.currentUploadsGauge.get();
-		let currentValue = 0;
-
-		// Handle the metric object structure
-		if (currentMetric?.values?.length > 0) {
-			currentValue = currentMetric.values[0].value as number;
-		}
-
-		if (currentValue > this.maxConcurrentUploads) {
-			this.maxConcurrentUploads = currentValue;
+	public static updateMaxConcurrentUploads(): void {
+		if (this.currentUploadsCount > this.maxConcurrentUploads) {
+			this.maxConcurrentUploads = this.currentUploadsCount;
 			this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
 		}
 	}
@@ -71,17 +75,16 @@ export class MetricsService implements OnModuleInit {
 	}
 
 	public static resetMaxConcurrentUploads(): void {
-		this.maxConcurrentUploads = 0;
-		this.maxConcurrentUploadsGauge.set(0);
+		this.maxConcurrentUploads = this.currentUploadsCount;
+		this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
 	}
 
 	private static setupMetricsReset(): void {
-		// Override the getMetrics method to include reset logic
 		const originalGetMetrics = register.metrics.bind(register);
 
 		register.metrics = async (): Promise<string> => {
 			const metrics = await originalGetMetrics();
-			// Schedule reset after metrics are returned
+
 			setImmediate(() => {
 				MetricsService.resetTotalUploads();
 				MetricsService.resetMaxConcurrentUploads();
