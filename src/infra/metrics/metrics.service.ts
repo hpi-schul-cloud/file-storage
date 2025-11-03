@@ -10,11 +10,17 @@ export class MetricsService implements OnModuleInit {
 		if (this.config.COLLECT_DEFAULT_METRICS) {
 			collectDefaultMetrics();
 		}
+		MetricsService.setupMetricsReset();
 	}
 
 	public static readonly currentUploadsGauge = new Gauge({
 		name: 'file_storage_current_uploads',
 		help: 'Number of current file uploads',
+	});
+
+	public static readonly totalUploadsGauge = new Gauge({
+		name: 'file_storage_total_uploads_per_period',
+		help: 'Total number of uploads in the current collection period',
 	});
 
 	public static readonly currentDownloadsGauge = new Gauge({
@@ -32,5 +38,28 @@ export class MetricsService implements OnModuleInit {
 		const metrics = await register.metrics();
 
 		return metrics;
+	}
+
+	public static updateTotalUploads(): void {
+		this.totalUploadsGauge.inc();
+	}
+
+	public static resetTotalUploads(): void {
+		this.totalUploadsGauge.set(0);
+	}
+
+	private static setupMetricsReset(): void {
+		// Override the getMetrics method to include reset logic
+		const originalGetMetrics = register.metrics.bind(register);
+
+		register.metrics = async (): Promise<string> => {
+			const metrics = await originalGetMetrics();
+			// Schedule reset after metrics are returned
+			setImmediate(() => {
+				MetricsService.resetTotalUploads();
+			});
+
+			return metrics;
+		};
 	}
 }

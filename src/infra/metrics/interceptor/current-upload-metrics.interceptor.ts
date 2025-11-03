@@ -7,6 +7,7 @@ import { MetricsService } from '../metrics.service';
 export class CurrentUploadMetricsInterceptor implements NestInterceptor {
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		MetricsService.currentUploadsGauge.inc();
+		MetricsService.updateTotalUploads();
 
 		return next.handle().pipe(
 			finalize(() => {
