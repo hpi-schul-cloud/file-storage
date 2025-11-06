@@ -14,11 +14,11 @@ async function bootstrap(): Promise<void> {
 		transport: Transport.KAFKA,
 		options: {
 			client: {
-				clientId: 'files-storage-kafka-consumer',
+				clientId: 'files-storage',
 				brokers: ['localhost:9092'],
 			},
 			consumer: {
-				groupId: 'svs-server-group',
+				groupId: 'files-storage-consumer',
 			},
 		},
 	});
