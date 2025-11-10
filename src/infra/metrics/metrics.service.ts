@@ -16,16 +16,6 @@ export class MetricsService implements OnModuleInit {
 		MetricsService.setupMetricsReset();
 	}
 
-	public static readonly currentUploadsGauge = new Gauge({
-		name: 'file_storage_current_uploads',
-		help: 'Number of current file uploads',
-	});
-
-	public static readonly totalUploadsGauge = new Gauge({
-		name: 'file_storage_total_uploads_per_period',
-		help: 'Total number of uploads in the current collection period',
-	});
-
 	public static readonly maxConcurrentUploadsGauge = new Gauge({
 		name: 'file_storage_max_concurrent_uploads',
 		help: 'Maximum number of concurrent uploads in the current collection period',
@@ -50,17 +40,11 @@ export class MetricsService implements OnModuleInit {
 
 	public static incrementCurrentUploads(): void {
 		this.currentUploadsCount++;
-		this.currentUploadsGauge.inc();
 		this.updateMaxConcurrentUploads();
 	}
 
 	public static decrementCurrentUploads(): void {
 		this.currentUploadsCount--;
-		this.currentUploadsGauge.dec();
-	}
-
-	public static updateTotalUploads(): void {
-		this.totalUploadsGauge.inc();
 	}
 
 	public static updateMaxConcurrentUploads(): void {
@@ -68,10 +52,6 @@ export class MetricsService implements OnModuleInit {
 			this.maxConcurrentUploads = this.currentUploadsCount;
 			this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
 		}
-	}
-
-	public static resetTotalUploads(): void {
-		this.totalUploadsGauge.set(0);
 	}
 
 	public static resetMaxConcurrentUploads(): void {
@@ -86,7 +66,6 @@ export class MetricsService implements OnModuleInit {
 			const metrics = await originalGetMetrics();
 
 			setImmediate(() => {
-				MetricsService.resetTotalUploads();
 				MetricsService.resetMaxConcurrentUploads();
 			});
 
