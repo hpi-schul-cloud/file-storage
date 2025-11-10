@@ -6,11 +6,11 @@ import { MetricsService } from '../metrics.service';
 @Injectable()
 export class CurrentDownloadMetricsInterceptor implements NestInterceptor {
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-		MetricsService.currentDownloadsGauge.inc();
+		MetricsService.incrementCurrentDownloads();
 
 		return next.handle().pipe(
 			finalize(() => {
-				MetricsService.currentDownloadsGauge.dec();
+				MetricsService.decrementCurrentDownloads();
 			})
 		);
 	}

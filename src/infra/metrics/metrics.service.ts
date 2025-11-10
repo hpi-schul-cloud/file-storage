@@ -8,6 +8,8 @@ export class MetricsService implements OnModuleInit {
 
 	private static maxConcurrentUploads = 0;
 	private static currentUploadsCount = 0;
+	private static maxConcurrentDownloads = 0;
+	private static currentDownloadsCount = 0;
 
 	public onModuleInit(): void {
 		if (this.config.COLLECT_DEFAULT_METRICS) {
@@ -21,9 +23,9 @@ export class MetricsService implements OnModuleInit {
 		help: 'Maximum number of concurrent uploads in the current collection period',
 	});
 
-	public static readonly currentDownloadsGauge = new Gauge({
-		name: 'file_storage_current_downloads',
-		help: 'Number of current file downloads',
+	public static readonly maxConcurrentDownloadsGauge = new Gauge({
+		name: 'file_storage_max_concurrent_downloads',
+		help: 'Maximum number of concurrent downloads in the current collection period',
 	});
 
 	public static readonly responseTimeMetricHistogram = new Histogram({
@@ -59,6 +61,27 @@ export class MetricsService implements OnModuleInit {
 		this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
 	}
 
+	public static incrementCurrentDownloads(): void {
+		this.currentDownloadsCount++;
+		this.updateMaxConcurrentDownloads();
+	}
+
+	public static decrementCurrentDownloads(): void {
+		this.currentDownloadsCount--;
+	}
+
+	public static updateMaxConcurrentDownloads(): void {
+		if (this.currentDownloadsCount > this.maxConcurrentDownloads) {
+			this.maxConcurrentDownloads = this.currentDownloadsCount;
+			this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
+		}
+	}
+
+	public static resetMaxConcurrentDownloads(): void {
+		this.maxConcurrentDownloads = this.currentDownloadsCount;
+		this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
+	}
+
 	private static setupMetricsReset(): void {
 		const originalGetMetrics = register.metrics.bind(register);
 
@@ -67,6 +90,7 @@ export class MetricsService implements OnModuleInit {
 
 			setImmediate(() => {
 				MetricsService.resetMaxConcurrentUploads();
+				MetricsService.resetMaxConcurrentDownloads();
 			});
 
 			return metrics;
