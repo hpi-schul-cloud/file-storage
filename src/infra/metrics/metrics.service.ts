@@ -18,12 +18,12 @@ export class MetricsService implements OnModuleInit {
 		MetricsService.setupMetricsReset();
 	}
 
-	public static readonly maxConcurrentUploadsGauge = new Gauge({
+	private static readonly maxConcurrentUploadsGauge = new Gauge({
 		name: 'file_storage_max_concurrent_uploads',
 		help: 'Maximum number of concurrent uploads in the current collection period',
 	});
 
-	public static readonly maxConcurrentDownloadsGauge = new Gauge({
+	private static readonly maxConcurrentDownloadsGauge = new Gauge({
 		name: 'file_storage_max_concurrent_downloads',
 		help: 'Maximum number of concurrent downloads in the current collection period',
 	});
