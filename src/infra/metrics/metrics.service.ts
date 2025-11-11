@@ -1,0 +1,99 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { collectDefaultMetrics, Gauge, Histogram, register } from 'prom-client';
+import { MetricConfig } from './metrics.config';
+
+@Injectable()
+export class MetricsService implements OnModuleInit {
+	constructor(private readonly config: MetricConfig) {}
+
+	private static maxConcurrentUploads = 0;
+	private static currentUploadsCount = 0;
+	private static maxConcurrentDownloads = 0;
+	private static currentDownloadsCount = 0;
+
+	public onModuleInit(): void {
+		if (this.config.COLLECT_DEFAULT_METRICS) {
+			collectDefaultMetrics();
+		}
+		MetricsService.setupMetricsReset();
+	}
+
+	private static readonly maxConcurrentUploadsGauge = new Gauge({
+		name: 'file_storage_max_concurrent_uploads',
+		help: 'Maximum number of concurrent uploads in the current collection period',
+	});
+
+	private static readonly maxConcurrentDownloadsGauge = new Gauge({
+		name: 'file_storage_max_concurrent_downloads',
+		help: 'Maximum number of concurrent downloads in the current collection period',
+	});
+
+	public static readonly responseTimeMetricHistogram = new Histogram({
+		name: 'sc_api_response_time_in_seconds',
+		help: 'SC API response time in seconds',
+		labelNames: ['method', 'base_url', 'full_path', 'route_path', 'status_code'],
+	});
+
+	public async getMetrics(): Promise<string> {
+		const metrics = await register.metrics();
+
+		return metrics;
+	}
+
+	public static incrementCurrentUploads(): void {
+		this.currentUploadsCount++;
+		this.updateMaxConcurrentUploads();
+	}
+
+	public static decrementCurrentUploads(): void {
+		this.currentUploadsCount--;
+	}
+
+	public static updateMaxConcurrentUploads(): void {
+		if (this.currentUploadsCount > this.maxConcurrentUploads) {
+			this.maxConcurrentUploads = this.currentUploadsCount;
+			this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
+		}
+	}
+
+	public static resetMaxConcurrentUploads(): void {
+		this.maxConcurrentUploads = this.currentUploadsCount;
+		this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
+	}
+
+	public static incrementCurrentDownloads(): void {
+		this.currentDownloadsCount++;
+		this.updateMaxConcurrentDownloads();
+	}
+
+	public static decrementCurrentDownloads(): void {
+		this.currentDownloadsCount--;
+	}
+
+	public static updateMaxConcurrentDownloads(): void {
+		if (this.currentDownloadsCount > this.maxConcurrentDownloads) {
+			this.maxConcurrentDownloads = this.currentDownloadsCount;
+			this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
+		}
+	}
+
+	public static resetMaxConcurrentDownloads(): void {
+		this.maxConcurrentDownloads = this.currentDownloadsCount;
+		this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
+	}
+
+	private static setupMetricsReset(): void {
+		const originalGetMetrics = register.metrics.bind(register);
+
+		register.metrics = async (): Promise<string> => {
+			const metrics = await originalGetMetrics();
+
+			setImmediate(() => {
+				MetricsService.resetMaxConcurrentUploads();
+				MetricsService.resetMaxConcurrentDownloads();
+			});
+
+			return metrics;
+		};
+	}
+}
