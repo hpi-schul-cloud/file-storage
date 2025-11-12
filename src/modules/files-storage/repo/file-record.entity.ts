@@ -15,6 +15,14 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 @Index({ properties: ['storageLocation', 'storageLocationId'], options: { background: true } })
 // https://github.com/mikro-orm/mikro-orm/issues/1230
 @Index({ options: { 'securityCheck.requestToken': 1 } })
+@Index({
+	name: 'isUploading_ttl_idx',
+	properties: ['createdAt'],
+	options: {
+		expireAfterSeconds: 86400, // 24 Stunden
+		partialFilterExpression: { isUploading: true },
+	},
+})
 export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRecordProps {
 	@Index({ options: { expireAfterSeconds: 7 * 24 * 60 * 60 } })
 	@Property({ nullable: true })

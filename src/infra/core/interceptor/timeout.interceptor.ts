@@ -1,4 +1,4 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor, RequestTimeoutException } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TypeGuard } from '@shared/guard';
 import { Observable, throwError, TimeoutError } from 'rxjs';
@@ -25,13 +25,19 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const timeoutMS = this.config[requestTimeoutEnvironmentName] ?? this.config[this.defaultConfigKey];
 		const validTimeoutMS = TypeGuard.checkNumber(timeoutMS);
 
-		const { url } = context.switchToHttp().getRequest<Request>();
+		const request = context.switchToHttp().getRequest<Request>();
+		const response = context.switchToHttp().getResponse();
+		const { url } = request;
 
 		return next.handle().pipe(
 			timeout(validTimeoutMS),
 			catchError((err: Error) => {
 				if (err instanceof TimeoutError) {
-					return throwError(() => new RequestTimeoutException(`url: ${url} - Request timed out after ${timeoutMS}ms`));
+					// Set proper headers to prevent browser retry
+					response.setHeader('Connection', 'close');
+					response.setHeader('Cache-Control', 'no-store');
+
+					return throwError(() => new NotFoundException(`url: ${url} - Request timed out after ${timeoutMS}ms`));
 				}
 
 				return throwError(() => err);
