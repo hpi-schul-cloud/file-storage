@@ -17,6 +17,10 @@
       "type": "application",
       "entryFile": "apps/files-storage-consumer.app"
     },
+    "files-storage-kafka": {
+      "type": "application",
+      "entryFile": "apps/files-storage-kafka.app"
+    },
     "preview-generator-amqp": {
       "type": "application",
       "entryFile": "apps/preview-generator-consumer.app"
