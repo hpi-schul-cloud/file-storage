@@ -225,7 +225,7 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const streamCompletion = this.awaitStreamCompletion(file.data, file.abortSignal);
+		const streamCompletion = this.awaitStreamCompletion(file);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
 
@@ -268,11 +268,12 @@ export class FilesStorageService {
 		}
 	}
 
-	private awaitStreamCompletion(stream: Readable, abortSignal?: AbortSignal): Promise<void> {
+	private awaitStreamCompletion(file: FileDto): Promise<void> {
+		const { data, abortSignal } = file;
+
 		return new Promise((resolve, reject) => {
-			// Handle abort signal
 			if (abortSignal?.aborted) {
-				resolve(); // Already aborted, treat as completed
+				resolve();
 
 				return;
 			}
@@ -285,27 +286,27 @@ export class FilesStorageService {
 
 			const onAbort = (): void => {
 				cleanup();
-				resolve(); // Stream aborted, treat as completed (not an error)
+				resolve();
 			};
 
 			if (abortSignal) {
 				abortSignal.addEventListener('abort', onAbort);
 			}
 
-			stream.on('end', () => {
+			data.on('end', () => {
 				cleanup();
 				resolve();
 			});
 
-			stream.on('error', (error) => {
+			data.on('error', (error) => {
 				cleanup();
 				reject(error);
 			});
 
-			stream.on('close', () => {
+			data.on('close', () => {
 				cleanup();
-				if (stream.destroyed && !stream.readableEnded) {
-					resolve(); // Stream wurde abrupt beendet, aber das ist ok
+				if (data.destroyed && !data.readableEnded) {
+					resolve();
 				}
 			});
 		});
