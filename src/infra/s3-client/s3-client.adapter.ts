@@ -427,7 +427,6 @@ export class S3ClientAdapter {
 			}
 		};
 
-		// Handle source stream events
 		sourceStream.on('data', refreshTimeout);
 		sourceStream.on('error', (error) => {
 			this.logger.warning(
@@ -445,7 +444,6 @@ export class S3ClientAdapter {
 		sourceStream.on('close', cleanup);
 		sourceStream.on('end', cleanup);
 
-		// Handle passthrough stream events
 		passthroughStream.on('error', (error) => {
 			this.logger.warning(
 				new S3ClientActionLoggable(`Passthrough stream error: ${error.message}`, {
@@ -461,27 +459,11 @@ export class S3ClientAdapter {
 		});
 		passthroughStream.on('close', cleanup);
 
-		// Start the timeout
 		refreshTimeout();
 	}
 
 	/* istanbul ignore next */
 	private setupUploadErrorHandling(upload: Upload, context: string, file: File): void {
-		// Handle upload progress and errors
-		upload.on('httpUploadProgress', (progress) => {
-			if (progress.loaded && progress.total) {
-				const percentage = Math.round((progress.loaded / progress.total) * 100);
-				this.logger.debug(
-					new S3ClientActionLoggable(`Upload progress: ${percentage}%`, {
-						action: 'uploadProgress',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
-			}
-		});
-
-		// Handle request abortion via AbortSignal
 		if (file.abortSignal) {
 			file.abortSignal.addEventListener('abort', () => {
 				this.logger.warning(
@@ -492,11 +474,9 @@ export class S3ClientAdapter {
 					})
 				);
 
-				// Abort the upload when request is cancelled
 				upload.abort();
 			});
 
-			// Check if already aborted
 			if (file.abortSignal.aborted) {
 				this.logger.warning(
 					new S3ClientActionLoggable('Upload aborted - signal already triggered', {
@@ -511,7 +491,6 @@ export class S3ClientAdapter {
 			}
 		}
 
-		// If the file.data is a stream, handle stream errors
 		if (file.data && typeof file.data === 'object' && 'on' in file.data) {
 			const stream = file.data as Readable;
 
@@ -524,7 +503,6 @@ export class S3ClientAdapter {
 					})
 				);
 
-				// Abort the upload on stream error
 				upload.abort();
 			});
 
