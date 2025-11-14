@@ -1,5 +1,5 @@
 import { CurrentUser, ICurrentUser, JwtAuthentication } from '@infra/auth-guard';
-import { RequestLoggingInterceptor, UploadMonitorInterceptor } from '@infra/core/interceptor';
+import { RequestLoggingInterceptor } from '@infra/core/interceptor';
 import { ApiValidationError } from '@infra/error';
 import { CurrentDownloadMetricsInterceptor, CurrentUploadMetricsInterceptor } from '@infra/metrics';
 import {
@@ -81,8 +81,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiConsumes('multipart/form-data')
-	@UseInterceptors(CurrentUploadMetricsInterceptor, UploadMonitorInterceptor)
-	@RequestTimeout('INCOMING_REQUEST_TIMEOUT_UPLOAD_MS')
+	@UseInterceptors(CurrentUploadMetricsInterceptor)
 	@Post('/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async upload(
 		@Body() _: FileParams,
@@ -90,9 +89,9 @@ export class FilesStorageController {
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request
 	): Promise<FileRecordResponse> {
-		const uploadResponse = await this.filesStorageUC.upload(currentUser.userId, params, req);
+		const upload = await this.filesStorageUC.upload(currentUser.userId, params, req);
 
-		return uploadResponse;
+		return upload;
 	}
 
 	@ApiOperation({ summary: 'Streamable download of a binary file.' })
