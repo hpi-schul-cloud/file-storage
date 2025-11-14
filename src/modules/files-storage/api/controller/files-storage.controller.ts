@@ -89,9 +89,9 @@ export class FilesStorageController {
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request
 	): Promise<FileRecordResponse> {
-		const upload = await this.filesStorageUC.upload(currentUser.userId, params, req);
+		const response = await this.filesStorageUC.upload(currentUser.userId, params, req);
 
-		return upload;
+		return response;
 	}
 
 	@ApiOperation({ summary: 'Streamable download of a binary file.' })
