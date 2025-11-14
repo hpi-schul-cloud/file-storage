@@ -4,7 +4,7 @@ import { TypeGuard } from '@shared/guard';
 import { Request, Response } from 'express';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
-import { TimeoutInterceptorConfig } from './interfaces';
+import { TimeoutAbortRequest, TimeoutInterceptorConfig } from './interfaces';
 
 /**
  * This interceptor leaves the request execution after a given timeout in ms.
@@ -34,8 +34,7 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const abortController = new AbortController();
 
 		// Store the abort controller on the request so upload handlers can access it
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(request as any).timeoutAbortController = abortController;
+		(request as TimeoutAbortRequest).timeoutAbortController = abortController;
 
 		return next.handle().pipe(
 			timeout(validTimeoutMS),
