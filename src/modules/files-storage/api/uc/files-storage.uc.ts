@@ -7,7 +7,7 @@ import {
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
-import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
+import { ToManyDifferentParentsException, UploadAbortLoggable } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
@@ -75,28 +75,11 @@ export class FilesStorageUC {
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		try {
-			const fileRecord = await this.uploadFileWithBusboy(userId, params, req);
-			const status = this.filesStorageService.getFileRecordStatus(fileRecord);
-			const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req);
+		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
-			return fileRecordResponse;
-		} catch (error) {
-			// Handle busboy-related errors gracefully
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			if (
-				errorMessage.includes('Unexpected end of file') ||
-				errorMessage.includes('Upload interrupted by client') ||
-				errorMessage.includes('Request aborted') ||
-				errorMessage.includes('Request closed prematurely')
-			) {
-				// This is expected behavior during Firefox timeouts
-				throw new InternalServerErrorException('Upload was interrupted by client timeout');
-			}
-
-			// Re-throw other errors
-			throw error;
-		}
+		return fileRecordResponse;
 	}
 
 	public async uploadFromUrl(userId: EntityId, params: FileRecordParams & FileUrlParams): Promise<FileRecordResponse> {
@@ -335,96 +318,64 @@ export class FilesStorageUC {
 	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecord> {
 		const promise = new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
-			let fileRecordPromise: Promise<FileRecord>;
-			let isProcessing = false;
-			let uploadAborted = false;
+			const abortController = new AbortController();
+			let fileRecordPromise: Promise<void | FileRecord>;
 
-			// Early abort check - universal for all browsers
 			if (!req.readable || req.destroyed) {
+				abortController.abort();
 				reject(new Error('Request already aborted before processing'));
 
 				return;
 			}
 
-			bb.on('file', (_name, file, info) => {
-				// Double-check for aborted requests before creating FileRecord
-				if (isProcessing || uploadAborted || !req.readable) {
-					file.destroy();
-
-					return;
-				}
-				isProcessing = true;
-
-				// Check once more if request is still active
-				if (req.destroyed || req.aborted) {
-					file.destroy();
-					uploadAborted = true;
-					reject(new Error('Request was aborted before file processing started'));
-
-					return;
-				}
-
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file);
-
-				fileRecordPromise = RequestContext.create(this.em, () => {
-					// Final check before creating FileRecord
-					if (uploadAborted || req.destroyed) {
-						throw new Error('Upload aborted before FileRecord creation');
-					}
-
-					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
-
-					return record;
+			// Listen for timeout signal from TimeoutInterceptor
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const timeoutAbortController = (req as any).timeoutAbortController as AbortController;
+			if (timeoutAbortController) {
+				timeoutAbortController.signal.addEventListener('abort', () => {
+					abortController.abort();
+					this.logger.warning(new UploadAbortLoggable('Upload request was aborted due to timeout', 'request_timeout'));
+					reject(new Error('Request timed out during upload processing'));
 				});
+			}
+
+			req.on('close', () => {
+				if (!req.complete) {
+					abortController.abort();
+					this.logger.warning(
+						new UploadAbortLoggable('Upload request was closed prematurely by client', 'request_closed')
+					);
+				}
 			});
 
-			bb.on('finish', () => {
-				if (uploadAborted) {
-					reject(new Error('Upload was aborted during processing'));
+			req.on('aborted', () => {
+				abortController.abort();
+				this.logger.warning(new UploadAbortLoggable('Upload request was aborted by client', 'request_aborted'));
+			});
 
-					return;
-				}
+			bb.on('file', (_name, file, info) => {
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal);
 
-				if (fileRecordPromise) {
-					fileRecordPromise
-						.then((result) => resolve(result))
+				fileRecordPromise = RequestContext.create(this.em, () => {
+					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
+
+					return record
+						.then((result) => result)
 						.catch((error) => {
 							req.unpipe(bb);
 							reject(new Error('Error by stream uploading', { cause: error }));
 						});
-				} else {
-					reject(new Error('No file received in upload'));
-				}
+				});
 			});
 
-			// Handle request aborted/timeout - avoid destroying busboy
-			req.on('aborted', () => {
-				uploadAborted = true;
-				this.safeCleanupBusboy(bb, req);
-				reject(new Error('Request aborted by client'));
-			});
-
-			req.on('close', () => {
-				if (!req.complete) {
-					uploadAborted = true;
-					this.safeCleanupBusboy(bb, req);
-					reject(new Error('Request closed prematurely during upload'));
-				}
-			});
-
-			// Handle busboy errors gracefully
-			bb.on('error', (error) => {
-				if (!uploadAborted) {
-					uploadAborted = true;
-					req.unpipe(bb);
-
-					// Check if this is the "Unexpected end of file" error
-					const errorMessage = error instanceof Error ? error.message : String(error);
-					if (errorMessage.includes('Unexpected end of file')) {
-						reject(new Error('Upload interrupted by client (browser timeout/abort)'));
-					} else {
-						reject(new Error('Upload parsing error', { cause: error }));
-					}
+			bb.on('finish', () => {
+				if (fileRecordPromise) {
+					fileRecordPromise
+						.then((result) => resolve(result as FileRecord))
+						.catch((error) => {
+							req.unpipe(bb);
+							reject(new Error('Error by stream uploading', { cause: error }));
+						});
 				}
 			});
 
@@ -432,47 +383,6 @@ export class FilesStorageUC {
 		});
 
 		return promise;
-	}
-
-	private gracefullyCloseBusboy(bb: busboy.Busboy, req: Request): void {
-		try {
-			// First unpipe to stop new data
-			if (req.readable) {
-				req.unpipe(bb);
-			}
-
-			// Don't destroy busboy at all - just let it finish naturally
-			// The uncaught exception happens when we try to destroy an already errored stream
-			// Instead, just remove all listeners and let garbage collection handle it
-			bb.removeAllListeners();
-
-			// Mark as ended to prevent further processing
-			if (!bb.destroyed && typeof bb.end === 'function') {
-				try {
-					bb.end();
-				} catch {
-					// Silent fail
-				}
-			}
-		} catch {
-			// Ignore errors during graceful close - silent fail
-		}
-	}
-
-	private safeCleanupBusboy(bb: busboy.Busboy, req: Request): void {
-		try {
-			// Only unpipe - never destroy busboy when there might be errors
-			if (req.readable) {
-				req.unpipe(bb);
-			}
-
-			// Remove listeners to prevent further events
-			bb.removeAllListeners('file');
-			bb.removeAllListeners('finish');
-			bb.removeAllListeners('error');
-		} catch {
-			// Silent fail - cleanup errors are expected
-		}
 	}
 
 	private async getResponse(

@@ -1,6 +1,7 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor, NotFoundException } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor, RequestTimeoutException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TypeGuard } from '@shared/guard';
+import { Request, Response } from 'express';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TimeoutInterceptorConfig } from './interfaces';
@@ -26,18 +27,38 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const validTimeoutMS = TypeGuard.checkNumber(timeoutMS);
 
 		const request = context.switchToHttp().getRequest<Request>();
-		const response = context.switchToHttp().getResponse();
+		const response = context.switchToHttp().getResponse<Response>();
 		const { url } = request;
+
+		// Create AbortController to signal timeout to the application
+		const abortController = new AbortController();
+
+		// Store the abort controller on the request so upload handlers can access it
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(request as any).timeoutAbortController = abortController;
 
 		return next.handle().pipe(
 			timeout(validTimeoutMS),
 			catchError((err: Error) => {
 				if (err instanceof TimeoutError) {
+					// Signal timeout to all stream operations
+					abortController.abort();
+
 					// Set proper headers to prevent browser retry
 					response.setHeader('Connection', 'close');
 					response.setHeader('Cache-Control', 'no-store');
 
-					return throwError(() => new NotFoundException(`url: ${url} - Request timed out after ${timeoutMS}ms`));
+					// Give streams a moment to cleanup before throwing
+					setTimeout(() => {
+						// Mark request as no longer readable to prevent further processing
+						if (request.readable) {
+							request.destroy();
+						}
+					}, 10);
+
+					return throwError(
+						() => new RequestTimeoutException(`url: ${url} - Request timed out after ${validTimeoutMS}ms`)
+					);
 				}
 
 				return throwError(() => err);

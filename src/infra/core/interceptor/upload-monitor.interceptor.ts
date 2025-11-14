@@ -6,7 +6,7 @@ import {
 	NestInterceptor,
 	RequestTimeoutException,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
@@ -21,7 +21,7 @@ export class UploadMonitorInterceptor implements NestInterceptor {
 
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		const request = context.switchToHttp().getRequest<Request>();
-		const response = context.switchToHttp().getResponse();
+		const response = context.switchToHttp().getResponse<Response>();
 		const uploadId = this.generateUploadId(request);
 
 		// Check if this is likely a browser retry (Firefox issue)
