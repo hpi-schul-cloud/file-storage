@@ -8,7 +8,6 @@ import { install as sourceMapInstall } from 'source-map-support';
 import { Logger, LoggerConfig } from '@infra/logger';
 import { MetricsModule, ResponseTimeMetricsInterceptor } from '@infra/metrics';
 import { FilesStorageAppModule } from '@modules/files-storage-app';
-import { RequestTimeoutConfig } from '@modules/files-storage-app/files-storage-app.config';
 import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
 
 async function bootstrap(): Promise<void> {
@@ -39,8 +38,7 @@ async function bootstrap(): Promise<void> {
 		logger.info(appStartLoggable);
 	});
 
-	const conf = await nestApp.resolve(RequestTimeoutConfig);
-	svr.requestTimeout = conf.CORE_INCOMING_REQUEST_TIMEOUT_MS + 10000;
+	svr.requestTimeout = 0;
 
 	const metricsPort = 9090;
 	const metricsApp = await NestFactory.create(MetricsModule);
