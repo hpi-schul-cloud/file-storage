@@ -40,7 +40,7 @@ async function bootstrap(): Promise<void> {
 	});
 
 	const conf = await nestApp.resolve(RequestTimeoutConfig);
-	svr.setTimeout(conf.CORE_INCOMING_REQUEST_TIMEOUT_MS + 10000);
+	svr.requestTimeout = conf.CORE_INCOMING_REQUEST_TIMEOUT_MS + 10000;
 
 	const metricsPort = 9090;
 	const metricsApp = await NestFactory.create(MetricsModule);
