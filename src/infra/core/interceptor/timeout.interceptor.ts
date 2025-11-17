@@ -29,7 +29,6 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const request = context.switchToHttp().getRequest<Request>();
 		const response = context.switchToHttp().getResponse<Response>();
 		const { url } = request;
-		request.setTimeout(validTimeoutMS);
 
 		// Create AbortController to signal timeout to the application
 		const abortController = new AbortController();
