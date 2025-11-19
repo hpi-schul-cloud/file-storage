@@ -9,7 +9,7 @@ import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException, RequestTimeoutException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -119,15 +119,26 @@ export class FilesStorageUC {
 		bytesRange?: string
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
+		if (!fileRecord.isPreviewPossible()) {
+			throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
+		}
 		const parentInfo = fileRecord.getParentInfo();
 
 		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
 		this.filesStorageService.checkFileName(fileRecord, params.fileName);
 
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
-		const fileResponse = await this.previewService.download(fileRecord, previewFileParams);
+		try {
+			const fileResponse = await this.previewService.download(fileRecord, previewFileParams);
+			return fileResponse;
+		} catch (error) {
+			if (error instanceof RequestTimeoutException) {
+				await this.filesStorageService.previewNotPossible(fileRecord);
+				throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
+			}
+			throw error;
+		}
 
-		return fileResponse;
 	}
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {

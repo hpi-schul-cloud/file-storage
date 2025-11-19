@@ -37,6 +37,7 @@ describe('File Controller (API) - preview', () => {
 	let em: EntityManager;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
+	let previewProducer: DeepMocked<PreviewProducer>;
 	let testApiClient: TestApiClient;
 	let uploadPath: string;
 
@@ -65,6 +66,7 @@ describe('File Controller (API) - preview', () => {
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		antivirusService = module.get(AntivirusService);
+		previewProducer = module.get(PreviewProducer);
 		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -419,6 +421,162 @@ describe('File Controller (API) - preview', () => {
 						expect(response.status).toEqual(206);
 						expect(headers['accept-ranges']).toMatch('bytes');
 						expect(headers['content-range']).toMatch('bytes 0-3/4');
+					});
+				});
+
+				describe('WHEN file has preview generation failed', () => {
+					const setup = async () => {
+						const loggedInClient = setupApiClient();
+						const uploadedFile = await uploadFile(loggedInClient);
+						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
+
+						// Mark the file as having failed preview generation
+						const fileRecord = await em.findOneOrFail(FileRecordEntity, uploadedFile.id);
+						fileRecord.previewGenerationFailed = true;
+						await em.flush();
+
+						return { loggedInClient, uploadedFile };
+					};
+
+					it('should return status 404 with PREVIEW_NOT_POSSIBLE error immediately without attempting preview', async () => {
+						const { loggedInClient, uploadedFile } = await setup();
+
+						const response = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						expect(response.status).toEqual(404);
+						expect(response.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
+						// Verify S3 client was never called since preview should fail immediately
+						expect(s3ClientAdapter.get).not.toHaveBeenCalled();
+					});
+
+					it('should return same error for subsequent requests without retrying', async () => {
+						const { loggedInClient, uploadedFile } = await setup();
+
+						// First request
+						const response1 = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						// Second request
+						const response2 = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						expect(response1.status).toEqual(404);
+						expect(response2.status).toEqual(404);
+						expect(response1.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
+						expect(response2.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
+						// Verify S3 client was never called for either request
+						expect(s3ClientAdapter.get).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('WHEN preview generation is not possible due to mime type', () => {
+					const setup = async () => {
+						const loggedInClient = setupApiClient();
+
+						// Upload a file with unsupported mime type
+						jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+						antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
+
+						const uploadResponse = await loggedInClient
+							.post(uploadPath)
+							.attach('file', Buffer.from('abcd'), 'test.txt')
+							.set('connection', 'keep-alive')
+							.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20')
+							.query({});
+						const uploadedFile = uploadResponse.body as FileRecordResponse;
+
+						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
+
+						return { loggedInClient, uploadedFile };
+					};
+
+					it('should return status 404 with PREVIEW_NOT_POSSIBLE error for unsupported mime type', async () => {
+						const { loggedInClient, uploadedFile } = await setup();
+
+						const response = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						expect(response.status).toEqual(404);
+						expect(response.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
+					});
+				});
+			});
+
+			describe('WHEN preview generation fails', () => {
+				describe('WHEN preview generation times out', () => {
+					const setupTimeoutScenario = async () => {
+						const loggedInClient = setupApiClient();
+						const uploadedFile = await uploadFile(loggedInClient);
+						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
+
+						// Mock preview service to simulate timeout by making the request hang
+						// The timeout interceptor should catch this and throw RequestTimeoutException
+						// const previewProducer = module.get(PreviewProducer) as DeepMocked<PreviewProducer>;
+						previewProducer.generate.mockRejectedValueOnce( new Error(("Preview generation timed out")) );
+						s3ClientAdapter.get.mockRejectedValueOnce(new NotFoundException());
+						// previewProducer.generate.mockImplementation(
+						// 	() => new Promise((resolve) => setTimeout(resolve, 60000)) // Long delay to trigger timeout
+						// );
+
+						return { loggedInClient, uploadedFile };
+					};
+
+					it('should mark file as preview generation failed and return 404 on subsequent requests', async () => {
+						const { loggedInClient, uploadedFile } = await setupTimeoutScenario();
+
+						// First request - should timeout and mark file as failed
+						const response1 = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						expect(response1.status).toEqual(404);
+						expect(response1.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
+
+						// Verify the file is marked as preview generation failed in database
+						const fileRecord = await em.findOneOrFail(FileRecordEntity, uploadedFile.id);
+						expect(fileRecord.previewGenerationFailed).toBe(true);
+
+						// Second request - should fail immediately without attempting preview
+						const response2 = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						expect(response2.status).toEqual(404);
+						expect(response2.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
+					});
+				});
+
+				describe('WHEN preview service throws other errors', () => {
+					const setupErrorScenario = async () => {
+						const loggedInClient = setupApiClient();
+						const uploadedFile = await uploadFile(loggedInClient);
+						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
+
+						// Mock S3 to throw a non-timeout error
+						const otherError = new Error('S3 connection failed');
+						s3ClientAdapter.get.mockRejectedValue(otherError);
+
+						return { loggedInClient, uploadedFile };
+					};
+
+					it('should not mark file as failed for non-timeout errors', async () => {
+						const { loggedInClient, uploadedFile } = await setupErrorScenario();
+
+						const response = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+							.query(defaultQueryParameters);
+
+						// Should return 500 for internal server error
+						expect(response.status).toEqual(500);
+
+						// Verify the file is NOT marked as preview generation failed
+						const fileRecord = await em.findOneOrFail(FileRecordEntity, uploadedFile.id);
+						expect(fileRecord.previewGenerationFailed).toBeFalsy();
 					});
 				});
 			});

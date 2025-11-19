@@ -59,6 +59,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	deletedSince?: Date;
 	isCopyFrom?: EntityId;
 	isUploading?: boolean;
+	previewGenerationFailed?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
@@ -219,9 +220,17 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public isPreviewPossible(): boolean {
+		if (this.props.previewGenerationFailed) {
+			return false;
+		}
+
 		const isPreviewPossible = Object.values<string>(PreviewInputMimeTypes).includes(this.props.mimeType);
 
 		return isPreviewPossible;
+	}
+
+	public markPreviewGenerationFailed(): void {
+		this.props.previewGenerationFailed = true;
 	}
 
 	public exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes: number): boolean {
