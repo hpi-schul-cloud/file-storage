@@ -6,7 +6,7 @@ import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
-import { INestApplication, NotFoundException, StreamableFile } from '@nestjs/common';
+import { INestApplication, NotFoundException, RequestTimeoutException, StreamableFile } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
 import { cleanupCollections } from '@testing/database';
@@ -516,12 +516,8 @@ describe('File Controller (API) - preview', () => {
 
 						// Mock preview service to simulate timeout by making the request hang
 						// The timeout interceptor should catch this and throw RequestTimeoutException
-						// const previewProducer = module.get(PreviewProducer) as DeepMocked<PreviewProducer>;
-						previewProducer.generate.mockRejectedValueOnce( new Error(("Preview generation timed out")) );
+						previewProducer.generate.mockRejectedValueOnce( new RequestTimeoutException(("Preview generation timed out")) );
 						s3ClientAdapter.get.mockRejectedValueOnce(new NotFoundException());
-						// previewProducer.generate.mockImplementation(
-						// 	() => new Promise((resolve) => setTimeout(resolve, 60000)) // Long delay to trigger timeout
-						// );
 
 						return { loggedInClient, uploadedFile };
 					};
