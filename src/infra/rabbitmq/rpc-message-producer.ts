@@ -18,7 +18,7 @@ export abstract class RpcMessageProducer {
 
 			return response.message;
 		} catch (error) {
-			// https://github.com/golevelup/nestjs/blob/52e84ad3ddd9dfed9205bbe1d1dee565fb1a9931/packages/rabbitmq/src/amqp/connection.ts#L444
+			// https://github.com/golevelup/nestjs/issues/1083
 			// right now there is no dedicated exception, so we have to check for the string value here
 			if (error instanceof Error && error.message?.includes('Failed to receive response within timeout')) {
 				throw new RequestTimeoutException(error.message);
