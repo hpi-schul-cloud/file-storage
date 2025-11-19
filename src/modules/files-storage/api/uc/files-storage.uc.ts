@@ -130,6 +130,7 @@ export class FilesStorageUC {
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
 		try {
 			const fileResponse = await this.previewService.download(fileRecord, previewFileParams);
+
 			return fileResponse;
 		} catch (error) {
 			if (error instanceof RequestTimeoutException) {
@@ -138,7 +139,6 @@ export class FilesStorageUC {
 			}
 			throw error;
 		}
-
 	}
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {

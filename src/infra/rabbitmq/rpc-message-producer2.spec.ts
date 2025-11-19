@@ -2,6 +2,7 @@ import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RequestTimeoutException } from '@nestjs/common';
 import { RpcMessageProducer } from '.';
 import { RabbitMQContainer } from '@testcontainers/rabbitmq';
+import { StartedRabbitMQContainer } from '@testcontainers/rabbitmq/build/rabbitmq-container';
 
 interface TestPayload {
 	value: boolean;
@@ -27,9 +28,9 @@ class RpcMessageProducerImp extends RpcMessageProducer {
 
 describe('RpcMessageProducer - Timeout Behavior', () => {
 	let service: RpcMessageProducerImp;
-	let startedRabbitMQContainer: any;
+	let startedRabbitMQContainer: StartedRabbitMQContainer;
 	let amqpConnection: AmqpConnection;
-	const container = new RabbitMQContainer("rabbitmq:3.12.11-management-alpine");
+	const container = new RabbitMQContainer('rabbitmq:3.12.11-management-alpine');
 
 	beforeAll(async () => {
 		// needs to pull the image, so we increase the timeout
@@ -89,7 +90,6 @@ describe('RpcMessageProducer - Timeout Behavior', () => {
 				expect(elapsedTime).toBeGreaterThanOrEqual(timeout - 100); // Allow 100ms tolerance
 				expect(elapsedTime).toBeLessThan(timeout + 500); // Allow 500ms tolerance for processing
 			}, 10000);
-
 		});
 	});
 });

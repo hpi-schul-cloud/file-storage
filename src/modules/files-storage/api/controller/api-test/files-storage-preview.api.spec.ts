@@ -516,7 +516,7 @@ describe('File Controller (API) - preview', () => {
 
 						// Mock preview service to simulate timeout by making the request hang
 						// The timeout interceptor should catch this and throw RequestTimeoutException
-						previewProducer.generate.mockRejectedValueOnce( new RequestTimeoutException(("Preview generation timed out")) );
+						previewProducer.generate.mockRejectedValueOnce(new RequestTimeoutException('Preview generation timed out'));
 						s3ClientAdapter.get.mockRejectedValueOnce(new NotFoundException());
 
 						return { loggedInClient, uploadedFile };

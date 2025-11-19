@@ -14,11 +14,11 @@ const buildFileRecord = () => {
 	const parentId = new ObjectId().toHexString();
 	const storageLocationId = new ObjectId().toHexString();
 
-	const fileRecord = fileRecordTestFactory().build({ 
-		parentId, 
-		storageLocationId, 
+	const fileRecord = fileRecordTestFactory().build({
+		parentId,
+		storageLocationId,
 		name: 'test.jpg',
-		mimeType: 'image/jpeg'
+		mimeType: 'image/jpeg',
 	});
 
 	return { fileRecord };
@@ -78,7 +78,7 @@ describe('FilesStorageService preview failed methods', () => {
 		describe('when called with a file record', () => {
 			it('should mark the file record as preview generation failed and save it', async () => {
 				const { fileRecord } = buildFileRecord();
-				
+
 				// Initially preview should be possible for image/jpeg
 				expect(fileRecord.isPreviewPossible()).toBe(true);
 
