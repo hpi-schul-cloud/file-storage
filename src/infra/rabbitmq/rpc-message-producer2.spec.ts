@@ -33,8 +33,6 @@ describe('RpcMessageProducer - Timeout Behavior', () => {
 	const container = new RabbitMQContainer('rabbitmq:3.12.11-management-alpine');
 
 	beforeAll(async () => {
-		// needs to pull the image, so we increase the timeout
-		jest.setTimeout(60000);
 		startedRabbitMQContainer = await container.start();
 		amqpConnection = new AmqpConnection({
 			uri: startedRabbitMQContainer.getAmqpUrl(),
@@ -51,7 +49,7 @@ describe('RpcMessageProducer - Timeout Behavior', () => {
 		await channel.bindQueue(queueName, TestExchange, TestEvent);
 
 		service = new RpcMessageProducerImp(amqpConnection);
-	});
+	}, 60000);
 
 	afterAll(async () => {
 		await amqpConnection.close();
