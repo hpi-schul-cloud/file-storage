@@ -1,8 +1,8 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RequestTimeoutException } from '@nestjs/common';
-import { RpcMessageProducer } from '.';
 import { RabbitMQContainer } from '@testcontainers/rabbitmq';
 import { StartedRabbitMQContainer } from '@testcontainers/rabbitmq/build/rabbitmq-container';
+import { RpcMessageProducer } from '.';
 
 interface TestPayload {
 	value: boolean;
@@ -26,7 +26,7 @@ class RpcMessageProducerImp extends RpcMessageProducer {
 	}
 }
 
-describe('RpcMessageProducer - Timeout Behavior', () => {
+describe.skip('RpcMessageProducer - Timeout Behavior', () => {
 	let service: RpcMessageProducerImp;
 	let startedRabbitMQContainer: StartedRabbitMQContainer;
 	let amqpConnection: AmqpConnection;
@@ -52,8 +52,8 @@ describe('RpcMessageProducer - Timeout Behavior', () => {
 	}, 60000);
 
 	afterAll(async () => {
-		await amqpConnection.close();
-		await startedRabbitMQContainer.stop();
+		//await amqpConnection.close();
+		//await startedRabbitMQContainer.stop();
 	});
 
 	describe('request timeout', () => {

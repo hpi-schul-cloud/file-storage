@@ -530,41 +530,6 @@ describe('FileRecord', () => {
 		});
 	});
 
-	describe('isPreviewPossible', () => {
-		it('should return false when previewGenerationFailed is true', () => {
-			const fileRecord = fileRecordTestFactory().build({
-				mimeType: 'image/jpeg',
-				previewGenerationFailed: true,
-			});
-
-			const result = fileRecord.isPreviewPossible();
-
-			expect(result).toBe(false);
-		});
-
-		it('should return true when previewGenerationFailed is false and mime type supports preview', () => {
-			const fileRecord = fileRecordTestFactory().build({
-				mimeType: 'image/jpeg',
-				previewGenerationFailed: false,
-			});
-
-			const result = fileRecord.isPreviewPossible();
-
-			expect(result).toBe(true);
-		});
-
-		it('should return false when mime type does not support preview', () => {
-			const fileRecord = fileRecordTestFactory().build({
-				mimeType: 'application/octet-stream',
-				previewGenerationFailed: false,
-			});
-
-			const result = fileRecord.isPreviewPossible();
-
-			expect(result).toBe(false);
-		});
-	});
-
 	describe('markPreviewGenerationFailed', () => {
 		it('should set previewGenerationFailed to true', () => {
 			const fileRecord = fileRecordTestFactory().build({
@@ -572,11 +537,11 @@ describe('FileRecord', () => {
 				previewGenerationFailed: false,
 			});
 
-			expect(fileRecord.isPreviewPossible()).toBe(true);
+			expect(fileRecord.previewGenerationFailed()).toBe(false);
 
 			fileRecord.markPreviewGenerationFailed();
 
-			expect(fileRecord.isPreviewPossible()).toBe(false);
+			expect(fileRecord.previewGenerationFailed()).toBe(true);
 		});
 	});
 });

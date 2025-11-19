@@ -219,11 +219,11 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.props.mimeType;
 	}
 
-	public isPreviewPossible(): boolean {
-		if (this.props.previewGenerationFailed) {
-			return false;
-		}
+	public previewGenerationFailed(): boolean {
+		return this.props.previewGenerationFailed ?? false;
+	}
 
+	public isPreviewPossible(): boolean {
 		const isPreviewPossible = Object.values<string>(PreviewInputMimeTypes).includes(this.props.mimeType);
 
 		return isPreviewPossible;

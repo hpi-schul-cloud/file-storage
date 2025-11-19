@@ -80,11 +80,11 @@ describe('FilesStorageService preview failed methods', () => {
 				const { fileRecord } = buildFileRecord();
 
 				// Initially preview should be possible for image/jpeg
-				expect(fileRecord.isPreviewPossible()).toBe(true);
+				expect(fileRecord.previewGenerationFailed()).toBe(false);
 
 				await service.previewNotPossible(fileRecord);
 
-				expect(fileRecord.isPreviewPossible()).toBe(false);
+				expect(fileRecord.previewGenerationFailed()).toBe(true);
 				expect(fileRecordRepo.save).toHaveBeenCalledWith([fileRecord]);
 				expect(logger.warning).toHaveBeenCalled();
 			});

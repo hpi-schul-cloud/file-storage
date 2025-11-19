@@ -119,9 +119,11 @@ export class FilesStorageUC {
 		bytesRange?: string
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		if (!fileRecord.isPreviewPossible()) {
+
+		if (fileRecord.previewGenerationFailed() && fileRecord.isPreviewPossible()) {
 			throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
 		}
+
 		const parentInfo = fileRecord.getParentInfo();
 
 		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);

@@ -472,39 +472,6 @@ describe('File Controller (API) - preview', () => {
 						expect(s3ClientAdapter.get).not.toHaveBeenCalled();
 					});
 				});
-
-				describe('WHEN preview generation is not possible due to mime type', () => {
-					const setup = async () => {
-						const loggedInClient = setupApiClient();
-
-						// Upload a file with unsupported mime type
-						jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
-						antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
-
-						const uploadResponse = await loggedInClient
-							.post(uploadPath)
-							.attach('file', Buffer.from('abcd'), 'test.txt')
-							.set('connection', 'keep-alive')
-							.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20')
-							.query({});
-						const uploadedFile = uploadResponse.body as FileRecordResponse;
-
-						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
-
-						return { loggedInClient, uploadedFile };
-					};
-
-					it('should return status 404 with PREVIEW_NOT_POSSIBLE error for unsupported mime type', async () => {
-						const { loggedInClient, uploadedFile } = await setup();
-
-						const response = await loggedInClient
-							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
-							.query(defaultQueryParameters);
-
-						expect(response.status).toEqual(404);
-						expect(response.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
-					});
-				});
 			});
 
 			describe('WHEN preview generation fails', () => {
