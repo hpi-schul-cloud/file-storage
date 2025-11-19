@@ -85,6 +85,7 @@
 		"@swc/cli": "^0.7.8",
 		"@swc/core": "^1.13.21",
 		"@swc/jest": "^0.2.39",
+		"@testcontainers/rabbitmq": "^11.8.1",
 		"@types/archiver": "^6.0.4",
 		"@types/busboy": "^1.5.4",
 		"@types/clamscan": "^2.4.1",
