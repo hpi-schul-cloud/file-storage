@@ -151,7 +151,39 @@ describe('FilesStorageService update methods', () => {
 			});
 		});
 
-		describe('WHEN file name already exists', () => {
+		describe('WHEN file name already exists in another file', () => {
+			let spy: jest.SpyInstance;
+
+			afterEach(() => {
+				spy.mockRestore();
+			});
+
+			const setup = () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const fileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
+				const otherFileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
+				const fileName = otherFileRecord.getName();
+
+				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([[fileRecord, otherFileRecord], 2]);
+
+				return {
+					fileName,
+					fileRecord,
+					otherFileRecord,
+					params: parentInfo,
+				};
+			};
+
+			it('should throw ConflictException', async () => {
+				const { fileRecord, fileName } = setup();
+				const expectedError = new ConflictException(ErrorType.FILE_NAME_EXISTS);
+
+				await expect(service.patchFilename(fileRecord, fileName)).rejects.toThrow(expectedError);
+				expect(fileRecordRepo.save).toHaveBeenCalledTimes(0);
+			});
+		});
+
+		describe('WHEN file is renamed to its own current name', () => {
 			let spy: jest.SpyInstance;
 
 			afterEach(() => {
@@ -168,17 +200,17 @@ describe('FilesStorageService update methods', () => {
 				return {
 					fileName,
 					fileRecord,
-					fileRecords: [fileRecord],
 					params: parentInfo,
 				};
 			};
 
-			it('should pass the error', async () => {
+			it('should allow renaming to same name (no conflict)', async () => {
 				const { fileRecord, fileName } = setup();
-				const expectedError = new ConflictException(ErrorType.FILE_NAME_EXISTS);
 
-				await expect(service.patchFilename(fileRecord, fileName)).rejects.toThrow(expectedError);
-				expect(fileRecordRepo.save).toHaveBeenCalledTimes(0);
+				const result = await service.patchFilename(fileRecord, fileName);
+
+				expect(result.getName()).toEqual(fileName);
+				expect(fileRecordRepo.save).toHaveBeenCalledWith(fileRecord);
 			});
 		});
 	});
