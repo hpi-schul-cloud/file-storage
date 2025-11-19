@@ -1,7 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { RequestTimeoutException } from '@nestjs/common';
 import { ErrorMapper } from './error.mapper';
 import { RpcMessage } from './rpc-message';
-import { RequestTimeoutException } from '@nestjs/common';
 
 export abstract class RpcMessageProducer {
 	constructor(
@@ -48,7 +48,7 @@ export abstract class RpcMessageProducer {
 		expiration?: number;
 	} {
 		// expiration should be greater than timeout
-		const expiration = this.timeout > 0 ? this.timeout * 1.5 : undefined;
+		const expiration = this.timeout > 0 ? this.timeout * 1.1 : undefined;
 
 		return {
 			exchange: this.exchange,

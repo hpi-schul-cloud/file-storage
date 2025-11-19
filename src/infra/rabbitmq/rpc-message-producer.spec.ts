@@ -1,5 +1,6 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { RequestTimeoutException } from '@nestjs/common';
 import { ErrorMapper, RpcMessageProducer } from '.';
 
 interface TestPayload {
@@ -59,7 +60,7 @@ describe('RpcMessageProducer', () => {
 					routingKey: TestEvent,
 					payload: params,
 					timeout,
-					expiration: timeout * 1.5,
+					expiration: timeout * 1.1,
 				};
 
 				return { params, expectedParams, message };
@@ -105,12 +106,10 @@ describe('RpcMessageProducer', () => {
 		});
 
 		describe('when amqpConnection throw an error', () => {
-			const setup = () => {
+			const setup = (error: Error) => {
 				const params: TestPayload = {
 					value: true,
 				};
-
-				const error = new Error('An error from called service');
 
 				amqpConnection.request.mockRejectedValueOnce(error);
 				const spy = jest.spyOn(ErrorMapper, 'mapRpcErrorResponseToDomainError');
@@ -119,9 +118,18 @@ describe('RpcMessageProducer', () => {
 			};
 
 			it('should call error mapper and throw with error', async () => {
-				const { params, spy, error } = setup();
+				const error = new Error('An error from called service');
+				const { params, spy } = setup(error);
 
 				await expect(service.testRequest(params)).rejects.toThrow(error);
+				expect(spy).not.toHaveBeenCalled();
+			});
+
+			it('should call error mapper and throw with error', async () => {
+				const error = new Error('Failed to receive response within timeout');
+				const { params, spy } = setup(error);
+
+				await expect(service.testRequest(params)).rejects.toThrow(RequestTimeoutException);
 				expect(spy).not.toHaveBeenCalled();
 			});
 		});

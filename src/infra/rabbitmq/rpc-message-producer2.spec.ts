@@ -70,7 +70,7 @@ describe.skip('RpcMessageProducer - Timeout Behavior', () => {
 					routingKey: TestEvent,
 					payload: params,
 					timeout,
-					expiration: timeout * 1.5,
+					expiration: timeout * 1.1,
 				};
 
 				return { params, expectedParams, message };
