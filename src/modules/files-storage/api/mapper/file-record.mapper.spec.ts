@@ -9,8 +9,17 @@ describe('FilesStorageMapper', () => {
 			const status = fileRecordStatusTestFactory().build();
 			const result = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
-			const { size, parentId, creatorId, parentType, isUploading, deletedSince, createdAt, updatedAt } =
-				fileRecord.getProps();
+			const {
+				size,
+				parentId,
+				creatorId,
+				parentType,
+				isUploading,
+				deletedSince,
+				createdAt,
+				updatedAt,
+				contentLastModifiedAt,
+			} = fileRecord.getProps();
 
 			expect(result).toEqual({
 				id: fileRecord.id,
@@ -29,6 +38,7 @@ describe('FilesStorageMapper', () => {
 				securityCheckStatus: status.scanStatus,
 				isCollaboraEditable: status.isCollaboraEditable,
 				exceedsCollaboraEditableFileSize: status.exceedsCollaboraEditableFileSize,
+				contentLastModifiedAt: contentLastModifiedAt,
 			});
 		});
 	});
