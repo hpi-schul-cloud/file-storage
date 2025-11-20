@@ -35,7 +35,6 @@
   <policy domain="coder" rights="read|write" pattern="WEBP"/>
   <policy domain="coder" rights="read|write" pattern="TIFF"/>
   <policy domain="coder" rights="read|write" pattern="HEIC"/>
-  <policy domain="coder" rights="read|write" pattern="JP2"/>
   <policy domain="coder" rights="read" pattern="PDF"/>
   <policy domain="coder" rights="read" pattern="SVG"/>
 </policymap>

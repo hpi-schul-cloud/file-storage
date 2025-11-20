@@ -9,7 +9,6 @@ RUN apk add --no-cache \
     imagemagick-raw \
     imagemagick-svg \
     imagemagick-tiff \
-    imagemagick-webp \
-    imagemagick-jp2
+    imagemagick-webp
 
 COPY imagemagic_policy.xml /etc/ImageMagick-7/policy.xml
