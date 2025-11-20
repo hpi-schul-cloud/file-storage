@@ -6,10 +6,11 @@ import {
 } from '@infra/authorization-client';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
+import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException, NotFoundException, RequestTimeoutException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -135,7 +136,7 @@ export class FilesStorageUC {
 
 			return fileResponse;
 		} catch (error) {
-			if (error instanceof RequestTimeoutException) {
+			if (error instanceof RpcTimeoutException) {
 				await this.filesStorageService.markPreviewGenerationFailed(fileRecord);
 				throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
 			}
