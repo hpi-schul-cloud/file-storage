@@ -520,7 +520,7 @@ export class FilesStorageService {
 		);
 	}
 
-	public async previewNotPossible(fileRecord: FileRecord): Promise<void> {
+	public async markPreviewGenerationFailed(fileRecord: FileRecord): Promise<void> {
 		fileRecord.markPreviewGenerationFailed();
 		await this.fileRecordRepo.save([fileRecord]);
 

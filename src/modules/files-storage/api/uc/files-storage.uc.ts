@@ -120,7 +120,7 @@ export class FilesStorageUC {
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 
-		if (fileRecord.previewGenerationFailed() && fileRecord.isPreviewPossible()) {
+		if (fileRecord.previewGenerationFailed()) {
 			throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
 		}
 
@@ -136,7 +136,7 @@ export class FilesStorageUC {
 			return fileResponse;
 		} catch (error) {
 			if (error instanceof RequestTimeoutException) {
-				await this.filesStorageService.previewNotPossible(fileRecord);
+				await this.filesStorageService.markPreviewGenerationFailed(fileRecord);
 				throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
 			}
 			throw error;
