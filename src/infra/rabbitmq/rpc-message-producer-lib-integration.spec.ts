@@ -1,7 +1,9 @@
+/**
+ * We need this integration test to ensure that RpcMessageProducer works as expected
+ * when AmqpConnection throws errors as specified in its code.
+ */
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { RequestTimeoutException } from '@nestjs/common';
-import { RabbitMQContainer } from '@testcontainers/rabbitmq';
-import { StartedRabbitMQContainer } from '@testcontainers/rabbitmq/build/rabbitmq-container';
 import { RpcMessageProducer } from '.';
 
 interface TestPayload {
@@ -26,34 +28,16 @@ class RpcMessageProducerImp extends RpcMessageProducer {
 	}
 }
 
-describe.skip('RpcMessageProducer - Timeout Behavior', () => {
+describe('RpcMessageProducer - Timeout Behavior', () => {
 	let service: RpcMessageProducerImp;
-	let startedRabbitMQContainer: StartedRabbitMQContainer;
 	let amqpConnection: AmqpConnection;
-	const container = new RabbitMQContainer('rabbitmq:3.12.11-management-alpine');
 
-	beforeAll(async () => {
-		startedRabbitMQContainer = await container.start();
+	beforeAll(() => {
 		amqpConnection = new AmqpConnection({
-			uri: startedRabbitMQContainer.getAmqpUrl(),
+			uri: 'amqp://localhost',
 		});
 
-		// Initialize the connection
-		await amqpConnection.init();
-
-		// Create exchange and queue
-		const channel = amqpConnection.channel;
-		await channel.assertExchange(TestExchange, 'direct', { durable: false });
-		const queueName = `${TestEvent}-queue`;
-		await channel.assertQueue(queueName, { durable: false, autoDelete: true });
-		await channel.bindQueue(queueName, TestExchange, TestEvent);
-
 		service = new RpcMessageProducerImp(amqpConnection);
-	}, 60000);
-
-	afterAll(async () => {
-		//await amqpConnection.close();
-		//await startedRabbitMQContainer.stop();
 	});
 
 	describe('request timeout', () => {
@@ -64,6 +48,8 @@ describe.skip('RpcMessageProducer - Timeout Behavior', () => {
 				};
 
 				const message: string[] = [];
+
+				jest.spyOn(amqpConnection, 'publish').mockResolvedValueOnce(true);
 
 				const expectedParams = {
 					exchange: TestExchange,
@@ -81,13 +67,17 @@ describe.skip('RpcMessageProducer - Timeout Behavior', () => {
 				const startTime = Date.now();
 
 				// Since we created the queue but no consumer, the request should timeout
-				await expect(service.testRequest(params)).rejects.toThrow(RequestTimeoutException);
+				await expect(service.testRequest(params)).rejects.toThrow(
+					new RequestTimeoutException(
+						`Failed to receive response within timeout of ${timeout}ms for exchange "${TestExchange}" and routing key "${TestEvent}"`
+					)
+				);
 
 				const elapsedTime = Date.now() - startTime;
 				// Verify that the timeout actually occurred around the expected time (with some tolerance)
 				expect(elapsedTime).toBeGreaterThanOrEqual(timeout - 100); // Allow 100ms tolerance
 				expect(elapsedTime).toBeLessThan(timeout + 500); // Allow 500ms tolerance for processing
-			}, 10000);
+			});
 		});
 	});
 });
