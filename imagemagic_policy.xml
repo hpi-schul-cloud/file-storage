@@ -12,14 +12,14 @@
 <!ATTLIST policy value CDATA #IMPLIED>
 ]>
 <policymap>
-  <!-- Resource limits to prevent OOM -->
-  <policy domain="resource" name="memory" value="2GiB"/>
-  <policy domain="resource" name="map" value="2GiB"/>
-  <policy domain="resource" name="area" value="512MB"/>
-  <policy domain="resource" name="disk" value="1GiB"/>
-  <policy domain="resource" name="width" value="8KP"/>
-  <policy domain="resource" name="height" value="8KP"/>
-  <policy domain="resource" name="time" value="120"/>
+  <!-- Resource limits to prevent OOM based on 4 GiB Memory -->
+  <policy domain="resource" name="memory" value="3.5GiB"/>
+  <policy domain="resource" name="map" value="3.5GiB"/>
+  <policy domain="resource" name="area" value="1GB"/>
+  <policy domain="resource" name="disk" value="2GiB"/>
+  <policy domain="resource" name="width" value="16KP"/>
+  <policy domain="resource" name="height" value="16KP"/>
+  <policy domain="resource" name="time" value="180"/>
   
   <!-- Security: Disable dangerous format handlers -->
   <policy domain="coder" rights="none" pattern="EPHEMERAL"/>
