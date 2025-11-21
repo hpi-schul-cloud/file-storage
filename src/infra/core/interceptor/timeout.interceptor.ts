@@ -43,9 +43,8 @@ export class TimeoutInterceptor implements NestInterceptor {
 					// Signal timeout to all stream operations
 					abortController.abort();
 
-					// Set proper headers to prevent browser retry
-					response.setHeader('Connection', 'close');
-					response.setHeader('Cache-Control', 'no-store');
+					// Set headers to prevent browser retry and caching
+					this.setAntiRetryHeaders(response);
 
 					// Give streams a moment to cleanup before throwing
 					setTimeout(() => {
@@ -63,5 +62,13 @@ export class TimeoutInterceptor implements NestInterceptor {
 				return throwError(() => err);
 			})
 		);
+	}
+
+	private setAntiRetryHeaders(response: Response): void {
+		response.setHeader('Connection', 'close');
+		response.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+		response.setHeader('Pragma', 'no-cache');
+		response.setHeader('Expires', '0');
+		response.setHeader('Surrogate-Control', 'no-store');
 	}
 }
