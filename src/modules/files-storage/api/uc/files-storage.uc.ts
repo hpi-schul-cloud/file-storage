@@ -4,7 +4,7 @@ import {
 	AuthorizationContextParams,
 	AuthorizationContextParamsRequiredPermissions,
 } from '@infra/authorization-client';
-import { TimeoutAbortRequest } from '@infra/core/interceptor';
+import { AbortableRequest } from '@infra/core/interceptor';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
@@ -316,11 +316,7 @@ export class FilesStorageUC {
 	}
 
 	// private: stream helper
-	private uploadFileWithBusboy(
-		userId: EntityId,
-		params: FileRecordParams,
-		req: TimeoutAbortRequest
-	): Promise<FileRecord> {
+	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: AbortableRequest): Promise<FileRecord> {
 		const promise = new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
 			const abortController = new AbortController();
@@ -334,7 +330,7 @@ export class FilesStorageUC {
 			}
 
 			// Listen for timeout signal from TimeoutInterceptor
-			const timeoutAbortController = req.timeoutAbortController;
+			const timeoutAbortController = req.abortController;
 			if (timeoutAbortController) {
 				timeoutAbortController.signal.addEventListener('abort', () => {
 					abortController.abort();

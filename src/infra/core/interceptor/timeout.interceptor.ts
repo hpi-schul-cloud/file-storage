@@ -1,10 +1,10 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor, RequestTimeoutException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TypeGuard } from '@shared/guard';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
-import { TimeoutAbortRequest, TimeoutInterceptorConfig } from './interfaces';
+import { AbortableRequest, TimeoutInterceptorConfig } from './interfaces';
 
 /**
  * This interceptor leaves the request execution after a given timeout in ms.
@@ -26,42 +26,43 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const timeoutMS = this.config[requestTimeoutEnvironmentName] ?? this.config[this.defaultConfigKey];
 		const validTimeoutMS = TypeGuard.checkNumber(timeoutMS);
 
-		const request = context.switchToHttp().getRequest<Request>();
+		const request = context.switchToHttp().getRequest<AbortableRequest>();
 		const response = context.switchToHttp().getResponse<Response>();
 		const { url } = request;
 
-		// Create AbortController to signal timeout to the application
-		const abortController = new AbortController();
-
-		// Store the abort controller on the request so upload handlers can access it
-		(request as TimeoutAbortRequest).timeoutAbortController = abortController;
+		Object.defineProperties(request, {
+			timeoutAbortController: {
+				value: new AbortController(),
+			},
+		});
 
 		return next.handle().pipe(
 			timeout(validTimeoutMS),
 			catchError((err: Error) => {
 				if (err instanceof TimeoutError) {
-					// Signal timeout to all stream operations
-					abortController.abort();
-
 					// Set headers to prevent browser retry and caching
 					this.setAntiRetryHeaders(response);
+					this.handleError(request);
 
-					// Give streams a moment to cleanup before throwing
-					setTimeout(() => {
-						// Mark request as no longer readable to prevent further processing
-						if (request.readable) {
-							request.destroy();
-						}
-					}, 10);
-
-					return throwError(
-						() => new RequestTimeoutException(`url: ${url} - Request timed out after ${validTimeoutMS}ms`)
-					);
+					return throwError(() => new RequestTimeoutException(`url: ${url} - Request timed out after ${timeoutMS}ms`));
 				}
 
 				return throwError(() => err);
 			})
 		);
+	}
+
+	private handleError(request: AbortableRequest): void {
+		// Signal timeout to all stream operations
+		request.abortController?.abort();
+
+		// Give streams a moment to cleanup before throwing
+		setTimeout(() => {
+			// Mark request as no longer readable to prevent further processing
+			if (request.readable) {
+				request.destroy();
+			}
+		}, 10);
 	}
 
 	private setAntiRetryHeaders(response: Response): void {
