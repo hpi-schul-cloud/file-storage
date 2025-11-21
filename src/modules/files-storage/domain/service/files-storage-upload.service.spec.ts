@@ -101,6 +101,7 @@ describe('FilesStorageService upload methods', () => {
 			file.data = readable;
 			file.name = fileRecords[0].getName();
 			file.mimeType = props.mimeType;
+			file.abortSignal = new AbortController().signal;
 
 			const fileSize = 3;
 
