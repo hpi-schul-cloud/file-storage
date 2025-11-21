@@ -71,7 +71,7 @@ export class S3ClientAdapter {
 			const stream = data.Body as Readable;
 			const passthrough = stream.pipe(new PassThrough());
 
-			this.setupStreamErrorHandling(stream, passthrough, path);
+			this.setupTimeOutAndErrorHandling(stream, passthrough, path);
 
 			return {
 				data: passthrough,
@@ -401,7 +401,7 @@ export class S3ClientAdapter {
 	}
 
 	/* istanbul ignore next */
-	private setupStreamErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
+	private setupTimeOutAndErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
 		let timer: NodeJS.Timeout;
 
 		const refreshTimeout = (): void => {
@@ -465,56 +465,34 @@ export class S3ClientAdapter {
 	/* istanbul ignore next */
 	private setupUploadErrorHandling(upload: Upload, context: string, file: File): void {
 		if (file.abortSignal) {
-			file.abortSignal.addEventListener('abort', () => {
-				this.logger.warning(
-					new S3ClientActionLoggable('Upload aborted by request cancellation', {
-						action: 'uploadAborted',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
-
-				upload.abort();
-			});
-
 			if (file.abortSignal.aborted) {
-				this.logger.warning(
-					new S3ClientActionLoggable('Upload aborted - signal already triggered', {
-						action: 'uploadAlreadyAborted',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
-				upload.abort();
+				this.handleUploadAbortion(context, upload, 'uploadAlreadyAborted');
 
 				return;
 			}
+
+			file.abortSignal.addEventListener('abort', () => {
+				this.handleUploadAbortion(context, upload, 'uploadAborted');
+			});
 		}
 
 		if (file.data && typeof file.data === 'object' && 'on' in file.data) {
-			const stream = file.data as Readable;
+			const stream = file.data;
 
-			stream.on('error', (error) => {
-				this.logger.warning(
-					new S3ClientActionLoggable(`Upload stream error: ${error.message}`, {
-						action: 'uploadStreamError',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
-
-				upload.abort();
-			});
-
-			stream.on('close', () => {
-				this.logger.debug(
-					new S3ClientActionLoggable('Upload stream closed', {
-						action: 'uploadStreamClosed',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
+			stream.on('error', () => {
+				this.handleUploadAbortion(context, upload, 'uploadStreamError');
 			});
 		}
+	}
+
+	private handleUploadAbortion(context: string, upload: Upload, action: string): void {
+		this.logger.warning(
+			new S3ClientActionLoggable('Upload aborted', {
+				action,
+				objectPath: context,
+				bucket: this.config.bucket,
+			})
+		);
+		upload.abort();
 	}
 }
