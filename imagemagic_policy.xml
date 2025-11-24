@@ -21,6 +21,8 @@
   <policy domain="resource" name="width" value="16KP"/>
   <policy domain="resource" name="height" value="16KP"/>
   <policy domain="resource" name="time" value="60"/>
+  <policy domain="resource" name="list-length" value="1024"/>
+  <policy domain="resource" name="thread" value="4"/> 
   
   <!-- Security: Disable dangerous format handlers -->
   <policy domain="coder" rights="none" pattern="EPHEMERAL"/>
@@ -28,6 +30,17 @@
   <policy domain="coder" rights="none" pattern="HTTPS"/>
   <policy domain="coder" rights="none" pattern="MVG"/>
   <policy domain="coder" rights="none" pattern="MSL"/>
+  <policy domain="coder" rights="none" pattern="PS"/>
+  <policy domain="coder" rights="none" pattern="EPS"/>
+  <policy domain="coder" rights="none" pattern="LABEL"/>
+  <policy domain="coder" rights="none" pattern="CAPTION"/>
+  <policy domain="coder" rights="none" pattern="TEXT"/>
+  <policy domain="coder" rights="none" pattern="DOT"/>
+  <policy domain="coder" rights="none" pattern="PLT"/>
+  <policy domain="coder" rights="none" pattern="HPGL"/>
+  <policy domain="coder" rights="none" pattern="PCL"/>
+  <policy domain="coder" rights="none" pattern="XPS"/>
+  <policy domain="coder" rights="none" pattern="FIG"/>
   
   <!-- Input formats: READ ONLY -->
   <policy domain="coder" rights="read" pattern="JPEG"/>
