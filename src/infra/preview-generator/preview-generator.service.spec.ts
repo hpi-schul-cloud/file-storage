@@ -1,7 +1,7 @@
 import { DeepMocked, createMock } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
-import { InternalServerErrorException } from '@nestjs/common';
+import { UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { ErrorType } from './interface/error-status.enum';
@@ -327,7 +327,7 @@ describe('PreviewGeneratorService', () => {
 					stderr.end();
 				});
 
-				const expectedError = new InternalServerErrorException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
 
 				return { params, originFile, expectedError };
 			};
@@ -362,7 +362,7 @@ describe('PreviewGeneratorService', () => {
 
 				createMockStream(new Error('imagemagic is not found'));
 
-				const expectedError = new InternalServerErrorException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
 
 				return { params, originFile, expectedError };
 			};

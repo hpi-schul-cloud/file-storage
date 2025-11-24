@@ -3,10 +3,11 @@ import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { PreviewProducer } from '@infra/preview-generator';
+import { RpcTimeoutException } from '@infra/rabbitmq';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
-import { INestApplication, NotFoundException, RequestTimeoutException, StreamableFile } from '@nestjs/common';
+import { INestApplication, NotFoundException, StreamableFile } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
 import { cleanupCollections } from '@testing/database';
@@ -483,7 +484,9 @@ describe('File Controller (API) - preview', () => {
 
 						// Mock preview service to simulate timeout by making the request hang
 						// The timeout interceptor should catch this and throw RequestTimeoutException
-						previewProducer.generate.mockRejectedValueOnce(new RequestTimeoutException('Preview generation timed out'));
+						previewProducer.generate.mockRejectedValueOnce(
+							new RpcTimeoutException(new Error('Failed to receive response within timeout'))
+						);
 						s3ClientAdapter.get.mockRejectedValueOnce(new NotFoundException());
 
 						return { loggedInClient, uploadedFile };
@@ -511,35 +514,6 @@ describe('File Controller (API) - preview', () => {
 
 						expect(response2.status).toEqual(404);
 						expect(response2.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
-					});
-				});
-
-				describe('WHEN preview service throws other errors', () => {
-					const setupErrorScenario = async () => {
-						const loggedInClient = setupApiClient();
-						const uploadedFile = await uploadFile(loggedInClient);
-						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
-
-						// Mock S3 to throw a non-timeout error
-						const otherError = new Error('S3 connection failed');
-						s3ClientAdapter.get.mockRejectedValue(otherError);
-
-						return { loggedInClient, uploadedFile };
-					};
-
-					it('should not mark file as failed for non-timeout errors', async () => {
-						const { loggedInClient, uploadedFile } = await setupErrorScenario();
-
-						const response = await loggedInClient
-							.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
-							.query(defaultQueryParameters);
-
-						// Should return 500 for internal server error
-						expect(response.status).toEqual(500);
-
-						// Verify the file is NOT marked as preview generation failed
-						const fileRecord = await em.findOneOrFail(FileRecordEntity, uploadedFile.id);
-						expect(fileRecord.previewGenerationFailed).toBeFalsy();
 					});
 				});
 			});

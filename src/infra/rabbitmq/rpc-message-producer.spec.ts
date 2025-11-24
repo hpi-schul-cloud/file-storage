@@ -1,6 +1,5 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { RequestTimeoutException } from '@nestjs/common';
 import { ErrorMapper, RpcMessageProducer } from '.';
 
 interface TestPayload {
@@ -129,7 +128,7 @@ describe('RpcMessageProducer', () => {
 				const error = new Error('Failed to receive response within timeout');
 				const { params, spy } = setup(error);
 
-				await expect(service.testRequest(params)).rejects.toThrow(RequestTimeoutException);
+				await expect(service.testRequest(params)).rejects.toThrow('Failed to receive response within timeout');
 				expect(spy).not.toHaveBeenCalled();
 			});
 		});

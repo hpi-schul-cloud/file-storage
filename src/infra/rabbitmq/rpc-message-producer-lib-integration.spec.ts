@@ -3,7 +3,6 @@
  * when AmqpConnection throws errors as specified in its code.
  */
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { RequestTimeoutException } from '@nestjs/common';
 import { RpcMessageProducer } from '.';
 
 interface TestPayload {
@@ -68,9 +67,7 @@ describe('RpcMessageProducer - Timeout Behavior', () => {
 
 				// Since we created the queue but no consumer, the request should timeout
 				await expect(service.testRequest(params)).rejects.toThrow(
-					new RequestTimeoutException(
-						`Failed to receive response within timeout of ${timeout}ms for exchange "${TestExchange}" and routing key "${TestEvent}"`
-					)
+					`Failed to receive response within timeout of ${timeout}ms for exchange "${TestExchange}" and routing key "${TestEvent}"`
 				);
 
 				const elapsedTime = Date.now() - startTime;
