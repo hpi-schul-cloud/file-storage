@@ -12,14 +12,15 @@
 <!ATTLIST policy value CDATA #IMPLIED>
 ]>
 <policymap>
-  <!-- Resource limits to prevent OOM based on 4000 MB memory from AMQP_FILE_PREVIEW_MEMORY_LIMITS -->
+  <!-- Resource limits to prevent OOM based on 4000 MB memory from AMQP_FILE_PREVIEW_MEMORY_LIMITS used in 
+  https://github.com/hpi-schul-cloud/file-storage/blob/main/ansible/roles/file-storage/templates/preview-generator-deployment.yml.j2#L64-L68 -->
   <policy domain="resource" name="memory" value="3.5GiB"/>
   <policy domain="resource" name="map" value="3.5GiB"/>
   <policy domain="resource" name="area" value="1GB"/>
   <policy domain="resource" name="disk" value="2GiB"/>
   <policy domain="resource" name="width" value="16KP"/>
   <policy domain="resource" name="height" value="16KP"/>
-  <policy domain="resource" name="time" value="180"/>
+  <policy domain="resource" name="time" value="60"/>
   
   <!-- Security: Disable dangerous format handlers -->
   <policy domain="coder" rights="none" pattern="EPHEMERAL"/>
