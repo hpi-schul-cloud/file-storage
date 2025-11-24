@@ -373,5 +373,27 @@ describe('PreviewGeneratorService', () => {
 				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
 			});
 		});
+
+		describe('WHEN s3ClientAdapter throws an error', () => {
+			const setup = () => {
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const expectedError = new Error('S3 error');
+				s3ClientAdapter.get.mockRejectedValueOnce(expectedError);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
 	});
 });
