@@ -46,7 +46,7 @@ describe(RpcTimeoutException.name, () => {
 		it('should create exception without error message when no error provided', () => {
 			const exception = new RpcTimeoutException();
 
-			expect(exception.message).toBe(undefined);
+			expect(exception.message).toBe('');
 		});
 	});
 });
