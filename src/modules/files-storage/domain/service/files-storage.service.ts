@@ -278,8 +278,10 @@ export class FilesStorageService {
 	}
 
 	// update
-	private checkDuplicatedNames(fileRecords: FileRecord[], newFileName: string): void {
-		if (fileRecords.find((item) => item.hasName(newFileName))) {
+	private checkDuplicatedNames(fileRecords: FileRecord[], newFileName: string, currentFileRecordId: EntityId): void {
+		const duplicateFound = fileRecords.find((item) => item.id !== currentFileRecordId && item.hasName(newFileName));
+
+		if (duplicateFound) {
 			throw new ConflictException(ErrorType.FILE_NAME_EXISTS);
 		}
 	}
@@ -288,7 +290,7 @@ export class FilesStorageService {
 		const parentInfo = fileRecord.getParentInfo();
 		const [fileRecords] = await this.getFileRecordsByParent(parentInfo.parentId);
 
-		this.checkDuplicatedNames(fileRecords, fileName);
+		this.checkDuplicatedNames(fileRecords, fileName, fileRecord.id);
 		fileRecord.setName(fileName);
 		await this.fileRecordRepo.save(fileRecord);
 
