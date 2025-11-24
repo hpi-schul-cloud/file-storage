@@ -23,7 +23,6 @@ export class FileRecordSecurityCheck implements FileRecordSecurityCheckProps {
 	public readonly status: ScanStatus;
 
 	@IsString()
-	@IsOptional()
 	public readonly reason: string;
 
 	@IsUUID()
