@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policymap [
+<!ELEMENT policymap (policy)*>
+<!ATTLIST policymap xmlns CDATA #FIXED "">
+<!ELEMENT policy EMPTY>
+<!ATTLIST policy xmlns CDATA #FIXED "">
+<!ATTLIST policy domain NMTOKEN #REQUIRED>
+<!ATTLIST policy name NMTOKEN #IMPLIED>
+<!ATTLIST policy pattern CDATA #IMPLIED>
+<!ATTLIST policy rights NMTOKEN #IMPLIED>
+<!ATTLIST policy stealth NMTOKEN #IMPLIED>
+<!ATTLIST policy value CDATA #IMPLIED>
+]>
+<policymap>
+  <!-- Resource limits to prevent OOM based on 4000 MB memory from AMQP_FILE_PREVIEW_MEMORY_LIMITS used in 
+  https://github.com/hpi-schul-cloud/file-storage/blob/main/ansible/roles/file-storage/templates/preview-generator-deployment.yml.j2#L64-L68 -->
+  <policy domain="resource" name="memory" value="3.5GiB"/>
+  <policy domain="resource" name="map" value="3.5GiB"/>
+  <policy domain="resource" name="area" value="1GB"/>
+  <policy domain="resource" name="disk" value="2GiB"/>
+  <policy domain="resource" name="width" value="16KP"/>
+  <policy domain="resource" name="height" value="16KP"/>
+  <policy domain="resource" name="time" value="60"/>
+  
+  <!-- Security: Disable dangerous format handlers -->
+  <policy domain="coder" rights="none" pattern="EPHEMERAL"/>
+  <policy domain="coder" rights="none" pattern="URL"/>
+  <policy domain="coder" rights="none" pattern="HTTPS"/>
+  <policy domain="coder" rights="none" pattern="MVG"/>
+  <policy domain="coder" rights="none" pattern="MSL"/>
+  
+  <!-- Input formats: READ ONLY -->
+  <policy domain="coder" rights="read" pattern="JPEG"/>
+  <policy domain="coder" rights="read" pattern="PNG"/>
+  <policy domain="coder" rights="read" pattern="TIFF"/>
+  <policy domain="coder" rights="read" pattern="HEIC"/>
+  <policy domain="coder" rights="read" pattern="PDF"/>
+  <policy domain="coder" rights="read" pattern="SVG"/>
+  
+  <!-- Output format: READ + WRITE -->
+  <policy domain="coder" rights="read|write" pattern="WEBP"/>
+</policymap>
