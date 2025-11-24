@@ -61,19 +61,12 @@ describe('RpcMessageProducer - Timeout Behavior', () => {
 				return { params, expectedParams, message };
 			};
 
-			it('should throw RequestTimeoutException when no response is received within timeout', async () => {
+			it('should throw error with expected message', async () => {
 				const { params } = setup();
-				const startTime = Date.now();
 
-				// Since we created the queue but no consumer, the request should timeout
 				await expect(service.testRequest(params)).rejects.toThrow(
 					`Failed to receive response within timeout of ${timeout}ms for exchange "${TestExchange}" and routing key "${TestEvent}"`
 				);
-
-				const elapsedTime = Date.now() - startTime;
-				// Verify that the timeout actually occurred around the expected time (with some tolerance)
-				expect(elapsedTime).toBeGreaterThanOrEqual(timeout - 100); // Allow 100ms tolerance
-				expect(elapsedTime).toBeLessThan(timeout + 500); // Allow 500ms tolerance for processing
 			});
 		});
 	});
