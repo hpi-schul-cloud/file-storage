@@ -369,7 +369,7 @@ export class FilesStorageUC {
 			});
 
 			bb.on('finish', () => {
-				if (fileRecordPromise) {
+				if (fileRecordPromise instanceof Promise) {
 					fileRecordPromise
 						.then((result) => resolve(result as FileRecord))
 						.catch((error) => {
