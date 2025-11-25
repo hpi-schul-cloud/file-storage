@@ -30,11 +30,13 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const response = context.switchToHttp().getResponse<Response>();
 		const { url } = request;
 
-		Object.defineProperties(request, {
-			abortController: {
-				value: new AbortController(),
-			},
-		});
+		if (request) {
+			Object.defineProperties(request, {
+				abortController: {
+					value: new AbortController(),
+				},
+			});
+		}
 
 		return next.handle().pipe(
 			timeout(validTimeoutMS),
