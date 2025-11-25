@@ -62,7 +62,7 @@ describe(`${baseRouteName} (api)`, () => {
 		await em.persistAndFlush(fileRecords);
 		em.clear();
 
-		return { user: studentUser, fileRecord, loggedInClient };
+		return { user: studentUser, fileRecord, fileRecords, loggedInClient };
 	};
 
 	describe('with not authenticated user', () => {
@@ -121,10 +121,11 @@ describe(`${baseRouteName} (api)`, () => {
 			expect(result.status).toEqual(400);
 		});
 
-		it('should return status 409 if filename exists', async () => {
-			const { loggedInClient, fileRecord } = await setup();
+		it('should return status 409 if filename exists in another file', async () => {
+			const { loggedInClient, fileRecord, fileRecords } = await setup();
+			const anotherFileRecord = fileRecords.find((f) => f.id !== fileRecord.id);
 
-			const result = await loggedInClient.patch(`${fileRecord.id}`, { fileName: 'test.txt' });
+			const result = await loggedInClient.patch(`${fileRecord.id}`, { fileName: anotherFileRecord?.name });
 
 			expect(result.body).toEqual({ code: 409, message: 'FILE_NAME_EXISTS', title: 'Conflict', type: 'CONFLICT' });
 			expect(result.status).toEqual(409);
@@ -132,6 +133,16 @@ describe(`${baseRouteName} (api)`, () => {
 	});
 
 	describe(`with valid request data`, () => {
+		it('should allow renaming to same name', async () => {
+			const { loggedInClient, fileRecord } = await setup();
+
+			const result = await loggedInClient.patch(`${fileRecord.id}`, { fileName: 'test.txt' });
+			const response = result.body as FileRecordResponse;
+
+			expect(result.status).toEqual(200);
+			expect(response.name).toEqual('test.txt');
+		});
+
 		it('should return status 200 for successful request', async () => {
 			const { loggedInClient, fileRecord } = await setup();
 
