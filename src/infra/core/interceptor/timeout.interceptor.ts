@@ -31,7 +31,7 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const { url } = request;
 
 		Object.defineProperties(request, {
-			timeoutAbortController: {
+			abortController: {
 				value: new AbortController(),
 			},
 		});
