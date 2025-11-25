@@ -42,6 +42,9 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	@Property({ nullable: true })
 	isUploading?: boolean;
 
+	@Property({ nullable: true })
+	previewGenerationFailed?: boolean;
+
 	@Index()
 	@Property({ type: ObjectIdType, fieldName: 'parent', nullable: false })
 	parentId!: EntityId;

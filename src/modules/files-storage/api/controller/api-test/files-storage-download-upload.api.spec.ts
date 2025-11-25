@@ -212,6 +212,16 @@ describe('files-storage controller (API)', () => {
 				});
 			});
 		});
+
+		describe('when problematic of stream data ', () => {
+			it('should return status 500 for successful upload', async () => {
+				const { loggedInClient, validId } = setup();
+				s3ClientAdapter.create.mockRejectedValueOnce(new Error('Problematic of stream data'));
+				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+
+				expect(response.status).toEqual(500);
+			});
+		});
 	});
 
 	describe('upload from url action', () => {

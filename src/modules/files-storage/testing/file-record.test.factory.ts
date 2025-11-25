@@ -26,6 +26,7 @@ class FileRecordTestFactory {
 		storageLocationId: new ObjectId().toHexString(),
 		storageLocation: StorageLocation.SCHOOL,
 		deletedSince: undefined,
+		previewGenerationFailed: undefined,
 		createdAt: new Date(Date.now() - 1000),
 		updatedAt: new Date(Date.now() - 1000),
 		contentLastModifiedAt: new Date(Date.now() - 500),
