@@ -41,7 +41,11 @@ export class PreviewGeneratorService {
 				status: true,
 			};
 		} catch (error) {
-			throw new PreviewNotPossibleException(params, error as Error);
+			if (error instanceof UnprocessableEntityException) {
+				throw new PreviewNotPossibleException(params, error);
+			}
+
+			throw error;
 		}
 	}
 
@@ -85,7 +89,7 @@ export class PreviewGeneratorService {
 		const promise = new Promise<PassThrough>((resolve, reject) => {
 			preview.stream(format, (err, stdout, stderr) => {
 				if (err) {
-					reject(new Error('Convert not possible', { cause: err }));
+					reject(new UnprocessableEntityException('Convert not possible', { cause: err }));
 				}
 
 				const throughStream = new PassThrough();
@@ -105,7 +109,7 @@ export class PreviewGeneratorService {
 						errorMessage += String.fromCharCode(chunk);
 					});
 
-					reject(new Error(errorMessage));
+					reject(new UnprocessableEntityException(errorMessage));
 				});
 			});
 		});

@@ -72,7 +72,7 @@ describe('PreviewProducer', () => {
 					routingKey: FilesPreviewEvents.GENERATE_PREVIEW,
 					payload: params,
 					timeout,
-					expiration: timeout * 1.5,
+					expiration: timeout * 1.1,
 				};
 
 				return { params, expectedParams, message };

@@ -6,10 +6,16 @@ import {
 } from '@infra/authorization-client';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
+import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+	UnprocessableEntityException,
+} from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -119,15 +125,28 @@ export class FilesStorageUC {
 		bytesRange?: string
 	): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
+
+		if (fileRecord.previewGenerationFailed()) {
+			throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
+		}
+
 		const parentInfo = fileRecord.getParentInfo();
 
 		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
 		this.filesStorageService.checkFileName(fileRecord, params.fileName);
 
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
-		const fileResponse = await this.previewService.download(fileRecord, previewFileParams);
+		try {
+			const fileResponse = await this.previewService.download(fileRecord, previewFileParams);
 
-		return fileResponse;
+			return fileResponse;
+		} catch (error) {
+			if (error instanceof UnprocessableEntityException || error instanceof RpcTimeoutException) {
+				await this.filesStorageService.markPreviewGenerationFailed(fileRecord);
+			}
+
+			throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE, { cause: error });
+		}
 	}
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {

@@ -4,6 +4,7 @@ import {
 	ConflictException,
 	ForbiddenException,
 	InternalServerErrorException,
+	UnprocessableEntityException,
 } from '@nestjs/common';
 import _ from 'lodash';
 import { ErrorMapper } from './error.mapper';
@@ -36,6 +37,15 @@ describe('ErrorMapper', () => {
 			const result = ErrorMapper.mapRpcErrorResponseToDomainError(json);
 
 			expect(result).toStrictEqual(new InternalServerErrorException(errorText));
+		});
+
+		it('Should map 422 error response to UnprocessableEntityException.', () => {
+			const errorText = 'UnprocessableEntityException ABC';
+			const json = _.toPlainObject(new UnprocessableEntityException(errorText)) as RpcError;
+
+			const result = ErrorMapper.mapRpcErrorResponseToDomainError(json);
+
+			expect(result).toStrictEqual(new UnprocessableEntityException(errorText));
 		});
 
 		it('Should map unknown error code to InternalServerErrorException.', () => {

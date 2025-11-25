@@ -1,9 +1,9 @@
 import { ErrorLogMessage, Loggable } from '@infra/logger';
-import { InternalServerErrorException } from '@nestjs/common';
+import { UnprocessableEntityException } from '@nestjs/common';
 import { PreviewFileOptions } from '../interface';
 import { ErrorType } from '../interface/error-status.enum';
 
-export class PreviewNotPossibleException extends InternalServerErrorException implements Loggable {
+export class PreviewNotPossibleException extends UnprocessableEntityException implements Loggable {
 	constructor(
 		private readonly payload: PreviewFileOptions,
 		private readonly error?: Error
@@ -14,7 +14,7 @@ export class PreviewNotPossibleException extends InternalServerErrorException im
 	public getLogMessage(): ErrorLogMessage {
 		const { originFilePath, previewFilePath, previewOptions } = this.payload;
 		const message: ErrorLogMessage = {
-			type: InternalServerErrorException.name,
+			type: UnprocessableEntityException.name,
 			stack: this.stack,
 			error: this.error,
 			data: {

@@ -519,4 +519,16 @@ export class FilesStorageService {
 			new FileStorageActionsLoggable('Start restore of FileRecords', { action: 'restore', sourcePayload: fileRecords })
 		);
 	}
+
+	public async markPreviewGenerationFailed(fileRecord: FileRecord): Promise<void> {
+		fileRecord.markPreviewGenerationFailed();
+		await this.fileRecordRepo.save([fileRecord]);
+
+		this.logger.warning(
+			new FileStorageActionsLoggable('Preview generation marked as failed', {
+				action: 'previewNotPossible',
+				sourcePayload: fileRecord,
+			})
+		);
+	}
 }

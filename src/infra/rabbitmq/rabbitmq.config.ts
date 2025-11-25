@@ -7,7 +7,7 @@ export class RabbitMqConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty()
-	RABBITMQ_GLOBAL_PREFETCH_COUNT = 5;
+	RABBITMQ_GLOBAL_PREFETCH_COUNT = 1;
 
 	@IsNumber()
 	@StringToNumber()
