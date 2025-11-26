@@ -82,7 +82,6 @@ export class FilesStorageController {
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiConsumes('multipart/form-data')
 	@UseInterceptors(CurrentUploadMetricsInterceptor)
-	@RequestTimeout('INCOMING_REQUEST_TIMEOUT_UPLOAD_MS')
 	@Post('/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async upload(
 		@Body() _: FileParams,
