@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor, RequestTimeoutException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { TypeGuard } from '@shared/guard';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { AbortableRequest, TimeoutInterceptorConfig } from './interfaces';
@@ -26,11 +26,11 @@ export class TimeoutInterceptor implements NestInterceptor {
 		const timeoutMS = this.config[requestTimeoutEnvironmentName] ?? this.config[this.defaultConfigKey];
 		const validTimeoutMS = TypeGuard.checkNumber(timeoutMS);
 
-		const request = context.switchToHttp().getRequest<AbortableRequest>();
+		const request = context.switchToHttp().getRequest<Request>();
 		const response = context.switchToHttp().getResponse<Response>();
 		const { url } = request;
 
-		if (request) {
+		if (request instanceof Request) {
 			Object.defineProperties(request, {
 				abortController: {
 					value: new AbortController(),
