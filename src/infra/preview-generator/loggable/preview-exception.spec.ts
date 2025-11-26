@@ -1,4 +1,4 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { UnprocessableEntityException } from '@nestjs/common';
 import { PreviewNotPossibleException } from './preview-exception';
 
 describe(PreviewNotPossibleException.name, () => {
@@ -25,7 +25,7 @@ describe(PreviewNotPossibleException.name, () => {
 			const result = exception.getLogMessage();
 
 			expect(result).toEqual({
-				type: InternalServerErrorException.name,
+				type: UnprocessableEntityException.name,
 				stack: exception.stack,
 				error,
 				data: {
