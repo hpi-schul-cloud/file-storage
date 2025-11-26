@@ -273,12 +273,20 @@ export class FilesStorageService {
 
 		return new Promise((resolve, reject) => {
 			if (abortSignal?.aborted) {
-				resolve();
-
-				return;
+				return resolve();
 			}
 
+			let isSettled = false;
+
 			const cleanup = (): void => {
+				if (isSettled) return;
+				isSettled = true;
+
+				// Remove all event listeners
+				data.removeAllListeners('end');
+				data.removeAllListeners('error');
+				data.removeAllListeners('close');
+
 				if (abortSignal) {
 					abortSignal.removeEventListener('abort', onAbort);
 				}
@@ -289,26 +297,28 @@ export class FilesStorageService {
 				resolve();
 			};
 
+			const onEnd = (): void => {
+				cleanup();
+				resolve();
+			};
+
+			const onError = (error: Error): void => {
+				cleanup();
+				reject(error);
+			};
+
+			const onClose = (): void => {
+				cleanup();
+				resolve();
+			};
+
 			if (abortSignal) {
 				abortSignal.addEventListener('abort', onAbort);
 			}
 
-			data.on('end', () => {
-				cleanup();
-				resolve();
-			});
-
-			data.on('error', (error) => {
-				cleanup();
-				reject(error);
-			});
-
-			data.on('close', () => {
-				cleanup();
-				if (data.destroyed && !data.readableEnded) {
-					resolve();
-				}
-			});
+			data.on('end', onEnd);
+			data.on('error', onError);
+			data.on('close', onClose);
 		});
 	}
 

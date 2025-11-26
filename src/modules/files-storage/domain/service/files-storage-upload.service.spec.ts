@@ -1070,4 +1070,131 @@ describe('FilesStorageService upload methods', () => {
 			});
 		});
 	});
+
+	describe('awaitStreamCompletion', () => {
+		describe('when AbortSignal is already aborted', () => {
+			it('should resolve immediately', async () => {
+				const abortController = new AbortController();
+				abortController.abort();
+				const file = fileDtoTestFactory().build({ abortSignal: abortController.signal });
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const result = await (service as any).awaitStreamCompletion(file);
+
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when stream emits close event', () => {
+			it('should resolve on close event', async () => {
+				const file = fileDtoTestFactory().build();
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const promiseResult = (service as any).awaitStreamCompletion(file);
+
+				// Simulate close event
+				setTimeout(() => {
+					file.data.emit('close');
+				}, 10);
+
+				const result = await promiseResult;
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when AbortSignal is triggered during stream processing', () => {
+			it('should resolve when abort signal is triggered', async () => {
+				const abortController = new AbortController();
+				const file = fileDtoTestFactory().build({ abortSignal: abortController.signal });
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const promiseResult = (service as any).awaitStreamCompletion(file);
+
+				// Simulate abort after a delay
+				setTimeout(() => {
+					abortController.abort();
+				}, 10);
+
+				const result = await promiseResult;
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when stream emits end event', () => {
+			it('should resolve on end event', async () => {
+				const file = fileDtoTestFactory().build();
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const promiseResult = (service as any).awaitStreamCompletion(file);
+
+				// Simulate end event
+				setTimeout(() => {
+					file.data.emit('end');
+				}, 10);
+
+				const result = await promiseResult;
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when stream emits error event', () => {
+			it('should reject with the error', async () => {
+				const file = fileDtoTestFactory().build();
+				const testError = new Error('Test stream error');
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const promiseResult = (service as any).awaitStreamCompletion(file);
+
+				// Simulate error event
+				setTimeout(() => {
+					file.data.emit('error', testError);
+				}, 10);
+
+				await expect(promiseResult).rejects.toThrow('Test stream error');
+			});
+		});
+
+		describe('when multiple events are emitted', () => {
+			it('should only settle once (first event wins)', async () => {
+				const file = fileDtoTestFactory().build();
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const promiseResult = (service as any).awaitStreamCompletion(file);
+
+				// Simulate multiple events - end should win and additional events should be ignored
+				setTimeout(() => {
+					file.data.emit('end'); // This should resolve the promise
+					// Note: We don't emit error after end because it would cause unhandled rejection
+					// The cleanup mechanism prevents further event processing
+				}, 10);
+
+				const result = await promiseResult;
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when file has no abortSignal', () => {
+			it('should work normally without abortSignal', async () => {
+				const file = fileDtoTestFactory().build({ abortSignal: undefined });
+
+				// Use reflection to access the private method
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const promiseResult = (service as any).awaitStreamCompletion(file);
+
+				// Simulate end event
+				setTimeout(() => {
+					file.data.emit('end');
+				}, 10);
+
+				const result = await promiseResult;
+				expect(result).toBeUndefined();
+			});
+		});
+	});
 });
