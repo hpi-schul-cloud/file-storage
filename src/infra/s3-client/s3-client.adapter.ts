@@ -462,7 +462,6 @@ export class S3ClientAdapter {
 		refreshTimeout();
 	}
 
-	/* istanbul ignore next */
 	private setupUploadErrorHandling(upload: Upload, context: string, file: File): void {
 		if (file.abortSignal) {
 			if (file.abortSignal.aborted) {
