@@ -1048,4 +1048,153 @@ describe(S3ClientAdapter.name, () => {
 			});
 		});
 	});
+
+	describe('handleUploadAbortion', () => {
+		const setup = () => {
+			const { pathToFile } = createParameter();
+			const mockUpload = createMock<Upload>();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const serviceAsAny = service as any;
+			const mockLogger = serviceAsAny.logger;
+			
+			return { pathToFile, mockUpload, mockLogger, serviceAsAny };
+		};
+
+		describe('WHEN upload abortion is handled', () => {
+			it('should log warning and call upload.abort() for uploadAlreadyAborted action', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadAlreadyAborted';
+				
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should log warning and call upload.abort() for uploadAborted action', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadAborted';
+				
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should log warning and call upload.abort() for uploadStreamError action', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadStreamError';
+				
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should handle custom action strings', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const customAction = 'customAbortReason';
+				
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, customAction);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action: customAction,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should handle different path formats', () => {
+				const { mockUpload, mockLogger, serviceAsAny } = setup();
+				const differentPath = 'folder/subfolder/file.pdf';
+				const action = 'uploadAborted';
+				
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(differentPath, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: differentPath,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+		});
+
+		describe('WHEN upload.abort() throws an error', () => {
+			it('should throw the error from upload.abort() but still log the warning first', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadAborted';
+				
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+				mockUpload.abort.mockImplementation(() => {
+					throw new Error('Abort failed');
+				});
+
+				// Should throw an error when abort fails
+				expect(() => {
+					serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+				}).toThrow('Abort failed');
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+		});
+	});
 });
