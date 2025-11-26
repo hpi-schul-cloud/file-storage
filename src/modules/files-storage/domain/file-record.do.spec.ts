@@ -529,4 +529,19 @@ describe('FileRecord', () => {
 			expect(result).toBe(mimeType);
 		});
 	});
+
+	describe('markPreviewGenerationFailed', () => {
+		it('should set previewGenerationFailed to true', () => {
+			const fileRecord = fileRecordTestFactory().build({
+				mimeType: 'image/jpeg',
+				previewGenerationFailed: false,
+			});
+
+			expect(fileRecord.previewGenerationFailed()).toBe(false);
+
+			fileRecord.markPreviewGenerationFailed();
+
+			expect(fileRecord.previewGenerationFailed()).toBe(true);
+		});
+	});
 });
