@@ -19,7 +19,7 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 	name: 'isUploading_ttl_idx',
 	properties: ['createdAt'],
 	options: {
-		expireAfterSeconds: 86400, // 24 Stunden
+		expireAfterSeconds: 3600,
 		partialFilterExpression: { isUploading: true },
 	},
 })
