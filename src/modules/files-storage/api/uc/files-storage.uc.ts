@@ -399,7 +399,7 @@ export class FilesStorageUC {
 
 				// Handle upload errors immediately
 				fileRecordPromise.catch((error) => {
-					safeReject(new Error('Error by stream uploading', { cause: error }));
+					safeReject(error);
 				});
 			});
 
@@ -412,7 +412,7 @@ export class FilesStorageUC {
 							safeResolve(result as FileRecord);
 						})
 						.catch((error) => {
-							safeReject(new Error('Error by stream uploading', { cause: error }));
+							safeReject(error);
 						});
 				} else {
 					safeReject(new Error('No file provided'));
