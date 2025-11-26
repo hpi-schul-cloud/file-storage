@@ -336,17 +336,31 @@ export class FilesStorageUC {
 
 	// private: stream helper
 	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: AbortableRequest): Promise<FileRecord> {
-		const promise = new Promise<FileRecord>((resolve, reject) => {
+		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
 			const abortController = new AbortController();
-			let fileRecordPromise: Promise<void | FileRecord>;
+			let fileRecordPromise: Promise<void | FileRecord> | undefined;
+			let isResolved = false;
 
-			if (!req.readable || req.destroyed) {
-				abortController.abort();
-				reject(new Error('Request already aborted before processing'));
+			const cleanup = (): void => {
+				req.unpipe(bb);
+			};
 
-				return;
-			}
+			const safeReject = (error: Error): void => {
+				if (!isResolved) {
+					isResolved = true;
+					cleanup();
+					reject(error);
+				}
+			};
+
+			const safeResolve = (result: FileRecord): void => {
+				if (!isResolved) {
+					isResolved = true;
+					cleanup();
+					resolve(result);
+				}
+			};
 
 			// Listen for timeout signal from TimeoutInterceptor
 			const timeoutAbortController = req.abortController;
@@ -354,7 +368,7 @@ export class FilesStorageUC {
 				timeoutAbortController.signal.addEventListener('abort', () => {
 					abortController.abort();
 					this.logger.warning(new UploadAbortLoggable('Upload request was aborted due to timeout', 'request_timeout'));
-					reject(new Error('Request timed out during upload processing'));
+					safeReject(new Error('Request timed out during upload processing'));
 				});
 			}
 
@@ -364,44 +378,49 @@ export class FilesStorageUC {
 					this.logger.warning(
 						new UploadAbortLoggable('Upload request was closed prematurely by client', 'request_closed')
 					);
+					safeReject(new Error('Request closed prematurely'));
 				}
 			});
 
 			req.on('aborted', () => {
 				abortController.abort();
 				this.logger.warning(new UploadAbortLoggable('Upload request was aborted by client', 'request_aborted'));
+				safeReject(new Error('Request aborted by client'));
 			});
 
 			bb.on('file', (_name, file, info) => {
+				if (isResolved) return; // Already resolved/rejected
+
 				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
-					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
+					return this.filesStorageService.uploadFile(userId, params, fileDto);
+				});
 
-					return record
-						.then((result) => result)
-						.catch((error) => {
-							req.unpipe(bb);
-							reject(new Error('Error by stream uploading', { cause: error }));
-						});
+				// Handle upload errors immediately
+				fileRecordPromise.catch((error) => {
+					safeReject(new Error('Error by stream uploading', { cause: error }));
 				});
 			});
 
 			bb.on('finish', () => {
+				if (isResolved) return;
+
 				if (fileRecordPromise instanceof Promise) {
 					fileRecordPromise
-						.then((result) => resolve(result as FileRecord))
+						.then((result) => {
+							safeResolve(result as FileRecord);
+						})
 						.catch((error) => {
-							req.unpipe(bb);
-							reject(new Error('Error by stream uploading', { cause: error }));
+							safeReject(new Error('Error by stream uploading', { cause: error }));
 						});
+				} else {
+					safeReject(new Error('No file provided'));
 				}
 			});
 
 			req.pipe(bb);
 		});
-
-		return promise;
 	}
 
 	private async getResponse(

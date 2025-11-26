@@ -276,39 +276,19 @@ export class FilesStorageService {
 				return resolve();
 			}
 
-			let isSettled = false;
-
-			const cleanup = (): void => {
-				if (isSettled) return;
-				isSettled = true;
-
-				// Remove all event listeners
-				data.removeAllListeners('end');
-				data.removeAllListeners('error');
-				data.removeAllListeners('close');
-
-				if (abortSignal) {
-					abortSignal.removeEventListener('abort', onAbort);
-				}
-			};
-
 			const onAbort = (): void => {
-				cleanup();
 				resolve();
 			};
 
 			const onEnd = (): void => {
-				cleanup();
 				resolve();
 			};
 
 			const onError = (error: Error): void => {
-				cleanup();
 				reject(error);
 			};
 
 			const onClose = (): void => {
-				cleanup();
 				resolve();
 			};
 
