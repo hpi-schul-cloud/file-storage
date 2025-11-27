@@ -1048,4 +1048,385 @@ describe(S3ClientAdapter.name, () => {
 			});
 		});
 	});
+
+	describe('handleUploadAbortion', () => {
+		const setup = () => {
+			const { pathToFile } = createParameter();
+			const mockUpload = createMock<Upload>();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const serviceAsAny = service as any;
+			const mockLogger = serviceAsAny.logger;
+
+			return { pathToFile, mockUpload, mockLogger, serviceAsAny };
+		};
+
+		describe('WHEN upload abortion is handled', () => {
+			it('should log warning and call upload.abort() for uploadAlreadyAborted action', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadAlreadyAborted';
+
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should log warning and call upload.abort() for uploadAborted action', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadAborted';
+
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should log warning and call upload.abort() for uploadStreamError action', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadStreamError';
+
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should handle custom action strings', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const customAction = 'customAbortReason';
+
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, customAction);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action: customAction,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+
+			it('should handle different path formats', () => {
+				const { mockUpload, mockLogger, serviceAsAny } = setup();
+				const differentPath = 'folder/subfolder/file.pdf';
+				const action = 'uploadAborted';
+
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+
+				serviceAsAny.handleUploadAbortion(differentPath, mockUpload, action);
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: differentPath,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+		});
+
+		describe('WHEN upload.abort() throws an error', () => {
+			it('should throw the error from upload.abort() but still log the warning first', () => {
+				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
+				const action = 'uploadAborted';
+
+				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
+				mockUpload.abort.mockImplementation(() => {
+					throw new Error('Abort failed');
+				});
+
+				// Should throw an error when abort fails
+				expect(() => {
+					serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
+				}).toThrow('Abort failed');
+
+				expect(loggerWarningSpy).toHaveBeenCalledWith(
+					expect.objectContaining({
+						message: 'Upload aborted',
+						payload: expect.objectContaining({
+							action,
+							objectPath: pathToFile,
+							bucket: 'test-bucket',
+						}),
+					})
+				);
+				expect(mockUpload.abort).toHaveBeenCalledTimes(1);
+			});
+		});
+	});
+
+	describe('setupUploadErrorHandling', () => {
+		const setup = () => {
+			const { pathToFile } = createParameter();
+			const mockUpload = createMock<Upload>();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const serviceAsAny = service as any;
+			const mockLogger = serviceAsAny.logger;
+
+			return { pathToFile, mockUpload, serviceAsAny, mockLogger };
+		};
+
+		describe('WHEN file has abortSignal', () => {
+			describe('AND abortSignal is already aborted', () => {
+				it('should call handleUploadAbortion immediately with uploadAlreadyAborted action', () => {
+					const { pathToFile, mockUpload, serviceAsAny } = setup();
+					const mockAbortController = new AbortController();
+					mockAbortController.abort();
+
+					const file: File = {
+						data: Readable.from(Buffer.from('test data')),
+						mimeType: 'text/plain',
+						abortSignal: mockAbortController.signal,
+					};
+
+					const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+					serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+					expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadAlreadyAborted');
+					expect(handleUploadAbortionSpy).toHaveBeenCalledTimes(1);
+				});
+
+				it('should return early and not add abort event listener', () => {
+					const { pathToFile, mockUpload, serviceAsAny } = setup();
+					const mockAbortController = new AbortController();
+					mockAbortController.abort();
+
+					const file: File = {
+						data: Readable.from(Buffer.from('test data')),
+						mimeType: 'text/plain',
+						abortSignal: mockAbortController.signal,
+					};
+
+					const addEventListenerSpy = jest.spyOn(mockAbortController.signal, 'addEventListener');
+					const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+					serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+					// Should call handleUploadAbortion immediately
+					expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadAlreadyAborted');
+					// Should not add event listener since it returns early
+					expect(addEventListenerSpy).not.toHaveBeenCalled();
+				});
+			});
+
+			describe('AND abortSignal is not yet aborted', () => {
+				it('should add abort event listener that calls handleUploadAbortion', () => {
+					const { pathToFile, mockUpload, serviceAsAny } = setup();
+					const mockAbortController = new AbortController();
+
+					const file: File = {
+						data: Readable.from(Buffer.from('test data')),
+						mimeType: 'text/plain',
+						abortSignal: mockAbortController.signal,
+					};
+
+					const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+					serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+					// Should not call immediately since signal is not aborted
+					expect(handleUploadAbortionSpy).not.toHaveBeenCalled();
+
+					// Trigger the abort signal
+					mockAbortController.abort();
+
+					// Now it should have been called
+					expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadAborted');
+					expect(handleUploadAbortionSpy).toHaveBeenCalledTimes(1);
+				});
+			});
+		});
+
+		describe('WHEN file has no abortSignal', () => {
+			it('should not call handleUploadAbortion for signal-related events', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				const file: File = {
+					data: Readable.from(Buffer.from('test data')),
+					mimeType: 'text/plain',
+					// No abortSignal property
+				};
+
+				const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				expect(handleUploadAbortionSpy).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN file data is a stream', () => {
+			it('should add error event listener to stream', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				const mockStream = new PassThrough();
+				const file: File = {
+					data: mockStream,
+					mimeType: 'text/plain',
+				};
+
+				const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+				const streamOnSpy = jest.spyOn(mockStream, 'on');
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				expect(streamOnSpy).toHaveBeenCalledWith('error', expect.any(Function));
+
+				// Trigger the error event
+				mockStream.emit('error', new Error('Stream error'));
+
+				expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadStreamError');
+				expect(handleUploadAbortionSpy).toHaveBeenCalledTimes(1);
+			});
+
+			it('should work with Readable stream', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				const mockStream = Readable.from(['test data']);
+				const file: File = {
+					data: mockStream,
+					mimeType: 'text/plain',
+				};
+
+				const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+				const streamOnSpy = jest.spyOn(mockStream, 'on');
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				expect(streamOnSpy).toHaveBeenCalledWith('error', expect.any(Function));
+
+				// Trigger the error event
+				mockStream.emit('error', new Error('Stream error'));
+
+				expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadStreamError');
+			});
+		});
+
+		describe('WHEN file data is not a stream', () => {
+			it('should not add error event listener for Buffer data', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				const file: File = {
+					data: Readable.from(Buffer.from('test data')),
+					mimeType: 'text/plain',
+				};
+
+				const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				// Should not call handleUploadAbortion since Buffer doesn't have error events
+				expect(handleUploadAbortionSpy).not.toHaveBeenCalled();
+			});
+
+			it('should not add error event listener for string data', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				const file: File = {
+					data: Readable.from(['test data string']),
+					mimeType: 'text/plain',
+				};
+
+				const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				expect(handleUploadAbortionSpy).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN file has both abortSignal and stream data', () => {
+			it('should handle both abort signal and stream error events', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				const mockAbortController = new AbortController();
+				const mockStream = new PassThrough();
+				const file: File = {
+					data: mockStream,
+					mimeType: 'text/plain',
+					abortSignal: mockAbortController.signal,
+				};
+
+				const handleUploadAbortionSpy = jest.spyOn(serviceAsAny, 'handleUploadAbortion');
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				// Trigger abort signal
+				mockAbortController.abort();
+
+				expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadAborted');
+
+				// Reset spy
+				handleUploadAbortionSpy.mockClear();
+
+				// Trigger stream error
+				mockStream.emit('error', new Error('Stream error'));
+
+				expect(handleUploadAbortionSpy).toHaveBeenCalledWith(pathToFile, mockUpload, 'uploadStreamError');
+				expect(handleUploadAbortionSpy).toHaveBeenCalledTimes(1);
+			});
+		});
+
+		describe('WHEN object has "on" method but is not a stream', () => {
+			it('should still add error listener for objects with "on" method', () => {
+				const { pathToFile, mockUpload, serviceAsAny } = setup();
+				interface MockEventEmitter {
+					on: jest.Mock;
+					emit: jest.Mock;
+				}
+
+				const mockEventEmitter: MockEventEmitter = {
+					on: jest.fn(),
+					emit: jest.fn(),
+				};
+
+				const file: File = {
+					data: mockEventEmitter as unknown as Readable,
+					mimeType: 'text/plain',
+				};
+
+				serviceAsAny.setupUploadErrorHandling(mockUpload, pathToFile, file);
+
+				expect(mockEventEmitter.on).toHaveBeenCalledWith('error', expect.any(Function));
+			});
+		});
+	});
 });

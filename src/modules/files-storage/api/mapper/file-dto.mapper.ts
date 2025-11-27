@@ -11,8 +11,8 @@ export class FileDtoMapper {
 		return file;
 	}
 
-	public static mapFromBusboyFileInfo(fileInfo: BusboyFileInfo, data: Readable): FileDto {
-		const file = FileDtoFactory.create(fileInfo.filename, data, fileInfo.mimeType);
+	public static mapFromBusboyFileInfo(fileInfo: BusboyFileInfo, data: Readable, abortSignal?: AbortSignal): FileDto {
+		const file = FileDtoFactory.create(fileInfo.filename, data, fileInfo.mimeType, abortSignal);
 
 		return file;
 	}

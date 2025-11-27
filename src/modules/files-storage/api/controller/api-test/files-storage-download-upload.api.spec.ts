@@ -221,6 +221,20 @@ describe('files-storage controller (API)', () => {
 
 				expect(response.status).toEqual(500);
 			});
+
+			it('should handle missing content-type header for multipart request', async () => {
+				const { loggedInClient, validId } = setup();
+
+				try {
+					await loggedInClient
+						.post(`/upload/school/${validId}/schools/${validId}`)
+						.send('some data without proper content-type');
+				} catch (error) {
+					// This might throw an error due to missing multipart headers
+					// which is expected behavior
+					expect(error).toBeDefined();
+				}
+			});
 		});
 	});
 

@@ -30,12 +30,15 @@ async function bootstrap(): Promise<void> {
 
 	nestApp.setGlobalPrefix(basePath);
 	await nestApp.init();
-	nestApp.listen(port, async () => {
+
+	const appServer = await nestApp.listen(port, async () => {
 		const logger = await nestApp.resolve(Logger);
 		const appStartLoggable = new AppStartLoggable({ appName: 'Files Storage Server', port, basePath });
 		logger.setContext('FILES_STORAGE_APP');
 		logger.info(appStartLoggable);
 	});
+
+	appServer.requestTimeout = 0;
 
 	const metricsPort = 9090;
 	const metricsApp = await NestFactory.create(MetricsModule);
