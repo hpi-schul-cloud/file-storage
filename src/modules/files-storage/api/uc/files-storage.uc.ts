@@ -339,7 +339,7 @@ export class FilesStorageUC {
 		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
 			const abortController = new AbortController();
-			let fileRecordPromise: Promise<void | FileRecord> | undefined;
+			let fileRecordPromise: Promise<FileRecord> | undefined;
 			let isResolved = false;
 
 			const cleanup = (): void => {
@@ -403,17 +403,16 @@ export class FilesStorageUC {
 				});
 			});
 
-			bb.on('finish', () => {
+			bb.on('finish', async () => {
 				if (isResolved) return;
 
 				if (fileRecordPromise instanceof Promise) {
-					fileRecordPromise
-						.then((result) => {
-							safeResolve(result as FileRecord);
-						})
-						.catch((error) => {
-							safeReject(error);
-						});
+					try {
+						const fileRecord = await fileRecordPromise;
+						safeResolve(fileRecord);
+					} catch (error) {
+						safeReject(error);
+					}
 				} else {
 					safeReject(new Error('No file provided'));
 				}
