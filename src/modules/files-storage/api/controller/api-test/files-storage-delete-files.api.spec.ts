@@ -184,6 +184,7 @@ describe(`${baseRouteName} (api)`, () => {
 					previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 					isCollaboraEditable: true,
 					exceedsCollaboraEditableFileSize: false,
+					contentLastModifiedAt: expect.any(String),
 				});
 			});
 
@@ -297,6 +298,7 @@ describe(`${baseRouteName} (api)`, () => {
 						previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 						isCollaboraEditable: true,
 						exceedsCollaboraEditableFileSize: false,
+						contentLastModifiedAt: expect.any(String),
 					});
 				});
 
@@ -459,6 +461,7 @@ describe(`${baseRouteName} (api)`, () => {
 								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 								isCollaboraEditable: true,
 								exceedsCollaboraEditableFileSize: false,
+								contentLastModifiedAt: expect.any(String),
 							},
 							{
 								creatorId: expect.any(String),
@@ -476,6 +479,7 @@ describe(`${baseRouteName} (api)`, () => {
 								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
 								isCollaboraEditable: true,
 								exceedsCollaboraEditableFileSize: false,
+								contentLastModifiedAt: expect.any(String),
 							},
 						],
 						total: 2,
