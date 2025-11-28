@@ -4,11 +4,12 @@ import {
 	AuthorizationContextParams,
 	AuthorizationContextParamsRequiredPermissions,
 } from '@infra/authorization-client';
+import { AbortableRequest } from '@infra/core/interceptor';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
-import { ToManyDifferentParentsException } from '@modules/files-storage/loggable';
+import { ToManyDifferentParentsException, UploadAbortLoggable } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
 import {
 	Injectable,
@@ -334,34 +335,91 @@ export class FilesStorageUC {
 	}
 
 	// private: stream helper
-	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecord> {
-		const promise = new Promise<FileRecord>((resolve, reject) => {
+	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: AbortableRequest): Promise<FileRecord> {
+		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
-			let fileRecordPromise: Promise<FileRecord>;
+			const abortController = new AbortController();
+			let fileRecordPromise: Promise<FileRecord> | undefined;
+			let isResolved = false;
+
+			const cleanup = (): void => {
+				req.unpipe(bb);
+			};
+
+			const safeReject = (error: Error): void => {
+				if (!isResolved) {
+					isResolved = true;
+					cleanup();
+					reject(error);
+				}
+			};
+
+			const safeResolve = (result: FileRecord): void => {
+				if (!isResolved) {
+					isResolved = true;
+					cleanup();
+					resolve(result);
+				}
+			};
+
+			// Listen for timeout signal from TimeoutInterceptor
+			const timeoutAbortController = req.abortController;
+			if (timeoutAbortController) {
+				timeoutAbortController.signal.addEventListener('abort', () => {
+					abortController.abort();
+					this.logger.warning(new UploadAbortLoggable('Upload request was aborted due to timeout', 'request_timeout'));
+					safeReject(new Error('Request timed out during upload processing'));
+				});
+			}
+
+			req.on('close', () => {
+				if (!req.complete) {
+					abortController.abort();
+					this.logger.warning(
+						new UploadAbortLoggable('Upload request was closed prematurely by client', 'request_closed')
+					);
+					safeReject(new Error('Request closed prematurely'));
+				}
+			});
+
+			req.on('aborted', () => {
+				abortController.abort();
+				this.logger.warning(new UploadAbortLoggable('Upload request was aborted by client', 'request_aborted'));
+				safeReject(new Error('Request aborted by client'));
+			});
 
 			bb.on('file', (_name, file, info) => {
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file);
+				if (isResolved) return; // Already resolved/rejected
+
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
-					const record = this.filesStorageService.uploadFile(userId, params, fileDto);
+					return this.filesStorageService.uploadFile(userId, params, fileDto);
+				});
 
-					return record;
+				// Handle upload errors immediately
+				fileRecordPromise.catch((error) => {
+					safeReject(error);
 				});
 			});
 
-			bb.on('finish', () => {
-				fileRecordPromise
-					.then((result) => resolve(result))
-					.catch((error) => {
-						req.unpipe(bb);
-						reject(new Error('Error by stream uploading', { cause: error }));
-					});
+			bb.on('finish', async () => {
+				if (isResolved) return;
+
+				if (fileRecordPromise instanceof Promise) {
+					try {
+						const fileRecord = await fileRecordPromise;
+						safeResolve(fileRecord);
+					} catch (error) {
+						safeReject(error);
+					}
+				} else {
+					safeReject(new Error('No file provided'));
+				}
 			});
 
 			req.pipe(bb);
 		});
-
-		return promise;
 	}
 
 	private async getResponse(

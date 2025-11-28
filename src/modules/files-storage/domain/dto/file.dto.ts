@@ -6,6 +6,7 @@ export class FileDto implements File {
 		this.name = file.name;
 		this.data = file.data;
 		this.mimeType = file.mimeType;
+		this.abortSignal = file.abortSignal;
 	}
 
 	name: string;
@@ -13,4 +14,6 @@ export class FileDto implements File {
 	data: Readable;
 
 	mimeType: string;
+
+	abortSignal?: AbortSignal;
 }

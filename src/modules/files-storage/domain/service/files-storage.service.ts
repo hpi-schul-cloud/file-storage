@@ -210,9 +210,7 @@ export class FilesStorageService {
 			await this.storeAndScanFile(fileRecord, file);
 		} catch (error) {
 			const filePath = fileRecord.createPath();
-
-			await this.storageClient.delete([filePath]);
-			await this.fileRecordRepo.delete(fileRecord);
+			await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 
 			throw error;
 		}
@@ -227,7 +225,7 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const streamCompletion = this.awaitStreamCompletion(file.data);
+		const streamCompletion = this.awaitStreamCompletion(file);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
 
@@ -270,10 +268,37 @@ export class FilesStorageService {
 		}
 	}
 
-	private awaitStreamCompletion(stream: Readable): Promise<void> {
+	private awaitStreamCompletion(file: FileDto): Promise<void> {
+		const { data, abortSignal } = file;
+
 		return new Promise((resolve, reject) => {
-			stream.on('end', resolve);
-			stream.on('error', reject);
+			if (abortSignal?.aborted) {
+				return resolve();
+			}
+
+			const onAbort = (): void => {
+				resolve();
+			};
+
+			const onEnd = (): void => {
+				resolve();
+			};
+
+			const onError = (error: Error): void => {
+				reject(error);
+			};
+
+			const onClose = (): void => {
+				resolve();
+			};
+
+			if (abortSignal) {
+				abortSignal.addEventListener('abort', onAbort);
+			}
+
+			data.on('end', onEnd);
+			data.on('error', onError);
+			data.on('close', onClose);
 		});
 	}
 
