@@ -1,8 +1,5 @@
-import { ICurrentUser } from '@infra/auth-guard';
 import { ErrorLogger, Loggable, LoggingUtils, LogMessageDataObject } from '@infra/logger';
 import { Injectable } from '@nestjs/common';
-import { HttpArgumentsHost } from '@nestjs/common/interfaces';
-import { Request } from 'express';
 import util from 'util';
 import { ErrorLoggable } from '../loggable';
 
@@ -15,19 +12,8 @@ export class DomainErrorHandler {
 		this.logger.error(loggable);
 	}
 
-	public execHttpContext(error: unknown, context: HttpArgumentsHost): void {
-		const request: Request = context.getRequest();
-		const user = request.user as ICurrentUser | undefined;
-		const requestInfo = {
-			userId: user?.userId,
-			request: {
-				method: request.method,
-				endpoint: request.url,
-				params: JSON.stringify(request.params),
-				query: JSON.stringify(request.query),
-			},
-		};
-		const loggable = this.createErrorLoggable(error, requestInfo);
+	public execHttpContext(error: unknown): void {
+		const loggable = this.createErrorLoggable(error);
 
 		this.logger.error(loggable);
 	}
