@@ -97,7 +97,7 @@ describe('GlobalErrorFilter', () => {
 
 				expect(domainErrorHandler.exec).toHaveBeenCalledWith(error);
 				expect(domainErrorHandler.exec).toHaveBeenCalledTimes(allContextTypes.length - 1);
-				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledWith(error, argumentsHost.switchToHttp());
+				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledWith(error);
 				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledTimes(1);
 			});
 		});
@@ -117,7 +117,7 @@ describe('GlobalErrorFilter', () => {
 
 				service.catch(error, argumentsHost);
 
-				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledWith(error, argumentsHost.switchToHttp());
+				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledWith(error);
 				expect(domainErrorHandler.execHttpContext).toHaveBeenCalledTimes(1);
 			});
 		});

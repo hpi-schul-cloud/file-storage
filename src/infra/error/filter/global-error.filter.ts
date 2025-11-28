@@ -22,7 +22,7 @@ export class GlobalErrorFilter<E extends RpcError> implements ExceptionFilter<E>
 		const contextType = host.getType<UseableContextType>();
 		switch (contextType) {
 			case UseableContextType.http:
-				this.domainErrorHandler.execHttpContext(error, host.switchToHttp());
+				this.domainErrorHandler.execHttpContext(error);
 
 				return this.sendHttpResponse(error, host);
 			case UseableContextType.rpc:
