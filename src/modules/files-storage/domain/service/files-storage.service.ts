@@ -121,52 +121,8 @@ export class FilesStorageService {
 		}));
 	}
 
-	/*
-	 * TODO: MAJOR REFACTOR NEEDED - UPLOAD vs UPDATE Consistency
-	 *
-	 * PROBLEM: uploadFile und updateFileContents haben sehr ähnliche Abläufe, aber inkonsistente Implementierung:
-	 * - uploadFile: verwendet storeAndScanFileWithRollback (mit DB + S3 Rollback)
-	 * - updateFileContents: verwendet storeAndScanFile direkt (ohne Rollback)
-	 * - Beide verwenden detectMimeType, aber unterschiedlich
-	 * - storeAndScanFile macht zu viele Aufgaben gleichzeitig
-	 *
-	 * ZIEL: Clean Code Orchestrierung in public Methoden, gut getrennte private Methoden
-	 *
-	 * NEUE STRUKTUR:
-	 *
-	 * uploadFile (CREATE):
-	 * 1. prepareNewFileRecord() -> FileRecord erstellen + FileName resolution
-	 * 2. validateAndPrepareBinaryContent() -> MIME detection + Stream preparation
-	 * 3. persistFileRecord() -> DB speichern
-	 * 4. storeBinaryContentWithRollback() -> S3 + Antivirus mit Upload-Rollback
-	 *
-	 * updateFileContents (UPDATE):
-	 * 1. validateMimeTypeConsistency() -> MIME prüfen gegen existierenden FileRecord
-	 * 2. prepareBinaryContentForUpdate() -> Stream vorbereiten
-	 * 3. storeBinaryContentWithUpdateRollback() -> S3 replace + Antivirus mit Update-Rollback
-	 * 4. updateFileMetadata() -> FileRecord Metadaten aktualisieren
-	 *
-	 * PRIVATE METHODEN (neu strukturiert):
-	 * - storeBinaryFile() -> Nur S3 create/update
-	 * - performAntivirusScan() -> Nur Antivirus (stream oder async)
-	 * - updateFileRecordMetadata() -> Nur FileRecord Updates
-	 * - rollbackFailedUpload() -> Upload-spezifisches Rollback
-	 * - rollbackFailedUpdate() -> Update-spezifisches Rollback
-	 *
-	 * HINWEIS: Möglicherweise sind auch Änderungen in FilesStorageUC.uploadFile/updateFileContents nötig,
-	 * um die Orchestrierung dort zu berücksichtigen.
-	 */
-
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		// TODO: REFACTOR - Diese Methode sollte als Orchestrator fungieren und folgende Schritte ausführen:
-		// 1. this.prepareNewFileRecord(userId, parentInfo, file) -> FileRecord erstellen
-		// 2. this.validateAndPrepareBinaryContent(file) -> MIME Type Detection, FileName Resolution
-		// 3. this.persistFileRecord(fileRecord) -> Speichern in DB
-		// 4. this.storeBinaryContentWithRollback(fileRecord, preparedFile) -> Binäre Datei speichern + Antivirus
-		//
-		// Aktuell: Zu viele Details in der öffentlichen Methode, storeAndScanFileWithRollback macht zu viel
-
 		const fileName = await this.resolveFileName(file, parentInfo);
 		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
 		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
@@ -183,16 +139,6 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, readable: Readable): Promise<FileRecord> {
-		// TODO: REFACTOR - Diese Methode sollte als Orchestrator fungieren und folgende Schritte ausführen:
-		// 1. this.validateMimeTypeConsistency(fileRecord, readable) -> MIME Type prüfen & Stream vorbereiten
-		// 2. this.storeBinaryContentForUpdate(fileRecord, preparedFile) -> Binäre Datei aktualisieren + Antivirus
-		// 3. this.updateFileMetadataAfterContentChange(fileRecord) -> Metadaten aktualisieren (size, lastModified, etc.)
-		//
-		// Aktuell: updateFileContents verwendet storeAndScanFile direkt, aber uploadFile verwendet storeAndScanFileWithRollback
-		// Das sollte konsistenter sein - beide brauchen ähnliche Fehlerbehandlung, aber unterschiedliche Rollback-Strategien
-		//
-		// HINWEIS: Diese Methode wird von WopiService.updateFileContents() verwendet - Interface muss gleich bleiben
-
 		const { mimeType, stream } = await this.detectMimeType(readable, fileRecord.mimeType);
 		this.checkMimeType(fileRecord.mimeType, mimeType);
 
@@ -260,12 +206,6 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFileWithRollback(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		// TODO: REFACTOR - Diese Methode sollte umbenannt werden zu "storeBinaryContentWithRollback"
-		// und spezifisch für Upload-Operationen gedacht sein. Update-Operationen brauchen andere Rollback-Logik.
-		//
-		// Für Update: Falls Fehler auftritt, sollte die alte Datei wiederhergestellt werden, nicht gelöscht
-		// Für Upload: Falls Fehler auftritt, sollte sowohl FileRecord als auch Binärdatei gelöscht werden
-
 		try {
 			await this.storeAndScanFile(fileRecord, file);
 		} catch (error) {
@@ -285,15 +225,6 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		// TODO: REFACTOR - Diese Methode macht zu viele verschiedene Dinge und sollte aufgeteilt werden:
-		// 1. this.storeBinaryFile(fileRecord, file) -> Nur das Speichern der Binärdatei
-		// 2. this.performAntivirusScan(fileRecord, file) -> Antivirus-Scanning (Stream oder asynchron)
-		// 3. this.updateFileRecordAfterStorage(fileRecord, fileSize) -> FileRecord Metadaten aktualisieren
-		// 4. this.triggerAsyncAntivirusIfNeeded(fileRecord) -> Asynchrones Antivirus falls erforderlich
-		//
-		// Problem: Diese Methode wird sowohl für Upload als auch Update verwendet, aber die Logik
-		// sollte sich unterscheiden (Upload = create, Update = replace/update in S3)
-
 		const streamCompletion = this.awaitStreamCompletion(file);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
