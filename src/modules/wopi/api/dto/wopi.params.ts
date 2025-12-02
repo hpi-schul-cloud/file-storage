@@ -1,6 +1,7 @@
 /* eslint-disable max-classes-per-file */
 import { accessTokenRegex } from '@infra/authorization-client';
 import { ApiProperty } from '@nestjs/swagger';
+import { FileRecordIdentifier } from '@shared/domain/interface/file-record.interface';
 import { EntityId } from '@shared/domain/types';
 import { IsEnum, IsMongoId, IsString, Matches, MaxLength } from 'class-validator';
 
@@ -9,7 +10,7 @@ export enum EditorMode {
 	VIEW = 'view',
 }
 
-export class AuthorizedCollaboraDocumentUrlParams {
+export class AuthorizedCollaboraDocumentUrlParams implements FileRecordIdentifier {
 	@ApiProperty()
 	@IsMongoId()
 	fileRecordId!: EntityId;
@@ -30,7 +31,7 @@ export class WopiAccessTokenParams {
 	access_token!: string;
 }
 
-export class SingleFileParams {
+export class SingleFileParams implements FileRecordIdentifier {
 	@ApiProperty()
 	@IsMongoId()
 	fileRecordId!: EntityId;

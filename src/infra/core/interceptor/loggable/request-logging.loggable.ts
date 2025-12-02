@@ -1,4 +1,9 @@
 import { Loggable, LogMessage } from '@infra/logger';
+import {
+	FileRecordIdentifier,
+	MultipleFileRecordIdentifier,
+	ParentIdentifier,
+} from '@shared/domain/interface/file-record.interface';
 import { Request } from 'express';
 
 export class RequestLoggingLoggable implements Loggable {
@@ -20,13 +25,20 @@ export class RequestLoggingLoggable implements Loggable {
 		};
 	}
 
+	// Use shared interface property names for type safety
+	public allowedProperties: (
+		| keyof FileRecordIdentifier
+		| keyof MultipleFileRecordIdentifier
+		| keyof ParentIdentifier
+	)[] = ['fileRecordId', 'fileRecordIds', 'parentId', 'parentType'];
+
 	private sanitizeRequestParams(): Record<string, unknown> {
 		const params = { ...this.request.params };
-		const allowedProperties = ['fileRecordId', 'fileRecordIds', 'parentId', 'parentType'];
+
 		const sanitizedParams: Record<string, unknown> = {};
 
 		// Only include allowed properties to prevent sensitive data exposure in logs
-		for (const key of allowedProperties) {
+		for (const key of this.allowedProperties) {
 			if (params[key] !== undefined) {
 				sanitizedParams[key] = params[key];
 			}

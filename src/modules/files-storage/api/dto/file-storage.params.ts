@@ -1,6 +1,11 @@
 /* eslint-disable max-classes-per-file */
 import { ScanResult } from '@infra/antivirus';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	FileRecordIdentifier,
+	MultipleFileRecordIdentifier,
+	ParentIdentifier,
+} from '@shared/domain/interface/file-record.interface';
 import { EntityId } from '@shared/domain/types';
 import { SanitizeHtml, StringToBoolean, StringToObject } from '@shared/transformer';
 import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
@@ -25,7 +30,7 @@ export class StorageLocationParamsDto implements StorageLocationParams {
 	storageLocation!: StorageLocation;
 }
 
-export class FileRecordParams implements ParentInfo {
+export class FileRecordParams implements ParentInfo, ParentIdentifier {
 	@ApiProperty()
 	@IsMongoId()
 	storageLocationId!: EntityId;
@@ -66,7 +71,7 @@ export class FileParams {
 	file!: string;
 }
 
-export class DownloadFileParams {
+export class DownloadFileParams implements FileRecordIdentifier {
 	@ApiProperty()
 	@IsMongoId()
 	fileRecordId!: EntityId;
@@ -90,19 +95,19 @@ export class ScanResultParams implements ScanResult {
 	error?: string;
 }
 
-export class SingleFileParams {
+export class SingleFileParams implements FileRecordIdentifier {
 	@ApiProperty()
 	@IsMongoId()
 	fileRecordId!: EntityId;
 }
 
-export class MultiFileParams {
+export class MultiFileParams implements MultipleFileRecordIdentifier {
 	@ApiProperty()
 	@IsMongoId({ each: true })
 	fileRecordIds!: EntityId[];
 }
 
-export class ArchiveFileParams {
+export class ArchiveFileParams implements MultipleFileRecordIdentifier {
 	@ApiProperty()
 	@IsMongoId({ each: true })
 	@StringToObject(ArchiveFileParams)
@@ -158,7 +163,7 @@ export class PreviewParams implements PreviewInfo {
 	forceUpdate?: boolean;
 }
 
-export class ParentParams {
+export class ParentParams implements ParentIdentifier {
 	@ApiProperty()
 	@IsMongoId()
 	parentId!: EntityId;
