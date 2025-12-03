@@ -22,7 +22,6 @@ export class RequestLoggingLoggable implements Loggable {
 				url: this.request.route.path,
 				method: this.request.method,
 				params: JSON.stringify(this.sanitizeRequestParams()),
-				query: JSON.stringify(this.request.query),
 			},
 		};
 	}
