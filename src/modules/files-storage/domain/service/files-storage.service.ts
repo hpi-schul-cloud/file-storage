@@ -11,7 +11,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { PassThrough, Readable } from 'stream';
+import { Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -30,7 +30,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { fileTypeStream } from './file-type.helper';
+import { detectMimeTypeByStream, splitStream } from './file-type.helper';
 
 @Injectable()
 export class FilesStorageService {
@@ -124,13 +124,9 @@ export class FilesStorageService {
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+		file.mimeType = await detectMimeTypeByStream(file.data, file.mimeType);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, file.mimeType, parentInfo, userId);
 
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		// remapped need to be removed, see this.updateFileContents
-		file.data = stream;
-		file.mimeType = fileRecord.mimeType;
 		await this.fileRecordRepo.save(fileRecord);
 
 		await this.storeAndScanFileWithRollback(fileRecord, file);
@@ -138,9 +134,9 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, readable: Readable): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(readable, fileRecord.mimeType);
-		this.checkMimeType(fileRecord.mimeType, mimeType);
+	public async updateFileContents(fileRecord: FileRecord, stream: Readable): Promise<FileRecord> {
+		const mimeType = await detectMimeTypeByStream(stream, fileRecord.mimeType);
+		this.checkMimeType(fileRecord, mimeType);
 
 		const file = FileDtoFactory.create(fileRecord.getName(), stream, mimeType);
 		await this.storeAndScanFile(fileRecord, file);
@@ -148,50 +144,10 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	private checkMimeType(oldMimeType: string, newMimeType: string): void {
-		if (oldMimeType !== newMimeType) {
+	private checkMimeType(fileRecord: FileRecord, mimeType: string): void {
+		if (fileRecord.mimeType !== mimeType) {
 			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
 		}
-	}
-
-	private async detectMimeType(
-		data: Readable,
-		expectedMimeType: string
-	): Promise<{ mimeType: string; stream: Readable }> {
-		if (this.isStreamMimeTypeDetectionPossible(expectedMimeType)) {
-			const source = this.createPipedStream(data);
-			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
-
-			const mimeType = detectedMimeType ?? expectedMimeType;
-
-			return { mimeType, stream };
-		}
-
-		return { mimeType: expectedMimeType, stream: data };
-	}
-
-	private createPipedStream(data: Readable): PassThrough {
-		return data.pipe(new PassThrough());
-	}
-
-	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
-		const mimTypes = [
-			'text/csv',
-			'image/svg+xml',
-			'application/msword',
-			'application/vnd.ms-powerpoint',
-			'application/vnd.ms-excel',
-		];
-
-		const result = !mimTypes.includes(mimeType);
-
-		return result;
-	}
-
-	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const stream = await fileTypeStream(file);
-
-		return { mime: stream.fileType?.mime, stream };
 	}
 
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
@@ -232,7 +188,7 @@ export class FilesStorageService {
 		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
-			const pipedStream = this.createPipedStream(file.data);
+			const pipedStream = splitStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),

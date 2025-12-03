@@ -1,13 +1,51 @@
-import type { ReadableStreamWithFileType } from 'file-type';
 import { loadEsm } from 'load-esm';
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'node:stream';
 
-export async function fileTypeStream(file: Readable): Promise<ReadableStreamWithFileType> {
-	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
+/**
+ * Chunks are piped by reference.
+ * Events work for individual streams only.
+ */
+export const splitStream = (sourceStream: Readable): Readable => {
+	const stream = new PassThrough();
 
-	const stream = await fileTypeStream(file);
+	sourceStream.on('data', (chunk) => {
+		stream.write(chunk);
+	});
+
+	sourceStream.on('end', () => {
+		stream.end();
+	});
+
+	sourceStream.on('error', (err) => {
+		stream.emit('error', err);
+	});
 
 	return stream;
-}
+};
 
-export default { fileTypeStream };
+const isFileTypePackageSupported = (mimeType: string): boolean => {
+	const unsupportedMimeTypes = [
+		'text/csv',
+		'image/svg+xml',
+		'application/msword',
+		'application/vnd.ms-powerpoint',
+		'application/vnd.ms-excel',
+	];
+
+	return !unsupportedMimeTypes.includes(mimeType);
+};
+
+export async function detectMimeTypeByStream(sourceStream: Readable, fallbackMimeType: string): Promise<string> {
+	if (!isFileTypePackageSupported(fallbackMimeType)) {
+		return fallbackMimeType;
+	}
+
+	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
+
+	const streamPipe = splitStream(sourceStream);
+	const stream = await fileTypeStream(streamPipe);
+	const detectedMimeType = stream.fileType?.mime;
+	const mimeType = detectedMimeType ?? fallbackMimeType;
+
+	return mimeType;
+}
