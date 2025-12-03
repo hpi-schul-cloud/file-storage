@@ -26,27 +26,22 @@ export class FileStorageActionsLoggable implements Loggable {
 	}
 
 	private get fileRecordId(): EntityId | EntityId[] | undefined {
-		if (this.payload.sourcePayload) {
-			if (Array.isArray(this.payload.sourcePayload)) {
-				return this.payload.sourcePayload.map((sourcePayload) => sourcePayload.id);
-			}
-
-			return this.payload.sourcePayload.id;
+		const sourcePayload = this.payload.sourcePayload ?? [];
+		if (Array.isArray(sourcePayload)) {
+			return sourcePayload.map((sourcePayload) => sourcePayload.id);
 		}
 
-		return undefined;
+		return sourcePayload.id;
 	}
 
 	private get sanitizedSourcePayload(): unknown {
-		if (!this.payload.sourcePayload) {
-			return undefined;
+		const sourcePayload = this.payload.sourcePayload ?? [];
+
+		if (Array.isArray(sourcePayload)) {
+			return sourcePayload.map((fileRecord) => this.sanitizeFileRecord(fileRecord));
 		}
 
-		if (Array.isArray(this.payload.sourcePayload)) {
-			return this.payload.sourcePayload.map((fileRecord) => this.sanitizeFileRecord(fileRecord));
-		}
-
-		return this.sanitizeFileRecord(this.payload.sourcePayload);
+		return this.sanitizeFileRecord(sourcePayload);
 	}
 
 	private sanitizeFileRecord(fileRecord: FileRecord): Record<string, unknown> {
