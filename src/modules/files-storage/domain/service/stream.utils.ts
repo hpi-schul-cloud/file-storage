@@ -1,11 +1,18 @@
+import type { ReadableStreamWithFileType } from 'file-type';
 import { loadEsm } from 'load-esm';
 import { PassThrough, Readable } from 'node:stream';
+
+export async function fileTypeStream(file: Readable): Promise<ReadableStreamWithFileType> {
+	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
+
+	return fileTypeStream(file);
+}
 
 /**
  * Chunks are piped by reference.
  * Events work for individual streams only.
  */
-export const splitStream = (sourceStream: Readable): Readable => {
+export const cloneStream = (sourceStream: Readable): Readable => {
 	const stream = new PassThrough();
 
 	sourceStream.on('data', (chunk) => {
@@ -40,12 +47,12 @@ export async function detectMimeTypeByStream(sourceStream: Readable, fallbackMim
 		return fallbackMimeType;
 	}
 
-	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
-
-	const streamPipe = splitStream(sourceStream);
+	const streamPipe = cloneStream(sourceStream);
 	const stream = await fileTypeStream(streamPipe);
 	const detectedMimeType = stream.fileType?.mime;
 	const mimeType = detectedMimeType ?? fallbackMimeType;
 
 	return mimeType;
 }
+
+export default { fileTypeStream };

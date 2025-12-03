@@ -30,7 +30,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { detectMimeTypeByStream, splitStream } from './file-type.helper';
+import { cloneStream, detectMimeTypeByStream } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -188,7 +188,7 @@ export class FilesStorageService {
 		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
-			const pipedStream = splitStream(file.data);
+			const pipedStream = cloneStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),

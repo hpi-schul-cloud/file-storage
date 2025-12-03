@@ -11,7 +11,7 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import FileType from '../../../domain/service/file-type.helper';
+import StreamUtils from '../../../domain/service/stream.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
@@ -19,7 +19,7 @@ import { availableParentTypes } from './mocks';
 
 const baseRouteName = '/file';
 
-jest.mock('../../../domain/service/file-type.helper');
+jest.mock('../../../domain/service/stream.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
@@ -175,7 +175,7 @@ describe(`${baseRouteName} (api)`, () => {
 					},
 				};
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 				return { validId, copyFilesParams, loggedInClient };
 			};
