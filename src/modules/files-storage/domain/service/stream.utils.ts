@@ -58,4 +58,36 @@ export async function detectMimeTypeByStream(sourceStream: Readable, fallbackMim
 	return mimeType;
 }
 
+export function awaitStreamCompletion(data: Readable, abortSignal?: AbortSignal): Promise<void> {
+	return new Promise((resolve, reject) => {
+		if (abortSignal?.aborted) {
+			return resolve();
+		}
+
+		const onAbort = (): void => {
+			resolve();
+		};
+
+		const onEnd = (): void => {
+			resolve();
+		};
+
+		const onError = (error: Error): void => {
+			reject(error);
+		};
+
+		const onClose = (): void => {
+			resolve();
+		};
+
+		if (abortSignal) {
+			abortSignal.addEventListener('abort', onAbort);
+		}
+
+		data.on('end', onEnd);
+		data.on('error', onError);
+		data.on('close', onClose);
+	});
+}
+
 export default { fileTypeStream };

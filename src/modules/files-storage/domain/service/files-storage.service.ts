@@ -30,7 +30,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { detectMimeTypeByStream, duplicateStream } from './stream.utils';
+import { awaitStreamCompletion, detectMimeTypeByStream, duplicateStream } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -185,7 +185,7 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const streamCompletion = this.awaitStreamCompletion(file);
+		const streamCompletion = awaitStreamCompletion(file.data, file.abortSignal);
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
 
@@ -226,40 +226,6 @@ export class FilesStorageService {
 		} catch (err) {
 			throw new InternalServerErrorException('File stream error', { cause: err });
 		}
-	}
-
-	private awaitStreamCompletion(file: FileDto): Promise<void> {
-		const { data, abortSignal } = file;
-
-		return new Promise((resolve, reject) => {
-			if (abortSignal?.aborted) {
-				return resolve();
-			}
-
-			const onAbort = (): void => {
-				resolve();
-			};
-
-			const onEnd = (): void => {
-				resolve();
-			};
-
-			const onError = (error: Error): void => {
-				reject(error);
-			};
-
-			const onClose = (): void => {
-				resolve();
-			};
-
-			if (abortSignal) {
-				abortSignal.addEventListener('abort', onAbort);
-			}
-
-			data.on('end', onEnd);
-			data.on('error', onError);
-			data.on('close', onClose);
-		});
 	}
 
 	// update
