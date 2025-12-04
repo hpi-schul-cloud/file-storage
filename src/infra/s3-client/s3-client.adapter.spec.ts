@@ -386,14 +386,34 @@ describe(S3ClientAdapter.name, () => {
 					);
 				});
 
-				it('should call service.moveToTrash()', async () => {
-					const { pathToFile, directory } = setup();
+				it('should call send() of client with copy objects', async () => {
+					const { directory, bucket } = setup();
 
-					const spyMoveToTrash = jest.spyOn(service, 'moveToTrash');
 					await service.moveDirectoryToTrash(directory);
 
-					expect(spyMoveToTrash).toHaveBeenCalledWith([pathToFile]);
-					expect(spyMoveToTrash).toHaveBeenCalledTimes(1);
+					expect(client.send).toHaveBeenNthCalledWith(
+						2,
+						expect.objectContaining({
+							input: {
+								Bucket: bucket,
+								CopySource: `${bucket}/test/text.txt`,
+								Key: 'trash/test/text.txt',
+							},
+						})
+					);
+				});
+
+				it('should call send() of client with delete objects', async () => {
+					const { directory, bucket } = setup();
+
+					await service.moveDirectoryToTrash(directory);
+
+					expect(client.send).toHaveBeenNthCalledWith(
+						3,
+						expect.objectContaining({
+							input: { Bucket: bucket, Delete: { Objects: [{ Key: 'test/text.txt' }] } },
+						})
+					);
 				});
 			});
 
@@ -402,7 +422,6 @@ describe(S3ClientAdapter.name, () => {
 					const { bucket, directory } = createParameter();
 					const filePath = `${directory}/test.txt`;
 					const nextFilePath = `${directory}/next-test.txt`;
-					const spyMoveToTrash = jest.spyOn(service, 'moveToTrash');
 
 					const expectedResponse = createListObjectsV2CommandOutput.build({
 						Contents: [{ Key: filePath }],
@@ -413,7 +432,12 @@ describe(S3ClientAdapter.name, () => {
 
 					// @ts-expect-error ignore parameter type of mock function
 					client.send.mockResolvedValueOnce(expectedResponse);
-					spyMoveToTrash.mockResolvedValueOnce();
+					// Mock for copy operation
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
+					// Mock for delete operation
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
 
 					const expectedNextResponse = createListObjectsV2CommandOutput.build({
 						Contents: [{ Key: nextFilePath }],
@@ -422,43 +446,69 @@ describe(S3ClientAdapter.name, () => {
 					});
 					// @ts-expect-error ignore parameter type of mock function
 					client.send.mockResolvedValueOnce(expectedNextResponse);
-					spyMoveToTrash.mockResolvedValueOnce();
+					// Mock for copy operation
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
+					// Mock for delete operation
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
 
-					return { bucket, filePath, nextFilePath, directory, spyMoveToTrash };
+					return { bucket, filePath, nextFilePath, directory };
 				};
 
 				it('should call send() of client with directory path', async () => {
-					const { bucket, directory, nextFilePath } = setup();
+					const { bucket, directory, nextFilePath, filePath } = setup();
 
 					await service.moveDirectoryToTrash(directory);
 
+					// First list operation
 					expect(client.send).toHaveBeenNthCalledWith(
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
 						})
 					);
+					// First copy operation
 					expect(client.send).toHaveBeenNthCalledWith(
 						2,
+						expect.objectContaining({
+							input: { Bucket: bucket, CopySource: `${bucket}/${filePath}`, Key: `trash/${filePath}` },
+						})
+					);
+					// First delete operation
+					expect(client.send).toHaveBeenNthCalledWith(
+						3,
+						expect.objectContaining({
+							input: { Bucket: bucket, Delete: { Objects: [{ Key: filePath }] } },
+						})
+					);
+					// Second list operation (with continuation token)
+					expect(client.send).toHaveBeenNthCalledWith(
+						4,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, ContinuationToken: nextFilePath, MaxKeys: 1000 },
 						})
 					);
-				});
-
-				it('should call service.moveToTrash()', async () => {
-					const { filePath, nextFilePath, directory, spyMoveToTrash } = setup();
-
-					await service.moveDirectoryToTrash(directory);
-
-					expect(spyMoveToTrash).toHaveBeenCalledWith([filePath]);
-					expect(spyMoveToTrash).toHaveBeenCalledWith([nextFilePath]);
+					// Second copy operation
+					expect(client.send).toHaveBeenNthCalledWith(
+						5,
+						expect.objectContaining({
+							input: { Bucket: bucket, CopySource: `${bucket}/${nextFilePath}`, Key: `trash/${nextFilePath}` },
+						})
+					);
+					// Second delete operation
+					expect(client.send).toHaveBeenNthCalledWith(
+						6,
+						expect.objectContaining({
+							input: { Bucket: bucket, Delete: { Objects: [{ Key: nextFilePath }] } },
+						})
+					);
 				});
 			});
 
 			describe('When contents contain invalid keys', () => {
 				const setup = () => {
-					const { pathToFile } = createParameter();
+					const { pathToFile, bucket } = createParameter();
 					const expectedResponse = createListObjectsV2CommandOutput.build({
 						Contents: [{ Key: undefined }],
 						IsTruncated: false,
@@ -467,16 +517,16 @@ describe(S3ClientAdapter.name, () => {
 					// @ts-expect-error ignore parameter type of mock function
 					client.send.mockResolvedValueOnce(expectedResponse);
 
-					return { pathToFile };
+					return { pathToFile, bucket };
 				};
 
-				it('should not call moveToTrash()', async () => {
+				it('should call client send with correct params', async () => {
 					const { pathToFile } = setup();
 
-					const spyMoveToTrash = jest.spyOn(service, 'moveToTrash');
 					await service.moveDirectoryToTrash(pathToFile);
 
-					expect(spyMoveToTrash).toHaveBeenCalledWith([]);
+					// Only called once for listing objects
+					expect(client.send).toHaveBeenCalledTimes(1);
 				});
 			});
 
@@ -561,13 +611,13 @@ describe(S3ClientAdapter.name, () => {
 					return { directory };
 				};
 
-				it('should not call deleteDirectory()', async () => {
+				it('should only call client.send once', async () => {
 					const { directory } = setup();
 
-					const spyMoveToTrash = jest.spyOn(service, 'delete');
 					await service.deleteDirectory(directory);
 
-					expect(spyMoveToTrash).toHaveBeenCalledWith([]);
+					// Only called once for listing objects
+					expect(client.send).toHaveBeenCalledTimes(1);
 				});
 			});
 
@@ -614,7 +664,6 @@ describe(S3ClientAdapter.name, () => {
 					const { bucket, directory } = createParameter();
 					const filePath = `${directory}/test.txt`;
 					const nextFilePath = `${directory}/next-test.txt`;
-					const spyDelete = jest.spyOn(service, 'delete');
 
 					const expectedResponse = createListObjectsV2CommandOutput.build({
 						Contents: [{ Key: filePath }],
@@ -625,7 +674,10 @@ describe(S3ClientAdapter.name, () => {
 
 					// @ts-expect-error ignore parameter type of mock function
 					client.send.mockResolvedValueOnce(expectedResponse);
-					spyDelete.mockResolvedValueOnce();
+
+					// Mock for delete operation
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
 
 					const expectedNextResponse = createListObjectsV2CommandOutput.build({
 						Contents: [{ Key: nextFilePath }],
@@ -635,37 +687,47 @@ describe(S3ClientAdapter.name, () => {
 
 					// @ts-expect-error ignore parameter type of mock function
 					client.send.mockResolvedValueOnce(expectedNextResponse);
-					spyDelete.mockResolvedValueOnce();
 
-					return { bucket, filePath, nextFilePath, directory, spyDelete };
+					// Mock for delete operation
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
+
+					return { bucket, filePath, nextFilePath, directory };
 				};
 
 				it('should call send() of client with directory path', async () => {
-					const { bucket, directory, nextFilePath } = setup();
+					const { bucket, directory, nextFilePath, filePath } = setup();
 
 					await service.deleteDirectory(directory);
 
+					// First list operation
 					expect(client.send).toHaveBeenNthCalledWith(
 						1,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, MaxKeys: 1000 },
 						})
 					);
+					// First delete operation
 					expect(client.send).toHaveBeenNthCalledWith(
 						2,
+						expect.objectContaining({
+							input: { Bucket: bucket, Delete: { Objects: [{ Key: filePath }] } },
+						})
+					);
+					// Second list operation (with continuation token)
+					expect(client.send).toHaveBeenNthCalledWith(
+						3,
 						expect.objectContaining({
 							input: { Bucket: bucket, Prefix: directory, ContinuationToken: nextFilePath, MaxKeys: 1000 },
 						})
 					);
-				});
-
-				it('should call service.delete()', async () => {
-					const { filePath, nextFilePath, directory, spyDelete } = setup();
-
-					await service.deleteDirectory(directory);
-
-					expect(spyDelete).toHaveBeenCalledWith([filePath]);
-					expect(spyDelete).toHaveBeenCalledWith([nextFilePath]);
+					// Second delete operation
+					expect(client.send).toHaveBeenNthCalledWith(
+						4,
+						expect.objectContaining({
+							input: { Bucket: bucket, Delete: { Objects: [{ Key: nextFilePath }] } },
+						})
+					);
 				});
 			});
 
@@ -735,10 +797,7 @@ describe(S3ClientAdapter.name, () => {
 			const setup = () => {
 				const { pathToFile } = createParameter();
 				const filePath = 'directory/test.txt';
-				const error = new InternalServerErrorException('S3ClientAdapter:delete', {
-					cause: undefined,
-					description: undefined,
-				});
+				const error = new Error('Delete failed');
 
 				const expectedResponse = createListObjectsV2CommandOutput.build({
 					Contents: [{ Key: filePath }],
@@ -749,7 +808,7 @@ describe(S3ClientAdapter.name, () => {
 				client.send.mockResolvedValueOnce(expectedResponse);
 
 				// @ts-ignore
-				client.send.mockRejectedValueOnce();
+				client.send.mockRejectedValueOnce(error);
 
 				const expectedError = new InternalServerErrorException(
 					'S3ClientAdapter:deleteDirectory',
