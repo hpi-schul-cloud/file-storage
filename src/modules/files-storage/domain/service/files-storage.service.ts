@@ -125,6 +125,7 @@ export class FilesStorageService {
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile, parentInfo);
 
+		const streamCompletion = awaitStreamCompletion(sourceFile.data, sourceFile.abortSignal);
 		const [streamForDetection, streamForStorage] = duplicateStream(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
 
@@ -132,18 +133,29 @@ export class FilesStorageService {
 		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 
 		await this.fileRecordRepo.save(fileRecord);
-		await this.storeAndScanFileWithRollback(fileRecord, file);
+
+		try {
+			await this.storeAndScanFile(fileRecord, file, streamCompletion);
+		} catch (error) {
+			await this.rollbackByFileRecord(fileRecord);
+			throw error;
+		}
 
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, sourceStream: Readable): Promise<FileRecord> {
+	public async updateFileContents(
+		fileRecord: FileRecord,
+		sourceStream: Readable,
+		abortSignal?: AbortSignal
+	): Promise<FileRecord> {
+		const streamCompletion = awaitStreamCompletion(sourceStream, abortSignal);
 		const [streamForDetection, streamForStorage] = duplicateStream(sourceStream, 2);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, fileRecord.mimeType);
 		this.checkMimeType(fileRecord, mimeType);
 
-		const file = FileDtoFactory.create(fileRecord.getName(), streamForStorage, mimeType);
-		await this.storeAndScanFile(fileRecord, file);
+		const file = FileDtoFactory.create(fileRecord.getName(), streamForStorage, mimeType, abortSignal);
+		await this.storeAndScanFile(fileRecord, file, streamCompletion);
 
 		return fileRecord;
 	}
@@ -165,15 +177,9 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private async storeAndScanFileWithRollback(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		try {
-			await this.storeAndScanFile(fileRecord, file);
-		} catch (error) {
-			const filePath = fileRecord.createPath();
-			await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
-
-			throw error;
-		}
+	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
+		const filePath = fileRecord.createPath();
+		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
 	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
@@ -184,8 +190,11 @@ export class FilesStorageService {
 		return shouldStreamToAntiVirus;
 	}
 
-	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const streamCompletion = awaitStreamCompletion(file.data, file.abortSignal);
+	private async storeAndScanFile(
+		fileRecord: FileRecord,
+		file: FileDto,
+		streamCompletion: Promise<void>
+	): Promise<void> {
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		const filePath = fileRecord.createPath();
 
