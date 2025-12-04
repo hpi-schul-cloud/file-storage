@@ -125,6 +125,7 @@ export class FilesStorageService {
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile, parentInfo);
 
+		const fileSizeObserver = StreamFileSizeObserver.create(sourceFile.data);
 		const streamCompletion = awaitStreamCompletion(sourceFile.data, sourceFile.abortSignal);
 		const [streamForDetection, streamForStorage] = duplicateStream(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
@@ -135,7 +136,7 @@ export class FilesStorageService {
 		await this.fileRecordRepo.save(fileRecord);
 
 		try {
-			await this.storeAndScanFile(fileRecord, file, streamCompletion);
+			await this.storeAndScanFile(fileRecord, file, streamCompletion, fileSizeObserver);
 		} catch (error) {
 			await this.rollbackByFileRecord(fileRecord);
 			throw error;
@@ -149,13 +150,14 @@ export class FilesStorageService {
 		sourceStream: Readable,
 		abortSignal?: AbortSignal
 	): Promise<FileRecord> {
+		const fileSizeObserver = StreamFileSizeObserver.create(sourceStream);
 		const streamCompletion = awaitStreamCompletion(sourceStream, abortSignal);
 		const [streamForDetection, streamForStorage] = duplicateStream(sourceStream, 2);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, fileRecord.mimeType);
 		this.checkMimeType(fileRecord, mimeType);
 
 		const file = FileDtoFactory.create(fileRecord.getName(), streamForStorage, mimeType, abortSignal);
-		await this.storeAndScanFile(fileRecord, file, streamCompletion);
+		await this.storeAndScanFile(fileRecord, file, streamCompletion, fileSizeObserver);
 
 		return fileRecord;
 	}
@@ -222,9 +224,9 @@ export class FilesStorageService {
 	private async storeAndScanFile(
 		fileRecord: FileRecord,
 		file: FileDto,
-		streamCompletion: Promise<void>
+		streamCompletion: Promise<void>,
+		fileSizeObserver: StreamFileSizeObserver
 	): Promise<void> {
-		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(streamCompletion);
 
