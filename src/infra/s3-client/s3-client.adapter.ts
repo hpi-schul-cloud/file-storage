@@ -94,13 +94,9 @@ export class S3ClientAdapter {
 	}
 
 	public async copy(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
-		try {
-			const result = await this.copyFiles(paths);
+		const result = await this.copyFiles(paths);
 
-			return result;
-		} catch (err) {
-			throw new InternalServerErrorException('S3ClientAdapter:copy', ErrorUtils.createHttpExceptionOptions(err));
-		}
+		return result;
 	}
 
 	public async delete(paths: string[]): Promise<void> {
