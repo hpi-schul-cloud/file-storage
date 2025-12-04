@@ -89,7 +89,6 @@ export class S3ClientAdapter {
 				params: req,
 			});
 
-			// Handle upload stream errors and aborts
 			this.setupUploadErrorHandling(upload, path, file);
 
 			const commandOutput = await upload.done();
@@ -379,22 +378,29 @@ export class S3ClientAdapter {
 	}
 
 	private setupUploadErrorHandling(upload: Upload, context: string, file: File): void {
-		if (file.abortSignal) {
-			if (file.abortSignal.aborted) {
-				this.handleUploadAbortion(context, upload, 'uploadAlreadyAborted');
+		this.setupAbortSignalHandling(upload, context, file.abortSignal);
+		this.setupUploadStreamErrorHandling(upload, context, file.data);
+	}
 
-				return;
-			}
-
-			file.abortSignal.addEventListener('abort', () => {
-				this.handleUploadAbortion(context, upload, 'uploadAborted');
-			});
+	private setupAbortSignalHandling(upload: Upload, context: string, abortSignal?: AbortSignal): void {
+		if (!abortSignal) {
+			return;
 		}
 
-		if (file.data && typeof file.data === 'object' && 'on' in file.data) {
-			const stream = file.data;
+		if (abortSignal.aborted) {
+			this.handleUploadAbortion(context, upload, 'uploadAlreadyAborted');
 
-			stream.on('error', () => {
+			return;
+		}
+
+		abortSignal.addEventListener('abort', () => {
+			this.handleUploadAbortion(context, upload, 'uploadAborted');
+		});
+	}
+
+	private setupUploadStreamErrorHandling(upload: Upload, context: string, data: Readable): void {
+		if (data && typeof data === 'object' && 'on' in data) {
+			data.on('error', () => {
 				this.handleUploadAbortion(context, upload, 'uploadStreamError');
 			});
 		}
