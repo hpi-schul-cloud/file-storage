@@ -73,6 +73,7 @@ export class S3ClientAdapter {
 			this.handleGetError(err, path);
 		}
 	}
+
 	public async create(path: string, file: File): Promise<ServiceOutputTypes> {
 		try {
 			this.logUploadFiles(path);
@@ -98,6 +99,7 @@ export class S3ClientAdapter {
 			return this.handleCreateError(err, path, file);
 		}
 	}
+
 	public async moveToTrash(paths: string[]): Promise<void> {
 		try {
 			if (paths.length === 0) return;
