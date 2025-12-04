@@ -318,32 +318,23 @@ export class S3ClientAdapter {
 
 	/* istanbul ignore next */
 	private setupTimeOutAndErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
-		let timer: NodeJS.Timeout;
+		const STREAM_TIMEOUT_MS = 60 * 1000;
+		let timeoutTimer: NodeJS.Timeout | undefined;
 
-		const refreshTimeout = (): void => {
-			if (timer) clearTimeout(timer);
-			timer = setTimeout(() => {
-				if (sourceStream.destroyed || passthroughStream.destroyed) return;
-
-				this.logStreamUnresponsive(context);
-				sourceStream.destroy();
-				passthroughStream.destroy();
-			}, 60 * 1000);
+		const startOrResetTimeout = (): void => {
+			this.clearStreamTimeout(timeoutTimer);
+			timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
 		};
 
 		const cleanup = (): void => {
-			if (timer) {
-				clearTimeout(timer);
-			}
+			this.clearStreamTimeout(timeoutTimer);
 		};
 
-		sourceStream.on('data', refreshTimeout);
+		sourceStream.on('data', startOrResetTimeout);
 		sourceStream.on('error', (error) => {
 			this.logSourceStreamError(error.message, context);
 			cleanup();
-			if (!passthroughStream.destroyed) {
-				passthroughStream.destroy(error);
-			}
+			this.destroyStreamIfNotDestroyed(passthroughStream, error);
 		});
 		sourceStream.on('close', cleanup);
 		sourceStream.on('end', cleanup);
@@ -351,13 +342,40 @@ export class S3ClientAdapter {
 		passthroughStream.on('error', (error) => {
 			this.logPassthroughStreamError(error.message, context);
 			cleanup();
-			if (!sourceStream.destroyed) {
-				sourceStream.destroy();
-			}
+			this.destroyStreamIfNotDestroyed(sourceStream);
 		});
 		passthroughStream.on('close', cleanup);
 
-		refreshTimeout();
+		startOrResetTimeout();
+	}
+
+	private clearStreamTimeout(timer: NodeJS.Timeout | undefined): void {
+		if (timer) {
+			clearTimeout(timer);
+		}
+	}
+
+	private createStreamTimeout(
+		sourceStream: Readable,
+		passthroughStream: PassThrough,
+		context: string,
+		timeoutMs: number
+	): NodeJS.Timeout {
+		return setTimeout(() => {
+			if (sourceStream.destroyed || passthroughStream.destroyed) {
+				return;
+			}
+
+			this.logStreamUnresponsive(context);
+			sourceStream.destroy();
+			passthroughStream.destroy();
+		}, timeoutMs);
+	}
+
+	private destroyStreamIfNotDestroyed(stream: Readable | PassThrough, error?: Error): void {
+		if (!stream.destroyed) {
+			stream.destroy(error);
+		}
 	}
 
 	private setupUploadErrorHandling(upload: Upload, context: string, file: File): void {
