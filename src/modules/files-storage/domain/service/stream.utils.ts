@@ -9,10 +9,10 @@ export async function fileTypeStream(file: Readable): Promise<ReadableStreamWith
 }
 
 /**
- * Creates one or more clones of a source stream.
+ * Creates one or more duplicates of a source stream.
  * Chunks are piped by reference. Events work for individual streams only.
  */
-export const cloneStreams = (sourceStream: Readable, count = 1): PassThrough[] => {
+export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[] => {
 	const streams: PassThrough[] = [];
 
 	for (let i = 0; i < count; i++) {

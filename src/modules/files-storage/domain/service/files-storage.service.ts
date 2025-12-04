@@ -30,7 +30,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { cloneStreams, detectMimeTypeByStream } from './stream.utils';
+import { detectMimeTypeByStream, duplicateStream } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -125,7 +125,7 @@ export class FilesStorageService {
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile, parentInfo);
 
-		const [streamForDetection, streamForStorage] = cloneStreams(sourceFile.data, 2);
+		const [streamForDetection, streamForStorage] = duplicateStream(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
 
 		const file = FileDtoFactory.create(fileName, streamForStorage, mimeType, sourceFile.abortSignal);
@@ -138,7 +138,7 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, sourceStream: Readable): Promise<FileRecord> {
-		const [streamForDetection, streamForStorage] = cloneStreams(sourceStream, 2);
+		const [streamForDetection, streamForStorage] = duplicateStream(sourceStream, 2);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, fileRecord.mimeType);
 		this.checkMimeType(fileRecord, mimeType);
 
@@ -192,7 +192,7 @@ export class FilesStorageService {
 		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
 
 		if (shouldStreamToAntiVirus) {
-			const [pipedStream] = cloneStreams(file.data);
+			const [pipedStream] = duplicateStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
