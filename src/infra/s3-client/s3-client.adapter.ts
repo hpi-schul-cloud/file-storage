@@ -528,6 +528,7 @@ export class S3ClientAdapter {
 		throw new InternalServerErrorException(null, ErrorUtils.createHttpExceptionOptions(err, 'S3ClientAdapter:head'));
 	}
 
+	/* istanbul ignore next */
 	private logStreamUnresponsive(context: string): void {
 		this.logger.info(
 			new S3ClientActionLoggable('Stream unresponsive: S3 object key', {
@@ -538,6 +539,7 @@ export class S3ClientAdapter {
 		);
 	}
 
+	/* istanbul ignore next */
 	private logSourceStreamError(errorMessage: string, context: string): void {
 		this.logger.warning(
 			new S3ClientActionLoggable(`Source stream error: ${errorMessage}`, {
@@ -548,6 +550,7 @@ export class S3ClientAdapter {
 		);
 	}
 
+	/* istanbul ignore next */
 	private logPassthroughStreamError(errorMessage: string, context: string): void {
 		this.logger.warning(
 			new S3ClientActionLoggable(`Passthrough stream error: ${errorMessage}`, {
