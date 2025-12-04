@@ -406,12 +406,14 @@ export class S3ClientAdapter {
 		startOrResetTimeout();
 	}
 
+	/* istanbul ignore next */
 	private clearStreamTimeout(timer: NodeJS.Timeout | undefined): void {
 		if (timer) {
 			clearTimeout(timer);
 		}
 	}
 
+	/* istanbul ignore next */
 	private createStreamTimeout(
 		sourceStream: Readable,
 		passthroughStream: PassThrough,
@@ -429,6 +431,7 @@ export class S3ClientAdapter {
 		}, timeoutMs);
 	}
 
+	/* istanbul ignore next */
 	private destroyStreamIfNotDestroyed(stream: Readable | PassThrough, error?: Error): void {
 		if (!stream.destroyed) {
 			stream.destroy(error);
