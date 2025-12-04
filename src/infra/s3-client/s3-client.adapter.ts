@@ -45,13 +45,7 @@ export class S3ClientAdapter {
 			const req = new CreateBucketCommand({ Bucket: this.config.bucket });
 			await this.client.send(req);
 		} catch (err) {
-			if (TypeGuard.isError(err)) {
-				this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
-			}
-			throw new InternalServerErrorException(
-				'S3ClientAdapter:createBucket',
-				ErrorUtils.createHttpExceptionOptions(err)
-			);
+			this.handleCreateBucketError(err);
 		}
 	}
 
@@ -80,21 +74,9 @@ export class S3ClientAdapter {
 				etag: data.ETag,
 			};
 		} catch (err: unknown) {
-			if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchKey') {
-				this.logger.warning(
-					new S3ClientActionLoggable('Could not get file with id', {
-						action: 'get',
-						objectPath: path,
-						bucket: this.config.bucket,
-					})
-				);
-				throw new NotFoundException('NoSuchKey', ErrorUtils.createHttpExceptionOptions(err));
-			} else {
-				throw new InternalServerErrorException('S3ClientAdapter:get', ErrorUtils.createHttpExceptionOptions(err));
-			}
+			this.handleGetError(err, path);
 		}
 	}
-
 	public async create(path: string, file: File): Promise<ServiceOutputTypes> {
 		try {
 			this.logger.debug(
@@ -124,16 +106,9 @@ export class S3ClientAdapter {
 
 			return commandOutput;
 		} catch (err: unknown) {
-			if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
-				await this.createBucket();
-
-				return await this.create(path, file);
-			}
-
-			throw new InternalServerErrorException('S3ClientAdapter:create', ErrorUtils.createHttpExceptionOptions(err));
+			return this.handleCreateError(err, path, file);
 		}
 	}
-
 	public async moveToTrash(paths: string[]): Promise<void> {
 		try {
 			if (paths.length === 0) return;
@@ -330,17 +305,7 @@ export class S3ClientAdapter {
 
 			return headResponse;
 		} catch (err) {
-			if (TypeGuard.getValueFromObjectKey(err, 'message') === 'NoSuchKey') {
-				this.logger.warning(
-					new S3ClientActionLoggable('could not find the file', {
-						action: 'head',
-						objectPath: path,
-						bucket: this.config.bucket,
-					})
-				);
-				throw new NotFoundException(null, ErrorUtils.createHttpExceptionOptions(err, 'NoSuchKey'));
-			}
-			throw new InternalServerErrorException(null, ErrorUtils.createHttpExceptionOptions(err, 'S3ClientAdapter:head'));
+			this.handleHeadError(err, path);
 		}
 	}
 
@@ -500,5 +465,51 @@ export class S3ClientAdapter {
 		}
 
 		return data.Body;
+	}
+
+	private handleGetError(err: unknown, path: string): never {
+		if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchKey') {
+			this.logger.warning(
+				new S3ClientActionLoggable('Could not get file with id', {
+					action: 'get',
+					objectPath: path,
+					bucket: this.config.bucket,
+				})
+			);
+			throw new NotFoundException('NoSuchKey', ErrorUtils.createHttpExceptionOptions(err));
+		} else {
+			throw new InternalServerErrorException('S3ClientAdapter:get', ErrorUtils.createHttpExceptionOptions(err));
+		}
+	}
+
+	private handleCreateBucketError(err: unknown): never {
+		if (TypeGuard.isError(err)) {
+			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
+		}
+		throw new InternalServerErrorException('S3ClientAdapter:createBucket', ErrorUtils.createHttpExceptionOptions(err));
+	}
+
+	private async handleCreateError(err: unknown, path: string, file: File): Promise<ServiceOutputTypes> {
+		if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
+			await this.createBucket();
+
+			return await this.create(path, file);
+		}
+
+		throw new InternalServerErrorException('S3ClientAdapter:create', ErrorUtils.createHttpExceptionOptions(err));
+	}
+
+	private handleHeadError(err: unknown, path: string): never {
+		if (TypeGuard.getValueFromObjectKey(err, 'message') === 'NoSuchKey') {
+			this.logger.warning(
+				new S3ClientActionLoggable('could not find the file', {
+					action: 'head',
+					objectPath: path,
+					bucket: this.config.bucket,
+				})
+			);
+			throw new NotFoundException(null, ErrorUtils.createHttpExceptionOptions(err, 'NoSuchKey'));
+		}
+		throw new InternalServerErrorException(null, ErrorUtils.createHttpExceptionOptions(err, 'S3ClientAdapter:head'));
 	}
 }
