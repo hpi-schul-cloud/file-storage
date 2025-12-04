@@ -124,10 +124,14 @@ export class FilesStorageService {
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile, parentInfo);
-		const { mimeType, stream } = await detectMimeTypeByStream(sourceFile.data, sourceFile.mimeType);
 
-		const file = FileDtoFactory.create(fileName, stream, mimeType);
+		const streamForDetection = cloneStream(sourceFile.data);
+		const streamForStorage = cloneStream(sourceFile.data);
+		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
+
+		const file = FileDtoFactory.create(fileName, streamForStorage, mimeType);
 		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+
 		await this.fileRecordRepo.save(fileRecord);
 		await this.storeAndScanFileWithRollback(fileRecord, file);
 
@@ -135,10 +139,12 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, sourceStream: Readable): Promise<FileRecord> {
-		const { mimeType, stream } = await detectMimeTypeByStream(sourceStream, fileRecord.mimeType);
+		const streamForDetection = cloneStream(sourceStream);
+		const streamForStorage = cloneStream(sourceStream);
+		const mimeType = await detectMimeTypeByStream(streamForDetection, fileRecord.mimeType);
 		this.checkMimeType(fileRecord, mimeType);
 
-		const file = FileDtoFactory.create(fileRecord.getName(), stream, mimeType);
+		const file = FileDtoFactory.create(fileRecord.getName(), streamForStorage, mimeType);
 		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
