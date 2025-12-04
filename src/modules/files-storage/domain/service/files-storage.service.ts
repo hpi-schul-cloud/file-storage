@@ -162,12 +162,6 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	private checkMimeType(fileRecord: FileRecord, mimeType: string): void {
-		if (fileRecord.mimeType !== mimeType) {
-			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
-		}
-	}
-
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
 		let fileName = file.name;
 
@@ -179,17 +173,27 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
-		const filePath = fileRecord.createPath();
-		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
+	private checkMimeType(fileRecord: FileRecord, mimeType: string): void {
+		if (fileRecord.mimeType !== mimeType) {
+			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
+		}
 	}
 
-	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
-		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
-		const shouldStreamToAntiVirus =
-			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
+	private async storeAndScanFile(
+		fileRecord: FileRecord,
+		file: FileDto,
+		streamCompletion: Promise<void>,
+		fileSizeObserver: StreamFileSizeObserver
+	): Promise<void> {
+		await this.uploadAndScan(fileRecord, file);
+		await this.throwOnIncompleteStream(streamCompletion);
 
-		return shouldStreamToAntiVirus;
+		this.finalizeFileRecord(fileRecord, fileSizeObserver);
+		await this.fileRecordRepo.save(fileRecord);
+
+		if (this.needsAsyncAntivirusScan(fileRecord)) {
+			await this.antivirusService.send(fileRecord.getSecurityToken());
+		}
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: FileDto): Promise<void> {
@@ -209,7 +213,16 @@ export class FilesStorageService {
 		}
 	}
 
-	private finalizeFileRecord(fileRecord: FileRecord, fileSize: number): void {
+	private async throwOnIncompleteStream(streamPromise: Promise<void>): Promise<void> {
+		try {
+			await streamPromise;
+		} catch (err) {
+			throw new InternalServerErrorException('File stream error', { cause: err });
+		}
+	}
+
+	private finalizeFileRecord(fileRecord: FileRecord, fileSizeObserver: StreamFileSizeObserver): void {
+		const fileSize = fileSizeObserver.getFileSize();
 		fileRecord.markAsUploaded(fileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
 		if (fileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
@@ -221,30 +234,17 @@ export class FilesStorageService {
 		return !this.shouldStreamToAntivirus(fileRecord) && !fileRecord.isWontCheck();
 	}
 
-	private async storeAndScanFile(
-		fileRecord: FileRecord,
-		file: FileDto,
-		streamCompletion: Promise<void>,
-		fileSizeObserver: StreamFileSizeObserver
-	): Promise<void> {
-		await this.uploadAndScan(fileRecord, file);
-		await this.throwOnIncompleteStream(streamCompletion);
+	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const shouldStreamToAntiVirus =
+			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
 
-		const fileRecordSize = fileSizeObserver.getFileSize();
-		this.finalizeFileRecord(fileRecord, fileRecordSize);
-		await this.fileRecordRepo.save(fileRecord);
-
-		if (this.needsAsyncAntivirusScan(fileRecord)) {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
-		}
+		return shouldStreamToAntiVirus;
 	}
 
-	private async throwOnIncompleteStream(streamPromise: Promise<void>): Promise<void> {
-		try {
-			await streamPromise;
-		} catch (err) {
-			throw new InternalServerErrorException('File stream error', { cause: err });
-		}
+	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
+		const filePath = fileRecord.createPath();
+		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
 	// update
