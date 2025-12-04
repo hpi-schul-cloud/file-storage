@@ -66,7 +66,7 @@ export class S3ClientAdapter {
 
 	public async moveToTrash(paths: string[]): Promise<void> {
 		try {
-			await this.moveFileToTrash(paths);
+			await this.moveFilesToTrash(paths);
 		} catch (err: unknown) {
 			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
 		}
@@ -194,7 +194,7 @@ export class S3ClientAdapter {
 		return commandOutput;
 	}
 
-	private async moveFileToTrash(paths: string[]): Promise<void> {
+	private async moveFilesToTrash(paths: string[]): Promise<void> {
 		if (paths.length === 0) return;
 
 		const copyPaths = paths.map((path) => {
@@ -214,7 +214,7 @@ export class S3ClientAdapter {
 		const data = await this.listObjects(path, nextMarker);
 		const filteredPathObjects = this.filterValidPathKeys(data);
 
-		await this.moveFileToTrash(filteredPathObjects);
+		await this.moveFilesToTrash(filteredPathObjects);
 
 		if (data.IsTruncated && data.NextContinuationToken) {
 			await this.moveDirectoryToTrashInternal(path, data.NextContinuationToken);
