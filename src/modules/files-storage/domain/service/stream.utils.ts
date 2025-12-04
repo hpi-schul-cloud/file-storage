@@ -8,6 +8,13 @@ export async function fileTypeStream(file: Readable): Promise<ReadableStreamWith
 	return fileTypeStream(file);
 }
 
+export const convertToPipableStream = (readable: Readable): Readable => {
+	const passThrough = new PassThrough();
+	readable.pipe(passThrough);
+
+	return passThrough;
+};
+
 /**
  * Chunks are piped by reference.
  * Events work for individual streams only.
