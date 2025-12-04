@@ -9,25 +9,29 @@ export async function fileTypeStream(file: Readable): Promise<ReadableStreamWith
 }
 
 /**
- * Chunks are piped by reference.
- * Events work for individual streams only.
+ * Creates one or more clones of a source stream.
+ * Chunks are piped by reference. Events work for individual streams only.
  */
-export const cloneStream = (sourceStream: Readable): Readable => {
-	const stream = new PassThrough();
+export const cloneStreams = (sourceStream: Readable, count = 1): PassThrough[] => {
+	const streams: PassThrough[] = [];
+
+	for (let i = 0; i < count; i++) {
+		streams.push(new PassThrough());
+	}
 
 	sourceStream.on('data', (chunk) => {
-		stream.write(chunk);
+		streams.forEach((stream) => stream.write(chunk));
 	});
 
 	sourceStream.on('end', () => {
-		stream.end();
+		streams.forEach((stream) => stream.end());
 	});
 
 	sourceStream.on('error', (err) => {
-		stream.emit('error', err);
+		streams.forEach((stream) => stream.emit('error', err));
 	});
 
-	return stream;
+	return streams;
 };
 
 const isFileTypePackageSupported = (mimeType: string): boolean => {
