@@ -20,20 +20,49 @@ export class FileStorageActionsLoggable implements Loggable {
 			data: {
 				action: this.payload.action,
 				fileRecordIds: JSON.stringify(this.fileRecordId),
-				sourcePayload: JSON.stringify(this.payload.sourcePayload),
+				sourcePayload: JSON.stringify(this.sanitizedSourcePayload),
 			},
 		};
 	}
 
 	private get fileRecordId(): EntityId | EntityId[] | undefined {
-		if (this.payload.sourcePayload) {
-			if (Array.isArray(this.payload.sourcePayload)) {
-				return this.payload.sourcePayload.map((sourcePayload) => sourcePayload.id);
-			}
-
-			return this.payload.sourcePayload.id;
+		const sourcePayload = this.payload.sourcePayload ?? [];
+		if (Array.isArray(sourcePayload)) {
+			return sourcePayload.map((sourcePayload) => sourcePayload.id);
 		}
 
-		return undefined;
+		return sourcePayload.id;
+	}
+
+	private get sanitizedSourcePayload(): unknown {
+		const sourcePayload = this.payload.sourcePayload ?? [];
+
+		if (Array.isArray(sourcePayload)) {
+			return sourcePayload.map((fileRecord) => this.sanitizeFileRecord(fileRecord));
+		}
+
+		return this.sanitizeFileRecord(sourcePayload);
+	}
+
+	private sanitizeFileRecord(fileRecord: FileRecord): Record<string, unknown> {
+		const props = fileRecord.getProps();
+
+		return {
+			id: props.id,
+			size: props.size,
+			mimeType: props.mimeType,
+			parentType: props.parentType,
+			parentId: props.parentId,
+			creatorId: props.creatorId,
+			storageLocation: props.storageLocation,
+			storageLocationId: props.storageLocationId,
+			deletedSince: props.deletedSince,
+			isUploading: props.isUploading,
+			previewGenerationFailed: props.previewGenerationFailed,
+			createdAt: props.createdAt,
+			updatedAt: props.updatedAt,
+			contentLastModifiedAt: props.contentLastModifiedAt,
+			// Explicitly exclude: name (filename)
+		};
 	}
 }
