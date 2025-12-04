@@ -190,17 +190,10 @@ export class FilesStorageService {
 		return shouldStreamToAntiVirus;
 	}
 
-	private async storeAndScanFile(
-		fileRecord: FileRecord,
-		file: FileDto,
-		streamCompletion: Promise<void>
-	): Promise<void> {
-		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
+	private async uploadAndScan(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		const filePath = fileRecord.createPath();
 
-		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
-
-		if (shouldStreamToAntiVirus) {
+		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const [pipedStream] = duplicateStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
@@ -212,19 +205,34 @@ export class FilesStorageService {
 		} else {
 			await this.storageClient.create(filePath, file);
 		}
+	}
 
+	private finalizeFileRecord(fileRecord: FileRecord, fileSize: number): void {
+		fileRecord.markAsUploaded(fileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
+		fileRecord.touchContentLastModifiedAt();
+		if (fileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
+			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
+		}
+	}
+
+	private needsAsyncAntivirusScan(fileRecord: FileRecord): boolean {
+		return !this.shouldStreamToAntivirus(fileRecord) && !fileRecord.isWontCheck();
+	}
+
+	private async storeAndScanFile(
+		fileRecord: FileRecord,
+		file: FileDto,
+		streamCompletion: Promise<void>
+	): Promise<void> {
+		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
+		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(streamCompletion);
 
 		const fileRecordSize = fileSizeObserver.getFileSize();
-		fileRecord.markAsUploaded(fileRecordSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
-		fileRecord.touchContentLastModifiedAt();
-		if (fileRecordSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
-			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
-		}
-
+		this.finalizeFileRecord(fileRecord, fileRecordSize);
 		await this.fileRecordRepo.save(fileRecord);
 
-		if (!shouldStreamToAntiVirus && !fileRecord.isWontCheck()) {
+		if (this.needsAsyncAntivirusScan(fileRecord)) {
 			await this.antivirusService.send(fileRecord.getSecurityToken());
 		}
 	}
