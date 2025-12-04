@@ -8,14 +8,14 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import FileTypeHelper from '../../../domain/service/file-type.helper';
+import StreamUtils from '../../../domain/service/stream.utils';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
 import { ScanResultParams } from '../../dto';
 
 const baseRouteName = '/file-security';
 const scanResult: ScanResultParams = { virus_detected: false };
-jest.mock('../../../domain/service/file-type.helper');
+jest.mock('../../../domain/service/stream.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication<Server>;
@@ -24,7 +24,7 @@ describe(`${baseRouteName} (api)`, () => {
 	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
-		jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+		jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 
 		const module: TestingModule = await Test.createTestingModule({
 			imports: [FilesStorageTestModule],

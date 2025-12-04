@@ -16,14 +16,14 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
-import FileType from '../../../domain/service/file-type.helper';
+import StreamUtils from '../../../domain/service/stream.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { FileRecordResponse } from '../../dto';
 
 const createRndInt = (max: number) => Math.floor(Math.random() * max);
-jest.mock('../../../domain/service/file-type.helper');
+jest.mock('../../../domain/service/stream.utils');
 
 const defaultQueryParameters = {
 	width: PreviewWidth.WIDTH_500,
@@ -96,7 +96,7 @@ describe('File Controller (API) - preview', () => {
 
 		uploadPath = `/upload/school/${validId}/schools/${validId}`;
 
-		jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+		jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
 		antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
 
 		return loggedInClient;
