@@ -49,26 +49,9 @@ export class S3ClientAdapter {
 
 	public async get(path: string, bytesRange?: string): Promise<GetFile> {
 		try {
-			this.logGetFile(path);
+			const result = await this.getFile(path, bytesRange);
 
-			const req = new GetObjectCommand({
-				Bucket: this.config.bucket,
-				Key: path,
-				Range: bytesRange,
-			});
-
-			const data = await this.client.send(req);
-			const stream = this.validateAndExtractStreamFromResponse(data);
-			const passthrough = stream.pipe(new PassThrough());
-			this.setupTimeOutAndErrorHandling(stream, passthrough, path);
-
-			return {
-				data: passthrough,
-				contentType: data.ContentType,
-				contentLength: data.ContentLength,
-				contentRange: data.ContentRange,
-				etag: data.ETag,
-			};
+			return result;
 		} catch (err: unknown) {
 			this.handleGetError(err, path);
 		}
@@ -76,25 +59,9 @@ export class S3ClientAdapter {
 
 	public async create(path: string, file: File): Promise<ServiceOutputTypes> {
 		try {
-			this.logUploadFiles(path);
+			const result = await this.createFile(path, file);
 
-			const req: PutObjectCommandInput = {
-				Body: file.data,
-				Bucket: this.config.bucket,
-				Key: path,
-				ContentType: file.mimeType,
-			};
-
-			const upload = new Upload({
-				client: this.client,
-				params: req,
-			});
-
-			this.setupUploadErrorHandling(upload, path, file);
-
-			const commandOutput = await upload.done();
-
-			return commandOutput;
+			return result;
 		} catch (err: unknown) {
 			return this.handleCreateError(err, path, file);
 		}
@@ -102,17 +69,7 @@ export class S3ClientAdapter {
 
 	public async moveToTrash(paths: string[]): Promise<void> {
 		try {
-			if (paths.length === 0) return;
-
-			const copyPaths = paths.map((path) => {
-				return { sourcePath: path, targetPath: `${this.deletedFolderName}/${path}` };
-			});
-
-			await this.copy(copyPaths);
-
-			// try catch with rollback is not needed,
-			// because the second copyRequest try override existing files in trash folder
-			await this.delete(paths);
+			await this.moveFileToTrash(paths);
 		} catch (err: unknown) {
 			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
 		}
@@ -120,16 +77,7 @@ export class S3ClientAdapter {
 
 	public async moveDirectoryToTrash(path: string, nextMarker?: string): Promise<void> {
 		try {
-			this.logMoveDirectoryToTrash(path);
-
-			const data = await this.listObjects(path, nextMarker);
-			const filteredPathObjects = this.filterValidPathKeys(data);
-
-			await this.moveToTrash(filteredPathObjects);
-
-			if (data.IsTruncated && data.NextContinuationToken) {
-				await this.moveDirectoryToTrash(path, data.NextContinuationToken);
-			}
+			await this.moveDirectoryToTrashInternal(path, nextMarker);
 		} catch (err) {
 			throw new InternalServerErrorException(
 				'S3ClientAdapter:moveDirectoryToTrash',
@@ -140,18 +88,7 @@ export class S3ClientAdapter {
 
 	public async restore(paths: string[]): Promise<CopyObjectCommandOutput[]> {
 		try {
-			this.logRestoreFiles(paths);
-
-			const copyPaths = paths.map((path) => {
-				return { sourcePath: `${this.deletedFolderName}/${path}`, targetPath: path };
-			});
-
-			const result = await this.copy(copyPaths);
-
-			// try catch with rollback is not needed,
-			// because the second copyRequest try override existing files in trash folder
-			const deleteObjects = copyPaths.map((p) => p.sourcePath);
-			await this.delete(deleteObjects);
+			const result = await this.restoreFiles(paths);
 
 			return result;
 		} catch (err) {
@@ -161,26 +98,210 @@ export class S3ClientAdapter {
 
 	public async copy(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
 		try {
-			this.logCopyFiles();
-
-			const copyRequests = paths.map(async (path) => {
-				const req = new CopyObjectCommand({
-					Bucket: this.config.bucket,
-					CopySource: `${this.config.bucket}/${path.sourcePath}`,
-					Key: `${path.targetPath}`,
-				});
-
-				const data = await this.client.send(req);
-
-				return data;
-			});
-
-			const settledPromises = await Promise.allSettled(copyRequests);
-			const result = this.handleSettledPromises(settledPromises, 'S3ClientAdapter:copy:settledPromises');
+			const result = await this.copyFiles(paths);
 
 			return result;
 		} catch (err) {
 			throw new InternalServerErrorException('S3ClientAdapter:copy', ErrorUtils.createHttpExceptionOptions(err));
+		}
+	}
+
+	public async delete(paths: string[]): Promise<void> {
+		try {
+			await this.deleteFiles(paths);
+		} catch (err) {
+			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
+		}
+	}
+
+	public async list(params: ListFiles): Promise<ObjectKeysRecursive> {
+		try {
+			const result = await this.listFiles(params);
+
+			return result;
+		} catch (err) {
+			throw new NotFoundException(null, ErrorUtils.createHttpExceptionOptions(err, 'S3ClientAdapter:listDirectory'));
+		}
+	}
+
+	public async head(path: string): Promise<HeadObjectCommandOutput> {
+		try {
+			const result = await this.getMetaData(path);
+
+			return result;
+		} catch (err) {
+			this.handleHeadError(err, path);
+		}
+	}
+
+	public async deleteDirectory(path: string, nextMarker?: string): Promise<void> {
+		try {
+			await this.deleteDirectoryInternal(path, nextMarker);
+		} catch (err) {
+			throw new InternalServerErrorException(
+				'S3ClientAdapter:deleteDirectory',
+				ErrorUtils.createHttpExceptionOptions(err)
+			);
+		}
+	}
+
+	private async getFile(path: string, bytesRange?: string): Promise<GetFile> {
+		this.logGetFile(path);
+
+		const req = new GetObjectCommand({
+			Bucket: this.config.bucket,
+			Key: path,
+			Range: bytesRange,
+		});
+
+		const data = await this.client.send(req);
+		const stream = this.validateAndExtractStreamFromResponse(data);
+		const passthrough = stream.pipe(new PassThrough());
+		this.setupTimeOutAndErrorHandling(stream, passthrough, path);
+
+		return {
+			data: passthrough,
+			contentType: data.ContentType,
+			contentLength: data.ContentLength,
+			contentRange: data.ContentRange,
+			etag: data.ETag,
+		};
+	}
+
+	private async createFile(path: string, file: File): Promise<ServiceOutputTypes> {
+		this.logUploadFiles(path);
+
+		const req: PutObjectCommandInput = {
+			Body: file.data,
+			Bucket: this.config.bucket,
+			Key: path,
+			ContentType: file.mimeType,
+		};
+
+		const upload = new Upload({
+			client: this.client,
+			params: req,
+		});
+
+		this.setupUploadErrorHandling(upload, path, file);
+
+		const commandOutput = await upload.done();
+
+		return commandOutput;
+	}
+
+	private async moveFileToTrash(paths: string[]): Promise<void> {
+		if (paths.length === 0) return;
+
+		const copyPaths = paths.map((path) => {
+			return { sourcePath: path, targetPath: `${this.deletedFolderName}/${path}` };
+		});
+
+		await this.copy(copyPaths);
+
+		// try catch with rollback is not needed,
+		// because the second copyRequest try override existing files in trash folder
+		await this.delete(paths);
+	}
+
+	private async moveDirectoryToTrashInternal(path: string, nextMarker?: string): Promise<void> {
+		this.logMoveDirectoryToTrash(path);
+
+		const data = await this.listObjects(path, nextMarker);
+		const filteredPathObjects = this.filterValidPathKeys(data);
+
+		await this.moveToTrash(filteredPathObjects);
+
+		if (data.IsTruncated && data.NextContinuationToken) {
+			await this.moveDirectoryToTrash(path, data.NextContinuationToken);
+		}
+	}
+
+	private async restoreFiles(paths: string[]): Promise<CopyObjectCommandOutput[]> {
+		this.logRestoreFiles(paths);
+
+		const copyPaths = paths.map((path) => {
+			return { sourcePath: `${this.deletedFolderName}/${path}`, targetPath: path };
+		});
+
+		const result = await this.copy(copyPaths);
+
+		// try catch with rollback is not needed,
+		// because the second copyRequest try override existing files in trash folder
+		const deleteObjects = copyPaths.map((p) => p.sourcePath);
+		await this.delete(deleteObjects);
+
+		return result;
+	}
+
+	private async copyFiles(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
+		this.logCopyFiles();
+
+		const copyRequests = paths.map(async (path) => {
+			const req = new CopyObjectCommand({
+				Bucket: this.config.bucket,
+				CopySource: `${this.config.bucket}/${path.sourcePath}`,
+				Key: `${path.targetPath}`,
+			});
+
+			const data = await this.client.send(req);
+
+			return data;
+		});
+
+		const settledPromises = await Promise.allSettled(copyRequests);
+		const result = this.handleSettledPromises(settledPromises, 'S3ClientAdapter:copy:settledPromises');
+
+		return result;
+	}
+
+	private async deleteFiles(paths: string[]): Promise<void> {
+		this.logDeleteFiles(paths);
+
+		if (paths.length === 0) return;
+
+		const pathObjects = paths.map((p) => {
+			return { Key: p };
+		});
+		const req = new DeleteObjectsCommand({
+			Bucket: this.config.bucket,
+			Delete: { Objects: pathObjects },
+		});
+
+		await this.client.send(req);
+	}
+
+	private async listFiles(params: ListFiles): Promise<ObjectKeysRecursive> {
+		this.logListFiles(params.path);
+
+		const result = await this.listObjectKeysRecursive(params);
+
+		return result;
+	}
+
+	private async getMetaData(path: string): Promise<HeadObjectCommandOutput> {
+		this.logGetMetadata(path);
+
+		const req = new HeadObjectCommand({
+			Bucket: this.config.bucket,
+			Key: path,
+		});
+
+		const headResponse = await this.client.send(req);
+
+		return headResponse;
+	}
+
+	private async deleteDirectoryInternal(path: string, nextMarker?: string): Promise<void> {
+		this.logDeleteDirectory(path);
+
+		const data = await this.listObjects(path, nextMarker);
+		const filteredPathObjects = this.filterValidPathKeys(data);
+
+		await this.delete(filteredPathObjects);
+
+		if (data.IsTruncated && data.NextContinuationToken) {
+			await this.deleteDirectory(path, data.NextContinuationToken);
 		}
 	}
 
@@ -194,38 +315,6 @@ export class S3ClientAdapter {
 		const result = settled.filter((p) => p.status === 'fulfilled').map((p) => p.value);
 
 		return result;
-	}
-
-	public async delete(paths: string[]): Promise<void> {
-		try {
-			this.logDeleteFiles(paths);
-
-			if (paths.length === 0) return;
-
-			const pathObjects = paths.map((p) => {
-				return { Key: p };
-			});
-			const req = new DeleteObjectsCommand({
-				Bucket: this.config.bucket,
-				Delete: { Objects: pathObjects },
-			});
-
-			await this.client.send(req);
-		} catch (err) {
-			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
-		}
-	}
-
-	public async list(params: ListFiles): Promise<ObjectKeysRecursive> {
-		try {
-			this.logListFiles(params.path);
-
-			const result = await this.listObjectKeysRecursive(params);
-
-			return result;
-		} catch (err) {
-			throw new NotFoundException(null, ErrorUtils.createHttpExceptionOptions(err, 'S3ClientAdapter:listDirectory'));
-		}
 	}
 
 	private async listObjectKeysRecursive(params: ListFiles): Promise<ObjectKeysRecursive> {
@@ -249,43 +338,6 @@ export class S3ClientAdapter {
 		}
 
 		return res;
-	}
-
-	public async head(path: string): Promise<HeadObjectCommandOutput> {
-		try {
-			this.logGetMetadata(path);
-
-			const req = new HeadObjectCommand({
-				Bucket: this.config.bucket,
-				Key: path,
-			});
-
-			const headResponse = await this.client.send(req);
-
-			return headResponse;
-		} catch (err) {
-			this.handleHeadError(err, path);
-		}
-	}
-
-	public async deleteDirectory(path: string, nextMarker?: string): Promise<void> {
-		try {
-			this.logDeleteDirectory(path);
-
-			const data = await this.listObjects(path, nextMarker);
-			const filteredPathObjects = this.filterValidPathKeys(data);
-
-			await this.delete(filteredPathObjects);
-
-			if (data.IsTruncated && data.NextContinuationToken) {
-				await this.deleteDirectory(path, data.NextContinuationToken);
-			}
-		} catch (err) {
-			throw new InternalServerErrorException(
-				'S3ClientAdapter:deleteDirectory',
-				ErrorUtils.createHttpExceptionOptions(err)
-			);
-		}
 	}
 
 	private async listObjects(
