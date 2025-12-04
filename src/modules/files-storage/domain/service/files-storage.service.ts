@@ -129,7 +129,7 @@ export class FilesStorageService {
 		const streamForStorage = cloneStream(sourceFile.data);
 		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
 
-		const file = FileDtoFactory.create(fileName, streamForStorage, mimeType);
+		const file = FileDtoFactory.create(fileName, streamForStorage, mimeType, sourceFile.abortSignal);
 		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 
 		await this.fileRecordRepo.save(fileRecord);
