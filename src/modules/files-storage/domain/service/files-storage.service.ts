@@ -122,20 +122,20 @@ export class FilesStorageService {
 	}
 
 	// upload
-	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const fileName = await this.resolveFileName(file, parentInfo);
-		file.mimeType = await detectMimeTypeByStream(file.data, file.mimeType);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, file.mimeType, parentInfo, userId);
+	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
+		const fileName = await this.resolveFileName(sourceFile, parentInfo);
+		const { mimeType, stream } = await detectMimeTypeByStream(sourceFile.data, sourceFile.mimeType);
 
+		const file = FileDtoFactory.create(fileName, stream, mimeType);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
 		await this.fileRecordRepo.save(fileRecord);
-
 		await this.storeAndScanFileWithRollback(fileRecord, file);
 
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, stream: Readable): Promise<FileRecord> {
-		const mimeType = await detectMimeTypeByStream(stream, fileRecord.mimeType);
+	public async updateFileContents(fileRecord: FileRecord, sourceStream: Readable): Promise<FileRecord> {
+		const { mimeType, stream } = await detectMimeTypeByStream(sourceStream, fileRecord.mimeType);
 		this.checkMimeType(fileRecord, mimeType);
 
 		const file = FileDtoFactory.create(fileRecord.getName(), stream, mimeType);
