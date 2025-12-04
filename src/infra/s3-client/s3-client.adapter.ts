@@ -68,9 +68,8 @@ export class S3ClientAdapter {
 			});
 
 			const data = await this.client.send(req);
-			const stream = data.Body as Readable;
+			const stream = this.validateAndExtractStreamFromResponse(data);
 			const passthrough = stream.pipe(new PassThrough());
-
 			this.setupTimeOutAndErrorHandling(stream, passthrough, path);
 
 			return {
@@ -493,5 +492,13 @@ export class S3ClientAdapter {
 			})
 		);
 		upload.abort();
+	}
+
+	private validateAndExtractStreamFromResponse(data: { Body?: unknown }): Readable {
+		if (!data.Body || !(data.Body instanceof Readable)) {
+			throw new InternalServerErrorException('S3ClientAdapter:get - Invalid response body');
+		}
+
+		return data.Body;
 	}
 }

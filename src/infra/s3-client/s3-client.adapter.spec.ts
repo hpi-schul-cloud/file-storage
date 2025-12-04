@@ -174,6 +174,45 @@ describe(S3ClientAdapter.name, () => {
 				await expect(service.get(pathToFile)).rejects.toThrow(InternalServerErrorException);
 			});
 		});
+
+		describe('WHEN response body is invalid', () => {
+			const setup = (body: unknown) => {
+				const { pathToFile } = createParameter();
+				const resultObj = {
+					Body: body,
+					ContentType: 'data.ContentType',
+					ContentLength: 'data.ContentLength',
+					ContentRange: 'data.ContentRange',
+					ETag: 'data.ETag',
+				};
+
+				// @ts-expect-error Testcase
+				client.send.mockResolvedValueOnce(resultObj);
+
+				return { pathToFile };
+			};
+
+			it('should throw InternalServerErrorException when Body is undefined', async () => {
+				const { pathToFile } = setup(undefined);
+
+				await expect(service.get(pathToFile)).rejects.toThrow(InternalServerErrorException);
+				await expect(service.get(pathToFile)).rejects.toThrow('S3ClientAdapter:get');
+			});
+
+			it('should throw InternalServerErrorException when Body is not a Readable stream', async () => {
+				const { pathToFile } = setup({ invalid: 'object' });
+
+				await expect(service.get(pathToFile)).rejects.toThrow(InternalServerErrorException);
+				await expect(service.get(pathToFile)).rejects.toThrow('S3ClientAdapter:get');
+			});
+
+			it('should throw InternalServerErrorException when Body is null', async () => {
+				const { pathToFile } = setup(null);
+
+				await expect(service.get(pathToFile)).rejects.toThrow(InternalServerErrorException);
+				await expect(service.get(pathToFile)).rejects.toThrow('S3ClientAdapter:get');
+			});
+		});
 	});
 
 	describe('create', () => {
