@@ -201,11 +201,11 @@ export class S3ClientAdapter {
 			return { sourcePath: path, targetPath: `${this.deletedFolderName}/${path}` };
 		});
 
-		await this.copy(copyPaths);
+		await this.copyFiles(copyPaths);
 
 		// try catch with rollback is not needed,
 		// because the second copyRequest try override existing files in trash folder
-		await this.delete(paths);
+		await this.deleteFiles(paths);
 	}
 
 	private async moveDirectoryToTrashInternal(path: string, nextMarker?: string): Promise<void> {
@@ -214,10 +214,10 @@ export class S3ClientAdapter {
 		const data = await this.listObjects(path, nextMarker);
 		const filteredPathObjects = this.filterValidPathKeys(data);
 
-		await this.moveToTrash(filteredPathObjects);
+		await this.moveFileToTrash(filteredPathObjects);
 
 		if (data.IsTruncated && data.NextContinuationToken) {
-			await this.moveDirectoryToTrash(path, data.NextContinuationToken);
+			await this.moveDirectoryToTrashInternal(path, data.NextContinuationToken);
 		}
 	}
 
@@ -228,12 +228,12 @@ export class S3ClientAdapter {
 			return { sourcePath: `${this.deletedFolderName}/${path}`, targetPath: path };
 		});
 
-		const result = await this.copy(copyPaths);
+		const result = await this.copyFiles(copyPaths);
 
 		// try catch with rollback is not needed,
 		// because the second copyRequest try override existing files in trash folder
 		const deleteObjects = copyPaths.map((p) => p.sourcePath);
-		await this.delete(deleteObjects);
+		await this.deleteFiles(deleteObjects);
 
 		return result;
 	}
@@ -302,10 +302,10 @@ export class S3ClientAdapter {
 		const data = await this.listObjects(path, nextMarker);
 		const filteredPathObjects = this.filterValidPathKeys(data);
 
-		await this.delete(filteredPathObjects);
+		await this.deleteFiles(filteredPathObjects);
 
 		if (data.IsTruncated && data.NextContinuationToken) {
-			await this.deleteDirectory(path, data.NextContinuationToken);
+			await this.deleteDirectoryInternal(path, data.NextContinuationToken);
 		}
 	}
 
