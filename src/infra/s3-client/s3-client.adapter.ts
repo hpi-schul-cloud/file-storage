@@ -38,9 +38,7 @@ export class S3ClientAdapter {
 	// is public but only used internally
 	public async createBucket(): Promise<void> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start create bucket', { action: 'get', bucket: this.config.bucket })
-			);
+			this.logCreateBucket();
 
 			const req = new CreateBucketCommand({ Bucket: this.config.bucket });
 			await this.client.send(req);
@@ -51,9 +49,7 @@ export class S3ClientAdapter {
 
 	public async get(path: string, bytesRange?: string): Promise<GetFile> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start get file', { action: 'get', objectPath: path, bucket: this.config.bucket })
-			);
+			this.logGetFile(path);
 
 			const req = new GetObjectCommand({
 				Bucket: this.config.bucket,
@@ -79,13 +75,7 @@ export class S3ClientAdapter {
 	}
 	public async create(path: string, file: File): Promise<ServiceOutputTypes> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start upload of files', {
-					action: 'create',
-					objectPath: path,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logUploadFiles(path);
 
 			const req: PutObjectCommandInput = {
 				Body: file.data,
@@ -129,13 +119,7 @@ export class S3ClientAdapter {
 
 	public async moveDirectoryToTrash(path: string, nextMarker?: string): Promise<void> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start move directory to trash', {
-					action: 'moveDirectoryToTrash',
-					objectPath: path,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logMoveDirectoryToTrash(path);
 
 			const data = await this.listObjects(path, nextMarker);
 			const filteredPathObjects = this.filterValidPathKeys(data);
@@ -155,13 +139,7 @@ export class S3ClientAdapter {
 
 	public async restore(paths: string[]): Promise<CopyObjectCommandOutput[]> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start restore of files', {
-					action: 'restore',
-					objectPath: paths,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logRestoreFiles(paths);
 
 			const copyPaths = paths.map((path) => {
 				return { sourcePath: `${this.deletedFolderName}/${path}`, targetPath: path };
@@ -182,9 +160,7 @@ export class S3ClientAdapter {
 
 	public async copy(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start copy of files', { action: 'copy', bucket: this.config.bucket })
-			);
+			this.logCopyFiles();
 
 			const copyRequests = paths.map(async (path) => {
 				const req = new CopyObjectCommand({
@@ -221,13 +197,7 @@ export class S3ClientAdapter {
 
 	public async delete(paths: string[]): Promise<void> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start delete of files', {
-					action: 'delete',
-					objectPath: paths,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logDeleteFiles(paths);
 
 			if (paths.length === 0) return;
 
@@ -247,13 +217,7 @@ export class S3ClientAdapter {
 
 	public async list(params: ListFiles): Promise<ObjectKeysRecursive> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start list of files', {
-					action: 'list',
-					objectPath: params.path,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logListFiles(params.path);
 
 			const result = await this.listObjectKeysRecursive(params);
 
@@ -288,13 +252,7 @@ export class S3ClientAdapter {
 
 	public async head(path: string): Promise<HeadObjectCommandOutput> {
 		try {
-			this.logger.debug(
-				new S3ClientActionLoggable('Start get metadata of file', {
-					action: 'head',
-					objectPath: path,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logGetMetadata(path);
 
 			const req = new HeadObjectCommand({
 				Bucket: this.config.bucket,
@@ -311,13 +269,7 @@ export class S3ClientAdapter {
 
 	public async deleteDirectory(path: string, nextMarker?: string): Promise<void> {
 		try {
-			this.logger.warning(
-				new S3ClientActionLoggable('Start delete directory', {
-					action: 'deleteDirectory',
-					objectPath: path,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logDeleteDirectory(path);
 
 			const data = await this.listObjects(path, nextMarker);
 			const filteredPathObjects = this.filterValidPathKeys(data);
@@ -373,13 +325,7 @@ export class S3ClientAdapter {
 			timer = setTimeout(() => {
 				if (sourceStream.destroyed || passthroughStream.destroyed) return;
 
-				this.logger.info(
-					new S3ClientActionLoggable('Stream unresponsive: S3 object key', {
-						action: 'checkStreamResponsive',
-						objectPath: context,
-						bucket: this.config.bucket,
-					})
-				);
+				this.logStreamUnresponsive(context);
 				sourceStream.destroy();
 				passthroughStream.destroy();
 			}, 60 * 1000);
@@ -393,13 +339,7 @@ export class S3ClientAdapter {
 
 		sourceStream.on('data', refreshTimeout);
 		sourceStream.on('error', (error) => {
-			this.logger.warning(
-				new S3ClientActionLoggable(`Source stream error: ${error.message}`, {
-					action: 'streamError',
-					objectPath: context,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logSourceStreamError(error.message, context);
 			cleanup();
 			if (!passthroughStream.destroyed) {
 				passthroughStream.destroy(error);
@@ -409,13 +349,7 @@ export class S3ClientAdapter {
 		sourceStream.on('end', cleanup);
 
 		passthroughStream.on('error', (error) => {
-			this.logger.warning(
-				new S3ClientActionLoggable(`Passthrough stream error: ${error.message}`, {
-					action: 'passthroughError',
-					objectPath: context,
-					bucket: this.config.bucket,
-				})
-			);
+			this.logPassthroughStreamError(error.message, context);
 			cleanup();
 			if (!sourceStream.destroyed) {
 				sourceStream.destroy();
@@ -511,5 +445,121 @@ export class S3ClientAdapter {
 			throw new NotFoundException(null, ErrorUtils.createHttpExceptionOptions(err, 'NoSuchKey'));
 		}
 		throw new InternalServerErrorException(null, ErrorUtils.createHttpExceptionOptions(err, 'S3ClientAdapter:head'));
+	}
+
+	private logStreamUnresponsive(context: string): void {
+		this.logger.info(
+			new S3ClientActionLoggable('Stream unresponsive: S3 object key', {
+				action: 'checkStreamResponsive',
+				objectPath: context,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logSourceStreamError(errorMessage: string, context: string): void {
+		this.logger.warning(
+			new S3ClientActionLoggable(`Source stream error: ${errorMessage}`, {
+				action: 'streamError',
+				objectPath: context,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logPassthroughStreamError(errorMessage: string, context: string): void {
+		this.logger.warning(
+			new S3ClientActionLoggable(`Passthrough stream error: ${errorMessage}`, {
+				action: 'passthroughError',
+				objectPath: context,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logMoveDirectoryToTrash(path: string): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start move directory to trash', {
+				action: 'moveDirectoryToTrash',
+				objectPath: path,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logRestoreFiles(paths: string[]): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start restore of files', {
+				action: 'restore',
+				objectPath: paths,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logCopyFiles(): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start copy of files', { action: 'copy', bucket: this.config.bucket })
+		);
+	}
+
+	private logDeleteFiles(paths: string[]): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start delete of files', {
+				action: 'delete',
+				objectPath: paths,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logListFiles(path: string): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start list of files', {
+				action: 'list',
+				objectPath: path,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logGetMetadata(path: string): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start get metadata of file', {
+				action: 'head',
+				objectPath: path,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logDeleteDirectory(path: string): void {
+		this.logger.warning(
+			new S3ClientActionLoggable('Start delete directory', {
+				action: 'deleteDirectory',
+				objectPath: path,
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logCreateBucket(): void {
+		this.logger.debug(new S3ClientActionLoggable('Start create bucket', { action: 'get', bucket: this.config.bucket }));
+	}
+
+	private logGetFile(path: string): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start get file', { action: 'get', objectPath: path, bucket: this.config.bucket })
+		);
+	}
+
+	private logUploadFiles(path: string): void {
+		this.logger.debug(
+			new S3ClientActionLoggable('Start upload of files', {
+				action: 'create',
+				objectPath: path,
+				bucket: this.config.bucket,
+			})
+		);
 	}
 }
