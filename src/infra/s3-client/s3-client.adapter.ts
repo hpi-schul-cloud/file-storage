@@ -38,10 +38,7 @@ export class S3ClientAdapter {
 	// is public but only used internally
 	public async createBucket(): Promise<void> {
 		try {
-			this.logCreateBucket();
-
-			const req = new CreateBucketCommand({ Bucket: this.config.bucket });
-			await this.client.send(req);
+			await this.createBucketInternal();
 		} catch (err) {
 			this.handleCreateBucketError(err);
 		}
@@ -166,6 +163,13 @@ export class S3ClientAdapter {
 			contentRange: data.ContentRange,
 			etag: data.ETag,
 		};
+	}
+
+	private async createBucketInternal(): Promise<void> {
+		this.logCreateBucket();
+
+		const req = new CreateBucketCommand({ Bucket: this.config.bucket });
+		await this.client.send(req);
 	}
 
 	private async createFile(path: string, file: File): Promise<ServiceOutputTypes> {
