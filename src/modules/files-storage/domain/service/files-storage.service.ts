@@ -162,7 +162,9 @@ export class FilesStorageService {
 			const source = this.createPipedStream(data);
 			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
 
-			const mimeType = detectedMimeType ?? expectedMimeType;
+			const shouldUseDetectedMimeType = this.shouldDetectedMimeTypeBeUsed(detectedMimeType);
+			const detectedMimeTypeToBeUsed = shouldUseDetectedMimeType ? detectedMimeType : undefined;
+			const mimeType = detectedMimeTypeToBeUsed ?? expectedMimeType;
 
 			return { mimeType, stream };
 		}
@@ -172,6 +174,14 @@ export class FilesStorageService {
 
 	private createPipedStream(data: Readable): PassThrough {
 		return data.pipe(new PassThrough());
+	}
+
+	private shouldDetectedMimeTypeBeUsed(mimeType?: string): boolean {
+		if (!mimeType) return false;
+
+		const unsupportedMimeTypes = ['application/x-cfb'];
+
+		return !unsupportedMimeTypes.includes(mimeType);
 	}
 
 	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
