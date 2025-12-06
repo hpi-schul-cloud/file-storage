@@ -30,7 +30,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { fileTypeStream } from './file-type.helper';
+import { FileTypeAdapter } from './file-type.adapter';
 
 @Injectable()
 export class FilesStorageService {
@@ -158,50 +158,14 @@ export class FilesStorageService {
 		data: Readable,
 		expectedMimeType: string
 	): Promise<{ mimeType: string; stream: Readable }> {
-		if (this.isStreamMimeTypeDetectionPossible(expectedMimeType)) {
-			const source = this.createPipedStream(data);
-			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
+		const source = this.createPipedStream(data);
+		const { mimeType, stream } = await FileTypeAdapter.detectMimeType(source, expectedMimeType);
 
-			const shouldUseDetectedMimeType = this.shouldDetectedMimeTypeBeUsed(detectedMimeType);
-			const detectedMimeTypeToBeUsed = shouldUseDetectedMimeType ? detectedMimeType : undefined;
-			const mimeType = detectedMimeTypeToBeUsed ?? expectedMimeType;
-
-			return { mimeType, stream };
-		}
-
-		return { mimeType: expectedMimeType, stream: data };
+		return { mimeType, stream };
 	}
 
 	private createPipedStream(data: Readable): PassThrough {
 		return data.pipe(new PassThrough());
-	}
-
-	private shouldDetectedMimeTypeBeUsed(mimeType?: string): boolean {
-		if (!mimeType) return false;
-
-		const unsupportedMimeTypes = ['application/x-cfb'];
-
-		return !unsupportedMimeTypes.includes(mimeType);
-	}
-
-	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
-		const mimTypes = [
-			'text/csv',
-			'image/svg+xml',
-			'application/msword',
-			'application/vnd.ms-powerpoint',
-			'application/vnd.ms-excel',
-		];
-
-		const result = !mimTypes.includes(mimeType);
-
-		return result;
-	}
-
-	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const stream = await fileTypeStream(file);
-
-		return { mime: stream.fileType?.mime, stream };
 	}
 
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
