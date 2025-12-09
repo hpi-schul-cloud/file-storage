@@ -34,4 +34,4 @@ export async function detectMimeTypeByStream(sourceStream: Readable, fallbackMim
 	return mimeType;
 }
 
-export default { fileTypeStream };
+export default { fileTypeStream, detectMimeTypeByStream };

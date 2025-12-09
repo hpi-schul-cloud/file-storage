@@ -21,7 +21,7 @@ import { FileDtoFactory, FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
-import StreamUtils from './detect-mime-type.utils';
+import detectMimeTypeUtils from './detect-mime-type.utils';
 import { FilesStorageService } from './files-storage.service';
 
 jest.mock('./detect-mime-type.utils');
@@ -162,7 +162,7 @@ describe('FilesStorageService upload methods', () => {
 					.mockResolvedValue([[fileRecord], 1]);
 
 				const getMimeTypeSpy = jest
-					.spyOn(StreamUtils, 'fileTypeStream')
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
 					.mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
@@ -327,7 +327,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
+				jest.spyOn(detectMimeTypeUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				fileRecordRepo.save.mockRejectedValueOnce(error);
 
@@ -349,7 +349,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
+				jest.spyOn(detectMimeTypeUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -383,7 +383,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
+				jest.spyOn(detectMimeTypeUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -432,7 +432,7 @@ describe('FilesStorageService upload methods', () => {
 					return Promise.resolve();
 				});
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
+				jest.spyOn(detectMimeTypeUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				return { params, file, userId };
 			};
@@ -465,7 +465,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
+				jest.spyOn(detectMimeTypeUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -500,7 +500,7 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
 				const readableStreamWithFileType = readableStreamWithFileTypeFactory.build({ fileType: undefined });
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
+				jest.spyOn(detectMimeTypeUtils, 'fileTypeStream').mockResolvedValueOnce(readableStreamWithFileType);
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -533,7 +533,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				const getMimeTypeSpy = jest.spyOn(StreamUtils, 'fileTypeStream');
+				const getMimeTypeSpy = jest.spyOn(detectMimeTypeUtils, 'fileTypeStream');
 
 				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
 
@@ -601,7 +601,9 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				jest
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
 				file.data.on('data', () => {
 					file.data.emit('error', new Error('Stream error'));
@@ -645,7 +647,7 @@ describe('FilesStorageService upload methods', () => {
 				const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]); // ==  { ext: 'png', mime: 'image/png' }
 				const readable = Readable.from(pngHeader);
 				const mimeTypeSpy = jest
-					.spyOn(StreamUtils, 'fileTypeStream')
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
 					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
 				antivirusService.scanStream.mockResolvedValueOnce({
@@ -790,18 +792,16 @@ describe('FilesStorageService upload methods', () => {
 				const setup = () => {
 					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
-					const mimeType = 'image/png';
-					const fileRecord = fileRecordTestFactory().build({ mimeType });
-					const readable = Readable.from('abc');
-					const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+					const file = fileDtoTestFactory().asPng().build();
+					const fileRecord = fileRecordTestFactory().build(file);
+
+					jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
 					const error = new Error('test');
 					storageClient.create.mockRejectedValueOnce(error);
 
 					return {
 						error,
-						readable,
 						fileRecord,
 						file,
 					};
@@ -818,10 +818,10 @@ describe('FilesStorageService upload methods', () => {
 				const setup = () => {
 					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
-					const mimeType = 'image/png';
-					const fileRecord = fileRecordTestFactory().build({ mimeType });
-					const file = FileDtoFactory.create(fileRecord.getName(), Readable.from('abc'), mimeType);
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+					const file = fileDtoTestFactory().asPng().build();
+					const fileRecord = fileRecordTestFactory().build(file);
+
+					jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
 					const error = new Error('test');
 					storageClient.create.mockRejectedValueOnce(error);
@@ -855,7 +855,9 @@ describe('FilesStorageService upload methods', () => {
 				const fileRecord = fileRecordTestFactory().build({ mimeType });
 				const readable = Readable.from('abc');
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				jest
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
 				return {
 					fileRecord,
@@ -879,7 +881,9 @@ describe('FilesStorageService upload methods', () => {
 				const fileRecord = fileRecordTestFactory().build({ mimeType });
 				const readable = Readable.from('abc');
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				jest
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
 				return {
 					file,
@@ -916,7 +920,9 @@ describe('FilesStorageService upload methods', () => {
 					const mimeType = 'image/png';
 					const fileRecord = fileRecordTestFactory().build({ mimeType });
 					const readable = Readable.from('abc');
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+					jest
+						.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+						.mockImplementationOnce((readable) => Promise.resolve(readable));
 					const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
 					const error = new Error('test');
 					antivirusService.scanStream.mockRejectedValueOnce(error);
@@ -942,7 +948,9 @@ describe('FilesStorageService upload methods', () => {
 					const fileRecord = fileRecordTestFactory().build({ mimeType });
 					const readable = Readable.from('abc');
 					const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+					jest
+						.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+						.mockImplementationOnce((readable) => Promise.resolve(readable));
 
 					const error = new Error('test');
 					antivirusService.send.mockRejectedValueOnce(error);
@@ -968,11 +976,13 @@ describe('FilesStorageService upload methods', () => {
 				const fileRecord = fileRecordTestFactory().build({ mimeType });
 				const readable = Readable.from('abc');
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable: ReadableStreamWithFileType) => {
-					const result = readableStreamWithFileTypeFactory.build({ readable: readable, fileType: { mime: 'other' } });
+				jest
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+					.mockImplementationOnce((readable: ReadableStreamWithFileType) => {
+						const result = readableStreamWithFileTypeFactory.build({ readable: readable, fileType: { mime: 'other' } });
 
-					return Promise.resolve(result);
-				});
+						return Promise.resolve(result);
+					});
 
 				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
@@ -1002,7 +1012,7 @@ describe('FilesStorageService upload methods', () => {
 				const readable = Readable.from('abc');
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
 				const mimeTypeSpy = jest
-					.spyOn(StreamUtils, 'fileTypeStream')
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
 					.mockImplementationOnce((readable) => Promise.resolve(readable));
 
 				antivirusService.scanStream.mockResolvedValueOnce({
@@ -1045,7 +1055,9 @@ describe('FilesStorageService upload methods', () => {
 					readable.emit('error', new Error('Stream error'));
 				});
 				const file = FileDtoFactory.create(fileRecord.getName(), readable, mimeType);
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementationOnce((readable) => Promise.resolve(readable));
+				jest
+					.spyOn(detectMimeTypeUtils, 'fileTypeStream')
+					.mockImplementationOnce((readable) => Promise.resolve(readable));
 				jest.spyOn(FileDtoFactory, 'create').mockImplementationOnce(() => {
 					return file;
 				});

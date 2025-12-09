@@ -47,8 +47,8 @@ export const duplicateStream = (sourceStream: Readable): PassThrough => {
 		stream.end();
 	});
 
-	sourceStream.on('error', (err) => {
-		stream.emit('error', err);
+	sourceStream.on('error', (error) => {
+		stream.destroy(error);
 	});
 
 	return stream;
