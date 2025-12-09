@@ -471,7 +471,16 @@ export class S3ClientAdapter {
 				bucket: this.config.bucket,
 			})
 		);
-		upload.abort();
+
+		upload.abort().catch(() => {
+			this.logger.warning(
+				new S3ClientActionLoggable('Failed to abort upload', {
+					action: 'abortUploadError',
+					objectPath: context,
+					bucket: this.config.bucket,
+				})
+			);
+		});
 	}
 
 	private validateAndExtractStreamFromResponse(data: { Body?: unknown }): Readable {
