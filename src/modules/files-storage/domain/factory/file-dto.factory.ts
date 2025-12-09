@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 import { FileDto } from '../dto';
-import { awaitStreamCompletion } from '../service/stream.utils';
+import { awaitStreamCompletion, duplicateStream } from '../service/stream.utils';
 import { StreamFileSizeObserver } from './stream-file-size.observer';
 
 export class FileDtoFactory {
@@ -19,15 +19,11 @@ export class FileDtoFactory {
 		return file;
 	}
 
-	public static copyFromFileDto(
-		sourceFile: FileDto,
-		mimeType: string,
-		stream: Readable,
-		newFileName?: string
-	): FileDto {
+	public static copyFromFileDto(sourceFile: FileDto, mimeType: string, newFileName?: string): FileDto {
+		const data = duplicateStream(sourceFile.data);
 		const file = new FileDto({
 			name: newFileName ?? sourceFile.name,
-			data: stream,
+			data,
 			mimeType,
 			abortSignal: sourceFile.abortSignal,
 			fileSizeObserver: sourceFile.fileSizeObserver,
