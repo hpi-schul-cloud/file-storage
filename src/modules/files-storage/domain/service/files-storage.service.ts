@@ -11,7 +11,6 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { Readable } from 'stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -31,7 +30,7 @@ import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } fr
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { detectMimeTypeByStream } from './detect-mime-type.utils';
-import { awaitStreamCompletion, duplicateStream } from './stream.utils';
+import { duplicateStream } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -125,19 +124,13 @@ export class FilesStorageService {
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile, parentInfo);
-
-		const fileSizeObserver = StreamFileSizeObserver.create(sourceFile.data);
-		const streamCompletion = awaitStreamCompletion(sourceFile.data, sourceFile.abortSignal);
-		const [streamForDetection, streamForStorage] = duplicateStream(sourceFile.data, 2);
-		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
-
-		const file = FileDtoFactory.create(fileName, streamForStorage, mimeType, sourceFile.abortSignal);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+		const file = await this.copyFileDtoWithResolvedProperties(sourceFile, fileName);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
 
 		await this.fileRecordRepo.save(fileRecord);
 
 		try {
-			await this.storeAndScanFile(fileRecord, file, streamCompletion, fileSizeObserver);
+			await this.storeAndScanFile(fileRecord, file);
 		} catch (error) {
 			await this.rollbackByFileRecord(fileRecord);
 			throw error;
@@ -146,21 +139,21 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async updateFileContents(
-		fileRecord: FileRecord,
-		sourceStream: Readable,
-		abortSignal?: AbortSignal
-	): Promise<FileRecord> {
-		const fileSizeObserver = StreamFileSizeObserver.create(sourceStream);
-		const streamCompletion = awaitStreamCompletion(sourceStream, abortSignal);
-		const [streamForDetection, streamForStorage] = duplicateStream(sourceStream, 2);
-		const mimeType = await detectMimeTypeByStream(streamForDetection, fileRecord.mimeType);
-		this.checkMimeType(fileRecord, mimeType);
+	public async updateFileContents(fileRecord: FileRecord, sourceFile: FileDto): Promise<FileRecord> {
+		const file = await this.copyFileDtoWithResolvedProperties(sourceFile);
+		this.checkMimeType(fileRecord, file);
 
-		const file = FileDtoFactory.create(fileRecord.getName(), streamForStorage, mimeType, abortSignal);
-		await this.storeAndScanFile(fileRecord, file, streamCompletion, fileSizeObserver);
+		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
+	}
+
+	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
+		const [streamForDetection, streamForStorage] = duplicateStream(sourceFile.data, 2);
+		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
+		const file = FileDtoFactory.copyFromFileDto(sourceFile, mimeType, streamForStorage, newFileName);
+
+		return file;
 	}
 
 	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
@@ -174,22 +167,17 @@ export class FilesStorageService {
 		return fileName;
 	}
 
-	private checkMimeType(fileRecord: FileRecord, mimeType: string): void {
-		if (fileRecord.mimeType !== mimeType) {
+	private checkMimeType(fileRecord: FileRecord, file: FileDto): void {
+		if (fileRecord.mimeType !== file.mimeType) {
 			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
 		}
 	}
 
-	private async storeAndScanFile(
-		fileRecord: FileRecord,
-		file: FileDto,
-		streamCompletion: Promise<void>,
-		fileSizeObserver: StreamFileSizeObserver
-	): Promise<void> {
+	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
 		await this.uploadAndScan(fileRecord, file);
-		await this.throwOnIncompleteStream(streamCompletion);
+		await this.throwOnIncompleteStream(file.streamCompletion);
 
-		this.finalizeFileRecord(fileRecord, fileSizeObserver);
+		this.finalizeFileRecord(fileRecord, file.fileSizeObserver);
 		await this.fileRecordRepo.save(fileRecord);
 
 		if (this.needsAsyncAntivirusScan(fileRecord)) {

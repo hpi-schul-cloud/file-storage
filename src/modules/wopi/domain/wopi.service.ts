@@ -1,4 +1,4 @@
-import { FileRecord, FilesStorageService, GetFileResponse } from '@modules/files-storage';
+import { FileDtoFactory, FileRecord, FilesStorageService, GetFileResponse } from '@modules/files-storage';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types/entity-id';
 import { Readable } from 'node:stream';
@@ -13,7 +13,8 @@ export class WopiService {
 
 	public async updateFileContents(fileRecordId: EntityId, readable: Readable): Promise<FileRecord> {
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
-		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, readable);
+		const file = FileDtoFactory.create(fileRecord.getName(), readable, fileRecord.mimeType);
+		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, file);
 
 		return updatedFileRecord;
 	}
