@@ -1,7 +1,7 @@
 import { DeepPartial } from 'fishery';
 import { Readable } from 'node:stream';
 import { FileDto, FileDtoFactory, StreamFileSizeObserver } from '../domain';
-import { aacReadable, pngReadable, textReadable, tiffReadable } from './buffer-with-types';
+import { aacReadable, pngReadable, svgReadable, textReadable, tiffReadable } from './buffer-with-types';
 
 class FileDtoTestFactory {
 	props: FileDto = {
@@ -40,6 +40,14 @@ class FileDtoTestFactory {
 	public asTiff(): FileDtoTestFactory {
 		this.props.mimeType = 'image/tiff';
 		this.props.data = tiffReadable();
+		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
+
+		return this;
+	}
+
+	public asSvg(): FileDtoTestFactory {
+		this.props.mimeType = 'image/svg+xml';
+		this.props.data = svgReadable();
 		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;

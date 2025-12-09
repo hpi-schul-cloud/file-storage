@@ -27,3 +27,13 @@ export function tiffReadable(): Readable {
 
 	return readable;
 }
+
+export function svgReadable(): Readable {
+	const svgContent = Buffer.from(
+		'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"></svg>',
+		'utf8'
+	);
+	const readable = Readable.from(svgContent);
+
+	return readable;
+}
