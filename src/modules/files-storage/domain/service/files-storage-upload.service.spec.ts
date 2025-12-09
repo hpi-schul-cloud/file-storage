@@ -21,10 +21,10 @@ import { FileDtoFactory, FileRecordFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
+import StreamUtils from './detect-mime-type.utils';
 import { FilesStorageService } from './files-storage.service';
-import StreamUtils from './stream.utils';
 
-jest.mock('./stream.utils');
+jest.mock('./detect-mime-type.utils');
 
 describe('FilesStorageService upload methods', () => {
 	let module: TestingModule;

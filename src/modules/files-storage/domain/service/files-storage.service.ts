@@ -30,7 +30,8 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { awaitStreamCompletion, detectMimeTypeByStream, duplicateStream } from './stream.utils';
+import { detectMimeTypeByStream } from './detect-mime-type.utils';
+import { awaitStreamCompletion, duplicateStream } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {

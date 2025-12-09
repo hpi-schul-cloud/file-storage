@@ -14,7 +14,7 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, FileRecordParentType, PreviewStatus } from '../../../domain';
-import StreamUtils from '../../../domain/service/stream.utils';
+import StreamUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
@@ -22,7 +22,7 @@ import { availableParentTypes } from './mocks';
 
 const baseRouteName = '/file';
 
-jest.mock('../../../domain/service/stream.utils');
+jest.mock('../../../domain/service/detect-mime-type.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;

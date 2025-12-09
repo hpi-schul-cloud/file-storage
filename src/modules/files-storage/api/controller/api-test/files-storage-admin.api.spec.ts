@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import StreamUtils from '../../../domain/service/stream.utils';
+import StreamUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
@@ -19,7 +19,7 @@ import { availableStorageLocations } from './mocks';
 
 const baseRouteName = '';
 
-jest.mock('../../../domain/service/stream.utils');
+jest.mock('../../../domain/service/detect-mime-type.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;

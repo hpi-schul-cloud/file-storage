@@ -16,14 +16,14 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
-import StreamUtils from '../../../domain/service/stream.utils';
+import StreamUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { FileRecordResponse } from '../../dto';
 
 const createRndInt = (max: number) => Math.floor(Math.random() * max);
-jest.mock('../../../domain/service/stream.utils');
+jest.mock('../../../domain/service/detect-mime-type.utils');
 
 const defaultQueryParameters = {
 	width: PreviewWidth.WIDTH_500,

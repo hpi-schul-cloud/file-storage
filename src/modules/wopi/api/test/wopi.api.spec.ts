@@ -23,7 +23,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
-import StreamUtils from '../../../files-storage/domain/service/stream.utils';
+import StreamUtils from '../../../files-storage/domain/service/detect-mime-type.utils';
 import {
 	authorizedCollaboraDocumentUrlParamsTestFactory,
 	wopiAccessTokenParamsTestFactory,
@@ -32,7 +32,7 @@ import {
 import { WopiConfig } from '../../wopi.config';
 import { EditorMode, WopiFileInfoResponse } from '../dto';
 
-jest.mock('../../../files-storage/domain/service/stream.utils');
+jest.mock('../../../files-storage/domain/service/detect-mime-type.utils');
 
 describe('Wopi Controller (API)', () => {
 	let app: INestApplication;
