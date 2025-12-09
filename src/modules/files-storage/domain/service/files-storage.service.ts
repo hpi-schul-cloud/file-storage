@@ -149,9 +149,8 @@ export class FilesStorageService {
 	}
 
 	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
-		const [streamForDetection, streamForStorage] = duplicateStream(sourceFile.data, 2);
-		const mimeType = await detectMimeTypeByStream(streamForDetection, sourceFile.mimeType);
-		const file = FileDtoFactory.copyFromFileDto(sourceFile, mimeType, streamForStorage, newFileName);
+		const mimeType = await detectMimeTypeByStream(sourceFile.data, sourceFile.mimeType);
+		const file = FileDtoFactory.copyFromFileDto(sourceFile, mimeType, newFileName);
 
 		return file;
 	}
@@ -189,7 +188,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
-			const [pipedStream] = duplicateStream(file.data);
+			const pipedStream = duplicateStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
