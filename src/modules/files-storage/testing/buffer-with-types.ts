@@ -37,3 +37,10 @@ export function svgReadable(): Readable {
 
 	return readable;
 }
+
+export function octetStreamReadable(): Readable {
+	const binaryData = Buffer.from([0x00, 0x01, 0x02, 0x03, 0xff, 0xfe, 0xfd, 0xfc]); // Random binary data
+	const readable = Readable.from(binaryData);
+
+	return readable;
+}
