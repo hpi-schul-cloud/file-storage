@@ -1,6 +1,6 @@
 import { DeepPartial } from 'fishery';
 import { Readable } from 'node:stream';
-import { FileDto, FileDtoFactory } from '../domain';
+import { FileDto, FileDtoFactory, StreamFileSizeObserver } from '../domain';
 
 class FileDtoTestFactory {
 	props: FileDto = {
@@ -8,6 +8,8 @@ class FileDtoTestFactory {
 		data: Readable.from('abc'),
 		mimeType: 'application/octet-stream',
 		abortSignal: new AbortController().signal,
+		streamCompletion: Promise.resolve(),
+		fileSizeObserver: StreamFileSizeObserver.create(Readable.from('abc')),
 	};
 
 	public build(params: DeepPartial<FileDto> = {}): FileDto {
