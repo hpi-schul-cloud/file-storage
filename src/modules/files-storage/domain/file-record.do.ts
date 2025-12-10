@@ -322,6 +322,10 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		this.props.size = sizeInByte;
 	}
 
+	public markAsUploading(): void {
+		this.props.isUploading = true;
+	}
+
 	public markAsUploaded(sizeInByte: number, maxSizeInByte: number): void {
 		this.setSizeInByte(sizeInByte, maxSizeInByte);
 		this.props.isUploading = undefined;

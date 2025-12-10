@@ -125,9 +125,7 @@ export class FilesStorageService {
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile, parentInfo);
 		const file = await this.copyFileDtoWithResolvedProperties(sourceFile, fileName);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
-
-		await this.fileRecordRepo.save(fileRecord);
+		const fileRecord = await this.prepareFileRecordWithUploadingFlag(file, parentInfo, userId);
 
 		try {
 			await this.storeAndScanFile(fileRecord, file);
@@ -170,6 +168,18 @@ export class FilesStorageService {
 		if (fileRecord.mimeType !== file.mimeType) {
 			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
 		}
+	}
+
+	private async prepareFileRecordWithUploadingFlag(
+		file: FileDto,
+		parentInfo: ParentInfo,
+		userId: EntityId
+	): Promise<FileRecord> {
+		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
+		fileRecord.markAsUploading();
+		await this.fileRecordRepo.save(fileRecord);
+
+		return fileRecord;
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
