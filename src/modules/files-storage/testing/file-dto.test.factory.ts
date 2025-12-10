@@ -20,6 +20,28 @@ class FileDtoTestFactory {
 		fileSizeObserver: StreamFileSizeObserver.create(Readable.from('abc')),
 	};
 
+	private static readonly mimeTypeMap = new Map<string, () => Readable>([
+		['image/png', pngReadable],
+		['text/plain', textReadable],
+		['audio/aac', aacReadable],
+		['image/tiff', tiffReadable],
+		['image/svg+xml', svgReadable],
+		['application/octet-stream', octetStreamReadable],
+	]);
+
+	public asMimeType(mimeType = this.props.mimeType): FileDtoTestFactory {
+		const readableFactory = FileDtoTestFactory.mimeTypeMap.get(mimeType);
+		if (!readableFactory) {
+			throw new Error(`Mime type ${mimeType} not supported in FileDtoTestFactory`);
+		}
+
+		this.props.mimeType = mimeType;
+		this.props.data = readableFactory();
+		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
+
+		return this;
+	}
+
 	public asPng(): FileDtoTestFactory {
 		this.props.mimeType = 'image/png';
 		this.props.data = pngReadable();
