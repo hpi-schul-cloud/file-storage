@@ -132,35 +132,23 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN file records of parent, file record repo save and get mime type are successfull', () => {
 			const setup = () => {
-				const { params, file, userId, fileRecord, expectedFileRecord } = createUploadFileParams();
-
+				const { params, file, userId, fileRecord } = createUploadFileParams('image/tiff');
 				const getFileRecordsByParentSpy = jest
 					.spyOn(service, 'getFileRecordsByParent')
-					.mockResolvedValue([[fileRecord], 1]);
-
+					.mockResolvedValueOnce([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
-				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-				fileRecordRepo.save.mockImplementation((fr) => {
-					if (fr instanceof FileRecord && !fr.id) {
-						const props = fr.getProps();
-						props.id = new ObjectId().toHexString();
-						fr = fileRecordTestFactory().build(props);
-					}
-
-					return Promise.resolve();
-				});
+				fileRecordRepo.save.mockResolvedValue(Promise.resolve());
 
 				return {
 					params,
 					file,
 					userId,
 					getFileRecordsByParentSpy,
-					expectedFileRecord,
 				};
 			};
 
-			it('should call getFileRecordsByParent with correct params', async () => {
+			it('should call getFileRecordsByParent with correct params to resolve file name', async () => {
 				const { params, file, userId, getFileRecordsByParentSpy } = setup();
 
 				await service.uploadFile(userId, params, file);
