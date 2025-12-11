@@ -10,7 +10,7 @@ import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-stor
 import { fileDtoTestFactory, fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileDtoFactory, FileRecordFactory } from '../factory';
+import { FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
@@ -446,6 +446,9 @@ describe('FilesStorageService upload methods', () => {
 					data: expect.any(PassThrough),
 					mimeType: fileRecord.mimeType,
 					name: fileRecord.getName(),
+					abortSignal: file.abortSignal,
+					fileSizeObserver: expect.any(StreamFileSizeObserver),
+					streamCompletion: expect.any(Promise),
 				};
 				expect(storageClient.create).toHaveBeenCalledWith(fileRecord.createPath(), expectedCalledParams);
 			});
@@ -825,7 +828,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should resolve when abort signal is triggered', async () => {
 				const abortController = new AbortController();
 				const file = fileDtoTestFactory().build({ abortSignal: abortController.signal });
-				const promiseResult = await awaitStreamCompletion(file.data);
+				const promiseResult = awaitStreamCompletion(file.data);
 
 				// Simulate abort after a delay
 				setTimeout(() => {
@@ -841,7 +844,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should resolve on end event', async () => {
 				const file = fileDtoTestFactory().build();
 
-				const promiseResult = await awaitStreamCompletion(file.data);
+				const promiseResult = awaitStreamCompletion(file.data);
 
 				// Simulate end event
 				setTimeout(() => {
@@ -857,7 +860,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should reject with the error', async () => {
 				const file = fileDtoTestFactory().build();
 				const testError = new Error('Test stream error');
-				const promiseResult = await awaitStreamCompletion(file.data);
+				const promiseResult = awaitStreamCompletion(file.data);
 
 				// Simulate error event
 				setTimeout(() => {
@@ -871,7 +874,7 @@ describe('FilesStorageService upload methods', () => {
 		describe('when multiple events are emitted', () => {
 			it('should only settle once (first event wins)', async () => {
 				const file = fileDtoTestFactory().build();
-				const promiseResult = await awaitStreamCompletion(file.data);
+				const promiseResult = awaitStreamCompletion(file.data);
 
 				// Simulate multiple events - end should win and additional events should be ignored
 				setTimeout(() => {
@@ -888,7 +891,7 @@ describe('FilesStorageService upload methods', () => {
 		describe('when file has no abortSignal', () => {
 			it('should work normally without abortSignal', async () => {
 				const file = fileDtoTestFactory().build({ abortSignal: undefined });
-				const promiseResult = await awaitStreamCompletion(file.data);
+				const promiseResult = awaitStreamCompletion(file.data);
 
 				// Simulate end event
 				setTimeout(() => {
