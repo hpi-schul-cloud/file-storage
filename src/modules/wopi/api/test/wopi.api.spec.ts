@@ -965,7 +965,9 @@ describe('Wopi Controller (API)', () => {
 				await em.persistAndFlush(fileRecord);
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
-				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+				jest
+					.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
+					.mockResolvedValue('application/vnd.oasis.opendocument.text');
 				wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, initialContentLastModifiedAt };
@@ -1096,7 +1098,9 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+				jest
+					.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
+					.mockResolvedValue('application/vnd.oasis.opendocument.text');
 
 				await em.persistAndFlush(fileRecord);
 
