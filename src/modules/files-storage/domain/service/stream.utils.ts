@@ -36,20 +36,24 @@ export function awaitStreamCompletion(data: Readable, abortSignal?: AbortSignal)
  * Creates one or more duplicates of a source stream.
  * Chunks are piped by reference. Events work for individual streams only.
  */
-export const duplicateStream = (sourceStream: Readable): PassThrough => {
-	const stream = new PassThrough();
+export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[] => {
+	const streams: PassThrough[] = [];
+
+	for (let i = 0; i < count; i++) {
+		streams.push(new PassThrough());
+	}
 
 	sourceStream.on('data', (chunk) => {
-		stream.write(chunk);
+		streams.forEach((stream) => stream.write(chunk));
 	});
 
 	sourceStream.on('end', () => {
-		stream.end();
+		streams.forEach((stream) => stream.end());
 	});
 
 	sourceStream.on('error', (error) => {
-		stream.destroy(error);
+		streams.forEach((stream) => stream.destroy(error));
 	});
 
-	return stream;
+	return streams;
 };

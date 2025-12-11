@@ -123,7 +123,7 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
-		const fileName = await this.resolveFileName(sourceFile, parentInfo);
+		const fileName = await this.resolveFileName(sourceFile.name, parentInfo);
 		const file = await this.copyFileDtoWithResolvedProperties(sourceFile, fileName);
 		const fileRecord = await this.prepareFileRecordWithUploadingFlag(file, parentInfo, userId);
 
@@ -147,18 +147,19 @@ export class FilesStorageService {
 	}
 
 	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
-		const mimeType = await detectMimeTypeByStream(sourceFile.data, sourceFile.mimeType);
-		const file = FileDtoFactory.copyFromFileDto(sourceFile, mimeType, newFileName);
+		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
+		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
+		const file = FileDtoFactory.copyFromFileDto(sourceFile, filesStorageStream, mimeType, newFileName);
 
 		return file;
 	}
 
-	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
-		let fileName = file.name;
+	private async resolveFileName(name: string, parentInfo: ParentInfo): Promise<string> {
+		let fileName = name;
 
 		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
 		if (count > 0) {
-			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
+			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, name);
 		}
 
 		return fileName;
@@ -198,7 +199,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
-			const pipedStream = duplicateStream(file.data);
+			const [pipedStream] = duplicateStream(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
