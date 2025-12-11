@@ -11,7 +11,7 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import StreamUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
@@ -175,7 +175,7 @@ describe(`${baseRouteName} (api)`, () => {
 					},
 				};
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { validId, copyFilesParams, loggedInClient };
 			};

@@ -14,7 +14,7 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, FileRecordParentType, PreviewStatus } from '../../../domain';
-import StreamUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
@@ -152,7 +152,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				return { loggedInClient, validId };
 			};
@@ -255,7 +255,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
@@ -327,7 +327,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				storageClient.moveToTrash.mockRejectedValueOnce(new Error('Storage client error'));
 
@@ -406,7 +406,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 					const validId1 = new ObjectId().toHexString();
 
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 					const result1 = await loggedInClient
 						.post(`/upload/school/${validId1}/schools/${validId1}`)
@@ -504,7 +504,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 					const validId1 = new ObjectId().toHexString();
 
-					jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 					const result1 = await loggedInClient
 						.post(`/upload/school/${validId1}/schools/${validId1}`)
