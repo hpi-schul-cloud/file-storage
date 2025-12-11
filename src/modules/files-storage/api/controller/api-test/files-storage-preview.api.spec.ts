@@ -16,7 +16,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
 import { ErrorType } from '../../../domain/error';
-import StreamUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
@@ -96,7 +96,7 @@ describe('File Controller (API) - preview', () => {
 
 		uploadPath = `/upload/school/${validId}/schools/${validId}`;
 
-		jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+		jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 		antivirusService.scanStream.mockResolvedValueOnce({ virus_detected: false });
 
 		return loggedInClient;

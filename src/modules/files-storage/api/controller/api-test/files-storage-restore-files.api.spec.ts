@@ -12,7 +12,7 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus } from '../../../domain';
-import StreamUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
@@ -125,7 +125,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				return { validId, loggedInClient };
 			};
@@ -254,7 +254,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 				fileRecordId = result.id;
 
-				jest.spyOn(StreamUtils, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				return { loggedInClient };
 			};
