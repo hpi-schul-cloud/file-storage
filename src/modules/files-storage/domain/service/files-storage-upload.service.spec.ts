@@ -728,8 +728,23 @@ describe('FilesStorageService upload methods', () => {
 			});
 		});
 
-		describe('WHEN mime type cant be detected from stream', () => {
-			const setup = () => {
+		describe('WHEN mime type is SVG (unsupported by file-type package)', () => {
+			it('should use dto mime type', async () => {
+				const file = fileDtoTestFactory().asSvg().build();
+				const fileRecord = fileRecordTestFactory().build(file);
+				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
+				antivirusService.scanStream.mockResolvedValueOnce({
+					virus_detected: undefined,
+					virus_signature: undefined,
+					error: undefined,
+				});
+
+				await service.updateFileContents(fileRecord, file);
+
+				expect(fileRecordRepo.save).toHaveBeenCalledWith(expect.objectContaining({ mimeType: file.mimeType }));
+			});
+
+			it('should call detectMimeTypeByStream and return fallback for unsupported MIME type', async () => {
 				const file = fileDtoTestFactory().asSvg().build();
 				const fileRecord = fileRecordTestFactory().build(file);
 				const mimeTypeSpy = jest
@@ -741,27 +756,10 @@ describe('FilesStorageService upload methods', () => {
 					error: undefined,
 				});
 
-				return {
-					mimeTypeSpy,
-					file,
-					fileRecord,
-				};
-			};
-
-			it('should use dto mime type', async () => {
-				const { file, fileRecord } = setup();
-
 				await service.updateFileContents(fileRecord, file);
 
-				expect(fileRecordRepo.save).toHaveBeenCalledWith(expect.objectContaining({ mimeType: file.mimeType }));
-			});
-
-			it('should not detect from stream', async () => {
-				const { file, fileRecord, mimeTypeSpy } = setup();
-
-				await service.updateFileContents(fileRecord, file);
-
-				expect(mimeTypeSpy).not.toHaveBeenCalled();
+				// Verify the function was called - SVG is unsupported so it returns the fallback
+				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(Readable), file.mimeType);
 			});
 		});
 
@@ -858,13 +856,13 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('when stream emits error event', () => {
 			it('should reject with the error', async () => {
-				const file = fileDtoTestFactory().build();
 				const testError = new Error('Test stream error');
-				const promiseResult = awaitStreamCompletion(file.data);
+				const testStream = new PassThrough();
+				const promiseResult = awaitStreamCompletion(testStream);
 
 				// Simulate error event
 				setTimeout(() => {
-					file.data.emit('error', testError);
+					testStream.emit('error', testError);
 				}, 10);
 
 				await expect(promiseResult).rejects.toThrow('Test stream error');
