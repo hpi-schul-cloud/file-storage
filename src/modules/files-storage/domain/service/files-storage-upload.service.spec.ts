@@ -3,10 +3,9 @@ import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PassThrough } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileDtoTestFactory, fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
@@ -253,19 +252,7 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
-
-				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-
-				fileRecordRepo.save.mockImplementation((fr) => {
-					if (fr instanceof FileRecord && !fr.id) {
-						const props = fr.getProps();
-						props.id = new ObjectId().toHexString();
-						fr = fileRecordTestFactory().build(props);
-					}
-
-					return Promise.resolve();
-				});
-
+				fileRecordRepo.save.mockResolvedValue(Promise.resolve());
 				storageClient.create.mockRejectedValueOnce(error);
 
 				return { params, file, userId, fileRecord, error };
@@ -286,28 +273,16 @@ describe('FilesStorageService upload methods', () => {
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
-
-				// The fileRecord.id must be set by fileRecordRepo.save. Otherwise createPath fails.
-
-				fileRecordRepo.save.mockImplementation((fr) => {
-					if (fr instanceof FileRecord && !fr.id) {
-						const props = fr.getProps();
-						props.id = new ObjectId().toHexString();
-						fr = fileRecordTestFactory().build(props);
-					}
-
-					return Promise.resolve();
-				});
-
+				fileRecordRepo.save.mockResolvedValue(Promise.resolve());
 				jest.replaceProperty(config, 'FILES_STORAGE_MAX_FILE_SIZE', 2);
-				const error = new BadRequestException(ErrorType.FILE_TOO_BIG);
 
-				return { params, file, userId, error };
+				return { params, file, userId };
 			};
 
 			it('should pass error and call storageClient.delete and fileRecordRepo.delete', async () => {
-				const { params, file, userId, error } = setup();
+				const { params, file, userId } = setup();
 
+				const error = new BadRequestException(ErrorType.FILE_TOO_BIG);
 				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(error);
 				expect(storageClient.delete).toHaveBeenCalled();
 				expect(fileRecordRepo.delete).toHaveBeenCalled();
@@ -431,7 +406,7 @@ describe('FilesStorageService upload methods', () => {
 
 				await service.updateFileContents(fileRecord, file);
 
-				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(PassThrough));
+				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(Readable), expect.any(String));
 			});
 
 			it('should call fileRecordRepo.save ', async () => {
