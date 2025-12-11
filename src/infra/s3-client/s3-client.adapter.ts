@@ -417,14 +417,22 @@ export class S3ClientAdapter {
 		timeoutMs: number
 	): NodeJS.Timeout {
 		return setTimeout(() => {
-			if (sourceStream.destroyed || passthroughStream.destroyed) {
+			if (sourceStream.destroyed && passthroughStream.destroyed) {
 				return;
 			}
 
 			this.logStreamUnresponsive(context);
-			sourceStream.destroy();
-			passthroughStream.destroy();
+			this.tryDestroyStreams(sourceStream, passthroughStream);
 		}, timeoutMs);
+	}
+
+	private tryDestroyStreams(sourceStream: Readable, passthroughStream: PassThrough): void {
+		if (!sourceStream.destroyed) {
+			sourceStream.destroy();
+		}
+		if (!passthroughStream.destroyed) {
+			passthroughStream.destroy();
+		}
 	}
 
 	/* istanbul ignore next */
