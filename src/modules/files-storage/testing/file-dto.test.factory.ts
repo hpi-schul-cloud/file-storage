@@ -11,6 +11,7 @@ import {
 } from './buffer-with-types';
 
 class FileDtoTestFactory {
+	forceStreamError = false;
 	props: FileDto = {
 		name: `file-dto-name-${Math.random()}`,
 		data: Readable.from('abc'),
@@ -90,6 +91,12 @@ class FileDtoTestFactory {
 		return this;
 	}
 
+	public withForcedStreamError(): FileDtoTestFactory {
+		this.forceStreamError = true;
+
+		return this;
+	}
+
 	public build(params: DeepPartial<FileDto> = {}): FileDto {
 		const props = { ...this.props, ...params };
 		const data = params.data ?? props.data;
@@ -101,6 +108,10 @@ class FileDtoTestFactory {
 			params.mimeType ?? props.mimeType,
 			abortSignal as AbortSignal
 		);
+
+		if (this.forceStreamError) {
+			fileDto.streamCompletion = Promise.reject(new Error('Stream processing failed'));
+		}
 
 		return fileDto;
 	}
