@@ -11,61 +11,14 @@ export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassT
 	// Create streams with optimized buffer settings for large files
 	for (let i = 0; i < count; i++) {
 		const passThrough = new PassThrough({
-			objectMode: sourceStream.readableObjectMode,
-			highWaterMark: 64 * 1024, // 64KB buffer for better performance with large files
+			// objectMode: sourceStream.readableObjectMode,
+			//highWaterMark: 64 * 1024, // 64KB buffer for better performance with large files
 		});
-
-		// Set up error handling and cleanup for each stream
-		passThrough.on('error', (error) => {
-			// If this stream fails, clean up other streams to prevent leaks
-			streams.forEach((otherStream) => {
-				if (otherStream !== passThrough && !otherStream.destroyed) {
-					otherStream.destroy(error);
-				}
-			});
-		});
-
-		// Handle premature close (e.g., S3 connection drops)
-		passThrough.on('close', () => {
-			// If stream closes unexpectedly and source is still active, clean up
-			if (!sourceStream.destroyed && sourceStream.readable) {
-				// Don't destroy source immediately - let other streams finish if possible
-				process.nextTick(() => {
-					const activeStreams = streams.filter((s) => !s.destroyed && s.readable);
-					if (activeStreams.length === 0) {
-						// All streams are closed, safe to destroy source
-						sourceStream.destroy();
-					}
-				});
-			}
-		});
-
 		streams.push(passThrough);
 	}
 
-	// Set up source stream error handling
-	sourceStream.on('error', (error) => {
-		// Propagate source errors to all destination streams
-		streams.forEach((stream) => {
-			if (!stream.destroyed) {
-				stream.destroy(error);
-			}
-		});
-	});
-
-	// Use native pipe() for each stream - most reliable approach
 	streams.forEach((stream) => {
-		sourceStream.pipe(stream, { end: true });
-	});
-
-	// Handle source stream cleanup
-	sourceStream.on('close', () => {
-		// Ensure all streams are properly ended when source closes
-		streams.forEach((stream) => {
-			if (!stream.destroyed && stream.writable) {
-				stream.end();
-			}
-		});
+		sourceStream.pipe(stream);
 	});
 
 	return streams;
