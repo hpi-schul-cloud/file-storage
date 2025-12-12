@@ -16,37 +16,22 @@ export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassT
 		streams.push(passThrough);
 	}
 
-	// Create a single distributor stream to handle the duplication
-	const distributor = new PassThrough({
-		// objectMode: sourceStream.readableObjectMode,
-		// highWaterMark: 64 * 1024,
-	});
-
-	// Pipe source to distributor (single pipe - this works)
-	sourceStream.pipe(distributor);
-
 	// Manually distribute data from distributor to all destination streams
-	distributor.on('data', (chunk) => {
+	sourceStream.on('data', (chunk) => {
 		streams.forEach((stream) => {
-			if (!stream.destroyed && stream.writable) {
-				stream.write(chunk);
-			}
+			stream.write(chunk);
 		});
 	});
 
-	distributor.on('end', () => {
+	sourceStream.on('end', () => {
 		streams.forEach((stream) => {
-			if (!stream.destroyed && stream.writable) {
-				stream.end();
-			}
+			stream.end();
 		});
 	});
 
-	distributor.on('error', (error) => {
+	sourceStream.on('error', (error) => {
 		streams.forEach((stream) => {
-			if (!stream.destroyed) {
-				stream.destroy(error);
-			}
+			stream.destroy(error);
 		});
 	});
 
