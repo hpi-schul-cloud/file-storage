@@ -16,7 +16,6 @@ export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassT
 		streams.push(passThrough);
 	}
 
-	// Manually distribute data from distributor to all destination streams
 	sourceStream.on('data', (chunk) => {
 		streams.forEach((stream) => {
 			stream.write(chunk);
@@ -35,7 +34,6 @@ export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassT
 		});
 	});
 
-	// Handle cleanup when destination streams fail
 	streams.forEach((stream) => {
 		stream.on('error', () => {
 			// If one stream fails, don't necessarily kill others
