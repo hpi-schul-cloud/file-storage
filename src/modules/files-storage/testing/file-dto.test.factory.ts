@@ -1,6 +1,6 @@
 import { DeepPartial } from 'fishery';
 import { Readable } from 'node:stream';
-import { FileDto, FileDtoFactory, StreamFileSizeObserver } from '../domain';
+import { FileDto, FileDtoFactory } from '../domain';
 import {
 	aacReadable,
 	octetStreamReadable,
@@ -18,7 +18,6 @@ class FileDtoTestFactory {
 		mimeType: 'application/octet-stream',
 		abortSignal: new AbortController().signal,
 		streamCompletion: Promise.resolve(),
-		fileSizeObserver: StreamFileSizeObserver.create(Readable.from('abc')),
 	};
 
 	private static readonly mimeTypeMap = new Map<string, () => Readable>([
@@ -38,7 +37,6 @@ class FileDtoTestFactory {
 
 		this.props.mimeType = mimeType;
 		this.props.data = readableFactory();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}
@@ -46,7 +44,6 @@ class FileDtoTestFactory {
 	public asPng(): FileDtoTestFactory {
 		this.props.mimeType = 'image/png';
 		this.props.data = pngReadable();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}
@@ -54,7 +51,6 @@ class FileDtoTestFactory {
 	public asText(): FileDtoTestFactory {
 		this.props.mimeType = 'text/plain';
 		this.props.data = textReadable();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}
@@ -62,7 +58,6 @@ class FileDtoTestFactory {
 	public asAac(): FileDtoTestFactory {
 		this.props.mimeType = 'audio/aac';
 		this.props.data = aacReadable();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}
@@ -70,7 +65,6 @@ class FileDtoTestFactory {
 	public asTiff(): FileDtoTestFactory {
 		this.props.mimeType = 'image/tiff';
 		this.props.data = tiffReadable();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}
@@ -78,7 +72,6 @@ class FileDtoTestFactory {
 	public asSvg(): FileDtoTestFactory {
 		this.props.mimeType = 'image/svg+xml';
 		this.props.data = svgReadable();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}
@@ -86,7 +79,6 @@ class FileDtoTestFactory {
 	public asOctetStream(): FileDtoTestFactory {
 		this.props.mimeType = 'application/octet-stream';
 		this.props.data = octetStreamReadable();
-		this.props.fileSizeObserver = StreamFileSizeObserver.create(this.props.data);
 
 		return this;
 	}

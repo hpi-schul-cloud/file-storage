@@ -1,6 +1,5 @@
 import { File } from '@infra/s3-client';
 import { Readable } from 'node:stream';
-import { StreamFileSizeObserver } from '../factory';
 
 export class FileDto implements File {
 	constructor(file: FileDto) {
@@ -9,7 +8,6 @@ export class FileDto implements File {
 		this.mimeType = file.mimeType;
 		this.abortSignal = file.abortSignal;
 		this.streamCompletion = file.streamCompletion;
-		this.fileSizeObserver = file.fileSizeObserver;
 	}
 
 	name: string;
@@ -21,6 +19,4 @@ export class FileDto implements File {
 	abortSignal?: AbortSignal;
 
 	streamCompletion?: Promise<void>;
-
-	fileSizeObserver?: StreamFileSizeObserver;
 }
