@@ -15,7 +15,7 @@ import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileDtoFactory, FileRecordFactory } from '../factory';
+import { ArchiveFactory, FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
@@ -185,10 +185,11 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
+		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(file);
 
-		this.finalizeFileRecord(fileRecord, file);
+		this.finalizeFileRecord(fileRecord, fileSizeObserver);
 		await this.fileRecordRepo.save(fileRecord);
 
 		if (this.needsAsyncAntivirusScan(fileRecord)) {
@@ -221,8 +222,8 @@ export class FilesStorageService {
 		}
 	}
 
-	private finalizeFileRecord(fileRecord: FileRecord, file: FileDto): void {
-		const fileSize = file.fileSizeObserver?.getFileSize() ?? 0;
+	private finalizeFileRecord(fileRecord: FileRecord, fileSizeObserver: StreamFileSizeObserver): void {
+		const fileSize = fileSizeObserver.getFileSize();
 		fileRecord.markAsUploaded(fileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
 		if (fileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
