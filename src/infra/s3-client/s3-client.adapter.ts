@@ -422,11 +422,11 @@ export class S3ClientAdapter {
 			}
 
 			this.logStreamUnresponsive(context);
-			this.tryDestroyStreams(sourceStream, passthroughStream);
+			this.destroyStreams(sourceStream, passthroughStream);
 		}, timeoutMs);
 	}
 
-	private tryDestroyStreams(sourceStream: Readable, passthroughStream: PassThrough): void {
+	private destroyStreams(sourceStream: Readable, passthroughStream: PassThrough): void {
 		if (!sourceStream.destroyed) {
 			sourceStream.destroy();
 		}
