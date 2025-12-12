@@ -199,11 +199,11 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
-			const [pipedStream] = duplicateStreamViaPipe(file.data);
+			// const [pipedStream] = duplicateStreamViaPipe(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
-				this.antivirusService.scanStream(pipedStream),
+				this.antivirusService.scanStream(file.data),
 			]);
 			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
 			fileRecord.updateSecurityCheckStatus(status, reason);

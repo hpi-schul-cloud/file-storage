@@ -1,24 +1,62 @@
 import { PassThrough, Readable } from 'node:stream';
 
 /**
- * Pipe-based stream duplication compatible with existing .pipe() architecture.
- * Uses Node.js native piping for reliability and proper error propagation.
- * Optimized for high-concurrency scenarios with robust cleanup on failures.
+ * Correct pipe-based stream duplication using a single distributor.
+ * Fixes the issue where multiple .pipe() calls from the same source don't work.
  */
 export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassThrough[] => {
 	const streams: PassThrough[] = [];
 
-	// Create streams with optimized buffer settings for large files
+	// Create destination streams
 	for (let i = 0; i < count; i++) {
 		const passThrough = new PassThrough({
 			// objectMode: sourceStream.readableObjectMode,
-			//highWaterMark: 64 * 1024, // 64KB buffer for better performance with large files
+			// highWaterMark: 64 * 1024, // Re-enable optimized buffer
 		});
 		streams.push(passThrough);
 	}
 
+	// Create a single distributor stream to handle the duplication
+	const distributor = new PassThrough({
+		// objectMode: sourceStream.readableObjectMode,
+		// highWaterMark: 64 * 1024,
+	});
+
+	// Pipe source to distributor (single pipe - this works)
+	sourceStream.pipe(distributor);
+
+	// Manually distribute data from distributor to all destination streams
+	distributor.on('data', (chunk) => {
+		streams.forEach((stream) => {
+			if (!stream.destroyed && stream.writable) {
+				stream.write(chunk);
+			}
+		});
+	});
+
+	distributor.on('end', () => {
+		streams.forEach((stream) => {
+			if (!stream.destroyed && stream.writable) {
+				stream.end();
+			}
+		});
+	});
+
+	distributor.on('error', (error) => {
+		streams.forEach((stream) => {
+			if (!stream.destroyed) {
+				stream.destroy(error);
+			}
+		});
+	});
+
+	// Handle cleanup when destination streams fail
 	streams.forEach((stream) => {
-		sourceStream.pipe(stream);
+		stream.on('error', () => {
+			// If one stream fails, don't necessarily kill others
+			// This allows for graceful degradation
+			// Error is handled by the consuming code
+		});
 	});
 
 	return streams;
