@@ -20,7 +20,7 @@ export class FileDto implements File {
 
 	abortSignal?: AbortSignal;
 
-	streamCompletion: Promise<void>;
+	streamCompletion?: Promise<void>;
 
-	fileSizeObserver: StreamFileSizeObserver;
+	fileSizeObserver?: StreamFileSizeObserver;
 }

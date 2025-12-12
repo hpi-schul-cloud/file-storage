@@ -147,7 +147,6 @@ export class FilesStorageService {
 	}
 
 	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
-		// Use pipe-based duplication compatible with existing .pipe() architecture
 		const [mimeTypeStream, filesStorageStream] = duplicateStreamViaPipe(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
 		const file = FileDtoFactory.copyFromFileDto(sourceFile, filesStorageStream, mimeType, newFileName);
@@ -222,7 +221,7 @@ export class FilesStorageService {
 	}
 
 	private finalizeFileRecord(fileRecord: FileRecord, file: FileDto): void {
-		const fileSize = file.fileSizeObserver.getFileSize();
+		const fileSize = file.fileSizeObserver?.getFileSize() ?? 0;
 		fileRecord.markAsUploaded(fileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
 		if (fileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
