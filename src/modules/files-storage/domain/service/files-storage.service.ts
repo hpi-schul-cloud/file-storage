@@ -30,7 +30,7 @@ import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } fr
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { detectMimeTypeByStream } from './detect-mime-type.utils';
-import { duplicateStream } from './stream.utils';
+import { duplicateStream, duplicateStreamHighThroughput } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -147,7 +147,8 @@ export class FilesStorageService {
 	}
 
 	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
-		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
+		// Use the high-throughput implementation optimized for large files and high concurrency
+		const [mimeTypeStream, filesStorageStream] = duplicateStreamHighThroughput(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
 		const file = FileDtoFactory.copyFromFileDto(sourceFile, filesStorageStream, mimeType, newFileName);
 
