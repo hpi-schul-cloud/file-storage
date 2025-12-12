@@ -30,7 +30,7 @@ import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } fr
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { ParentStatistic, ScanStatus } from '../vo';
 import { detectMimeTypeByStream } from './detect-mime-type.utils';
-import { duplicateStream, duplicateStreamHighThroughput } from './stream.utils';
+import { duplicateStreamViaPipe } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -147,8 +147,8 @@ export class FilesStorageService {
 	}
 
 	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
-		// Use the high-throughput implementation optimized for large files and high concurrency
-		const [mimeTypeStream, filesStorageStream] = duplicateStreamHighThroughput(sourceFile.data, 2);
+		// Use pipe-based duplication compatible with existing .pipe() architecture
+		const [mimeTypeStream, filesStorageStream] = duplicateStreamViaPipe(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
 		const file = FileDtoFactory.copyFromFileDto(sourceFile, filesStorageStream, mimeType, newFileName);
 
@@ -200,7 +200,7 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
-			const [pipedStream] = duplicateStream(file.data);
+			const [pipedStream] = duplicateStreamViaPipe(file.data);
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
