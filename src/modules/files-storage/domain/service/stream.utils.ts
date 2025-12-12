@@ -24,7 +24,7 @@ export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassT
 	return streams;
 };
 
-export function awaitStreamCompletion(data: Readable, abortSignal?: AbortSignal): Promise<void> {
+export function awaitStreamCompletion(passThrough: PassThrough, abortSignal?: AbortSignal): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if (abortSignal?.aborted) {
 			return resolve();
@@ -50,8 +50,8 @@ export function awaitStreamCompletion(data: Readable, abortSignal?: AbortSignal)
 			abortSignal.addEventListener('abort', onAbort);
 		}
 
-		data.on('end', onEnd);
-		data.on('error', onError);
-		data.on('close', onClose);
+		passThrough.on('end', onEnd);
+		passThrough.on('error', onError);
+		passThrough.on('close', onClose);
 	});
 }
