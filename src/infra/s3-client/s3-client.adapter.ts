@@ -372,41 +372,30 @@ export class S3ClientAdapter {
 	/* istanbul ignore next */
 	private setupTimeOutAndErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
 		const STREAM_TIMEOUT_MS = 60 * 1000;
-		let timeoutTimer: NodeJS.Timeout | undefined;
-
-		const startOrResetTimeout = (): void => {
-			this.clearStreamTimeout(timeoutTimer);
-			timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
+		const timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
+		const refreshTimer = (): void => {
+			timeoutTimer.refresh()
 		};
 
-		const cleanup = (): void => {
-			this.clearStreamTimeout(timeoutTimer);
+		const cleanup = (error?: Error): void => {
+			clearTimeout(timeoutTimer);
+			this.destroyStreamIfNotDestroyed(passthroughStream, error);
+			this.destroyStreamIfNotDestroyed(sourceStream, error);
 		};
 
-		sourceStream.on('data', startOrResetTimeout);
+		sourceStream.on('data', refreshTimer);
 		sourceStream.on('error', (error) => {
 			this.logSourceStreamError(error.message, context);
-			cleanup();
-			this.destroyStreamIfNotDestroyed(passthroughStream, error);
+			cleanup(error);
 		});
 		sourceStream.on('close', cleanup);
 		sourceStream.on('end', cleanup);
 
 		passthroughStream.on('error', (error) => {
 			this.logPassthroughStreamError(error.message, context);
-			cleanup();
-			this.destroyStreamIfNotDestroyed(sourceStream);
+			cleanup(error);
 		});
 		passthroughStream.on('close', cleanup);
-
-		startOrResetTimeout();
-	}
-
-	/* istanbul ignore next */
-	private clearStreamTimeout(timer: NodeJS.Timeout | undefined): void {
-		if (timer) {
-			clearTimeout(timer);
-		}
 	}
 
 	/* istanbul ignore next */
