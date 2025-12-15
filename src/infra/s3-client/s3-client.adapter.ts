@@ -374,28 +374,21 @@ export class S3ClientAdapter {
 		const STREAM_TIMEOUT_MS = 60 * 1000;
 		const timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
 		const refreshTimer = (): void => {
-			timeoutTimer.refresh()
-		};
-
-		const cleanup = (error?: Error): void => {
-			clearTimeout(timeoutTimer);
+			timeoutTimer.refresh();
 		};
 
 		sourceStream.on('data', refreshTimer);
 		sourceStream.on('error', (error) => {
 			this.logSourceStreamError(error.message, context);
-			cleanup(error);
+			clearTimeout(timeoutTimer);
 			this.destroyStreamIfNotDestroyed(passthroughStream, error);
 		});
-		sourceStream.on('close', cleanup);
-		sourceStream.on('end', cleanup);
 
 		passthroughStream.on('error', (error) => {
 			this.logPassthroughStreamError(error.message, context);
-			cleanup(error);
+			clearTimeout(timeoutTimer);
 			this.destroyStreamIfNotDestroyed(sourceStream, error);
 		});
-		passthroughStream.on('close', cleanup);
 	}
 
 	/* istanbul ignore next */
