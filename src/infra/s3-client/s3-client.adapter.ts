@@ -379,14 +379,13 @@ export class S3ClientAdapter {
 
 		const cleanup = (error?: Error): void => {
 			clearTimeout(timeoutTimer);
-			this.destroyStreamIfNotDestroyed(passthroughStream, error);
-			this.destroyStreamIfNotDestroyed(sourceStream, error);
 		};
 
 		sourceStream.on('data', refreshTimer);
 		sourceStream.on('error', (error) => {
 			this.logSourceStreamError(error.message, context);
 			cleanup(error);
+			this.destroyStreamIfNotDestroyed(passthroughStream, error);
 		});
 		sourceStream.on('close', cleanup);
 		sourceStream.on('end', cleanup);
@@ -394,6 +393,7 @@ export class S3ClientAdapter {
 		passthroughStream.on('error', (error) => {
 			this.logPassthroughStreamError(error.message, context);
 			cleanup(error);
+			this.destroyStreamIfNotDestroyed(sourceStream, error);
 		});
 		passthroughStream.on('close', cleanup);
 	}
