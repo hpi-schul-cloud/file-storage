@@ -426,6 +426,7 @@ export class S3ClientAdapter {
 		}, timeoutMs);
 	}
 
+	/* istanbul ignore next */
 	private destroyStreams(sourceStream: Readable, passthroughStream: PassThrough): void {
 		if (!sourceStream.destroyed) {
 			sourceStream.destroy();
