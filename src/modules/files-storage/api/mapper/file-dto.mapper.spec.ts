@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AxiosResponse } from 'axios';
 import { Readable } from 'node:stream';
-import { FileDto, StreamFileSizeObserver } from '../../domain';
+import { FileDto } from '../../domain';
 import { busboyFileInfoTestFactory } from '../../testing';
 import { FileDtoMapper } from './file-dto.mapper';
 
@@ -20,8 +20,6 @@ describe('FileDtoMapper', () => {
 					name,
 					data: readable,
 					mimeType,
-					streamCompletion: expect.any(Promise),
-					fileSizeObserver: expect.any(StreamFileSizeObserver),
 				});
 
 				return { name, response, expectedFile };
@@ -48,8 +46,6 @@ describe('FileDtoMapper', () => {
 					name,
 					data: readable,
 					mimeType: 'application/octet-stream',
-					streamCompletion: expect.any(Promise),
-					fileSizeObserver: expect.any(StreamFileSizeObserver),
 				});
 
 				return { name, response, expectedFile };
@@ -73,8 +69,6 @@ describe('FileDtoMapper', () => {
 				name: busboyFileInfo.filename,
 				data: readable,
 				mimeType: busboyFileInfo.mimeType,
-				streamCompletion: expect.any(Promise),
-				fileSizeObserver: expect.any(StreamFileSizeObserver),
 			});
 
 			return { busboyFileInfo, readable, expectedFile };

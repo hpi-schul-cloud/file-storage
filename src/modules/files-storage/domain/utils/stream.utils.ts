@@ -7,11 +7,9 @@ import { PassThrough, Readable } from 'node:stream';
 export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[] => {
 	const streams: PassThrough[] = [];
 
-	// Create destination streams
 	for (let i = 0; i < count; i++) {
 		const passThrough = new PassThrough({
-			// objectMode: sourceStream.readableObjectMode,
-			// highWaterMark: 64 * 1024, // Re-enable optimized buffer
+			highWaterMark: 64 * 1024, // = 64KB, because busboy send typical chunks with 8-64KB. Default is 16KB and will increase cpu load with many small writes.
 		});
 		streams.push(passThrough);
 	}

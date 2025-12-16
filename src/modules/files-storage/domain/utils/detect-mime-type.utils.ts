@@ -1,11 +1,11 @@
 import type { ReadableStreamWithFileType } from 'file-type';
 import { loadEsm } from 'load-esm';
-import { Readable } from 'node:stream';
+import { PassThrough } from 'node:stream';
 
-export async function fileTypeStream(file: Readable): Promise<ReadableStreamWithFileType> {
+async function fileTypeStream(passThrough: PassThrough): Promise<ReadableStreamWithFileType> {
 	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
 
-	return fileTypeStream(file);
+	return fileTypeStream(passThrough);
 }
 
 const isFileTypePackageSupported = (mimeType: string): boolean => {
@@ -20,12 +20,12 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 	return !unsupportedMimeTypes.includes(mimeType);
 };
 
-export async function detectMimeTypeByStream(stream: Readable, fallbackMimeType: string): Promise<string> {
+export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackMimeType: string): Promise<string> {
 	if (!isFileTypePackageSupported(fallbackMimeType)) {
 		return fallbackMimeType;
 	}
 
-	const fileTypeStreamResult = await fileTypeStream(stream);
+	const fileTypeStreamResult = await fileTypeStream(passThrough);
 	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
 	const mimeType = detectedMimeType ?? fallbackMimeType;
 
