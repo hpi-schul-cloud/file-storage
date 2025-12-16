@@ -21,6 +21,13 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 	return !unsupportedMimeTypes.includes(mimeType);
 };
 
+export const resolveMimeType = (fileTypeStreamResult: ReadableStreamWithFileType, fallbackMimeType: string): string => {
+	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
+	const mimeType = detectedMimeType ?? fallbackMimeType;
+
+	return mimeType;
+};
+
 export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackMimeType: string): Promise<string> {
 	if (!isFileTypePackageSupported(fallbackMimeType)) {
 		return fallbackMimeType;
@@ -28,10 +35,8 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 
 	/* istanbul ignore next */
 	const fileTypeStreamResult = await fileTypeStream(passThrough);
-	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
-	const mimeType = detectedMimeType ?? fallbackMimeType;
 
-	return mimeType;
+	return resolveMimeType(fileTypeStreamResult, fallbackMimeType);
 }
 
 export default { detectMimeTypeByStream, fileTypeStream };

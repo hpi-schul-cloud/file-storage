@@ -6,7 +6,7 @@ jest.mock('./detect-mime-type.utils', () => ({
 	fileTypeStream: jest.fn(),
 }));
 
-const { detectMimeTypeByStream, fileTypeStream } = require('./detect-mime-type.utils');
+const { detectMimeTypeByStream, fileTypeStream, resolveMimeType } = require('./detect-mime-type.utils');
 
 describe('detectMimeTypeByStream', () => {
 	describe('when fallback mime type is not supported by file-type package', () => {
@@ -68,6 +68,52 @@ describe('detectMimeTypeByStream', () => {
 			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
 
 			expect(result).toBe('application/vnd.ms-excel');
+		});
+	});
+
+	describe('resolveMimeType', () => {
+		it('should return detected mime type when fileType.mime is available', () => {
+			const fileTypeStreamResult = {
+				fileType: { mime: 'image/png' },
+			};
+			const fallbackMimeType = 'application/octet-stream';
+
+			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+
+			expect(result).toBe('image/png');
+		});
+
+		it('should return fallback mime type when fileType is null', () => {
+			const fileTypeStreamResult = {
+				fileType: null,
+			};
+			const fallbackMimeType = 'text/plain';
+
+			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+
+			expect(result).toBe('text/plain');
+		});
+
+		it('should return fallback mime type when fileType is undefined', () => {
+			const fileTypeStreamResult = {
+				fileType: undefined,
+			};
+			const fallbackMimeType = 'application/json';
+
+			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+
+			expect(result).toBe('application/json');
+		});
+
+		it('should return fallback mime type when fileType.mime is undefined', () => {
+			const fileTypeStreamResult = {
+				fileType: { mime: undefined },
+			};
+			const fallbackMimeType = 'video/mp4';
+
+			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+
+			expect(result).toBe('video/mp4');
 		});
 	});
 
