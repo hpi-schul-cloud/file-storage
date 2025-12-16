@@ -373,11 +373,10 @@ export class S3ClientAdapter {
 	private setupTimeOutAndErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
 		const STREAM_TIMEOUT_MS = 60 * 1000;
 		const timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
-		const refreshTimer = (): void => {
-			timeoutTimer.refresh();
-		};
 
-		sourceStream.on('data', refreshTimer);
+		sourceStream.on('data', () => {
+			timeoutTimer.refresh();
+		});
 		sourceStream.on('error', (error) => {
 			this.logSourceStreamError(error.message, context);
 			clearTimeout(timeoutTimer);
