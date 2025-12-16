@@ -1,7 +1,6 @@
 import { PassThrough } from 'node:stream';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { awaitStreamCompletion } from '../utils';
-import { StreamFileSizeObserver } from './stream-file-size.observer';
 
 export class PassThroughFileDtoFactory {
 	public static create(
@@ -19,8 +18,6 @@ export class PassThroughFileDtoFactory {
 			streamCompletion,
 			fileSize: 0,
 		});
-
-		StreamFileSizeObserver.observe(file);
 
 		return file;
 	}

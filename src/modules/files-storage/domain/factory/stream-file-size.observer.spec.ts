@@ -7,6 +7,8 @@ describe('StreamFileSizeObserver', () => {
 		describe('when observing a PassThroughFileDto created by factory', () => {
 			it('should track file size automatically when created by PassThroughFileDtoFactory', (done) => {
 				const passThroughFileDto = passThroughFileDtoTestFactory().asText().build();
+				StreamFileSizeObserver.observe(passThroughFileDto);
+
 				passThroughFileDto.streamCompletion
 					?.then(() => {
 						expect(passThroughFileDto.fileSize).toBe(46);
@@ -17,6 +19,7 @@ describe('StreamFileSizeObserver', () => {
 
 			it('should track file size for PNG content', (done) => {
 				const passThroughFileDto = passThroughFileDtoTestFactory().asPng().build();
+				StreamFileSizeObserver.observe(passThroughFileDto);
 
 				passThroughFileDto.streamCompletion
 					?.then(() => {
@@ -28,6 +31,7 @@ describe('StreamFileSizeObserver', () => {
 
 			it('should track file size for different mime types', (done) => {
 				const passThroughFileDto = passThroughFileDtoTestFactory().asSvg().build();
+				StreamFileSizeObserver.observe(passThroughFileDto);
 
 				passThroughFileDto.streamCompletion
 					?.then(() => {
@@ -103,6 +107,7 @@ describe('StreamFileSizeObserver', () => {
 
 			it('should work with binary data', (done) => {
 				const passThroughFileDto = passThroughFileDtoTestFactory().asOctetStream().build();
+				StreamFileSizeObserver.observe(passThroughFileDto);
 
 				passThroughFileDto.streamCompletion
 					?.then(() => {

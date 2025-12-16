@@ -15,7 +15,7 @@ import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
+import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
@@ -184,6 +184,7 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
+		StreamFileSizeObserver.observe(file);
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(file);
 
