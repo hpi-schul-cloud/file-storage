@@ -45,23 +45,46 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 
 export function awaitStreamCompletion(passThrough: PassThrough, abortSignal?: AbortSignal): Promise<void> {
 	return new Promise((resolve, reject) => {
-		if (abortSignal?.aborted) {
+		const isAborted = abortSignal?.aborted;
+		const isEnded = passThrough.readableEnded && passThrough.writableEnded;
+		const isAlreadyDestroyed = passThrough.destroyed;
+		if (isAborted || isEnded || isAlreadyDestroyed) {
+			// Resolve (not reject) because the waiting is complete, regardless of reason
 			return resolve();
 		}
 
+		const cleanup = (): void => {
+			passThrough.removeListener('finish', onFinish);
+			passThrough.removeListener('end', onEnd);
+			passThrough.removeListener('error', onError);
+			passThrough.removeListener('close', onClose);
+			if (abortSignal) {
+				abortSignal.removeEventListener('abort', onAbort);
+			}
+		};
+
 		const onAbort = (): void => {
+			cleanup();
+			resolve();
+		};
+
+		const onFinish = (): void => {
+			cleanup();
 			resolve();
 		};
 
 		const onEnd = (): void => {
+			cleanup();
 			resolve();
 		};
 
 		const onError = (error: Error): void => {
+			cleanup();
 			reject(error);
 		};
 
 		const onClose = (): void => {
+			cleanup();
 			resolve();
 		};
 
@@ -69,6 +92,7 @@ export function awaitStreamCompletion(passThrough: PassThrough, abortSignal?: Ab
 			abortSignal.addEventListener('abort', onAbort);
 		}
 
+		passThrough.on('finish', onFinish);
 		passThrough.on('end', onEnd);
 		passThrough.on('error', onError);
 		passThrough.on('close', onClose);
