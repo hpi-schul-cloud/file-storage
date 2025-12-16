@@ -15,7 +15,7 @@ import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
@@ -29,9 +29,8 @@ import {
 } from '../interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
+import { detectMimeTypeByStream, duplicateStreamViaPipe } from '../utils';
 import { ParentStatistic, ScanStatus } from '../vo';
-import { detectMimeTypeByStream } from './detect-mime-type.utils';
-import { duplicateStreamViaPipe } from './stream.utils';
 
 @Injectable()
 export class FilesStorageService {
@@ -153,7 +152,7 @@ export class FilesStorageService {
 	): Promise<PassThroughFileDto> {
 		const [mimeTypeStream, filesStorageStream] = duplicateStreamViaPipe(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
-		const file = FileDtoFactory.copyFromFileDto(sourceFile, filesStorageStream, mimeType, newFileName);
+		const file = PassThroughFileDtoFactory.create(sourceFile, filesStorageStream, mimeType, newFileName);
 
 		return file;
 	}

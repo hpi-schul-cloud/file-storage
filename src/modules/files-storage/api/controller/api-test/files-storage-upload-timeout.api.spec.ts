@@ -10,10 +10,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 
-jest.mock('../../../domain/service/detect-mime-type.utils');
+jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 const createRndInt = (max: number) => Math.floor(Math.random() * max);
 

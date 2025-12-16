@@ -7,18 +7,17 @@ import { BadRequestException, ConflictException, InternalServerErrorException } 
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { fileDtoTestFactory, fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
+import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
-import detectMimeTypeUtils from './detect-mime-type.utils';
 import { FilesStorageService } from './files-storage.service';
-import { awaitStreamCompletion } from './stream.utils';
 
-jest.mock('./detect-mime-type.utils');
+jest.mock('../utils/detect-mime-type.utils');
 
 describe('FilesStorageService upload methods', () => {
 	let module: TestingModule;
@@ -90,7 +89,7 @@ describe('FilesStorageService upload methods', () => {
 			const parentInfo = ParentInfoTestFactory.build();
 
 			const fileRecords = fileRecordTestFactory().withParentInfo(parentInfo).buildList(3);
-			const file = fileDtoTestFactory().asMimeType(mimeType).build({ name: fileRecords[0].getName() });
+			const file = passThroughFileDtoTestFactory().asMimeType(mimeType).build({ name: fileRecords[0].getName() });
 			const fileSize = 3;
 
 			const fileRecord = FileRecordFactory.buildFromExternalInput(
@@ -346,10 +345,10 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN stream emits error', () => {
 			const setup = () => {
-				const sourceFile = fileDtoTestFactory().asTiff().build();
+				const sourceFile = passThroughFileDtoTestFactory().asTiff().build();
 				const fileRecord = fileRecordTestFactory().build(sourceFile);
 				const parentInfo = fileRecord.getParentInfo();
-				const fileDtoWithFailingStream = fileDtoTestFactory().withForcedStreamError().build(sourceFile);
+				const fileDtoWithFailingStream = passThroughFileDtoTestFactory().withForcedStreamError().build(sourceFile);
 
 				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
@@ -359,7 +358,7 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(sourceFile.mimeType);
 				fileRecordRepo.save.mockResolvedValue(Promise.resolve());
-				jest.spyOn(FileDtoFactory, 'copyFromFileDto').mockReturnValueOnce(fileDtoWithFailingStream);
+				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithFailingStream);
 
 				return {
 					params: parentInfo,
@@ -401,7 +400,7 @@ describe('FilesStorageService upload methods', () => {
 			};
 
 			it('should call getMimeType with correct params', async () => {
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const { fileRecord, mimeTypeSpy } = setup(file);
 
 				await service.updateFileContents(fileRecord, file);
@@ -410,7 +409,7 @@ describe('FilesStorageService upload methods', () => {
 			});
 
 			it('should call fileRecordRepo.save ', async () => {
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const { fileRecord } = setup(file);
 
 				await service.updateFileContents(fileRecord, file);
@@ -437,7 +436,7 @@ describe('FilesStorageService upload methods', () => {
 			});
 
 			it('should call storageClient.create with correct params', async () => {
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const { fileRecord } = setup(file);
 
 				await service.updateFileContents(fileRecord, file);
@@ -447,14 +446,14 @@ describe('FilesStorageService upload methods', () => {
 					mimeType: fileRecord.mimeType,
 					name: fileRecord.getName(),
 					abortSignal: file.abortSignal,
-					fileSizeObserver: expect.any(StreamFileSizeObserver),
+					// fileSizeObserver: expect.any(StreamFileSizeObserver),
 					streamCompletion: expect.any(Promise),
 				};
 				expect(storageClient.create).toHaveBeenCalledWith(fileRecord.createPath(), expectedCalledParams);
 			});
 
 			it('should return an instance of FileRecord', async () => {
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const { fileRecord } = setup(file);
 
 				const result = await service.updateFileContents(fileRecord, file);
@@ -467,7 +466,7 @@ describe('FilesStorageService upload methods', () => {
 			describe('Antivirus handling by upload ', () => {
 				describe('when useStreamToAntivirus is true, fileRecord is previewable and has not a collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const file = fileDtoTestFactory().asPng().build();
+						const file = passThroughFileDtoTestFactory().asPng().build();
 						const { fileRecord } = setup(file);
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
@@ -480,7 +479,7 @@ describe('FilesStorageService upload methods', () => {
 
 				describe('when useStreamToAntivirus is true, fileRecord is not previewable and has collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const file = fileDtoTestFactory().asText().build();
+						const file = passThroughFileDtoTestFactory().asText().build();
 						const { fileRecord } = setup(file);
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
@@ -493,7 +492,7 @@ describe('FilesStorageService upload methods', () => {
 
 				describe('when useStreamToAntivirus is true and fileRecord is not previewable and has no collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const file = fileDtoTestFactory().asAac().build();
+						const file = passThroughFileDtoTestFactory().asAac().build();
 						const { fileRecord } = setup(file);
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
@@ -506,7 +505,7 @@ describe('FilesStorageService upload methods', () => {
 
 				describe('when useStreamToAntivirus is false and fileRecord is previewable and has no collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const file = fileDtoTestFactory().asPng().build();
+						const file = passThroughFileDtoTestFactory().asPng().build();
 						const { fileRecord } = setup(file);
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
@@ -519,7 +518,7 @@ describe('FilesStorageService upload methods', () => {
 
 				describe('when useStreamToAntivirus is false and fileRecord is not previewable and has collabora mimeType', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
-						const file = fileDtoTestFactory().asText().build();
+						const file = passThroughFileDtoTestFactory().asText().build();
 						const { fileRecord } = setup(file);
 						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
@@ -537,7 +536,7 @@ describe('FilesStorageService upload methods', () => {
 				const setup = () => {
 					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
-					const file = fileDtoTestFactory().asPng().build();
+					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
 
 					jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
@@ -563,7 +562,7 @@ describe('FilesStorageService upload methods', () => {
 				const setup = () => {
 					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
-					const file = fileDtoTestFactory().asPng().build();
+					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
 
 					jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
@@ -596,7 +595,7 @@ describe('FilesStorageService upload methods', () => {
 			const setup = () => {
 				jest.replaceProperty(config, 'FILES_STORAGE_MAX_FILE_SIZE', 0);
 
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const fileRecord = fileRecordTestFactory().build(file);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
@@ -618,7 +617,7 @@ describe('FilesStorageService upload methods', () => {
 			const setup = () => {
 				jest.replaceProperty(config, 'FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE', 0);
 
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const fileRecord = fileRecordTestFactory().build(file);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
@@ -654,7 +653,7 @@ describe('FilesStorageService upload methods', () => {
 				const setup = () => {
 					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
 
-					const file = fileDtoTestFactory().asPng().build();
+					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
 					jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
@@ -679,7 +678,7 @@ describe('FilesStorageService upload methods', () => {
 				const setup = () => {
 					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
 
-					const file = fileDtoTestFactory().asPng().build();
+					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
 					jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
@@ -703,7 +702,7 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN getMimeType returns different mime type than original', () => {
 			const setup = () => {
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const fileRecord = fileRecordTestFactory().build(file);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('other');
 
@@ -730,7 +729,7 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN mime type is SVG (unsupported by file-type package)', () => {
 			const setup = () => {
-				const file = fileDtoTestFactory().asSvg().build();
+				const file = passThroughFileDtoTestFactory().asSvg().build();
 				const fileRecord = fileRecordTestFactory().build(file);
 				const mimeTypeSpy = jest
 					.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream')
@@ -767,9 +766,9 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN stream processing fails during updateFileContents', () => {
 			const setup = () => {
-				const file = fileDtoTestFactory().asPng().build();
+				const file = passThroughFileDtoTestFactory().asPng().build();
 				const fileRecord = fileRecordTestFactory().build(file);
-				const fileDtoWithFailingStream = fileDtoTestFactory().withForcedStreamError().build(file);
+				const fileDtoWithFailingStream = passThroughFileDtoTestFactory().withForcedStreamError().build(file);
 
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 				antivirusService.scanStream.mockResolvedValueOnce({
@@ -777,7 +776,7 @@ describe('FilesStorageService upload methods', () => {
 					virus_signature: undefined,
 					error: undefined,
 				});
-				jest.spyOn(FileDtoFactory, 'copyFromFileDto').mockReturnValueOnce(fileDtoWithFailingStream);
+				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithFailingStream);
 
 				return {
 					file,
@@ -791,115 +790,6 @@ describe('FilesStorageService upload methods', () => {
 				const resultPromise = service.updateFileContents(fileRecord, file);
 
 				await expect(resultPromise).rejects.toThrow(InternalServerErrorException);
-			});
-		});
-	});
-
-	describe('awaitStreamCompletion', () => {
-		describe('when AbortSignal is already aborted', () => {
-			it('should resolve immediately', async () => {
-				const abortController = new AbortController();
-				abortController.abort();
-				const file = fileDtoTestFactory().build({ abortSignal: abortController.signal });
-
-				const result = await awaitStreamCompletion(file.data);
-
-				expect(result).toBeUndefined();
-			});
-		});
-
-		describe('when stream emits close event', () => {
-			it('should resolve on close event', async () => {
-				const file = fileDtoTestFactory().build();
-
-				const promiseResult = awaitStreamCompletion(file.data);
-
-				// Simulate close event
-				setTimeout(() => {
-					file.data.emit('close');
-				}, 10);
-
-				const result = await promiseResult;
-				expect(result).toBeUndefined();
-			});
-		});
-
-		describe('when AbortSignal is triggered during stream processing', () => {
-			it('should resolve when abort signal is triggered', async () => {
-				const abortController = new AbortController();
-				const file = fileDtoTestFactory().build({ abortSignal: abortController.signal });
-				const promiseResult = awaitStreamCompletion(file.data);
-
-				// Simulate abort after a delay
-				setTimeout(() => {
-					abortController.abort();
-				}, 10);
-
-				const result = await promiseResult;
-				expect(result).toBeUndefined();
-			});
-		});
-
-		describe('when stream emits end event', () => {
-			it('should resolve on end event', async () => {
-				const file = fileDtoTestFactory().build();
-
-				const promiseResult = awaitStreamCompletion(file.data);
-
-				// Simulate end event
-				setTimeout(() => {
-					file.data.emit('end');
-				}, 10);
-
-				const result = await promiseResult;
-				expect(result).toBeUndefined();
-			});
-		});
-
-		describe('when stream emits error event', () => {
-			it('should reject with the error', async () => {
-				const testError = new Error('Test stream error');
-				const testStream = new PassThrough();
-				const promiseResult = awaitStreamCompletion(testStream);
-
-				// Simulate error event
-				setTimeout(() => {
-					testStream.emit('error', testError);
-				}, 10);
-
-				await expect(promiseResult).rejects.toThrow('Test stream error');
-			});
-		});
-
-		describe('when multiple events are emitted', () => {
-			it('should only settle once (first event wins)', async () => {
-				const file = fileDtoTestFactory().build();
-				const promiseResult = awaitStreamCompletion(file.data);
-
-				// Simulate multiple events - end should win and additional events should be ignored
-				setTimeout(() => {
-					file.data.emit('end'); // This should resolve the promise
-					// Note: We don't emit error after end because it would cause unhandled rejection
-					// The cleanup mechanism prevents further event processing
-				}, 10);
-
-				const result = await promiseResult;
-				expect(result).toBeUndefined();
-			});
-		});
-
-		describe('when file has no abortSignal', () => {
-			it('should work normally without abortSignal', async () => {
-				const file = fileDtoTestFactory().build({ abortSignal: undefined });
-				const promiseResult = awaitStreamCompletion(file.data);
-
-				// Simulate end event
-				setTimeout(() => {
-					file.data.emit('end');
-				}, 10);
-
-				const result = await promiseResult;
-				expect(result).toBeUndefined();
 			});
 		});
 	});

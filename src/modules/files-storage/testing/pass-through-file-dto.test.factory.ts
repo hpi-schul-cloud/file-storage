@@ -1,6 +1,8 @@
 import { DeepPartial } from 'fishery';
-import { Readable } from 'node:stream';
+import { PassThrough, Readable } from 'node:stream';
 import { FileDto, FileDtoFactory } from '../domain';
+import { PassThroughFileDto } from '../domain/dto';
+import { PassThroughFileDtoFactory } from '../domain/factory';
 import {
 	aacReadable,
 	octetStreamReadable,
@@ -10,11 +12,11 @@ import {
 	tiffReadable,
 } from './buffer-with-types';
 
-class FileDtoTestFactory {
+class PassThroughFileDtoTestFactory {
 	forceStreamError = false;
 	props: FileDto = {
 		name: `file-dto-name-${Math.random()}`,
-		data: Readable.from('abc'),
+		data: Readable.from('abc').pipe(new PassThrough()),
 		mimeType: 'application/octet-stream',
 		abortSignal: new AbortController().signal,
 	};
@@ -28,8 +30,8 @@ class FileDtoTestFactory {
 		['application/octet-stream', octetStreamReadable],
 	]);
 
-	public asMimeType(mimeType = this.props.mimeType): FileDtoTestFactory {
-		const readableFactory = FileDtoTestFactory.mimeTypeMap.get(mimeType);
+	public asMimeType(mimeType = this.props.mimeType): PassThroughFileDtoTestFactory {
+		const readableFactory = PassThroughFileDtoTestFactory.mimeTypeMap.get(mimeType);
 		if (!readableFactory) {
 			throw new Error(`Mime type ${mimeType} not supported in FileDtoTestFactory`);
 		}
@@ -40,68 +42,79 @@ class FileDtoTestFactory {
 		return this;
 	}
 
-	public asPng(): FileDtoTestFactory {
+	public asPng(): PassThroughFileDtoTestFactory {
 		this.props.mimeType = 'image/png';
 		this.props.data = pngReadable();
 
 		return this;
 	}
 
-	public asText(): FileDtoTestFactory {
+	public asText(): PassThroughFileDtoTestFactory {
 		this.props.mimeType = 'text/plain';
 		this.props.data = textReadable();
 
 		return this;
 	}
 
-	public asAac(): FileDtoTestFactory {
+	public asAac(): PassThroughFileDtoTestFactory {
 		this.props.mimeType = 'audio/aac';
 		this.props.data = aacReadable();
 
 		return this;
 	}
 
-	public asTiff(): FileDtoTestFactory {
+	public asTiff(): PassThroughFileDtoTestFactory {
 		this.props.mimeType = 'image/tiff';
 		this.props.data = tiffReadable();
 
 		return this;
 	}
 
-	public asSvg(): FileDtoTestFactory {
+	public asSvg(): PassThroughFileDtoTestFactory {
 		this.props.mimeType = 'image/svg+xml';
 		this.props.data = svgReadable();
 
 		return this;
 	}
 
-	public asOctetStream(): FileDtoTestFactory {
+	public asOctetStream(): PassThroughFileDtoTestFactory {
 		this.props.mimeType = 'application/octet-stream';
 		this.props.data = octetStreamReadable();
 
 		return this;
 	}
 
-	public withForcedStreamError(): FileDtoTestFactory {
+	public withForcedStreamError(): PassThroughFileDtoTestFactory {
 		this.forceStreamError = true;
 
 		return this;
 	}
 
-	public build(params: DeepPartial<FileDto> = {}): FileDto {
+	public build(params: DeepPartial<FileDto> = {}): PassThroughFileDto {
 		const props = { ...this.props, ...params };
-		const data = params.data ?? props.data;
+		const data = (params.data ?? props.data) as Readable;
 		const abortSignal = params.abortSignal ?? props.abortSignal;
 
 		const fileDto = FileDtoFactory.create(
 			params.name ?? props.name,
-			data as Readable,
+			data,
 			params.mimeType ?? props.mimeType,
 			abortSignal as AbortSignal
 		);
 
-		return fileDto;
+		const passThrough = data.pipe(new PassThrough());
+		const passThroughFileDto = PassThroughFileDtoFactory.create(
+			fileDto,
+			passThrough,
+			params.mimeType ?? props.mimeType
+		);
+
+		if (this.forceStreamError) {
+			passThroughFileDto.streamCompletion = Promise.reject(new Error('Stream processing failed'));
+		}
+
+		return passThroughFileDto;
 	}
 }
 
-export const fileDtoTestFactory = (): FileDtoTestFactory => new FileDtoTestFactory();
+export const passThroughFileDtoTestFactory = (): PassThroughFileDtoTestFactory => new PassThroughFileDtoTestFactory();

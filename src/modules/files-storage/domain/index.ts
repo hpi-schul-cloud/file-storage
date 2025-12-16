@@ -1,6 +1,12 @@
 export { FileDto } from './dto';
 export { ErrorType } from './error';
-export { FileDtoFactory, FileRecordFactory, ParentStatisticFactory, StreamFileSizeObserver } from './factory';
+export {
+	FileDtoFactory,
+	FileRecordFactory,
+	ParentStatisticFactory,
+	PassThroughFileDtoFactory,
+	StreamFileSizeObserver,
+} from './factory';
 export * from './file-record.do';
 export * from './interface';
 export { FileStorageActionsLoggable } from './loggable';

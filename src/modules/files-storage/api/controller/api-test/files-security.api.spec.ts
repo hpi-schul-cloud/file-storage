@@ -8,14 +8,14 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import type { Server } from 'node:net';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
-import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
 import { ScanResultParams } from '../../dto';
 
 const baseRouteName = '/file-security';
 const scanResult: ScanResultParams = { virus_detected: false };
-jest.mock('../../../domain/service/detect-mime-type.utils');
+jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication<Server>;

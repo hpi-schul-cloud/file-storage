@@ -1,7 +1,6 @@
 import { Readable } from 'stream';
 import { FileDto } from '../dto';
 import { FileDtoFactory } from './file-dto.factory';
-import { StreamFileSizeObserver } from './stream-file-size.observer';
 
 describe('FileDtoFactory', () => {
 	describe('create', () => {
@@ -13,8 +12,6 @@ describe('FileDtoFactory', () => {
 				name,
 				data,
 				mimeType,
-				streamCompletion: expect.any(Promise),
-				fileSizeObserver: expect.any(StreamFileSizeObserver),
 			});
 
 			return { name, data, mimeType, expectedFile };

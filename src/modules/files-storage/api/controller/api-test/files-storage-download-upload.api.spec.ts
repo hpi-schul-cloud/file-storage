@@ -11,13 +11,13 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType } from '../../../domain';
-import DetectMimeTypeUtils from '../../../domain/service/detect-mime-type.utils';
+import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { availableParentTypes } from './mocks';
 
-jest.mock('../../../domain/service/detect-mime-type.utils');
+jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 const createRndInt = (max: number) => Math.floor(Math.random() * max);
 
