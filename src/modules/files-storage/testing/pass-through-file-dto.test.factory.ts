@@ -58,10 +58,7 @@ class PassThroughFileDtoTestFactory {
 	}
 
 	public build(params: DeepPartial<FileDto> = {}): PassThroughFileDto {
-		// Erstelle das FileDto mit der fileDtoFactory
 		const fileDto = this.fileDtoFactory.build(params);
-
-		// Dann der PassThrough-spezifische Code
 		const passThrough = fileDto.data.pipe(new PassThrough());
 		const passThroughFileDto = PassThroughFileDtoFactory.create(fileDto, passThrough, fileDto.mimeType);
 
