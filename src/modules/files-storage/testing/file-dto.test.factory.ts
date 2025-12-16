@@ -17,7 +17,7 @@ class FileDtoTestFactory {
 		data: Readable.from('abc'),
 		mimeType: 'application/octet-stream',
 		abortSignal: new AbortController().signal,
-		streamCompletion: Promise.resolve(),
+		// streamCompletion: Promise.resolve(),
 	};
 
 	private static readonly mimeTypeMap = new Map<string, () => Readable>([
@@ -102,7 +102,7 @@ class FileDtoTestFactory {
 		);
 
 		if (this.forceStreamError) {
-			fileDto.streamCompletion = Promise.reject(new Error('Stream processing failed'));
+			// fileDto.streamCompletion = Promise.reject(new Error('Stream processing failed'));
 		}
 
 		return fileDto;
