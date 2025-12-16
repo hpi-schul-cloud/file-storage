@@ -7,7 +7,6 @@ export class FileDto implements File {
 		this.data = file.data;
 		this.mimeType = file.mimeType;
 		this.abortSignal = file.abortSignal;
-		this.streamCompletion = file.streamCompletion;
 	}
 
 	name: string;
@@ -17,6 +16,4 @@ export class FileDto implements File {
 	mimeType: string;
 
 	abortSignal?: AbortSignal;
-
-	streamCompletion?: Promise<void>;
 }

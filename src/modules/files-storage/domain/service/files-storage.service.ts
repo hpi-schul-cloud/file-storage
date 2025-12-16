@@ -13,7 +13,7 @@ import {
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileDto } from '../dto';
+import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
@@ -147,7 +147,10 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	private async copyFileDtoWithResolvedProperties(sourceFile: FileDto, newFileName?: string): Promise<FileDto> {
+	private async copyFileDtoWithResolvedProperties(
+		sourceFile: FileDto,
+		newFileName?: string
+	): Promise<PassThroughFileDto> {
 		const [mimeTypeStream, filesStorageStream] = duplicateStreamViaPipe(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
 		const file = FileDtoFactory.copyFromFileDto(sourceFile, filesStorageStream, mimeType, newFileName);
@@ -184,7 +187,7 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
+	private async storeAndScanFile(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
 		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(file);
@@ -197,7 +200,7 @@ export class FilesStorageService {
 		}
 	}
 
-	private async uploadAndScan(fileRecord: FileRecord, file: FileDto): Promise<void> {
+	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
 		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
@@ -214,7 +217,7 @@ export class FilesStorageService {
 		}
 	}
 
-	private async throwOnIncompleteStream(file: FileDto): Promise<void> {
+	private async throwOnIncompleteStream(file: PassThroughFileDto): Promise<void> {
 		try {
 			await file.streamCompletion;
 		} catch (err) {

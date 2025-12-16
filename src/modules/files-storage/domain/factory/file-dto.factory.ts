@@ -1,5 +1,5 @@
 import { PassThrough, Readable } from 'node:stream';
-import { FileDto } from '../dto';
+import { FileDto, PassThroughFileDto } from '../dto';
 import { awaitStreamCompletion } from '../service/stream.utils';
 
 export class FileDtoFactory {
@@ -19,9 +19,9 @@ export class FileDtoFactory {
 		passThrough: PassThrough,
 		mimeType: string,
 		newFileName?: string
-	): FileDto {
+	): PassThroughFileDto {
 		const streamCompletion = awaitStreamCompletion(passThrough, sourceFile.abortSignal);
-		const file = new FileDto({
+		const file = new PassThroughFileDto({
 			name: newFileName ?? sourceFile.name,
 			data: passThrough,
 			mimeType,

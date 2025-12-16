@@ -1,11 +1,11 @@
-import { Readable } from 'stream';
+import { PassThrough } from 'node:stream';
 
 export class StreamFileSizeObserver {
 	private fileSize: number;
 
-	constructor(stream: Readable) {
+	constructor(passThrough: PassThrough) {
 		this.fileSize = 0;
-		stream.on('data', (chunk: Buffer) => {
+		passThrough.on('data', (chunk: Buffer) => {
 			this.fileSize += chunk.length;
 		});
 	}
@@ -14,8 +14,8 @@ export class StreamFileSizeObserver {
 		return this.fileSize;
 	}
 
-	public static create(stream: Readable): StreamFileSizeObserver {
-		const observer = new StreamFileSizeObserver(stream);
+	public static create(passThrough: PassThrough): StreamFileSizeObserver {
+		const observer = new StreamFileSizeObserver(passThrough);
 
 		return observer;
 	}
