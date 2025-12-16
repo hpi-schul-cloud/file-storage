@@ -30,7 +30,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { detectMimeTypeByStream, duplicateStream } from '../utils';
-import { ParentStatistic, ScanStatus } from '../vo';
+import { ParentStatistic } from '../vo';
 
 @Injectable()
 export class FilesStorageService {
@@ -188,7 +188,11 @@ export class FilesStorageService {
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(file);
 
-		this.finalizeFileRecord(fileRecord, fileSizeObserver.getFileSize());
+		fileRecord.markAsUploaded(
+			fileSizeObserver.getFileSize(),
+			this.config.FILES_STORAGE_MAX_FILE_SIZE,
+			this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE
+		);
 		await this.fileRecordRepo.save(fileRecord);
 
 		if (this.needsAsyncAntivirusScan(fileRecord)) {
@@ -218,14 +222,6 @@ export class FilesStorageService {
 			await file.streamCompletion;
 		} catch (err) {
 			throw new InternalServerErrorException('File stream error', { cause: err });
-		}
-	}
-
-	private finalizeFileRecord(fileRecord: FileRecord, finalFileSize: number): void {
-		fileRecord.markAsUploaded(finalFileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
-		fileRecord.touchContentLastModifiedAt();
-		if (finalFileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
-			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
 		}
 	}
 
