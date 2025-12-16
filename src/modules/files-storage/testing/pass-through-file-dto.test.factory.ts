@@ -42,49 +42,49 @@ class PassThroughFileDtoTestFactory {
 		return this;
 	}
 
-	public asPng(): PassThroughFileDtoTestFactory {
+	public asPng(): this {
 		this.props.mimeType = 'image/png';
 		this.props.data = pngReadable();
 
 		return this;
 	}
 
-	public asText(): PassThroughFileDtoTestFactory {
+	public asText(): this {
 		this.props.mimeType = 'text/plain';
 		this.props.data = textReadable();
 
 		return this;
 	}
 
-	public asAac(): PassThroughFileDtoTestFactory {
+	public asAac(): this {
 		this.props.mimeType = 'audio/aac';
 		this.props.data = aacReadable();
 
 		return this;
 	}
 
-	public asTiff(): PassThroughFileDtoTestFactory {
+	public asTiff(): this {
 		this.props.mimeType = 'image/tiff';
 		this.props.data = tiffReadable();
 
 		return this;
 	}
 
-	public asSvg(): PassThroughFileDtoTestFactory {
+	public asSvg(): this {
 		this.props.mimeType = 'image/svg+xml';
 		this.props.data = svgReadable();
 
 		return this;
 	}
 
-	public asOctetStream(): PassThroughFileDtoTestFactory {
+	public asOctetStream(): this {
 		this.props.mimeType = 'application/octet-stream';
 		this.props.data = octetStreamReadable();
 
 		return this;
 	}
 
-	public withForcedStreamError(): PassThroughFileDtoTestFactory {
+	public withForcedStreamError(): this {
 		this.forceStreamError = true;
 
 		return this;

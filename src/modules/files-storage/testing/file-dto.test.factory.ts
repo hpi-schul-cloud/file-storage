@@ -28,7 +28,7 @@ class FileDtoTestFactory {
 		['application/octet-stream', octetStreamReadable],
 	]);
 
-	public asMimeType(mimeType = this.props.mimeType): FileDtoTestFactory {
+	public asMimeType(mimeType = this.props.mimeType): this {
 		const readableFactory = FileDtoTestFactory.mimeTypeMap.get(mimeType);
 		if (!readableFactory) {
 			throw new Error(`Mime type ${mimeType} not supported in FileDtoTestFactory`);
@@ -40,49 +40,49 @@ class FileDtoTestFactory {
 		return this;
 	}
 
-	public asPng(): FileDtoTestFactory {
+	public asPng(): this {
 		this.props.mimeType = 'image/png';
 		this.props.data = pngReadable();
 
 		return this;
 	}
 
-	public asText(): FileDtoTestFactory {
+	public asText(): this {
 		this.props.mimeType = 'text/plain';
 		this.props.data = textReadable();
 
 		return this;
 	}
 
-	public asAac(): FileDtoTestFactory {
+	public asAac(): this {
 		this.props.mimeType = 'audio/aac';
 		this.props.data = aacReadable();
 
 		return this;
 	}
 
-	public asTiff(): FileDtoTestFactory {
+	public asTiff(): this {
 		this.props.mimeType = 'image/tiff';
 		this.props.data = tiffReadable();
 
 		return this;
 	}
 
-	public asSvg(): FileDtoTestFactory {
+	public asSvg(): this {
 		this.props.mimeType = 'image/svg+xml';
 		this.props.data = svgReadable();
 
 		return this;
 	}
 
-	public asOctetStream(): FileDtoTestFactory {
+	public asOctetStream(): this {
 		this.props.mimeType = 'application/octet-stream';
 		this.props.data = octetStreamReadable();
 
 		return this;
 	}
 
-	public withForcedStreamError(): FileDtoTestFactory {
+	public withForcedStreamError(): this {
 		this.forceStreamError = true;
 
 		return this;
