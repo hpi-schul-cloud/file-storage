@@ -4,7 +4,7 @@ import { PassThrough, Readable } from 'node:stream';
  * Correct pipe-based stream duplication using a single distributor.
  * Fixes the issue where multiple .pipe() calls from the same source don't work.
  */
-export const duplicateStreamViaPipe = (sourceStream: Readable, count = 1): PassThrough[] => {
+export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[] => {
 	const streams: PassThrough[] = [];
 
 	// Create destination streams

@@ -29,7 +29,7 @@ import {
 } from '../interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
-import { detectMimeTypeByStream, duplicateStreamViaPipe } from '../utils';
+import { detectMimeTypeByStream, duplicateStream } from '../utils';
 import { ParentStatistic, ScanStatus } from '../vo';
 
 @Injectable()
@@ -147,7 +147,7 @@ export class FilesStorageService {
 	}
 
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
-		const [mimeTypeStream, filesStorageStream] = duplicateStreamViaPipe(sourceFile.data, 2);
+		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
 		const file = PassThroughFileDtoFactory.create(sourceFile, filesStorageStream, mimeType, newFileName);
 
