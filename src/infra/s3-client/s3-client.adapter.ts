@@ -404,18 +404,9 @@ export class S3ClientAdapter {
 			}
 
 			this.logStreamUnresponsive(context);
-			this.destroyStreams(sourceStream, passthroughStream);
+			this.destroyStreamIfNotDestroyed(sourceStream);
+			this.destroyStreamIfNotDestroyed(passthroughStream);
 		}, timeoutMs);
-	}
-
-	/* istanbul ignore next */
-	private destroyStreams(sourceStream: Readable, passthroughStream: PassThrough): void {
-		if (!sourceStream.destroyed) {
-			sourceStream.destroy();
-		}
-		if (!passthroughStream.destroyed) {
-			passthroughStream.destroy();
-		}
 	}
 
 	/* istanbul ignore next */
