@@ -1,4 +1,4 @@
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'node:stream';
 import { StreamFileSizeObserver } from './stream-file-size.observer';
 
 describe('StreamFileSizeObserver', () => {
@@ -9,7 +9,8 @@ describe('StreamFileSizeObserver', () => {
 					this.push(null);
 				},
 			});
-			const observer = StreamFileSizeObserver.create(stream);
+			const passThrough = stream.pipe(new PassThrough());
+			const observer = StreamFileSizeObserver.create(passThrough);
 
 			return {
 				stream,
@@ -47,7 +48,8 @@ describe('StreamFileSizeObserver', () => {
 					this.push(null);
 				},
 			});
-			const observer = StreamFileSizeObserver.create(stream);
+			const passThrough = stream.pipe(new PassThrough());
+			const observer = StreamFileSizeObserver.create(passThrough);
 			const chunk = Buffer.from('test');
 
 			stream.emit('data', chunk);
