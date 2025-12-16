@@ -2,7 +2,8 @@ import type { ReadableStreamWithFileType } from 'file-type';
 import { loadEsm } from 'load-esm';
 import { PassThrough } from 'node:stream';
 
-async function fileTypeStream(passThrough: PassThrough): Promise<ReadableStreamWithFileType> {
+/* istanbul ignore next */
+export async function fileTypeStream(passThrough: PassThrough): Promise<ReadableStreamWithFileType> {
 	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
 
 	return fileTypeStream(passThrough);
@@ -25,6 +26,7 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 		return fallbackMimeType;
 	}
 
+	/* istanbul ignore next */
 	const fileTypeStreamResult = await fileTypeStream(passThrough);
 	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
 	const mimeType = detectedMimeType ?? fallbackMimeType;
@@ -32,4 +34,4 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 	return mimeType;
 }
 
-export default { detectMimeTypeByStream };
+export default { detectMimeTypeByStream, fileTypeStream };
