@@ -401,13 +401,23 @@ export class S3ClientAdapter {
 	}
 
 	/* istanbul ignore next */
+	private destroyStreams(sourceStream: Readable, passthroughStream: PassThrough): void {
+		if (!sourceStream.destroyed) {
+			sourceStream.destroy();
+		}
+		if (!passthroughStream.destroyed) {
+			passthroughStream.destroy();
+		}
+	}
+
+	/* istanbul ignore next */
 	private setupTimeOutAndErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
 		let timer: NodeJS.Timeout;
 
 		const refreshTimeout = (): void => {
 			if (timer) clearTimeout(timer);
 			timer = setTimeout(() => {
-				if (sourceStream.destroyed || passthroughStream.destroyed) return;
+				if (sourceStream.destroyed && passthroughStream.destroyed) return;
 
 				this.logger.info(
 					new S3ClientActionLoggable('Stream unresponsive: S3 object key', {
@@ -416,8 +426,8 @@ export class S3ClientAdapter {
 						bucket: this.config.bucket,
 					})
 				);
-				sourceStream.destroy();
-				passthroughStream.destroy();
+
+				this.destroyStreams(sourceStream, passthroughStream);
 			}, 60 * 1000);
 		};
 
@@ -441,8 +451,6 @@ export class S3ClientAdapter {
 				passthroughStream.destroy(error);
 			}
 		});
-		sourceStream.on('close', cleanup);
-		sourceStream.on('end', cleanup);
 
 		passthroughStream.on('error', (error) => {
 			this.logger.warning(
@@ -457,7 +465,6 @@ export class S3ClientAdapter {
 				sourceStream.destroy();
 			}
 		});
-		passthroughStream.on('close', cleanup);
 
 		refreshTimeout();
 	}
