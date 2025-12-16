@@ -6,7 +6,7 @@ import { PassThroughFileDtoFactory } from '../domain/factory';
 import { fileDtoTestFactory } from './file-dto.test.factory';
 
 class PassThroughFileDtoTestFactory {
-	private fileDtoFactory = fileDtoTestFactory();
+	private readonly fileDtoFactory = fileDtoTestFactory();
 	forceStreamError = false;
 
 	public asMimeType(mimeType?: string): this {
