@@ -11,7 +11,6 @@ import {
 } from './buffer-with-types';
 
 class FileDtoTestFactory {
-	forceStreamError = false;
 	props: FileDto = {
 		name: `file-dto-name-${Math.random()}`,
 		data: Readable.from('abc'),
@@ -78,12 +77,6 @@ class FileDtoTestFactory {
 	public asOctetStream(): this {
 		this.props.mimeType = 'application/octet-stream';
 		this.props.data = octetStreamReadable();
-
-		return this;
-	}
-
-	public withForcedStreamError(): this {
-		this.forceStreamError = true;
 
 		return this;
 	}
