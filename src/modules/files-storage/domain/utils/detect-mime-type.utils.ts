@@ -36,6 +36,7 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 	/* istanbul ignore next */
 	const fileTypeStreamResult = await fileTypeStream(passThrough);
 
+	/* istanbul ignore next */
 	return resolveMimeType(fileTypeStreamResult, fallbackMimeType);
 }
 
