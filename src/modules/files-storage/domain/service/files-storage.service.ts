@@ -124,7 +124,7 @@ export class FilesStorageService {
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
 		const fileName = await this.resolveFileName(sourceFile.name, parentInfo);
-		const file = await this.copyFileDtoWithResolvedProperties(sourceFile, fileName);
+		const file = await this.createPassThroughFileDto(sourceFile, fileName);
 		const fileRecord = await this.prepareFileRecordWithUploadingFlag(file, parentInfo, userId);
 
 		try {
@@ -138,7 +138,7 @@ export class FilesStorageService {
 	}
 
 	public async updateFileContents(fileRecord: FileRecord, sourceFile: FileDto): Promise<FileRecord> {
-		const file = await this.copyFileDtoWithResolvedProperties(sourceFile);
+		const file = await this.createPassThroughFileDto(sourceFile);
 		this.checkMimeType(fileRecord, file);
 
 		await this.storeAndScanFile(fileRecord, file);
@@ -146,10 +146,7 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	private async copyFileDtoWithResolvedProperties(
-		sourceFile: FileDto,
-		newFileName?: string
-	): Promise<PassThroughFileDto> {
+	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
 		const [mimeTypeStream, filesStorageStream] = duplicateStreamViaPipe(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
 		const file = PassThroughFileDtoFactory.create(sourceFile, filesStorageStream, mimeType, newFileName);
