@@ -188,7 +188,7 @@ export class FilesStorageService {
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(file);
 
-		this.finalizeFileRecord(fileRecord, fileSizeObserver);
+		this.finalizeFileRecord(fileRecord, fileSizeObserver.getFileSize());
 		await this.fileRecordRepo.save(fileRecord);
 
 		if (this.needsAsyncAntivirusScan(fileRecord)) {
@@ -221,11 +221,10 @@ export class FilesStorageService {
 		}
 	}
 
-	private finalizeFileRecord(fileRecord: FileRecord, fileSizeObserver: StreamFileSizeObserver): void {
-		const fileSize = fileSizeObserver.getFileSize();
-		fileRecord.markAsUploaded(fileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
+	private finalizeFileRecord(fileRecord: FileRecord, finalFileSize: number): void {
+		fileRecord.markAsUploaded(finalFileSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
 		fileRecord.touchContentLastModifiedAt();
-		if (fileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
+		if (finalFileSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
 			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
 		}
 	}
