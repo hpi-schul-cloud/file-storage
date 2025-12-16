@@ -8,6 +8,7 @@ export class PassThroughFileDto implements FileDto {
 		this.mimeType = file.mimeType;
 		this.abortSignal = file.abortSignal;
 		this.streamCompletion = file.streamCompletion;
+		this.fileSize = file.fileSize;
 	}
 
 	name: string;
@@ -19,4 +20,6 @@ export class PassThroughFileDto implements FileDto {
 	abortSignal?: AbortSignal;
 
 	streamCompletion?: Promise<void>;
+
+	fileSize: number;
 }

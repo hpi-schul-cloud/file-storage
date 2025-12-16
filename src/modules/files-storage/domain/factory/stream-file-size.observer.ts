@@ -1,22 +1,15 @@
 import { PassThrough } from 'node:stream';
 
+interface HasFileSizeAndPassThrough {
+	fileSize: number;
+	data: PassThrough;
+}
+
 export class StreamFileSizeObserver {
-	private fileSize: number;
-
-	constructor(passThrough: PassThrough) {
-		this.fileSize = 0;
-		passThrough.on('data', (chunk: Buffer) => {
-			this.fileSize += chunk.length;
+	public static observe(obj: HasFileSizeAndPassThrough): void {
+		obj.fileSize = 0;
+		obj.data.on('data', (chunk: Buffer) => {
+			obj.fileSize += chunk.length;
 		});
-	}
-
-	public getFileSize(): number {
-		return this.fileSize;
-	}
-
-	public static create(passThrough: PassThrough): StreamFileSizeObserver {
-		const observer = new StreamFileSizeObserver(passThrough);
-
-		return observer;
 	}
 }

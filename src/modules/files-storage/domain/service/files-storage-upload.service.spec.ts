@@ -446,7 +446,7 @@ describe('FilesStorageService upload methods', () => {
 					mimeType: fileRecord.mimeType,
 					name: fileRecord.getName(),
 					abortSignal: file.abortSignal,
-					// fileSizeObserver: expect.any(StreamFileSizeObserver),
+					fileSize: 8,
 					streamCompletion: expect.any(Promise),
 				};
 				expect(storageClient.create).toHaveBeenCalledWith(fileRecord.createPath(), expectedCalledParams);

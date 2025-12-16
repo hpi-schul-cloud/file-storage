@@ -22,7 +22,7 @@ describe('PassThroughFileDtoFactory', () => {
 				data: passThrough,
 				mimeType,
 				streamCompletion: expect.any(Promise),
-				// fileSizeObserver: expect.any(StreamFileSizeObserver),
+				fileSize: 0,
 			});
 
 			return { name, passThrough, mimeType, fileDto, expectedFile };
