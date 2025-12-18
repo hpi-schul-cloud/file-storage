@@ -23,7 +23,7 @@ async function bootstrap(): Promise<void> {
 	nestApp.use(createRequestLoggerMiddleware(config.LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED));
 	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());
 
-	enableOpenApiDocs(nestApp, '/file-storage/api/v3/docs');
+	enableOpenApiDocs(nestApp, '/file-storage/docs');
 
 	const port = 4444;
 	const basePath = '/api/v3';
