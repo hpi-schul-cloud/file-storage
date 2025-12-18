@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import FileType from '../../../domain/service/file-type.helper';
+import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { fileRecordEntityFactory } from '../../../testing';
@@ -19,7 +19,7 @@ import { availableStorageLocations } from './mocks';
 
 const baseRouteName = '';
 
-jest.mock('../../../domain/service/file-type.helper');
+jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
@@ -141,7 +141,7 @@ describe(`${baseRouteName} (api)`, () => {
 				await em.persistAndFlush([...fileRecords1, ...fileRecords2, ...markedForDeleteFileRecords]);
 				em.clear();
 
-				jest.spyOn(FileType, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				await uploadFile(loggedInClient, storageLocationId1, storageLocationId1, 'test1.txt');
 

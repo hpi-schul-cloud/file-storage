@@ -90,8 +90,10 @@ export class FilesStorageUC {
 	}
 
 	public async uploadFromUrl(userId: EntityId, params: FileRecordParams & FileUrlParams): Promise<FileRecordResponse> {
-		await this.checkPermission(params, FileStorageAuthorizationContext.create);
-		await this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId);
+		await Promise.all([
+			this.checkPermission(params, FileStorageAuthorizationContext.create),
+			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
+		]);
 
 		const response = await this.getResponse(params);
 		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response);

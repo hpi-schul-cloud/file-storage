@@ -322,9 +322,17 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		this.props.size = sizeInByte;
 	}
 
-	public markAsUploaded(sizeInByte: number, maxSizeInByte: number): void {
+	public markAsUploading(): void {
+		this.props.isUploading = true;
+	}
+
+	public markAsUploaded(sizeInByte: number, maxSizeInByte: number, maxSecurityCheckFileSizeInByte: number): void {
 		this.setSizeInByte(sizeInByte, maxSizeInByte);
 		this.props.isUploading = undefined;
+		this.touchContentLastModifiedAt();
+		if (sizeInByte > maxSecurityCheckFileSizeInByte) {
+			this.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
+		}
 	}
 
 	public createPath(): string {
@@ -350,7 +358,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.props.contentLastModifiedAt;
 	}
 
-	public touchContentLastModifiedAt(): void {
+	private touchContentLastModifiedAt(): void {
 		this.props.contentLastModifiedAt = new Date();
 	}
 }

@@ -11,13 +11,13 @@ import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.tes
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType } from '../../../domain';
-import FileTypeHelper from '../../../domain/service/file-type.helper';
+import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { availableParentTypes } from './mocks';
 
-jest.mock('../../../domain/service/file-type.helper');
+jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 const createRndInt = (max: number) => Math.floor(Math.random() * max);
 
@@ -73,7 +73,7 @@ describe('files-storage controller (API)', () => {
 
 			const validId = new ObjectId().toHexString();
 
-			jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 			return { validId, loggedInClient, user: studentUser };
 		};
@@ -266,7 +266,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				const body = {
 					url: 'http://localhost/test.txt',
@@ -379,7 +379,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
@@ -483,7 +483,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
@@ -536,7 +536,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 					const expectedResponse1 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					const expectedResponse2 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
@@ -591,7 +591,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				const result = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -647,7 +647,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
@@ -703,7 +703,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
@@ -754,7 +754,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				const result = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -805,7 +805,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				const result1 = await loggedInClient
 					.post(`/upload/school/${validId}/schools/${validId}`)
@@ -889,7 +889,7 @@ describe('files-storage controller (API)', () => {
 
 				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { loggedInClient };
 			};
@@ -911,7 +911,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				const fileApiClient = new TestApiClient(app, '');
 

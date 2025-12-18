@@ -10,10 +10,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import FileTypeHelper from '../../../domain/service/file-type.helper';
+import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 
-jest.mock('../../../domain/service/file-type.helper');
+jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 const createRndInt = (max: number) => Math.floor(Math.random() * max);
 
@@ -70,7 +70,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
 			const validId = new ObjectId().toHexString();
 
-			jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 			return { validId, loggedInClient, user: studentUser };
 		};

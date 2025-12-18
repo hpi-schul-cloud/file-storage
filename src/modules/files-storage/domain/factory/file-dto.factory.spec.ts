@@ -8,7 +8,11 @@ describe('FileDtoFactory', () => {
 			const name = 'test.txt';
 			const data = Readable.from('abc');
 			const mimeType = 'text/plain';
-			const expectedFile = new FileDto({ name, data, mimeType });
+			const expectedFile = new FileDto({
+				name,
+				data,
+				mimeType,
+			});
 
 			return { name, data, mimeType, expectedFile };
 		};

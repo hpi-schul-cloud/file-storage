@@ -11,11 +11,11 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { PassThrough, Readable } from 'stream';
+import { PassThrough } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileDto } from '../dto';
+import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileDtoFactory, FileRecordFactory, StreamFileSizeObserver } from '../factory';
+import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
 import {
 	CollaboraEditabilityStatus,
@@ -29,8 +29,8 @@ import {
 } from '../interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
-import { ParentStatistic, ScanStatus } from '../vo';
-import { fileTypeStream } from './file-type.helper';
+import { detectMimeTypeByStream, duplicateStream } from '../utils';
+import { ParentStatistic } from '../vo';
 
 @Injectable()
 export class FilesStorageService {
@@ -122,117 +122,89 @@ export class FilesStorageService {
 	}
 
 	// upload
-	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, file: FileDto): Promise<FileRecord> {
-		const fileName = await this.resolveFileName(file, parentInfo);
-		const { mimeType, stream } = await this.detectMimeType(file.data, file.mimeType);
-		const fileRecord = FileRecordFactory.buildFromExternalInput(fileName, mimeType, parentInfo, userId);
+	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
+		const fileName = await this.resolveFileName(sourceFile.name, parentInfo);
+		const file = await this.createPassThroughFileDto(sourceFile, fileName);
+		const fileRecord = await this.prepareFileRecordWithUploadingFlag(file, parentInfo, userId);
 
-		// MimeType Detection consumes part of the stream, so the restored stream is passed on
-		// remapped need to be removed, see this.updateFileContents
-		file.data = stream;
-		file.mimeType = fileRecord.mimeType;
-		await this.fileRecordRepo.save(fileRecord);
-
-		await this.storeAndScanFileWithRollback(fileRecord, file);
+		try {
+			await this.storeAndScanFile(fileRecord, file);
+		} catch (error) {
+			await this.rollbackByFileRecord(fileRecord);
+			throw error;
+		}
 
 		return fileRecord;
 	}
 
-	public async updateFileContents(fileRecord: FileRecord, readable: Readable): Promise<FileRecord> {
-		const { mimeType, stream } = await this.detectMimeType(readable, fileRecord.mimeType);
-		this.checkMimeType(fileRecord.mimeType, mimeType);
+	public async updateFileContents(fileRecord: FileRecord, sourceFile: FileDto): Promise<FileRecord> {
+		const file = await this.createPassThroughFileDto(sourceFile);
+		this.checkMimeType(fileRecord, file);
 
-		const file = FileDtoFactory.create(fileRecord.getName(), stream, mimeType);
 		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
 	}
 
-	private checkMimeType(oldMimeType: string, newMimeType: string): void {
-		if (oldMimeType !== newMimeType) {
-			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
-		}
+	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
+		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
+		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
+		const file = PassThroughFileDtoFactory.create(sourceFile, filesStorageStream, mimeType, newFileName);
+
+		return file;
 	}
 
-	private async detectMimeType(
-		data: Readable,
-		expectedMimeType: string
-	): Promise<{ mimeType: string; stream: Readable }> {
-		if (this.isStreamMimeTypeDetectionPossible(expectedMimeType)) {
-			const source = this.createPipedStream(data);
-			const { stream, mime: detectedMimeType } = await this.detectMimeTypeByStream(source);
-
-			const mimeType = detectedMimeType ?? expectedMimeType;
-
-			return { mimeType, stream };
-		}
-
-		return { mimeType: expectedMimeType, stream: data };
-	}
-
-	private createPipedStream(data: Readable): PassThrough {
-		return data.pipe(new PassThrough());
-	}
-
-	private isStreamMimeTypeDetectionPossible(mimeType: string): boolean {
-		const mimTypes = [
-			'text/csv',
-			'image/svg+xml',
-			'application/msword',
-			'application/vnd.ms-powerpoint',
-			'application/vnd.ms-excel',
-		];
-
-		const result = !mimTypes.includes(mimeType);
-
-		return result;
-	}
-
-	private async detectMimeTypeByStream(file: Readable): Promise<{ mime?: string; stream: Readable }> {
-		const stream = await fileTypeStream(file);
-
-		return { mime: stream.fileType?.mime, stream };
-	}
-
-	private async resolveFileName(file: FileDto, parentInfo: ParentInfo): Promise<string> {
-		let fileName = file.name;
+	private async resolveFileName(name: string, parentInfo: ParentInfo): Promise<string> {
+		let fileName = name;
 
 		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
 		if (count > 0) {
-			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, file.name);
+			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, name);
 		}
 
 		return fileName;
 	}
 
-	private async storeAndScanFileWithRollback(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		try {
-			await this.storeAndScanFile(fileRecord, file);
-		} catch (error) {
-			const filePath = fileRecord.createPath();
-			await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
-
-			throw error;
+	private checkMimeType(fileRecord: FileRecord, file: FileDto): void {
+		if (fileRecord.mimeType !== file.mimeType) {
+			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
 		}
 	}
 
-	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
-		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
-		const shouldStreamToAntiVirus =
-			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
+	private async prepareFileRecordWithUploadingFlag(
+		file: FileDto,
+		parentInfo: ParentInfo,
+		userId: EntityId
+	): Promise<FileRecord> {
+		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
+		fileRecord.markAsUploading();
+		await this.fileRecordRepo.save(fileRecord);
 
-		return shouldStreamToAntiVirus;
+		return fileRecord;
 	}
 
-	private async storeAndScanFile(fileRecord: FileRecord, file: FileDto): Promise<void> {
-		const streamCompletion = this.awaitStreamCompletion(file);
-		const fileSizeObserver = StreamFileSizeObserver.create(file.data);
+	private async storeAndScanFile(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
+		StreamFileSizeObserver.observe(file);
+		await this.uploadAndScan(fileRecord, file);
+		await this.throwOnIncompleteStream(file);
+
+		fileRecord.markAsUploaded(
+			file.fileSize,
+			this.config.FILES_STORAGE_MAX_FILE_SIZE,
+			this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE
+		);
+		await this.fileRecordRepo.save(fileRecord);
+
+		if (this.needsAsyncAntivirusScan(fileRecord)) {
+			await this.antivirusService.send(fileRecord.getSecurityToken());
+		}
+	}
+
+	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
 		const filePath = fileRecord.createPath();
 
-		const shouldStreamToAntiVirus = this.shouldStreamToAntivirus(fileRecord);
-
-		if (shouldStreamToAntiVirus) {
-			const pipedStream = this.createPipedStream(file.data);
+		if (this.shouldStreamToAntivirus(fileRecord)) {
+			const pipedStream = file.data.pipe(new PassThrough());
 
 			const [, antivirusClientResponse] = await Promise.all([
 				this.storageClient.create(filePath, file),
@@ -243,63 +215,31 @@ export class FilesStorageService {
 		} else {
 			await this.storageClient.create(filePath, file);
 		}
-
-		await this.throwOnIncompleteStream(streamCompletion);
-
-		const fileRecordSize = fileSizeObserver.getFileSize();
-		fileRecord.markAsUploaded(fileRecordSize, this.config.FILES_STORAGE_MAX_FILE_SIZE);
-		fileRecord.touchContentLastModifiedAt();
-		if (fileRecordSize > this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE) {
-			fileRecord.updateSecurityCheckStatus(ScanStatus.WONT_CHECK, 'File is too big');
-		}
-
-		await this.fileRecordRepo.save(fileRecord);
-
-		if (!shouldStreamToAntiVirus && !fileRecord.isWontCheck()) {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
-		}
 	}
 
-	private async throwOnIncompleteStream(streamPromise: Promise<void>): Promise<void> {
+	private async throwOnIncompleteStream(file: PassThroughFileDto): Promise<void> {
 		try {
-			await streamPromise;
+			await file.streamCompletion;
 		} catch (err) {
 			throw new InternalServerErrorException('File stream error', { cause: err });
 		}
 	}
 
-	private awaitStreamCompletion(file: FileDto): Promise<void> {
-		const { data, abortSignal } = file;
+	private needsAsyncAntivirusScan(fileRecord: FileRecord): boolean {
+		return !this.shouldStreamToAntivirus(fileRecord) && !fileRecord.isWontCheck();
+	}
 
-		return new Promise((resolve, reject) => {
-			if (abortSignal?.aborted) {
-				return resolve();
-			}
+	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const shouldStreamToAntiVirus =
+			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
 
-			const onAbort = (): void => {
-				resolve();
-			};
+		return shouldStreamToAntiVirus;
+	}
 
-			const onEnd = (): void => {
-				resolve();
-			};
-
-			const onError = (error: Error): void => {
-				reject(error);
-			};
-
-			const onClose = (): void => {
-				resolve();
-			};
-
-			if (abortSignal) {
-				abortSignal.addEventListener('abort', onAbort);
-			}
-
-			data.on('end', onEnd);
-			data.on('error', onError);
-			data.on('close', onClose);
-		});
+	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
+		const filePath = fileRecord.createPath();
+		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
 	// update
