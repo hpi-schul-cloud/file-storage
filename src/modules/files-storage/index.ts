@@ -1,5 +1,6 @@
 export { FilesStorageConsumer, FilesStorageExchange } from './api';
 export {
+	FileDtoFactory,
 	FileRecord,
 	FileRecordParentType,
 	FilesStorageMapper,

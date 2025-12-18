@@ -1,6 +1,6 @@
 import { BaseFactory } from '@testing/factory/base.factory';
 import { FileTypeResult, ReadableStreamWithFileType } from 'file-type';
-import { Readable } from 'stream';
+import { PassThrough, Readable } from 'stream';
 
 interface ReadableStreamWithFileTypeProps {
 	fileType?: FileTypeResult;
@@ -33,12 +33,13 @@ export const readableStreamWithFileTypeFactory = BaseFactory.define<
 	ReadableStreamWithFileTypeProps
 >(ReadableStreamWithFileTypeImp, () => {
 	const readable = Readable.from('abc');
+	const passThrough = readable.pipe(new PassThrough());
 
 	return {
 		fileType: {
 			ext: 'png',
 			mime: 'image/png',
 		},
-		readable,
+		readable: passThrough,
 	};
 });

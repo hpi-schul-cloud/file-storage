@@ -544,4 +544,78 @@ describe('FileRecord', () => {
 			expect(fileRecord.previewGenerationFailed()).toBe(true);
 		});
 	});
+
+	describe('markAsUploaded', () => {
+		const setup = () => {
+			const fileRecord = fileRecordTestFactory().build({ contentLastModifiedAt: undefined });
+			fileRecord.markAsUploading();
+
+			return { fileRecord };
+		};
+
+		it('should set the file size, clear uploading status, and update content last modified date', () => {
+			const { fileRecord } = setup();
+			const newSize = 1024;
+			const maxSize = 2048;
+			const maxSecurityCheckSize = 4096;
+
+			expect(fileRecord.getProps().isUploading).toBe(true);
+			expect(fileRecord.getProps().contentLastModifiedAt).toBeUndefined();
+
+			fileRecord.markAsUploaded(newSize, maxSize, maxSecurityCheckSize);
+
+			expect(fileRecord.sizeInByte).toBe(newSize);
+			expect(fileRecord.getProps().isUploading).toBeUndefined();
+			expect(fileRecord.getProps().contentLastModifiedAt).toBeInstanceOf(Date);
+		});
+
+		it('should set security check status to WONT_CHECK when file size exceeds maxSecurityCheckFileSizeInByte', () => {
+			const { fileRecord } = setup();
+			const newSize = 5000;
+			const maxSize = 6000;
+			const maxSecurityCheckSizeSmallerThanNewSize = 4000;
+
+			fileRecord.markAsUploaded(newSize, maxSize, maxSecurityCheckSizeSmallerThanNewSize);
+
+			expect(fileRecord.scanStatus).toBe(ScanStatus.WONT_CHECK);
+		});
+
+		it('should not change security check status when file size is within maxSecurityCheckFileSizeInByte', () => {
+			const { fileRecord } = setup();
+			const originalScanStatus = fileRecord.scanStatus;
+			const newSize = 1024;
+			const maxSize = 2048;
+			const maxSecurityCheckSizeLargerThanNewSize = 4096;
+
+			fileRecord.markAsUploaded(newSize, maxSize, maxSecurityCheckSizeLargerThanNewSize);
+
+			expect(fileRecord.scanStatus).toBe(originalScanStatus);
+		});
+
+		it('should throw BadRequestException if size is negative', () => {
+			const { fileRecord } = setup();
+			const invalidSize = -1;
+			const maxSize = 2048;
+			const maxSecurityCheckSize = 4096;
+
+			expect(() => fileRecord.markAsUploaded(invalidSize, maxSize, maxSecurityCheckSize)).toThrow(BadRequestException);
+			expect(() => fileRecord.markAsUploaded(invalidSize, maxSize, maxSecurityCheckSize)).toThrow(
+				ErrorType.FILE_IS_EMPTY
+			);
+		});
+
+		it('should throw BadRequestException if size exceeds maxSize', () => {
+			const { fileRecord } = setup();
+			const invalidSize = 3000;
+			const maxSizeSmallerThanInvalidSize = 2048;
+			const maxSecurityCheckSize = 4096;
+
+			expect(() => fileRecord.markAsUploaded(invalidSize, maxSizeSmallerThanInvalidSize, maxSecurityCheckSize)).toThrow(
+				BadRequestException
+			);
+			expect(() => fileRecord.markAsUploaded(invalidSize, maxSizeSmallerThanInvalidSize, maxSecurityCheckSize)).toThrow(
+				ErrorType.FILE_TOO_BIG
+			);
+		});
+	});
 });

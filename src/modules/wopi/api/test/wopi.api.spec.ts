@@ -23,7 +23,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
 import path from 'node:path';
-import FileTypeHelper from '../../../files-storage/domain/service/file-type.helper';
+import DetectMimeTypeUtils from '../../../files-storage/domain/utils/detect-mime-type.utils';
 import {
 	authorizedCollaboraDocumentUrlParamsTestFactory,
 	wopiAccessTokenParamsTestFactory,
@@ -32,7 +32,7 @@ import {
 import { WopiConfig } from '../../wopi.config';
 import { EditorMode, WopiFileInfoResponse } from '../dto';
 
-jest.mock('../../../files-storage/domain/service/file-type.helper');
+jest.mock('../../../files-storage/domain/utils/detect-mime-type.utils');
 
 describe('Wopi Controller (API)', () => {
 	let app: INestApplication;
@@ -965,7 +965,9 @@ describe('Wopi Controller (API)', () => {
 				await em.persistAndFlush(fileRecord);
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest
+					.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
+					.mockResolvedValue('application/vnd.oasis.opendocument.text');
 				wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
 				return { fileRecord, query, initialContentLastModifiedAt };
@@ -1000,13 +1002,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => {
-					const redableStreamWithFileType = Object.assign(readable, {
-						fileType: { mime: 'text/plain', ext: 'txt' },
-					});
-
-					return Promise.resolve(redableStreamWithFileType);
-				});
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1037,7 +1033,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1068,7 +1064,7 @@ describe('Wopi Controller (API)', () => {
 				const error = new ForbiddenException('Token resolution error');
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1102,7 +1098,9 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest
+					.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
+					.mockResolvedValue('application/vnd.oasis.opendocument.text');
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1133,7 +1131,7 @@ describe('Wopi Controller (API)', () => {
 				const error = new InternalServerErrorException('Token resolution error');
 				authorizationClientAdapter.resolveToken.mockRejectedValueOnce(error);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1164,7 +1162,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				wopiConfig.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED = true;
 
@@ -1196,7 +1194,7 @@ describe('Wopi Controller (API)', () => {
 				const error = new Error('Storage client error');
 				storageClient.create.mockRejectedValueOnce(error);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				await em.persistAndFlush(fileRecord);
 
@@ -1276,7 +1274,7 @@ describe('Wopi Controller (API)', () => {
 
 				authorizationClientAdapter.resolveToken.mockResolvedValueOnce(accessTokenPayloadResponse);
 
-				jest.spyOn(FileTypeHelper, 'fileTypeStream').mockImplementation((readable) => Promise.resolve(readable));
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 				await em.persistAndFlush(fileRecord);
 
