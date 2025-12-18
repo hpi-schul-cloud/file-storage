@@ -48,32 +48,10 @@ spec:
             port:
               number: 4444
         pathType: Prefix
-      - path: /file-storage/api/v3/
+      - path: /file-storage/api/v3/docs
         backend:
           service:
             name: file-storage-svc
             port:
               number: 4444
         pathType: Prefix
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ NAMESPACE }}-file-storage-docs-ingress
-  namespace: {{ NAMESPACE }}
-  annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /api/v3/docs$2
-  spec:
-    ingressClassName: {{ INGRESS_CLASS }}
-  rules:
-    - host: {{ DOMAIN }}
-      http:
-        paths:
-        - path: /file-storage/api/v3/docs(/|$)(.*)
-          pathType: ImplementationSpecific
-          backend:
-            service:
-              name: file-storage-svc
-              port:
-                number: 4444
