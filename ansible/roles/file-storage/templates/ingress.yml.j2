@@ -48,3 +48,10 @@ spec:
             port:
               number: 4444
         pathType: Prefix
+      - path: /file-storage/api/v3/docs/
+        backend:
+          service:
+            name: file-storage-svc
+            port:
+              number: 4444
+        pathType: Prefix
