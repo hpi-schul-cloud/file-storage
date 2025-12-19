@@ -29,6 +29,10 @@ import type { ApiValidationError } from '../models';
 // @ts-ignore
 import type { AuthorizationBodyParams } from '../models';
 // @ts-ignore
+import type { AuthorizationManyReferencesBodyParams } from '../models';
+// @ts-ignore
+import type { AuthorizedByReferenceResponse } from '../models';
+// @ts-ignore
 import type { AuthorizedResponse } from '../models';
 // @ts-ignore
 import type { CreateAccessTokenParams } from '../models';
@@ -72,6 +76,46 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
             localVarRequestOptions.data = serializeDataIfNeeded(authorizationBodyParams, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Checks if user is authorized to perform the given operation.
+         * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authorizationReferenceControllerAuthorizeByReferences: async (authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'authorizationManyReferencesBodyParams' is not null or undefined
+            assertParamExists('authorizationReferenceControllerAuthorizeByReferences', 'authorizationManyReferencesBodyParams', authorizationManyReferencesBodyParams)
+            const localVarPath = `/authorization/by-references`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearer required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(authorizationManyReferencesBodyParams, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -179,6 +223,19 @@ export const AuthorizationApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Checks if user is authorized to perform the given operation.
+         * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<AuthorizedByReferenceResponse>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthorizationApi.authorizationReferenceControllerAuthorizeByReferences']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @param {CreateAccessTokenParams} createAccessTokenParams 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -224,6 +281,16 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
         },
         /**
          * 
+         * @summary Checks if user is authorized to perform the given operation.
+         * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: any): AxiosPromise<Array<AuthorizedByReferenceResponse>> {
+            return localVarFp.authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {CreateAccessTokenParams} createAccessTokenParams 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -259,6 +326,16 @@ export interface AuthorizationApiInterface {
      * @memberof AuthorizationApiInterface
      */
     authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<AuthorizedResponse>;
+
+    /**
+     * 
+     * @summary Checks if user is authorized to perform the given operation.
+     * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthorizationApiInterface
+     */
+    authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<Array<AuthorizedByReferenceResponse>>;
 
     /**
      * 
@@ -298,6 +375,18 @@ export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterfa
      */
     public authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig) {
         return AuthorizationApiFp(this.configuration).authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Checks if user is authorized to perform the given operation.
+     * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AuthorizationApi
+     */
+    public authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: RawAxiosRequestConfig) {
+        return AuthorizationApiFp(this.configuration).authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

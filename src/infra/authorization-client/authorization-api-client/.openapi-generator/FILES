@@ -12,6 +12,8 @@ models/access-token-payload-response.ts
 models/access-token-response.ts
 models/authorization-body-params.ts
 models/authorization-context-params.ts
+models/authorization-many-references-body-params.ts
+models/authorized-by-reference-response.ts
 models/authorized-response.ts
 models/create-access-token-params.ts
 models/index.ts
