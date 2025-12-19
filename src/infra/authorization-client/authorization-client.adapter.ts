@@ -1,6 +1,6 @@
 import { JwtExtractor } from '@infra/auth-guard/utils/jwt';
 import { AxiosErrorLoggable } from '@infra/error/loggable';
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { Request } from 'express';
@@ -15,6 +15,8 @@ import {
 import {
 	AuthorizationErrorLoggableException,
 	AuthorizationForbiddenLoggableException,
+	AuthorizationManyReferencesErrorLoggableException,
+	AuthorizationManyReferencesForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
 import { AccessToken, AccessTokenFactory, ReferenceAuthorizationInfo, ReferenceAuthorizationInfoFactory } from './vo';
@@ -76,7 +78,7 @@ export class AuthorizationClientAdapter {
 		);
 
 		if (unauthorizedReferences.length > 0) {
-			throw new ForbiddenException();
+			throw new AuthorizationManyReferencesForbiddenLoggableException(unauthorizedReferences);
 		}
 	}
 
@@ -101,7 +103,7 @@ export class AuthorizationClientAdapter {
 				error = new AxiosErrorLoggable(error, 'AUTHORIZATION_BY_MANY_REFERENCES_FAILED');
 			}
 
-			throw error; //new AuthorizationErrorLoggableException(error);
+			throw new AuthorizationManyReferencesErrorLoggableException(error, params);
 		}
 	}
 
