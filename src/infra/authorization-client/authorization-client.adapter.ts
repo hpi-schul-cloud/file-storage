@@ -1,6 +1,6 @@
 import { JwtExtractor } from '@infra/auth-guard/utils/jwt';
 import { AxiosErrorLoggable } from '@infra/error/loggable';
-import { Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { AxiosRequestConfig, isAxiosError } from 'axios';
 import { Request } from 'express';
@@ -9,6 +9,7 @@ import {
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParams,
+	AuthorizationManyReferencesBodyParams,
 	CreateAccessTokenParams,
 } from './authorization-api-client';
 import {
@@ -16,7 +17,7 @@ import {
 	AuthorizationForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
-import { AccessToken, AccessTokenFactory } from './vo';
+import { AccessToken, AccessTokenFactory, ReferenceAuthorizationInfo, ReferenceAuthorizationInfoFactory } from './vo';
 
 @Injectable()
 export class AuthorizationClientAdapter {
@@ -64,6 +65,43 @@ export class AuthorizationClientAdapter {
 			}
 
 			throw new AuthorizationErrorLoggableException(error, params);
+		}
+	}
+
+	public async checkPermissionsByManyReferences(params: AuthorizationManyReferencesBodyParams): Promise<void> {
+		const results = await this.hasPermissionsByManyReferences(params);
+
+		const unauthorizedReferences = results.filter(
+			(referenceAuthorizationInfo) => !referenceAuthorizationInfo.isAuthorized
+		);
+
+		if (unauthorizedReferences.length > 0) {
+			throw new ForbiddenException();
+		}
+	}
+
+	public async hasPermissionsByManyReferences(
+		params: AuthorizationManyReferencesBodyParams
+	): Promise<ReferenceAuthorizationInfo[]> {
+		try {
+			const options = this.createOptionParams();
+
+			const response = await this.authorizationApi.authorizationReferenceControllerAuthorizeByReferences(
+				params,
+				options
+			);
+
+			const result = response.data.map((referenceAuthorizationInfo) => {
+				return ReferenceAuthorizationInfoFactory.build(referenceAuthorizationInfo);
+			});
+
+			return result;
+		} catch (error) {
+			if (isAxiosError(error)) {
+				error = new AxiosErrorLoggable(error, 'AUTHORIZATION_BY_MANY_REFERENCES_FAILED');
+			}
+
+			throw error; //new AuthorizationErrorLoggableException(error);
 		}
 	}
 
