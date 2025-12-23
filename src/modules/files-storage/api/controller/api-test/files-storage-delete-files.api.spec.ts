@@ -6,6 +6,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
+import { AuthorizationManyReferencesForbiddenLoggableException } from '@infra/authorization-client/error';
 import { ApiValidationError } from '@infra/error';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { FileRecordEntity } from '@modules/files-storage/repo';
@@ -13,7 +14,7 @@ import { EntityId } from '@shared/domain/types';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { ErrorType, FileRecordParentType, PreviewStatus } from '../../../domain';
+import { FileRecordParentType, PreviewStatus } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
@@ -492,7 +493,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 					await loggedInClient.delete(`/delete`, fileRecordIds);
 
-					expect(authorizationClientAdapter.checkPermissionsByReference).toHaveBeenCalledTimes(1);
+					expect(authorizationClientAdapter.checkPermissionsByManyReferences).toHaveBeenCalledTimes(1);
 				});
 			});
 
@@ -504,7 +505,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 					const validId1 = new ObjectId().toHexString();
 
-					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
 					const result1 = await loggedInClient
 						.post(`/upload/school/${validId1}/schools/${validId1}`)
@@ -529,16 +530,68 @@ describe(`${baseRouteName} (api)`, () => {
 					return { loggedInClient, fileRecordIds };
 				};
 
-				it('should return error status', async () => {
+				it('should return right type of data', async () => {
 					const { loggedInClient, fileRecordIds } = await setup();
 
+					const result = await loggedInClient.delete(`/delete`, fileRecordIds);
+					const response = result.body as FileRecordResponse;
+
+					expect(response).toStrictEqual({
+						data: [
+							{
+								creatorId: expect.any(String),
+								id: expect.any(String),
+								name: expect.any(String),
+								url: expect.any(String),
+								parentId: expect.any(String),
+								createdAt: expect.any(String),
+								updatedAt: expect.any(String),
+								parentType: 'schools',
+								mimeType: 'text/plain',
+								deletedSince: expect.any(String),
+								securityCheckStatus: 'pending',
+								size: expect.any(Number),
+								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
+								exceedsCollaboraEditableFileSize: false,
+								contentLastModifiedAt: expect.any(String),
+							},
+							{
+								creatorId: expect.any(String),
+								id: expect.any(String),
+								name: expect.any(String),
+								url: expect.any(String),
+								parentId: expect.any(String),
+								createdAt: expect.any(String),
+								updatedAt: expect.any(String),
+								parentType: 'schools',
+								mimeType: 'text/plain',
+								deletedSince: expect.any(String),
+								securityCheckStatus: 'pending',
+								size: expect.any(Number),
+								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
+								exceedsCollaboraEditableFileSize: false,
+								contentLastModifiedAt: expect.any(String),
+							},
+						],
+						total: 2,
+					});
+				});
+
+				it('should return error status, when authorization fails', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					authorizationClientAdapter.checkPermissionsByManyReferences.mockRejectedValueOnce(
+						new AuthorizationManyReferencesForbiddenLoggableException([])
+					);
 					const response = await loggedInClient.delete(`/delete`, fileRecordIds);
 
 					expect(response.body).toEqual({
-						code: 400,
-						message: 'Bad Request',
-						title: 'To Many Different Parents',
-						type: ErrorType.TO_MANY_DIFFERENT_PARENTS,
+						code: 403,
+						message: 'Forbidden',
+						title: 'Authorization Many References Forbidden',
+						type: 'AUTHORIZATION_MANY_REFERENCES_FORBIDDEN',
 					});
 				});
 			});

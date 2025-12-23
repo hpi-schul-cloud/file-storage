@@ -9,14 +9,17 @@ import {
 	AuthorizationApi,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParams,
+	AuthorizationManyReferencesBodyParams,
 	CreateAccessTokenParams,
 } from './authorization-api-client';
 import {
 	AuthorizationErrorLoggableException,
 	AuthorizationForbiddenLoggableException,
+	AuthorizationManyReferencesErrorLoggableException,
+	AuthorizationManyReferencesForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
-import { AccessToken, AccessTokenFactory } from './vo';
+import { AccessToken, AccessTokenFactory, ReferenceAuthorizationInfo, ReferenceAuthorizationInfoFactory } from './vo';
 
 @Injectable()
 export class AuthorizationClientAdapter {
@@ -64,6 +67,43 @@ export class AuthorizationClientAdapter {
 			}
 
 			throw new AuthorizationErrorLoggableException(error, params);
+		}
+	}
+
+	public async checkPermissionsByManyReferences(params: AuthorizationManyReferencesBodyParams): Promise<void> {
+		const results = await this.hasPermissionsByManyReferences(params);
+
+		const unauthorizedReferences = results.filter(
+			(referenceAuthorizationInfo) => !referenceAuthorizationInfo.isAuthorized
+		);
+
+		if (unauthorizedReferences.length > 0) {
+			throw new AuthorizationManyReferencesForbiddenLoggableException(unauthorizedReferences);
+		}
+	}
+
+	public async hasPermissionsByManyReferences(
+		params: AuthorizationManyReferencesBodyParams
+	): Promise<ReferenceAuthorizationInfo[]> {
+		try {
+			const options = this.createOptionParams();
+
+			const response = await this.authorizationApi.authorizationReferenceControllerAuthorizeByReferences(
+				params,
+				options
+			);
+
+			const result = response.data.map((referenceAuthorizationInfo) => {
+				return ReferenceAuthorizationInfoFactory.build(referenceAuthorizationInfo);
+			});
+
+			return result;
+		} catch (error) {
+			if (isAxiosError(error)) {
+				error = new AxiosErrorLoggable(error, 'AUTHORIZATION_BY_MANY_REFERENCES_FAILED');
+			}
+
+			throw new AuthorizationManyReferencesErrorLoggableException(error, params);
 		}
 	}
 

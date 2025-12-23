@@ -9,7 +9,6 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
-import { ToManyDifferentParentsException, UploadAbortLoggable } from '@modules/files-storage/loggable';
 import { HttpService } from '@nestjs/axios';
 import {
 	Injectable,
@@ -17,6 +16,7 @@ import {
 	NotFoundException,
 	UnprocessableEntityException,
 } from '@nestjs/common';
+import { ParentIdentifier } from '@shared/domain/interface/file-record.interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -26,14 +26,13 @@ import internal from 'stream';
 import {
 	ErrorType,
 	FileRecord,
-	FileRecordParentType,
 	FilesStorageMapper,
 	FilesStorageService,
 	GetFileResponse,
-	ParentInfo,
 	PreviewService,
-	StorageLocation,
+	StorageLocation
 } from '../../domain';
+import { UploadAbortLoggable } from '../../loggable';
 import {
 	ArchiveFileParams,
 	CopyFileResponse,
@@ -154,9 +153,9 @@ export class FilesStorageUC {
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-		const parentInfo = this.extractSingleParentInfoOrThrow(fileRecords);
+		const parentInfo = FileRecord.getUniqueParentInfos(fileRecords);
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
+		await this.checkPermissions(parentInfo, FileStorageAuthorizationContext.read);
 
 		const fileResponse = await this.filesStorageService.downloadFilesAsArchive(fileRecords, params.archiveName);
 
@@ -168,7 +167,7 @@ export class FilesStorageUC {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
 		const parentInfo = params;
 
-		await this.checkDeletePermission(parentInfo);
+		await this.checkDeletePermission([parentInfo]);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -181,7 +180,7 @@ export class FilesStorageUC {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
 		const parentInfo = fileRecord.getParentInfo();
 
-		await this.checkDeletePermission(parentInfo);
+		await this.checkDeletePermission([parentInfo]);
 
 		await this.deletePreviewsAndFiles([fileRecord]);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -192,9 +191,9 @@ export class FilesStorageUC {
 
 	public async deleteMultipleFilesOfParent(params: MultiFileParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-		const parentInfo = this.extractSingleParentInfoOrThrow(fileRecords);
+		const parentInfos = FileRecord.getUniqueParentInfos(fileRecords);
 
-		await this.checkDeletePermission(parentInfo);
+		await this.checkDeletePermission(parentInfos);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -461,34 +460,26 @@ export class FilesStorageUC {
 	}
 
 	// private: permission checks
-	private async checkPermission(
-		parentInfo: { parentType: FileRecordParentType; parentId: EntityId },
-		context: AuthorizationContextParams
-	): Promise<void> {
+	private async checkPermission(parentInfo: ParentIdentifier, context: AuthorizationContextParams): Promise<void> {
 		const { parentType, parentId } = parentInfo;
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
 	}
 
-	private async checkDeletePermission(parentInfo: {
-		parentType: FileRecordParentType;
-		parentId: EntityId;
-	}): Promise<void> {
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.delete);
+	private async checkPermissions(parentInfo: ParentIdentifier[], context: AuthorizationContextParams): Promise<void> {
+		const references = parentInfo.map((info) => {
+			const { parentType, parentId } = info;
+			const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
+
+			return { referenceType, referenceId: parentId, context };
+		});
+
+		await this.authorizationClientAdapter.checkPermissionsByManyReferences({ references });
 	}
 
-	private extractSingleParentInfoOrThrow(fileRecords: FileRecord[]): ParentInfo {
-		const uniqueParentInfos = FileRecord.getUniqueParentInfos(fileRecords);
-		const parentInfo = uniqueParentInfos[0];
-
-		if (uniqueParentInfos.length > 1) {
-			throw new ToManyDifferentParentsException(uniqueParentInfos, 1);
-		} else if (!parentInfo) {
-			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
-		}
-
-		return parentInfo;
+	private async checkDeletePermission(parentInfo: ParentIdentifier[]): Promise<void> {
+		await this.checkPermissions(parentInfo, FileStorageAuthorizationContext.delete);
 	}
 
 	private async checkStorageLocationCanRead(
