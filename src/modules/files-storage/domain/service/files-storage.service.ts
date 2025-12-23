@@ -139,7 +139,6 @@ export class FilesStorageService {
 
 	public async updateFileContents(fileRecord: FileRecord, sourceFile: FileDto): Promise<FileRecord> {
 		const file = await this.createPassThroughFileDto(sourceFile);
-		this.checkMimeType(fileRecord, file);
 
 		await this.storeAndScanFile(fileRecord, file);
 
@@ -163,12 +162,6 @@ export class FilesStorageService {
 		}
 
 		return fileName;
-	}
-
-	private checkMimeType(fileRecord: FileRecord, file: FileDto): void {
-		if (fileRecord.mimeType !== file.mimeType) {
-			throw new ConflictException(ErrorType.MIME_TYPE_MISMATCH);
-		}
 	}
 
 	private async prepareFileRecordWithUploadingFlag(

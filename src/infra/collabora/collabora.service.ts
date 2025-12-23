@@ -16,6 +16,8 @@ export class CollaboraService {
 
 	public async discoverUrl(mimeType: string): Promise<string> {
 		try {
+			// Special case for CFB files (e.g., older MS Office formats and password protected files)
+			mimeType = mimeType === 'application/x-cfb' ? 'application/vnd.ms-office' : mimeType;
 			const xmlDocument = await this.fetchDiscoveryXml();
 			const nodes = this.getNodesByMimeType(mimeType, xmlDocument);
 
