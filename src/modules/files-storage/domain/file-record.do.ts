@@ -44,6 +44,7 @@ export enum CollaboraMimeTypes {
 	PPSX = 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
 	PPT = 'application/vnd.ms-powerpoint',
 	ODP = 'application/vnd.oasis.opendocument.presentation',
+	CFB = 'application/x-cfb',
 }
 
 export interface FileRecordProps extends AuthorizableObject {
@@ -250,11 +251,18 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	public isCollaboraEditable(collaboraMaxFileSizeInBytes: number): boolean {
 		const isBlocked = this.securityCheck.isBlocked();
 		const hasCollaboraCompatibleMimeType = this.hasCollaboraCompatibleMimeType();
+		const hasCollaboraExtension = this.hasValidCollaboraCompatibleExtension();
 		const exceedsFileSize = this.exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes);
 
-		const isEditable = hasCollaboraCompatibleMimeType && !isBlocked && !exceedsFileSize;
+		const isEditable = hasCollaboraCompatibleMimeType && hasCollaboraExtension && !isBlocked && !exceedsFileSize;
 
 		return isEditable;
+	}
+
+	private hasValidCollaboraCompatibleExtension(): boolean {
+		return Object.keys(CollaboraMimeTypes).some((ext) =>
+			this.props.name.toLowerCase().endsWith(ext.toLocaleLowerCase())
+		);
 	}
 
 	public getParentInfo(): ParentInfo {
