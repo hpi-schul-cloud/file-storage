@@ -115,6 +115,17 @@ describe('detectMimeTypeByStream', () => {
 
 			expect(result).toBe('video/mp4');
 		});
+
+		it('should return fallback mime type when fileType.mime is undefined', () => {
+			const fileTypeStreamResult = {
+				fileType: { mime: 'application/x-cfb' },
+			};
+			const fallbackMimeType = 'video/mp4';
+
+			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+
+			expect(result).toBe('video/mp4');
+		});
 	});
 
 	describe('edge cases', () => {
