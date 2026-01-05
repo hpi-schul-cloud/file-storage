@@ -116,7 +116,7 @@ describe('detectMimeTypeByStream', () => {
 			expect(result).toBe('video/mp4');
 		});
 
-		it('should return fallback mime type when fileType.mime is undefined', () => {
+		it('should return fallback mime type when fileType.mime is application/x-cfb', () => {
 			const fileTypeStreamResult = {
 				fileType: { mime: 'application/x-cfb' },
 			};
