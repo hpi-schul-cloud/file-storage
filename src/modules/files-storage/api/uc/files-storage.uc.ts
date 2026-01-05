@@ -30,7 +30,7 @@ import {
 	FilesStorageService,
 	GetFileResponse,
 	PreviewService,
-	StorageLocation
+	StorageLocation,
 } from '../../domain';
 import { UploadAbortLoggable } from '../../loggable';
 import {
@@ -153,11 +153,16 @@ export class FilesStorageUC {
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-		const parentInfo = FileRecord.getUniqueParentInfos(fileRecords);
+		const unblockedFileRecords = fileRecords.filter((fr) => !fr.isBlocked());
 
-		await this.checkPermissions(parentInfo, FileStorageAuthorizationContext.read);
+		const uniqueParentInfos = FileRecord.getUniqueParentInfos(unblockedFileRecords);
 
-		const fileResponse = await this.filesStorageService.downloadFilesAsArchive(fileRecords, params.archiveName);
+		await this.checkPermissions(uniqueParentInfos, FileStorageAuthorizationContext.read);
+
+		const fileResponse = await this.filesStorageService.downloadFilesAsArchive(
+			unblockedFileRecords,
+			params.archiveName
+		);
 
 		return fileResponse;
 	}
