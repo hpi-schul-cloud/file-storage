@@ -23,9 +23,19 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 
 export const resolveMimeType = (fileTypeStreamResult: ReadableStreamWithFileType, fallbackMimeType: string): string => {
 	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
-	const mimeType = detectedMimeType ?? fallbackMimeType;
+	const shouldUseDetectedMimeType = shouldDetectedMimeTypeBeUsed(detectedMimeType);
+	const detectedMimeTypeToBeUsed = shouldUseDetectedMimeType ? detectedMimeType : undefined;
+	const mimeType = detectedMimeTypeToBeUsed ?? fallbackMimeType;
 
 	return mimeType;
+};
+
+export const shouldDetectedMimeTypeBeUsed = (mimeType?: string): boolean => {
+	if (!mimeType) return false;
+
+	const excludedMimeTypes = ['application/x-cfb'];
+
+	return !excludedMimeTypes.includes(mimeType);
 };
 
 export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackMimeType: string): Promise<string> {
