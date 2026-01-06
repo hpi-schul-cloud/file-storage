@@ -269,7 +269,7 @@ describe('FilesStorageService download methods', () => {
 			const { archiveName } = setup();
 
 			await expect(service.downloadFilesAsArchive([], archiveName)).rejects.toThrow(
-				new NotFoundException(ErrorType.FILE_NOT_FOUND)
+				new NotFoundException(ErrorType.NO_FILES_IN_ARCHIVE)
 			);
 		});
 

@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { ErrorType } from '../../../domain';
+import { ErrorType, ScanStatus } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
@@ -878,6 +878,23 @@ describe('files-storage controller (API)', () => {
 				const headers = response.headers as Record<string, string>;
 
 				expect(headers['content-type']).toMatch('application/zip');
+			});
+
+			it('should return 404 when file is blocked', async () => {
+				const { uploadedFile2, loggedInClient } = await setup();
+				await em.nativeUpdate(
+					FileRecordEntity,
+					{ id: uploadedFile2.id },
+					// @ts-ignore
+					{ 'securityCheck.status': ScanStatus.BLOCKED }
+				);
+
+				const response = await loggedInClient.post('/download-files-as-archive', {
+					fileRecordIds: [uploadedFile2.id],
+					archiveName: 'test',
+				});
+
+				expect(response.status).toEqual(404);
 			});
 		});
 	});
