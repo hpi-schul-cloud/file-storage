@@ -153,7 +153,7 @@ export class FilesStorageUC {
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-		const unblockedFileRecords = fileRecords.filter((fr) => !fr.isBlocked());
+		const unblockedFileRecords = fileRecords.filter((fileRecord) => !fileRecord.isBlocked());
 
 		const uniqueParentInfos = FileRecord.getUniqueParentInfos(unblockedFileRecords);
 
