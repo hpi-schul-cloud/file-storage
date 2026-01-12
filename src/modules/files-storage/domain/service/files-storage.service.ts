@@ -312,7 +312,7 @@ export class FilesStorageService {
 
 	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
 		if (fileRecords.length === 0) {
-			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
+			throw new NotFoundException(ErrorType.NO_FILES_IN_ARCHIVE);
 		}
 
 		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
