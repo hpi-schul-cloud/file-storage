@@ -1,6 +1,6 @@
 # File Storage Service
 
-This project provides a file storage service with integrated antivirus scanning, authorization, and preview generation. It is designed for use in secure environments and supports integration with external services such as S3-compatible storage, antivirus servers, and authorization APIs.
+This project provides a file storage service with integrated antivirus scanning, authorization, and preview generation. It is designed for use in secure environments and supports integration with external services such as S3-compatible storage, antivirus servers, Collabora and authorization APIs.
 
 ## Features
 
@@ -11,6 +11,7 @@ This project provides a file storage service with integrated antivirus scanning,
 - **Logging**: Detailed logging for debugging and auditing.
 - **RabbitMQ Integration**: For asynchronous processing and notifications.
 - **MongoDB Support**: Stores file metadata.
+- **Collabora Support**: Integrates online office document collaboration.
 
 ## Environment Variables
 
@@ -31,6 +32,11 @@ Configuration is managed via the `.env` file. Key variables include:
 | PREVIEW_PRODUCER_INCOMING_REQUEST_TIMEOUT | Timeout for preview generation requests |
 | CORE_INCOMING_REQUEST_TIMEOUT_MS          | Core service request timeout (ms)       |
 | INCOMING_REQUEST_TIMEOUT_COPY_API_MS      | Timeout for copy API requests (ms)      |
+| FEATURE_COLUMN_BOARD_COLLABORA_ENABLED    | Enable Collabora feature                |
+| COLLABORA_ONLINE_URL                      | Base URL of the Collabora server        |
+| WOPI_URL                                  | Base URL of the WOPI endpoints          |
+| WOPI_POST_MESSAGE_ORIGIN                  | Origin of POST messages to Collabora    |
+
 
 ## Getting Started
 
@@ -42,6 +48,7 @@ Configuration is managed via the `.env` file. Key variables include:
 - RabbitMQ
 - S3-compatible storage (e.g., AWS S3, MinIO)
 - Antivirus server (e.g., ClamAV)
+- Collabora Online Development Edition
 
 ### Installation
 
