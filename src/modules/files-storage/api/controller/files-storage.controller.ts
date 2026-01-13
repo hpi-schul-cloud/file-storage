@@ -136,6 +136,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiHeader({ name: 'Range', required: false })
 	@ApiHeader({ name: 'If-None-Match', required: false })
+	@UseInterceptors(CurrentDownloadMetricsInterceptor)
 	@Get('/preview/:fileRecordId/:fileName')
 	public async downloadPreview(
 		@Param() params: DownloadFileParams,
@@ -174,6 +175,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiHeader({ name: 'Range', required: false })
 	@Post('/download-files-as-archive')
+	@UseInterceptors(CurrentDownloadMetricsInterceptor)
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async downloadFilesAsArchive(
 		@Body() params: ArchiveFileParams,
