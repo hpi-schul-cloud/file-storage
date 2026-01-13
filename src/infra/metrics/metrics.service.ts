@@ -82,6 +82,11 @@ export class MetricsService implements OnModuleInit {
 		this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
 	}
 
+	/**
+	 * Configures automatic reset of max concurrent counters after each metrics collection.
+	 * Overrides the default register.metrics() method to reset peak values after Prometheus scrapes,
+	 * providing a "max since last collection" instead of all-time maximum values.
+	 */
 	private static setupMetricsReset(): void {
 		const originalGetMetrics = register.metrics.bind(register);
 
