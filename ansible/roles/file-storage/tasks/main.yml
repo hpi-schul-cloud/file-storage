@@ -71,6 +71,18 @@
     tags:
       - keda
 
+  - name: file storage scaled object
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: file-storage-scaled-object.yml.j2
+      state: "{{ 'present' if WITH_FILESTORAGE else 'absent'}}"
+    when:
+     - KEDA_ENABLED is defined and KEDA_ENABLED|bool
+     - SCALED_FILE_STORAGE_ENABLED is defined and SCALED_FILE_STORAGE_ENABLED|bool
+    tags:
+      - keda
+
   - name: Filestorage server service
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config
