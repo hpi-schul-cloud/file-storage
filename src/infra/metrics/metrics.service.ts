@@ -15,17 +15,26 @@ export class MetricsService implements OnModuleInit {
 		if (this.config.COLLECT_DEFAULT_METRICS) {
 			collectDefaultMetrics();
 		}
-		MetricsService.setupMetricsReset();
 	}
 
 	private static readonly maxConcurrentUploadsGauge = new Gauge({
 		name: 'file_storage_max_concurrent_uploads',
-		help: 'Maximum number of concurrent uploads in the current collection period',
+		help: 'Maximum number of concurrent uploads ever recorded (all-time)',
 	});
 
 	private static readonly maxConcurrentDownloadsGauge = new Gauge({
 		name: 'file_storage_max_concurrent_downloads',
-		help: 'Maximum number of concurrent downloads in the current collection period',
+		help: 'Maximum number of concurrent downloads ever recorded (all-time)',
+	});
+
+	private static readonly currentConcurrentUploadsGauge = new Gauge({
+		name: 'file_storage_current_concurrent_uploads',
+		help: 'Current number of active uploads',
+	});
+
+	private static readonly currentConcurrentDownloadsGauge = new Gauge({
+		name: 'file_storage_current_concurrent_downloads',
+		help: 'Current number of active downloads',
 	});
 
 	public static readonly responseTimeMetricHistogram = new Histogram({
@@ -36,17 +45,18 @@ export class MetricsService implements OnModuleInit {
 
 	public async getMetrics(): Promise<string> {
 		const metrics = await register.metrics();
-
 		return metrics;
 	}
 
 	public static incrementCurrentUploads(): void {
 		this.currentUploadsCount++;
+		this.currentConcurrentUploadsGauge.set(this.currentUploadsCount);
 		this.updateMaxConcurrentUploads();
 	}
 
 	public static decrementCurrentUploads(): void {
 		this.currentUploadsCount--;
+		this.currentConcurrentUploadsGauge.set(this.currentUploadsCount);
 	}
 
 	public static updateMaxConcurrentUploads(): void {
@@ -56,18 +66,15 @@ export class MetricsService implements OnModuleInit {
 		}
 	}
 
-	public static resetMaxConcurrentUploads(): void {
-		this.maxConcurrentUploads = this.currentUploadsCount;
-		this.maxConcurrentUploadsGauge.set(this.maxConcurrentUploads);
-	}
-
 	public static incrementCurrentDownloads(): void {
 		this.currentDownloadsCount++;
+		this.currentConcurrentDownloadsGauge.set(this.currentDownloadsCount);
 		this.updateMaxConcurrentDownloads();
 	}
 
 	public static decrementCurrentDownloads(): void {
 		this.currentDownloadsCount--;
+		this.currentConcurrentDownloadsGauge.set(this.currentDownloadsCount);
 	}
 
 	public static updateMaxConcurrentDownloads(): void {
@@ -77,23 +84,4 @@ export class MetricsService implements OnModuleInit {
 		}
 	}
 
-	public static resetMaxConcurrentDownloads(): void {
-		this.maxConcurrentDownloads = this.currentDownloadsCount;
-		this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
-	}
-
-	private static setupMetricsReset(): void {
-		const originalGetMetrics = register.metrics.bind(register);
-
-		register.metrics = async (): Promise<string> => {
-			const metrics = await originalGetMetrics();
-
-			setImmediate(() => {
-				MetricsService.resetMaxConcurrentUploads();
-				MetricsService.resetMaxConcurrentDownloads();
-			});
-
-			return metrics;
-		};
-	}
 }
