@@ -80,6 +80,12 @@ Configuration is managed via the `.env` file. Key variables include:
 npm run test
 ```
 
+### Collabora installation
+
+For more information about local Collabora setup, please check
+https://documentation.dbildungscloud.dev/docs/services/collabora/Local%20setup
+
+
 ## Project Structure
 
 - `src/` - Main source code
