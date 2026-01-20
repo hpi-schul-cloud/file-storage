@@ -43,9 +43,15 @@ spec:
   triggers:
   - type: prometheus
     metadata:
-      serverAddress: {{ PROMETHEUS_SERVER_ADDRESS }}
-      metricName: file_storage_current_concurrent_uploads
+      serverAddress: http://application-kube-prometheu-prometheus.monitoring.svc.cluster.local:9090
+      metricName: file_storage_current_concurrent_downloads_avg
       query: |
-        avg(file_storage_current_concurrent_uploads{namespace="{{ NAMESPACE }}"})
-      threshold: "{{ FILE_STORAGE_SCALE_THRESHOLD|default('5', true) }}"
-      # Scale up when average current concurrent uploads per pod exceeds threshold
+        avg(file_storage_current_concurrent_downloads{namespace="{{ NAMESPACE }}"}) or vector(0)
+      threshold: "5"
+  - type: prometheus
+    metadata:
+      serverAddress: http://application-kube-prometheu-prometheus.monitoring.svc.cluster.local:9090
+      metricName: file_storage_current_concurrent_uploads_avg
+      query: |
+        avg(file_storage_current_concurrent_uploads{namespace="{{ NAMESPACE }}"}) or vector(0)
+      threshold: "5"
