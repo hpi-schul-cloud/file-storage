@@ -10,27 +10,46 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 	for (let i = 0; i < count; i++) {
 		const passThrough = new PassThrough({
 			highWaterMark: 64 * 1024, // = 64KB, because busboy send typical chunks with 8-64KB. Default is 16KB and will increase cpu load with many small writes.
+			objectMode: false, // Ensure we're in buffer mode for memory efficiency
 		});
 		streams.push(passThrough);
 	}
 
-	sourceStream.on('data', (chunk) => {
+	const handleData = (chunk: Buffer) => {
 		streams.forEach((stream) => {
-			stream.write(chunk);
+			if (!stream.destroyed && stream.writable) {
+				stream.write(chunk);
+			}
 		});
-	});
+	};
 
-	sourceStream.on('end', () => {
+	const handleEnd = () => {
 		streams.forEach((stream) => {
-			stream.end();
+			if (!stream.destroyed) {
+				stream.end();
+			}
 		});
-	});
+		cleanupListeners();
+	};
 
-	sourceStream.on('error', (error) => {
+	const handleError = (error: Error) => {
 		streams.forEach((stream) => {
-			stream.destroy(error);
+			if (!stream.destroyed) {
+				stream.destroy(error);
+			}
 		});
-	});
+		cleanupListeners();
+	};
+
+	const cleanupListeners = () => {
+		sourceStream.removeListener('data', handleData);
+		sourceStream.removeListener('end', handleEnd);
+		sourceStream.removeListener('error', handleError);
+	};
+
+	sourceStream.on('data', handleData);
+	sourceStream.on('end', handleEnd);
+	sourceStream.on('error', handleError);
 
 	streams.forEach((stream) => {
 		stream.on('error', () => {

@@ -185,18 +185,26 @@ export class FilesStorageService {
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
 		StreamFileSizeObserver.observe(file);
-		await this.uploadAndScan(fileRecord, file);
-		await this.throwOnIncompleteStream(file);
 
-		fileRecord.markAsUploaded(
-			file.fileSize,
-			this.config.FILES_STORAGE_MAX_FILE_SIZE,
-			this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE
-		);
-		await this.fileRecordRepo.save(fileRecord);
+		try {
+			await this.uploadAndScan(fileRecord, file);
+			await this.throwOnIncompleteStream(file);
 
-		if (this.needsAsyncAntivirusScan(fileRecord)) {
-			await this.antivirusService.send(fileRecord.getSecurityToken());
+			fileRecord.markAsUploaded(
+				file.fileSize,
+				this.config.FILES_STORAGE_MAX_FILE_SIZE,
+				this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE
+			);
+			await this.fileRecordRepo.save(fileRecord);
+
+			if (this.needsAsyncAntivirusScan(fileRecord)) {
+				await this.antivirusService.send(fileRecord.getSecurityToken());
+			}
+		} finally {
+			// Clean up the file stream to prevent memory leaks
+			if (file.data && !file.data.destroyed) {
+				file.data.destroy();
+			}
 		}
 	}
 
@@ -204,14 +212,22 @@ export class FilesStorageService {
 		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
-			const pipedStream = file.data.pipe(new PassThrough());
+			const pipedStream = new PassThrough();
+			const antivirusPipe = file.data.pipe(pipedStream);
 
-			const [, antivirusClientResponse] = await Promise.all([
-				this.storageClient.create(filePath, file),
-				this.antivirusService.scanStream(pipedStream),
-			]);
-			const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
-			fileRecord.updateSecurityCheckStatus(status, reason);
+			try {
+				const [, antivirusClientResponse] = await Promise.all([
+					this.storageClient.create(filePath, file),
+					this.antivirusService.scanStream(pipedStream),
+				]);
+				const { status, reason } = ScanResultDtoMapper.fromScanResult(antivirusClientResponse);
+				fileRecord.updateSecurityCheckStatus(status, reason);
+			} finally {
+				// Clean up streams to prevent memory leaks
+				if (!pipedStream.destroyed) {
+					pipedStream.destroy();
+				}
+			}
 		} else {
 			await this.storageClient.create(filePath, file);
 		}
