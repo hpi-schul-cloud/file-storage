@@ -15,7 +15,7 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 		streams.push(passThrough);
 	}
 
-	const handleData = (chunk: Buffer) => {
+	const handleData = (chunk: Buffer): void => {
 		streams.forEach((stream) => {
 			if (!stream.destroyed && stream.writable) {
 				stream.write(chunk);
@@ -23,7 +23,7 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 		});
 	};
 
-	const handleEnd = () => {
+	const handleEnd = (): void => {
 		streams.forEach((stream) => {
 			if (!stream.destroyed) {
 				stream.end();
@@ -32,7 +32,7 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 		cleanupListeners();
 	};
 
-	const handleError = (error: Error) => {
+	const handleError = (error: Error): void => {
 		streams.forEach((stream) => {
 			if (!stream.destroyed) {
 				stream.destroy(error);
@@ -41,7 +41,7 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 		cleanupListeners();
 	};
 
-	const cleanupListeners = () => {
+	const cleanupListeners = (): void => {
 		sourceStream.removeListener('data', handleData);
 		sourceStream.removeListener('end', handleEnd);
 		sourceStream.removeListener('error', handleError);
@@ -52,7 +52,7 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 	sourceStream.on('error', handleError);
 
 	streams.forEach((stream) => {
-		stream.on('error', () => {
+		stream.on('error', (): void => {
 			// If one stream fails, don't necessarily kill others
 			// This allows for graceful degradation
 			// Error is handled by the consuming code

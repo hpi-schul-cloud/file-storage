@@ -213,7 +213,7 @@ export class FilesStorageService {
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = new PassThrough();
-			const antivirusPipe = file.data.pipe(pipedStream);
+			file.data.pipe(pipedStream);
 
 			try {
 				const [, antivirusClientResponse] = await Promise.all([
