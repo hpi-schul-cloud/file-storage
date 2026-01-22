@@ -40,12 +40,18 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 	if (!isFileTypePackageSupported(fallbackMimeType)) {
 		return fallbackMimeType;
 	}
-
 	/* istanbul ignore next */
 	const fileTypeStreamResult = await fileTypeStream(passThrough);
 
 	/* istanbul ignore next */
-	return resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+	const mimeType = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+
+	// Clean up the fileTypeStream to prevent memory leaks
+	if (fileTypeStreamResult && typeof fileTypeStreamResult.destroy === 'function') {
+		fileTypeStreamResult.destroy();
+	}
+
+	return mimeType;
 }
 
 export default { detectMimeTypeByStream, fileTypeStream };
