@@ -1,13 +1,6 @@
-import type { ReadableStreamWithFileType } from 'file-type';
-import { loadEsm } from 'load-esm';
+import { type ReadableStreamWithFileType } from 'file-type';
 import { PassThrough } from 'node:stream';
-
-/* istanbul ignore next */
-export async function fileTypeStream(passThrough: PassThrough): Promise<ReadableStreamWithFileType> {
-	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
-
-	return fileTypeStream(passThrough);
-}
+import { fileTypeStream } from './file-type-stream.import';
 
 const isFileTypePackageSupported = (mimeType: string): boolean => {
 	const unsupportedMimeTypes = [
@@ -54,4 +47,4 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 	return mimeType;
 }
 
-export default { detectMimeTypeByStream, fileTypeStream };
+export default { detectMimeTypeByStream };
