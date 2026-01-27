@@ -1,0 +1,57 @@
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: file-storage-prometheus-scaledobject
+  namespace: {{ NAMESPACE }}
+  labels:
+    app: file-storage
+    app.kubernetes.io/part-of: schulcloud-verbund
+    app.kubernetes.io/version: {{ FILE_STORAGE_IMAGE_TAG }}
+    app.kubernetes.io/name: file-storage
+    app.kubernetes.io/component: file-storage
+    app.kubernetes.io/managed-by: ansible
+    git.branch: {{ FILE_STORAGE_BRANCH_NAME }}
+    git.repo: {{ FILE_STORAGE_REPO_NAME }}
+spec:
+  scaleTargetRef:
+    name: file-storage-deployment
+  minReplicaCount: {{ FILE_STORAGE_REPLICAS|default("1", true) }}
+  maxReplicaCount: {{ (FILE_STORAGE_REPLICAS|default("1", true)|int * 3) }}
+  cooldownPeriod: 300
+  pollingInterval: 30
+  # Advanced scaling behavior prevents thrashing and provides stable scaling in production
+  # - Waits for sustained load before scaling to avoid brief spike reactions
+  # - Conservative scale-down prevents rapid up/down oscillations
+  # - Restores original replica count when KEDA is disabled
+  advanced:
+    restoreToOriginalReplicaCount: true
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 60  # Wait 1 minute before scaling up
+          policies:
+          - type: Percent
+            value: 100  # Scale up by 100% (double) max
+            periodSeconds: 60
+        scaleDown:
+          stabilizationWindowSeconds: 300  # Wait 5 minutes before scaling down
+          policies:
+          - type: Percent
+            value: 50   # Scale down by 50% max
+            periodSeconds: 60
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: http://application-kube-prometheu-prometheus.monitoring.svc.cluster.local:9090
+      metricName: file_storage_current_concurrent_downloads_avg
+      query: |
+        avg(file_storage_current_concurrent_downloads{namespace="{{ NAMESPACE }}"}) or vector(0)
+      threshold: "5"
+  - type: prometheus
+    metadata:
+      serverAddress: http://application-kube-prometheu-prometheus.monitoring.svc.cluster.local:9090
+      metricName: file_storage_current_concurrent_uploads_avg
+      query: |
+        avg(file_storage_current_concurrent_uploads{namespace="{{ NAMESPACE }}"}) or vector(0)
+      threshold: "5"
