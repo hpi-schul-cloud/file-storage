@@ -14,8 +14,11 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 	return !unsupportedMimeTypes.includes(mimeType);
 };
 
-export const resolveMimeType = (fileTypeStreamResult: ReadableStreamWithFileType, fallbackMimeType: string): string => {
-	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
+export const resolveMimeType = (
+	fallbackMimeType: string,
+	fileTypeStreamResult?: ReadableStreamWithFileType
+): string => {
+	const detectedMimeType = fileTypeStreamResult?.fileType?.mime;
 	const mimeType = filterDetectedMimeType(detectedMimeType) ?? fallbackMimeType;
 
 	return mimeType;
@@ -33,11 +36,16 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 	if (!isFileTypePackageSupported(fallbackMimeType)) {
 		return fallbackMimeType;
 	}
-	/* istanbul ignore next */
-	const fileTypeStreamResult = await fileTypeStream(passThrough);
+
+	let fileTypeStreamResult: ReadableStreamWithFileType | undefined;
+
+	try {
+		/* istanbul ignore next */
+		fileTypeStreamResult = await fileTypeStream(passThrough);
+	} catch {}
 
 	/* istanbul ignore next */
-	const mimeType = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+	const mimeType = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 	// Clean up the fileTypeStream to prevent memory leaks
 	if (fileTypeStreamResult && typeof fileTypeStreamResult.destroy === 'function') {
