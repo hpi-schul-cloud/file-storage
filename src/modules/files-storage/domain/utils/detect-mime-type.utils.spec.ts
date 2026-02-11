@@ -1,4 +1,6 @@
+import { createMock } from '@golevelup/ts-jest';
 import { PassThrough } from 'node:stream';
+import { Logger } from 'winston';
 import { octetStreamReadable, svgReadable, textReadable } from '../../testing/buffer-with-types';
 import * as FileTypeStream from './file-type-stream.import';
 const { detectMimeTypeByStream, resolveMimeType } = require('./detect-mime-type.utils');
@@ -82,7 +84,7 @@ describe('detectMimeTypeByStream', () => {
 			//@ts-ignore
 			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('image/png');
 		});
@@ -100,7 +102,7 @@ describe('detectMimeTypeByStream', () => {
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('application/octet-stream');
 		});
@@ -119,7 +121,7 @@ describe('detectMimeTypeByStream', () => {
 			//@ts-ignore
 			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('image/png');
 			expect(mockFileTypeResult.destroy).toHaveBeenCalled();
@@ -135,7 +137,7 @@ describe('detectMimeTypeByStream', () => {
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('application/octet-stream');
 		});
