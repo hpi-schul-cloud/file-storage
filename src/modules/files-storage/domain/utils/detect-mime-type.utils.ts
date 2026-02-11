@@ -37,12 +37,7 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 		return fallbackMimeType;
 	}
 
-	let fileTypeStreamResult: ReadableStreamWithFileType | undefined;
-
-	try {
-		/* istanbul ignore next */
-		fileTypeStreamResult = await fileTypeStream(passThrough);
-	} catch {}
+	const fileTypeStreamResult = await tryDetectMimeTypeByStream(passThrough);
 
 	/* istanbul ignore next */
 	const mimeType = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
@@ -54,5 +49,13 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 
 	return mimeType;
 }
+
+const tryDetectMimeTypeByStream = async (passThrough: PassThrough): Promise<ReadableStreamWithFileType | undefined> => {
+	try {
+		const fileTypeStreamResult = await fileTypeStream(passThrough);
+
+		return fileTypeStreamResult;
+	} catch {}
+};
 
 export default { detectMimeTypeByStream };
