@@ -12,7 +12,7 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, ScanStatus } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
-import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { availableParentTypes } from './mocks';
@@ -28,6 +28,7 @@ describe('files-storage controller (API)', () => {
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
 	let testApiClient: TestApiClient;
+	let config: FileStorageConfig;
 
 	const baseRouteName = '/file';
 
@@ -45,6 +46,8 @@ describe('files-storage controller (API)', () => {
 			.useValue(createMock<NodeClam>())
 			.overrideProvider(AuthorizationClientAdapter)
 			.useValue(createMock<AuthorizationClientAdapter>())
+			.overrideProvider(FileStorageConfig)
+			.useValue(new FileStorageConfig())
 			.compile();
 
 		app = module.createNestApplication();
@@ -53,6 +56,7 @@ describe('files-storage controller (API)', () => {
 
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
+		config = module.get(FileStorageConfig);
 		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -236,6 +240,20 @@ describe('files-storage controller (API)', () => {
 				}
 			});
 		});
+
+		describe('when parent has already the maximum number of files allowed', () => {
+			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
+				const { loggedInClient, validId } = setup();
+				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+
+				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+				expect(response.status).toEqual(403);
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+			});
+		});
 	});
 
 	describe('upload from url action', () => {
@@ -367,6 +385,21 @@ describe('files-storage controller (API)', () => {
 				});
 
 				expect(response.status).toEqual(404);
+			});
+
+			it('should return status 400 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
+				const { validId, loggedInClient, body } = setup();
+				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+
+				const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+				expect(response.status).toEqual(400);
+				expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
 			});
 		});
 

@@ -10,9 +10,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FileRecordParentType, StorageLocation } from '../../../domain';
+import { ErrorType, FileRecordParentType, StorageLocation } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
-import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
 import { availableParentTypes } from './mocks';
@@ -25,6 +25,7 @@ describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
 	let testApiClient: TestApiClient;
+	let config: FileStorageConfig;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -43,6 +44,7 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
+		config = module.get(FileStorageConfig);
 		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -154,6 +156,21 @@ describe(`${baseRouteName} (api)`, () => {
 				const response = await loggedInClient.post(`/copy/school/${validId}/users/${validId}`, params);
 
 				expect(response.status).toEqual(400);
+			});
+
+			it('should return status 400 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
+				const { loggedInClient, validId, copyFilesParams } = setup();
+				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+
+				const response = await loggedInClient.post(`/copy/school/${validId}/users/${validId}`, copyFilesParams);
+
+				expect(response.status).toEqual(400);
+				expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
 			});
 		});
 

@@ -3,7 +3,12 @@ import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	InternalServerErrorException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
@@ -25,7 +30,7 @@ describe('FilesStorageService upload methods', () => {
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
-	let config: DeepMocked<FileStorageConfig>;
+	let config: FileStorageConfig;
 
 	beforeEach(async () => {
 		module = await Test.createTestingModule({
@@ -49,12 +54,12 @@ describe('FilesStorageService upload methods', () => {
 				},
 				{
 					provide: FileStorageConfig,
-					useValue: createMock<FileStorageConfig>({
+					useValue: {
 						FILES_STORAGE_MAX_FILE_SIZE: 10000,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10000,
 						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
 						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
-					}),
+					},
 				},
 				{
 					provide: DomainErrorHandler,
@@ -220,6 +225,29 @@ describe('FilesStorageService upload methods', () => {
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
 					});
 				});
+			});
+		});
+
+		describe('WHEN parent already has maximum number of files', () => {
+			const setup = () => {
+				const { params, file, userId } = createUploadFileParams();
+				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+				fileRecordRepo.findByParentId.mockResolvedValueOnce([[], maxFilesPerParent]);
+
+				return { params, file, userId, defaultMaxFilesPerParent };
+			};
+
+			it('should throw ForbiddenException with FILE_LIMIT_PER_PARENT_EXCEEDED', async () => {
+				const { params, file, userId, defaultMaxFilesPerParent } = setup();
+
+				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(
+					new ForbiddenException(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED)
+				);
+
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
 			});
 		});
 

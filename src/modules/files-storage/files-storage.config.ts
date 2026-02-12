@@ -16,6 +16,11 @@ export class FileStorageConfig {
 	@ConfigProperty()
 	FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE = 2684354560;
 
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty()
+	FILES_STORAGE_MAX_FILES_PER_PARENT = 1000;
+
 	@IsBoolean()
 	@StringToBoolean()
 	@ConfigProperty()
