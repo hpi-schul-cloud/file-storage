@@ -28,7 +28,7 @@ describe('files-storage controller (API)', () => {
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
 	let testApiClient: TestApiClient;
-	let config: FileStorageConfig;
+	let config: DeepMocked<FileStorageConfig>;
 
 	const baseRouteName = '/file';
 
@@ -242,16 +242,21 @@ describe('files-storage controller (API)', () => {
 		});
 
 		describe('when parent has already the maximum number of files allowed', () => {
+			let defaultMaxFilesPerParent: number;
+
+			afterEach(() => {
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+			});
+
 			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
 				const { loggedInClient, validId } = setup();
-				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
-				const maxFilesPerParent = 0;
 
+				defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
 				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
 
 				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				expect(response.status).toEqual(403);
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
 			});
 		});
 	});
@@ -385,21 +390,6 @@ describe('files-storage controller (API)', () => {
 				});
 
 				expect(response.status).toEqual(404);
-			});
-
-			it('should return status 400 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
-				const { validId, loggedInClient, body } = setup();
-				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
-				const maxFilesPerParent = 0;
-
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
-
-				const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
-
-				expect(response.status).toEqual(400);
-				expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
-
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
 			});
 		});
 
@@ -602,6 +592,58 @@ describe('files-storage controller (API)', () => {
 					const response = result.body as FileRecordEntity;
 
 					expect(response.name).toEqual('test (2).txt');
+				});
+			});
+
+			describe('when parent already has the maximum number of files allowed', () => {
+				let defaultMaxFilesPerParent: number;
+				const setup = async (fileName = 'test.txt') => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+					const validId = new ObjectId().toHexString();
+
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+
+					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
+					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
+
+					const result = await loggedInClient
+						.post(`/upload/school/${validId}/schools/${validId}`)
+						.attach('file', Buffer.from('abcd'), decodeURI(fileName))
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response = result.body as FileRecordEntity;
+					const fileId = response.id;
+
+					const body = {
+						url: `http://localhost:${appPort}/file/download/${fileId}/${fileName}`,
+						fileName,
+						headers: {
+							authorization: loggedInClient.getAuthHeader(),
+						},
+					};
+
+					defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+					const maxFilesPerParent = 0;
+
+					config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+
+					return { validId, fileId, loggedInClient, body, user: studentUser };
+				};
+
+				afterEach(() => {
+					config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+				});
+
+				it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
+					const { validId, loggedInClient, body } = await setup();
+
+					const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+					expect(response.status).toEqual(403);
+					expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
 				});
 			});
 		});
