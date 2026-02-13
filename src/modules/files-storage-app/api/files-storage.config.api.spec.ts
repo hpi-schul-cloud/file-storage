@@ -1,12 +1,12 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
+import { FILES_STORAGE_S3_CONNECTION } from '@modules/files-storage';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
+import { FilesStorageTestModule } from '../testing';
 
 describe(`files-storage (api)`, () => {
 	let app: INestApplication;
@@ -35,7 +35,11 @@ describe(`files-storage (api)`, () => {
 				const response = await testApiClient.get('config/public');
 
 				expect(response.statusCode).toEqual(HttpStatus.OK);
-				expect(response.body).toEqual({ MAX_FILE_SIZE: 2684354560, COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600 });
+				expect(response.body).toEqual({
+					MAX_FILE_SIZE: 2684354560,
+					COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600,
+					FILES_STORAGE_MAX_FILES_PER_PARENT: 1000,
+				});
 			});
 		});
 	});
