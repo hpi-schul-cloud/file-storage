@@ -2,6 +2,9 @@ import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsInt, IsNumber, IsUrl } from 'class-validator';
 
+export const WOPI_PUBLIC_API_CONFIG_TOKEN = 'WOPI_PUBLIC_API_CONFIG_TOKEN';
+export const WOPI_CONFIG_TOKEN = 'WOPI_CONFIG_TOKEN';
+
 @Configuration()
 export class WopiPublicApiConfig {
 	@IsBoolean()

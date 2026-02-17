@@ -2,6 +2,8 @@ import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber, IsString } from 'class-validator';
 
+export const RABBITMQ_CONFIG_TOKEN = 'RABBITMQ_CONFIG_TOKEN';
+
 @Configuration()
 export class RabbitMqConfig {
 	@IsNumber()

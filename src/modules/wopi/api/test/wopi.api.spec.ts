@@ -10,6 +10,7 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing';
 import { ScanStatus } from '@modules/files-storage/domain';
+import { FILE_STORAGE_CONFIG_TOKEN } from '@modules/files-storage/files-storage.config';
 import { FileRecordEntity } from '@modules/files-storage/repo';
 import {
 	fileRecordEntityFactory,
@@ -29,7 +30,7 @@ import {
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
 } from '../../testing';
-import { WopiConfig } from '../../wopi.config';
+import { WOPI_CONFIG_TOKEN, WopiConfig } from '../../wopi.config';
 import { EditorMode, WopiFileInfoResponse } from '../dto';
 
 jest.mock('../../../files-storage/domain/utils/detect-mime-type.utils');
@@ -55,12 +56,12 @@ describe('Wopi Controller (API)', () => {
 			.useValue(createMock<CollaboraService>())
 			.overrideProvider(FILES_STORAGE_S3_CONNECTION)
 			.useValue(createMock<S3ClientAdapter>())
-			.overrideProvider(WopiConfig)
+			.overrideProvider(WOPI_CONFIG_TOKEN)
 			.useValue({
 				FEATURE_COLUMN_BOARD_COLLABORA_ENABLED: false,
 				COLLABORA_MAX_FILE_SIZE_IN_BYTES: collaboraMaxFileSizeInBytes,
 			})
-			.overrideProvider(FileStorageConfig)
+			.overrideProvider(FILE_STORAGE_CONFIG_TOKEN)
 			.useValue({})
 			.compile();
 
@@ -71,8 +72,8 @@ describe('Wopi Controller (API)', () => {
 		em = moduleFixture.get(EntityManager);
 		collaboraService = moduleFixture.get(CollaboraService);
 		storageClient = moduleFixture.get(FILES_STORAGE_S3_CONNECTION);
-		wopiConfig = moduleFixture.get(WopiConfig);
-		filesStorageConfig = moduleFixture.get(FileStorageConfig);
+		wopiConfig = moduleFixture.get(WOPI_CONFIG_TOKEN);
+		filesStorageConfig = moduleFixture.get(FILE_STORAGE_CONFIG_TOKEN);
 
 		testApiClient = new TestApiClient(app, '/wopi');
 	});

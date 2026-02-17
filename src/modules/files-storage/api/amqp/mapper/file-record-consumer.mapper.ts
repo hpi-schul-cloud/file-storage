@@ -1,4 +1,4 @@
-import { FileRecord } from '@modules/files-storage/domain';
+import { FileRecord } from '../../../domain';
 import { FileRecordConsumerListResponse, FileRecordConsumerResponse } from '../dto/file-storage-consumer.response';
 
 export class FileRecordConsumerMapper {

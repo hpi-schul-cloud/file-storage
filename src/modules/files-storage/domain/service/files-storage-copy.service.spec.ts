@@ -5,7 +5,7 @@ import { Logger } from '@infra/logger';
 import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FileRecordFactory } from '../factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
@@ -40,7 +40,7 @@ describe('FilesStorageService copy methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: FileStorageConfig,
+					provide: FILE_STORAGE_CONFIG_TOKEN,
 					useValue: createMock<FileStorageConfig>(),
 				},
 				{

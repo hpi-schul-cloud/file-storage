@@ -2,6 +2,8 @@ import { Configuration } from '@infra/configuration';
 import { StringToBoolean } from '@shared/transformer';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
+export const DATABASE_CONFIG_TOKEN = 'DATABASE_CONFIG_TOKEN';
+
 @Configuration()
 export class DatabaseConfig {
 	@IsString()

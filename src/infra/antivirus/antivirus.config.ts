@@ -3,6 +3,7 @@ import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export const AntivirusExchange = 'antivirus';
+export const ANTIVIRUS_CONFIG_TOKEN = 'ANTIVIRUS_CONFIG_TOKEN';
 
 @Configuration()
 export class AntivirusConfig {

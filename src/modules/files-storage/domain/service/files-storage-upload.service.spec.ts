@@ -6,7 +6,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -48,7 +48,7 @@ describe('FilesStorageService upload methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: FileStorageConfig,
+					provide: FILE_STORAGE_CONFIG_TOKEN,
 					useValue: createMock<FileStorageConfig>({
 						FILES_STORAGE_MAX_FILE_SIZE: 10000,
 						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10000,
@@ -67,7 +67,7 @@ describe('FilesStorageService upload methods', () => {
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
-		config = module.get(FileStorageConfig);
+		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 	});
 
 	afterEach(() => {

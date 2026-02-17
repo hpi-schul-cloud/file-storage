@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ErrorMapper } from '../rabbitmq';
 import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
 import { PreviewFileOptions } from './interface';
-import { PreviewGeneratorConfig } from './preview-generator.config';
+import { PREVIEW_GENERATOR_CONFIG_TOKEN, PreviewGeneratorConfig } from './preview-generator.config';
 import { PreviewProducer } from './preview.producer';
 
 describe('PreviewProducer', () => {
@@ -28,7 +28,7 @@ describe('PreviewProducer', () => {
 					useValue: createMock<AmqpConnection>(),
 				},
 				{
-					provide: PreviewGeneratorConfig,
+					provide: PREVIEW_GENERATOR_CONFIG_TOKEN,
 					useValue: createMock<PreviewGeneratorConfig>({
 						PREVIEW_PRODUCER_INCOMING_REQUEST_TIMEOUT: timeout,
 					}),

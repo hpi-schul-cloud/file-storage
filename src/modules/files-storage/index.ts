@@ -9,5 +9,5 @@ export {
 	ScanStatus,
 } from './domain';
 export { FilesStorageApiModule } from './files-storage.api.module';
-export { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
+export { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
 export { FilesStorageModule } from './files-storage.module';

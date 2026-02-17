@@ -7,7 +7,7 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import _ from 'lodash';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
@@ -49,7 +49,7 @@ describe('FilesStorageService update methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: FileStorageConfig,
+					provide: FILE_STORAGE_CONFIG_TOKEN,
 					useValue: createMock<FileStorageConfig>(),
 				},
 				{

@@ -1,18 +1,18 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Logger } from '@infra/logger';
 import { RpcMessageProducer } from '@infra/rabbitmq';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
 import { PreviewFileOptions, PreviewResponseMessage } from './interface';
 import { PreviewActionsLoggable } from './loggable/preview-actions.loggable';
-import { PreviewGeneratorConfig } from './preview-generator.config';
+import { PREVIEW_GENERATOR_CONFIG_TOKEN, PreviewGeneratorConfig } from './preview-generator.config';
 
 @Injectable()
 export class PreviewProducer extends RpcMessageProducer {
 	constructor(
 		protected readonly amqpConnection: AmqpConnection,
 		private readonly logger: Logger,
-		protected readonly config: PreviewGeneratorConfig
+		@Inject(PREVIEW_GENERATOR_CONFIG_TOKEN) config: PreviewGeneratorConfig
 	) {
 		const timeout = config.PREVIEW_PRODUCER_INCOMING_REQUEST_TIMEOUT;
 

@@ -13,6 +13,8 @@ export enum LoggerLogLevel {
 	debug = 'debug',
 }
 
+export const LOGGER_CONFIG_TOKEN = 'LOGGER_CONFIG_TOKEN';
+
 @Configuration()
 export class LoggerConfig {
 	@IsEnum(LoggerLogLevel)

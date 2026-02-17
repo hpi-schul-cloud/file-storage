@@ -12,21 +12,17 @@ import {
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough } from 'node:stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
+import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import {
 	CollaboraEditabilityStatus,
-	CopyFileResult,
-	FILE_RECORD_REPO,
-	FileRecordRepo,
 	FileRecordStatus,
 	FileRecordWithStatus,
-	GetFileResponse,
-	StorageLocationParams,
-} from '../interface';
+} from '../interface/file-record-status.interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { detectMimeTypeByStream, duplicateStream } from '../utils';
@@ -38,7 +34,7 @@ export class FilesStorageService {
 		@Inject(FILE_RECORD_REPO) private readonly fileRecordRepo: FileRecordRepo,
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
 		private readonly antivirusService: AntivirusService,
-		private readonly config: FileStorageConfig,
+		@Inject(FILE_STORAGE_CONFIG_TOKEN) private readonly config: FileStorageConfig,
 		private readonly logger: Logger,
 		private readonly domainErrorHandler: DomainErrorHandler
 	) {

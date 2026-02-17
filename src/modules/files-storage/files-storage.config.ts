@@ -4,6 +4,8 @@ import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
 export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
 
+export const FILE_STORAGE_CONFIG_TOKEN = 'FILE_STORAGE_CONFIG_TOKEN';
+
 @Configuration()
 export class FileStorageConfig {
 	@IsNumber()

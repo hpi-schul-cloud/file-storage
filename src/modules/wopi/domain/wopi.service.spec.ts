@@ -4,7 +4,7 @@ import { fileRecordTestFactory, GetFileResponseTestFactory } from '@modules/file
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'node:stream';
-import { WopiConfig } from '../wopi.config';
+import { WOPI_CONFIG_TOKEN, WopiConfig } from '../wopi.config';
 import { WopiService } from './wopi.service';
 
 describe('WopiService', () => {
@@ -19,7 +19,7 @@ describe('WopiService', () => {
 				WopiService,
 				{ provide: FilesStorageService, useValue: createMock<FilesStorageService>() },
 				{
-					provide: WopiConfig,
+					provide: WOPI_CONFIG_TOKEN,
 					useValue: {
 						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600,
 					},
@@ -28,7 +28,7 @@ describe('WopiService', () => {
 		}).compile();
 
 		wopiService = module.get(WopiService);
-		wopiConfig = module.get(WopiConfig);
+		wopiConfig = module.get(WOPI_CONFIG_TOKEN);
 		filesStorageService = module.get(FilesStorageService);
 	});
 

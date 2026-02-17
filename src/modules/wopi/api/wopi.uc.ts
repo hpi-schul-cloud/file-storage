@@ -8,11 +8,11 @@ import {
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
 import { FileRecord, FilesStorageMapper, GetFileResponse } from '@modules/files-storage';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import { AuthorizedCollaboraDocumentUrlFactory, WopiPayload, WopiPayloadFactory, WopiService } from '../domain';
-import { WopiConfig } from '../wopi.config';
+import { WOPI_CONFIG_TOKEN, WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
@@ -29,7 +29,7 @@ export class WopiUc {
 		private readonly logger: Logger,
 		private readonly collaboraService: CollaboraService,
 		private readonly wopiService: WopiService,
-		private readonly config: WopiConfig
+		@Inject(WOPI_CONFIG_TOKEN) private readonly config: WopiConfig
 	) {
 		this.logger.setContext(WopiUc.name);
 	}

@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthGuardConfig } from '../auth-guard.config';
+import { AUTH_GUARD_CONFIG_TOKEN, AuthGuardConfig } from '../auth-guard.config';
 import { jwtPayloadFactory } from '../testing';
 import { JwtStrategy } from './jwt.strategy';
 
@@ -13,7 +13,7 @@ describe('jwt strategy', () => {
 			providers: [
 				JwtStrategy,
 				{
-					provide: AuthGuardConfig,
+					provide: AUTH_GUARD_CONFIG_TOKEN,
 					useValue: createMock<AuthGuardConfig>(),
 				},
 			],

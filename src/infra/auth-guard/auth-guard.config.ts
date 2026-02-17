@@ -3,6 +3,8 @@ import { Transform } from 'class-transformer';
 import { IsString } from 'class-validator';
 import { Algorithm } from 'jsonwebtoken';
 
+export const AUTH_GUARD_CONFIG_TOKEN = 'AUTH_GUARD_CONFIG_TOKEN';
+
 @Configuration()
 export class AuthGuardConfig {
 	@IsString()

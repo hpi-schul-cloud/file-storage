@@ -5,7 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { install as sourceMapInstall } from 'source-map-support';
 
 // application imports
-import { Logger, LoggerConfig } from '@infra/logger';
+import { Logger, LOGGER_CONFIG_TOKEN } from '@infra/logger';
 import { MetricsModule, ResponseTimeMetricsInterceptor } from '@infra/metrics';
 import { FilesStorageAppModule } from '@modules/files-storage-app';
 import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
@@ -18,7 +18,7 @@ async function bootstrap(): Promise<void> {
 	// customize nest app settings
 	nestApp.enableCors({ exposedHeaders: ['Content-Disposition'] });
 
-	const config = nestApp.get(LoggerConfig);
+	const config = nestApp.get(LOGGER_CONFIG_TOKEN);
 
 	nestApp.use(createRequestLoggerMiddleware(config.LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED));
 	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());

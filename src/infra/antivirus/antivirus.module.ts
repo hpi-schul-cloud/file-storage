@@ -2,7 +2,7 @@ import { ConfigurationModule } from '@infra/configuration';
 import { RabbitMQWrapperModule } from '@infra/rabbitmq';
 import { DynamicModule, Module } from '@nestjs/common';
 import NodeClam from 'clamscan';
-import { AntivirusConfig, AntivirusExchange } from './antivirus.config';
+import { ANTIVIRUS_CONFIG_TOKEN, AntivirusConfig, AntivirusExchange } from './antivirus.config';
 import { AntivirusService } from './antivirus.service';
 import { AntivirusServiceOptions } from './interfaces';
 
@@ -11,7 +11,10 @@ export class AntivirusModule {
 	public static forRoot(): DynamicModule {
 		return {
 			module: AntivirusModule,
-			imports: [ConfigurationModule.register(AntivirusConfig), RabbitMQWrapperModule.forRoot([AntivirusExchange])],
+			imports: [
+				ConfigurationModule.register(ANTIVIRUS_CONFIG_TOKEN, AntivirusConfig),
+				RabbitMQWrapperModule.forRoot([AntivirusExchange]),
+			],
 			providers: [
 				AntivirusService,
 				{
@@ -24,7 +27,7 @@ export class AntivirusModule {
 							routingKey: config.ANTIVIRUS_ROUTING_KEY,
 						};
 					},
-					inject: [AntivirusConfig],
+					inject: [ANTIVIRUS_CONFIG_TOKEN],
 				},
 				{
 					provide: NodeClam,
@@ -41,7 +44,7 @@ export class AntivirusModule {
 							},
 						});
 					},
-					inject: [AntivirusConfig],
+					inject: [ANTIVIRUS_CONFIG_TOKEN],
 				},
 			],
 

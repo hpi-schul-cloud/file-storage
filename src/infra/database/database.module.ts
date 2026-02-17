@@ -2,7 +2,7 @@ import { ConfigurationModule } from '@infra/configuration';
 import { defineConfig, EntityClass } from '@mikro-orm/mongodb';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Module } from '@nestjs/common';
-import { DatabaseConfig } from './database.config';
+import { DATABASE_CONFIG_TOKEN, DatabaseConfig } from './database.config';
 import { findOneOrFailHandler } from './database.not-found.error';
 
 @Module({})
@@ -23,8 +23,8 @@ export class DatabaseModule {
 							debug: config.DB_DEBUG,
 						});
 					},
-					inject: [DatabaseConfig],
-					imports: [ConfigurationModule.register(DatabaseConfig)],
+					inject: [DATABASE_CONFIG_TOKEN],
+					imports: [ConfigurationModule.register(DATABASE_CONFIG_TOKEN, DatabaseConfig)],
 				}),
 			],
 			providers: [],

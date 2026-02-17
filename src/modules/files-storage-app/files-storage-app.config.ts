@@ -3,6 +3,8 @@ import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber } from 'class-validator';
 
+export const FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN = 'FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN';
+
 @Configuration()
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	[key: string]: number;

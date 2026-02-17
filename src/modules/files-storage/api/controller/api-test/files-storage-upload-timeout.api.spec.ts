@@ -1,9 +1,12 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { RequestTimeoutConfig } from '@modules/files-storage-app/files-storage-app.config';
+import {
+	FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN,
+	RequestTimeoutConfig,
+} from '@modules/files-storage-app/files-storage-app.config';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -21,7 +24,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
 	let testApiClient: TestApiClient;
-	let requestTimeoutConfig: DeepMocked<RequestTimeoutConfig>;
+	let requestTimeoutConfig: RequestTimeoutConfig;
 
 	const baseRouteName = '/file';
 
@@ -39,7 +42,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 			.useValue(createMock<NodeClam>())
 			.overrideProvider(AuthorizationClientAdapter)
 			.useValue(createMock<AuthorizationClientAdapter>())
-			.overrideProvider(RequestTimeoutConfig)
+			.overrideProvider(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN)
 			.useValue({
 				CORE_INCOMING_REQUEST_TIMEOUT_MS: 15,
 				INCOMING_REQUEST_TIMEOUT_COPY_API_MS: 100,
@@ -51,7 +54,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 		await app.listen(appPort);
 
 		testApiClient = new TestApiClient(app, baseRouteName);
-		requestTimeoutConfig = module.get(RequestTimeoutConfig);
+		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
 	});
 
 	afterAll(async () => {
