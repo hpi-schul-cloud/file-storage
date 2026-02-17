@@ -2,17 +2,22 @@ import { ConfigProperty, Configuration } from '@infra/configuration';
 import { S3Config } from '@infra/s3-client';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
+
 export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
 
 export const FILE_STORAGE_CONFIG_TOKEN = 'FILE_STORAGE_CONFIG_TOKEN';
+export const FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN = 'FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN';
 
 @Configuration()
-export class FileStorageConfig {
+export class FileStoragePublicApiConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('FILES_STORAGE_MAX_FILE_SIZE')
 	filesStorageMaxFileSize = 2684354560;
+}
 
+@Configuration()
+export class FileStorageConfig extends FileStoragePublicApiConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE')
