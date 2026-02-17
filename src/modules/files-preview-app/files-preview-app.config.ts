@@ -10,15 +10,12 @@ export const FILES_PREVIEW_APP_REQUEST_TIMEOUT_CONFIG_TOKEN = 'FILES_PREVIEW_APP
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	[key: string]: number;
 
+	// Actually not needed in the module. Just here because TimeoutInterceptor is part of the CoreModule.
+	// And CoreModule is needed because it contains error pipeline. TimeoutInterceptor should be separated from CoreModule in the future.
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
 	coreIncomingRequestTimeoutMs!: number;
-
-	@IsNumber()
-	@StringToNumber()
-	@ConfigProperty('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
-	incomingRequestTimeoutCopyApiMs!: number;
 }
 
 @Configuration()
