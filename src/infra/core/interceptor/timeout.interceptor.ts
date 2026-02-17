@@ -13,7 +13,7 @@ import { AbortableRequest, TimeoutInterceptorConfig } from './interfaces';
  */
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
-	private readonly defaultConfigKey: keyof TimeoutInterceptorConfig = 'CORE_INCOMING_REQUEST_TIMEOUT_MS';
+	private readonly defaultConfigKey: keyof TimeoutInterceptorConfig = 'coreIncomingRequestTimeoutMs';
 
 	constructor(private readonly config: TimeoutInterceptorConfig) {}
 

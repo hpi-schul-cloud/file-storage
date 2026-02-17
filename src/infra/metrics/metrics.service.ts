@@ -12,7 +12,7 @@ export class MetricsService implements OnModuleInit {
 	private static currentDownloadsCount = 0;
 
 	public onModuleInit(): void {
-		if (this.config.COLLECT_DEFAULT_METRICS) {
+		if (this.config.collectDefaultMetrics) {
 			collectDefaultMetrics();
 		}
 	}
@@ -45,6 +45,7 @@ export class MetricsService implements OnModuleInit {
 
 	public async getMetrics(): Promise<string> {
 		const metrics = await register.metrics();
+
 		return metrics;
 	}
 

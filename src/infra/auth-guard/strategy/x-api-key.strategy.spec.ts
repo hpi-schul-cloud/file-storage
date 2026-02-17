@@ -16,7 +16,7 @@ describe('XApiKeyStrategy', () => {
 				{
 					provide: X_API_KEY_CONFIG_TOKEN,
 					useValue: {
-						X_API_ALLOWED_KEYS: ['7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4'],
+						xApiAllowedKeys: ['7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4'],
 					},
 				},
 			],

@@ -21,7 +21,7 @@ describe('WopiService', () => {
 				{
 					provide: WOPI_CONFIG_TOKEN,
 					useValue: {
-						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 104857600,
+						collaboraMaxFileSizeInBytes: 104857600,
 					},
 				},
 			],
@@ -167,7 +167,7 @@ describe('WopiService', () => {
 				const fileRecord = fileRecordTestFactory()
 					.asOpenDocument()
 					.build({
-						size: wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES + 1,
+						size: wopiConfig.collaboraMaxFileSizeInBytes + 1,
 					});
 
 				expect(() => wopiService.throwIfNotCollaboraEditable(fileRecord)).toThrow(
@@ -180,7 +180,7 @@ describe('WopiService', () => {
 					.asOpenDocument()
 					.withScanStatus(ScanStatus.BLOCKED)
 					.build({
-						size: wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES - 1,
+						size: wopiConfig.collaboraMaxFileSizeInBytes - 1,
 					});
 
 				expect(() => wopiService.throwIfNotCollaboraEditable(fileRecord)).toThrow(
@@ -193,7 +193,7 @@ describe('WopiService', () => {
 					.asOpenDocument()
 					.withScanStatus(ScanStatus.VERIFIED)
 					.build({
-						size: wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES - 1,
+						size: wopiConfig.collaboraMaxFileSizeInBytes - 1,
 					});
 				expect(() => wopiService.throwIfNotCollaboraEditable(fileRecord)).not.toThrow();
 			});

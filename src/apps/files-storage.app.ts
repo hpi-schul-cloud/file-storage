@@ -20,7 +20,7 @@ async function bootstrap(): Promise<void> {
 
 	const config = nestApp.get(LOGGER_CONFIG_TOKEN);
 
-	nestApp.use(createRequestLoggerMiddleware(config.LOGGER_GLOBAL_REQUEST_LOGGING_ENABLED));
+	nestApp.use(createRequestLoggerMiddleware(config.loggerGlobalRequestLoggingEnabled));
 	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());
 
 	enableOpenApiDocs(nestApp, 'api/v3/file/docs');

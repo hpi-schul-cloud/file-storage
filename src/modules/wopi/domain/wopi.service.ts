@@ -34,7 +34,7 @@ export class WopiService {
 	}
 
 	public throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
-		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.collaboraMaxFileSizeInBytes);
 
 		if (!isCollaboraEditable) {
 			throw new NotFoundException(

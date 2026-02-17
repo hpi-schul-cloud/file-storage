@@ -1,4 +1,4 @@
-import { Configuration } from '@infra/configuration';
+import { ConfigProperty, Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber } from 'class-validator';
@@ -11,9 +11,11 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 
 	@IsNumber()
 	@StringToNumber()
-	CORE_INCOMING_REQUEST_TIMEOUT_MS!: number;
+	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
+	coreIncomingRequestTimeoutMs!: number;
 
 	@IsNumber()
 	@StringToNumber()
-	INCOMING_REQUEST_TIMEOUT_COPY_API_MS!: number;
+	@ConfigProperty('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
+	incomingRequestTimeoutCopyApiMs!: number;
 }

@@ -8,15 +8,15 @@ export const RABBITMQ_CONFIG_TOKEN = 'RABBITMQ_CONFIG_TOKEN';
 export class RabbitMqConfig {
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	RABBITMQ_GLOBAL_PREFETCH_COUNT = 1;
+	@ConfigProperty('RABBITMQ_GLOBAL_PREFETCH_COUNT')
+	rabbitmqGlobalPrefetchCount = 1;
 
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS = 20;
+	@ConfigProperty('RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS')
+	rabbitmqHeartbeatIntervalInSeconds = 20;
 
 	@IsString()
-	@ConfigProperty()
-	RABBITMQ_URI!: string;
+	@ConfigProperty('RABBITMQ_URI')
+	rabbitmqUri!: string;
 }

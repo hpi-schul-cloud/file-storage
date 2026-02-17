@@ -21,10 +21,10 @@ export class AntivirusModule {
 					provide: 'ANTIVIRUS_SERVICE_OPTIONS',
 					useFactory: (config: AntivirusConfig): AntivirusServiceOptions => {
 						return {
-							enabled: config.ENABLE_FILE_SECURITY_CHECK,
-							filesServiceBaseUrl: config.FILE_STORAGE_SERVICE_URL,
+							enabled: config.enableFileSecurityCheck,
+							filesServiceBaseUrl: config.fileStorageServiceUrl,
 							exchange: AntivirusExchange,
-							routingKey: config.ANTIVIRUS_ROUTING_KEY,
+							routingKey: config.antivirusRoutingKey,
 						};
 					},
 					inject: [ANTIVIRUS_CONFIG_TOKEN],
@@ -32,13 +32,13 @@ export class AntivirusModule {
 				{
 					provide: NodeClam,
 					useFactory: (config: AntivirusConfig): Promise<NodeClam> => {
-						const isLocalhost = config.ANTIVIRUS_SERVICE_HOSTNAME === 'localhost';
+						const isLocalhost = config.antivirusServiceHostname === 'localhost';
 
 						return new NodeClam().init({
 							debugMode: isLocalhost,
 							clamdscan: {
-								host: config.ANTIVIRUS_SERVICE_HOSTNAME,
-								port: config.ANTIVIRUS_SERVICE_PORT,
+								host: config.antivirusServiceHostname,
+								port: config.antivirusServicePort,
 								bypassTest: true,
 								localFallback: false,
 							},

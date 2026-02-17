@@ -14,7 +14,7 @@ export class PreviewProducer extends RpcMessageProducer {
 		private readonly logger: Logger,
 		@Inject(PREVIEW_GENERATOR_CONFIG_TOKEN) config: PreviewGeneratorConfig
 	) {
-		const timeout = config.PREVIEW_PRODUCER_INCOMING_REQUEST_TIMEOUT;
+		const timeout = config.previewProducerIncomingRequestTimeout;
 
 		super(amqpConnection, FilesPreviewExchange, timeout);
 		this.logger.setContext(PreviewProducer.name);

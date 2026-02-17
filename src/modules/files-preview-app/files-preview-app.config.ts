@@ -12,34 +12,34 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	CORE_INCOMING_REQUEST_TIMEOUT_MS!: number;
+	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
+	coreIncomingRequestTimeoutMs!: number;
 
 	@IsNumber()
 	@StringToNumber()
-	@ConfigProperty()
-	INCOMING_REQUEST_TIMEOUT_COPY_API_MS!: number;
+	@ConfigProperty('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
+	incomingRequestTimeoutCopyApiMs!: number;
 }
 
 @Configuration()
 export class FilesPreviewAppConfig {
 	@IsUrl({ require_tld: false })
-	@ConfigProperty()
-	FILES_STORAGE_S3_ENDPOINT = 'http://localhost:9000/';
+	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
+	filesStorageS3Endpoint = 'http://localhost:9000/';
 
 	@IsString()
-	@ConfigProperty()
-	FILES_STORAGE_S3_REGION = 'eu-central-1';
+	@ConfigProperty('FILES_STORAGE_S3_REGION')
+	filesStorageS3Region = 'eu-central-1';
 
 	@IsString()
-	@ConfigProperty()
-	FILES_STORAGE_S3_BUCKET = 'schulcloud';
+	@ConfigProperty('FILES_STORAGE_S3_BUCKET')
+	filesStorageS3Bucket = 'schulcloud';
 
 	@IsString()
-	@ConfigProperty()
-	FILES_STORAGE_S3_ACCESS_KEY_ID = 'miniouser';
+	@ConfigProperty('FILES_STORAGE_S3_ACCESS_KEY_ID')
+	filesStorageS3AccessKeyId = 'miniouser';
 
 	@IsString()
-	@ConfigProperty()
-	FILES_STORAGE_S3_SECRET_ACCESS_KEY = 'miniouser';
+	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
+	filesStorageS3SecretAccessKey = 'miniouser';
 }

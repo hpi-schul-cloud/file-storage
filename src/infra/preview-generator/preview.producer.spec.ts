@@ -30,7 +30,7 @@ describe('PreviewProducer', () => {
 				{
 					provide: PREVIEW_GENERATOR_CONFIG_TOKEN,
 					useValue: createMock<PreviewGeneratorConfig>({
-						PREVIEW_PRODUCER_INCOMING_REQUEST_TIMEOUT: timeout,
+						previewProducerIncomingRequestTimeout: timeout,
 					}),
 				},
 			],

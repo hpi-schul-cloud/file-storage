@@ -31,7 +31,7 @@ class TestController {
 }
 
 const createMockConfig = {
-	CORE_INCOMING_REQUEST_TIMEOUT_MS: 1000,
+	coreIncomingRequestTimeoutMs: 1000,
 	MY_CONFIG_NAME: 1000,
 };
 
@@ -75,7 +75,7 @@ describe('TimeoutInterceptor', () => {
 
 	describe('when response is slower then the request timeout', () => {
 		const setup = () => {
-			createMockConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 1;
+			createMockConfig.coreIncomingRequestTimeoutMs = 1;
 		};
 
 		it('should respond with status request timeout', async () => {
@@ -104,7 +104,7 @@ describe('TimeoutInterceptor', () => {
 
 	describe('when override the default timeout', () => {
 		const setup = () => {
-			createMockConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 1000;
+			createMockConfig.coreIncomingRequestTimeoutMs = 1000;
 			createMockConfig.MY_CONFIG_NAME = 1;
 		};
 

@@ -28,7 +28,7 @@ export class CollaboraService {
 	}
 
 	private getCollaboraOnlineUrl(): string {
-		return this.collaboraConfig.COLLABORA_ONLINE_URL;
+		return this.collaboraConfig.collaboraOnlineUrl;
 	}
 
 	private handleDiscoveryError(error: unknown): never {

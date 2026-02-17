@@ -13,8 +13,8 @@ export class FilesStorageConfigUc {
 	) {}
 
 	public getPublicConfig(): FilesStorageConfigResponse {
-		const maxFileSize = this.filesStorageConfig.FILES_STORAGE_MAX_FILE_SIZE;
-		const collaboraMaxFileSize = this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
+		const maxFileSize = this.filesStorageConfig.filesStorageMaxFileSize;
+		const collaboraMaxFileSize = this.wopiConfig.collaboraMaxFileSizeInBytes;
 		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize, collaboraMaxFileSize);
 
 		return configResponse;
