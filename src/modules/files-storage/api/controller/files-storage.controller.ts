@@ -51,6 +51,8 @@ import {
 import { StreamableFileMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
 
+export const INCOMING_REQUEST_TIMEOUT_COPY_API_KEY = 'incomingRequestTimeoutCopyApiMs';
+
 @ApiTags('file')
 @JwtAuthentication()
 @Controller('file')
@@ -332,7 +334,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@RequestTimeout('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
+	@RequestTimeout(INCOMING_REQUEST_TIMEOUT_COPY_API_KEY)
 	@Post('/copy/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async copy(
 		@Param() params: FileRecordParams,

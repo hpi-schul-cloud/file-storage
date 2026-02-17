@@ -1,4 +1,4 @@
-export { FilesStorageConsumer, FilesStorageExchange } from './api';
+export { FilesStorageConsumer, FilesStorageExchange, INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from './api';
 export {
 	FileDtoFactory,
 	FileRecord,

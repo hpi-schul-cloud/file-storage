@@ -1,5 +1,6 @@
 import { ConfigProperty, Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
+import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '@modules/files-storage';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber } from 'class-validator';
 
@@ -17,5 +18,5 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
-	incomingRequestTimeoutCopyApiMs!: number;
+	[INCOMING_REQUEST_TIMEOUT_COPY_API_KEY]!: number;
 }
