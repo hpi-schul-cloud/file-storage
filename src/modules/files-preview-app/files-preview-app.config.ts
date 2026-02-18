@@ -22,21 +22,21 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 export class FilesPreviewAppConfig {
 	@IsUrl({ require_tld: false })
 	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
-	filesStorageS3Endpoint = 'http://localhost:9000/';
+	endpoint = 'http://localhost:9000/';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_REGION')
-	filesStorageS3Region = 'eu-central-1';
+	region = 'eu-central-1';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_BUCKET')
-	filesStorageS3Bucket = 'schulcloud';
+	bucket = 'schulcloud';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_ACCESS_KEY_ID')
-	filesStorageS3AccessKeyId = 'miniouser';
+	accessKeyId = 'miniouser';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
-	filesStorageS3SecretAccessKey = 'miniouser';
+	secretAccessKey = 'miniouser';
 }

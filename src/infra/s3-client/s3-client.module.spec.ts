@@ -1,36 +1,45 @@
 import { createMock } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { Inject } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { S3ClientAdapter } from './s3-client.adapter';
 import { S3ClientModule } from './s3-client.module';
-
-const connectionOne = 'connectionOne';
+import {
+	TEST_S3_CLIENT_ONE_CONFIG_TOKEN,
+	TEST_S3_CLIENT_ONE_INJECTION_TOKEN,
+	TEST_S3_CLIENT_TWO_CONFIG_TOKEN,
+	TEST_S3_CLIENT_TWO_INJECTION_TOKEN,
+	TestS3ClientConfigOne,
+	TestS3ClientConfigTwo,
+} from './testing/test-s3-client.config';
 
 class OneService {
-	constructor(@Inject(connectionOne) public s3client: S3ClientAdapter) {}
+	constructor(@Inject(TEST_S3_CLIENT_ONE_INJECTION_TOKEN) public s3client: S3ClientAdapter) {}
+}
+class TwoService {
+	constructor(@Inject(TEST_S3_CLIENT_TWO_INJECTION_TOKEN) public s3client: S3ClientAdapter) {}
 }
 
 describe('S3ClientModule', () => {
 	let module: TestingModule;
-	const s3ClientConfigOne = {
-		connectionName: connectionOne,
-		endpoint: 'endpoint-1',
-		region: 'region-eu-2',
-		bucket: 'bucket-1',
-		accessKeyId: 'accessKeyId-1',
-		secretAccessKey: 'secretAccessKey-1',
-	};
-
 	let s3ClientAdapterOne: S3ClientAdapter;
+	let s3ClientAdapterTwo: S3ClientAdapter;
 	let serviceOne: OneService;
+	let serviceTwo: TwoService;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			imports: [
-				S3ClientModule.register(connectionOne, s3ClientConfigOne),
-				ConfigModule.forRoot({ ignoreEnvFile: true, ignoreEnvVars: true, isGlobal: true }),
+				S3ClientModule.register({
+					clientInjectionToken: TEST_S3_CLIENT_ONE_INJECTION_TOKEN,
+					configInjectionToken: TEST_S3_CLIENT_ONE_CONFIG_TOKEN,
+					configConstructor: TestS3ClientConfigOne,
+				}),
+				S3ClientModule.register({
+					clientInjectionToken: TEST_S3_CLIENT_TWO_INJECTION_TOKEN,
+					configInjectionToken: TEST_S3_CLIENT_TWO_CONFIG_TOKEN,
+					configConstructor: TestS3ClientConfigTwo,
+				}),
 			],
 			providers: [
 				{
@@ -38,11 +47,14 @@ describe('S3ClientModule', () => {
 					useValue: createMock<Logger>(),
 				},
 				OneService,
+				TwoService,
 			],
 		}).compile();
 
-		s3ClientAdapterOne = module.get(connectionOne);
+		s3ClientAdapterOne = module.get(TEST_S3_CLIENT_ONE_INJECTION_TOKEN);
+		s3ClientAdapterTwo = module.get(TEST_S3_CLIENT_TWO_INJECTION_TOKEN);
 		serviceOne = module.get(OneService);
+		serviceTwo = module.get(TwoService);
 	});
 
 	afterAll(async () => {
@@ -56,7 +68,18 @@ describe('S3ClientModule', () => {
 
 		it('should has correctly connection', () => {
 			// @ts-expect-error this is a private property
-			expect(s3ClientAdapterOne.config).toBe(s3ClientConfigOne);
+			expect(s3ClientAdapterOne.config).toBeInstanceOf(TestS3ClientConfigOne);
+		});
+	});
+
+	describe('when connectionTwo is initialized with register method', () => {
+		it('should be defined', () => {
+			expect(s3ClientAdapterTwo).toBeDefined();
+		});
+
+		it('should has correctly connection', () => {
+			// @ts-expect-error this is a private property
+			expect(s3ClientAdapterTwo.config).toBeInstanceOf(TestS3ClientConfigTwo);
 		});
 	});
 
@@ -64,6 +87,22 @@ describe('S3ClientModule', () => {
 		describe('when connectionOne is injected', () => {
 			it('should has injected s3ClientAdapterOne', () => {
 				expect(serviceOne.s3client).toBe(s3ClientAdapterOne);
+			});
+			it('should has injected s3ClientAdapterOne with correct config', () => {
+				// @ts-expect-error this is a private property
+				expect(serviceOne.s3client.config).toBeInstanceOf(TestS3ClientConfigOne);
+			});
+		});
+	});
+
+	describe('TwoService', () => {
+		describe('when connectionTwo is injected', () => {
+			it('should has injected s3ClientAdapterTwo', () => {
+				expect(serviceTwo.s3client).toBe(s3ClientAdapterTwo);
+			});
+			it('should has injected s3ClientAdapterTwo with correct config', () => {
+				// @ts-expect-error this is a private property
+				expect(serviceTwo.s3client.config).toBeInstanceOf(TestS3ClientConfigTwo);
 			});
 		});
 	});

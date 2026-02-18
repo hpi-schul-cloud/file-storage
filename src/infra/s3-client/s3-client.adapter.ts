@@ -30,9 +30,10 @@ export class S3ClientAdapter {
 		private readonly client: S3Client,
 		private readonly config: S3Config,
 		private readonly logger: Logger,
-		private readonly errorHandler: DomainErrorHandler
+		private readonly errorHandler: DomainErrorHandler,
+		private readonly clientInjectionToken: string
 	) {
-		this.logger.setContext(`${S3ClientAdapter.name}:${config.connectionName}`);
+		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
 	}
 
 	// is public but only used internally
@@ -372,22 +373,41 @@ export class S3ClientAdapter {
 	/* istanbul ignore next */
 	private setupTimeOutAndErrorHandling(sourceStream: Readable, passthroughStream: PassThrough, context: string): void {
 		const STREAM_TIMEOUT_MS = 60 * 1000;
-		const timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
+		let timeoutTimer: NodeJS.Timeout | undefined;
 
-		sourceStream.on('data', () => {
-			timeoutTimer.refresh();
-		});
+		const startOrResetTimeout = (): void => {
+			this.clearStreamTimeout(timeoutTimer);
+			timeoutTimer = this.createStreamTimeout(sourceStream, passthroughStream, context, STREAM_TIMEOUT_MS);
+		};
+
+		const cleanup = (): void => {
+			this.clearStreamTimeout(timeoutTimer);
+		};
+
+		sourceStream.on('data', startOrResetTimeout);
 		sourceStream.on('error', (error) => {
 			this.logSourceStreamError(error.message, context);
-			clearTimeout(timeoutTimer);
+			cleanup();
 			this.destroyStreamIfNotDestroyed(passthroughStream, error);
 		});
+		sourceStream.on('close', cleanup);
+		sourceStream.on('end', cleanup);
 
 		passthroughStream.on('error', (error) => {
 			this.logPassthroughStreamError(error.message, context);
-			clearTimeout(timeoutTimer);
-			this.destroyStreamIfNotDestroyed(sourceStream, error);
+			cleanup();
+			this.destroyStreamIfNotDestroyed(sourceStream);
 		});
+		passthroughStream.on('close', cleanup);
+
+		startOrResetTimeout();
+	}
+
+	/* istanbul ignore next */
+	private clearStreamTimeout(timer: NodeJS.Timeout | undefined): void {
+		if (timer) {
+			clearTimeout(timer);
+		}
 	}
 
 	/* istanbul ignore next */
@@ -398,13 +418,13 @@ export class S3ClientAdapter {
 		timeoutMs: number
 	): NodeJS.Timeout {
 		return setTimeout(() => {
-			if (sourceStream.destroyed && passthroughStream.destroyed) {
+			if (sourceStream.destroyed || passthroughStream.destroyed) {
 				return;
 			}
 
 			this.logStreamUnresponsive(context);
-			this.destroyStreamIfNotDestroyed(sourceStream);
-			this.destroyStreamIfNotDestroyed(passthroughStream);
+			sourceStream.destroy();
+			passthroughStream.destroy();
 		}, timeoutMs);
 	}
 

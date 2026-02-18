@@ -6,12 +6,7 @@ import { PreviewGeneratorProducerModule } from '@infra/preview-generator';
 import { S3ClientModule } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
 import { FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
-import {
-	createS3ModuleOptions,
-	FILE_STORAGE_CONFIG_TOKEN,
-	FILES_STORAGE_S3_CONNECTION,
-	FileStorageConfig,
-} from './files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
 import { FileRecordMikroOrmRepo } from './repo';
 
 const imports = [
@@ -19,11 +14,10 @@ const imports = [
 	ErrorModule,
 	LoggerModule,
 	AntivirusModule.forRoot(),
-	S3ClientModule.registerAsync({
-		injectionToken: FILES_STORAGE_S3_CONNECTION,
-		useFactory: createS3ModuleOptions,
-		inject: [FILE_STORAGE_CONFIG_TOKEN],
-		imports: [ConfigurationModule.register(FILE_STORAGE_CONFIG_TOKEN, FileStorageConfig)],
+	S3ClientModule.register({
+		clientInjectionToken: FILES_STORAGE_S3_CONNECTION,
+		configInjectionToken: FILE_STORAGE_CONFIG_TOKEN,
+		configConstructor: FileStorageConfig,
 	}),
 	PreviewGeneratorProducerModule,
 ];
