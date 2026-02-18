@@ -1,4 +1,6 @@
-import { PassThrough, Readable } from 'node:stream';
+import { createMock } from '@golevelup/ts-jest';
+import { PassThrough } from 'node:stream';
+import { Logger } from 'winston';
 import { octetStreamReadable, svgReadable, textReadable } from '../../testing/buffer-with-types';
 import * as FileTypeStream from './file-type-stream.import';
 const { detectMimeTypeByStream, resolveMimeType } = require('./detect-mime-type.utils');
@@ -82,7 +84,7 @@ describe('detectMimeTypeByStream', () => {
 			//@ts-ignore
 			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('image/png');
 		});
@@ -100,7 +102,7 @@ describe('detectMimeTypeByStream', () => {
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('application/octet-stream');
 		});
@@ -119,10 +121,25 @@ describe('detectMimeTypeByStream', () => {
 			//@ts-ignore
 			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
 
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType);
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
 			expect(result).toBe('image/png');
 			expect(mockFileTypeResult.destroy).toHaveBeenCalled();
+		});
+
+		it('should return fallback mime type when fileTypeStream throws an error', async () => {
+			const passThrough = new PassThrough();
+			const fallbackMimeType = 'application/octet-stream';
+
+			//@ts-ignore
+			FileTypeStream.fileTypeStream.mockRejectedValueOnce(new Error('Stream error'));
+
+			const readable = octetStreamReadable();
+			readable.pipe(passThrough);
+
+			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
+
+			expect(result).toBe('application/octet-stream');
 		});
 	});
 
@@ -133,7 +150,7 @@ describe('detectMimeTypeByStream', () => {
 			};
 			const fallbackMimeType = 'application/octet-stream';
 
-			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 			expect(result).toBe('image/png');
 		});
@@ -144,7 +161,7 @@ describe('detectMimeTypeByStream', () => {
 			};
 			const fallbackMimeType = 'text/plain';
 
-			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 			expect(result).toBe('text/plain');
 		});
@@ -155,7 +172,7 @@ describe('detectMimeTypeByStream', () => {
 			};
 			const fallbackMimeType = 'application/json';
 
-			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 			expect(result).toBe('application/json');
 		});
@@ -166,7 +183,7 @@ describe('detectMimeTypeByStream', () => {
 			};
 			const fallbackMimeType = 'video/mp4';
 
-			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 			expect(result).toBe('video/mp4');
 		});
@@ -177,37 +194,9 @@ describe('detectMimeTypeByStream', () => {
 			};
 			const fallbackMimeType = 'video/mp4';
 
-			const result = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 			expect(result).toBe('video/mp4');
-		});
-	});
-
-	describe('edge cases', () => {
-		it('should handle stream errors gracefully', async () => {
-			const passThrough = new PassThrough();
-			const fallbackMimeType = 'application/octet-stream';
-
-			//@ts-ignore
-			FileTypeStream.fileTypeStream.mockRejectedValueOnce(new Error('Stream error'));
-			const readable = new Readable({
-				read() {
-					setImmediate(() => {
-						this.destroy(new Error('Stream error'));
-					});
-				},
-			});
-
-			readable.on('error', () => {
-				/* Expected error */
-			});
-			passThrough.on('error', () => {
-				/* Expected error */
-			});
-
-			readable.pipe(passThrough);
-
-			await expect(detectMimeTypeByStream(passThrough, fallbackMimeType)).rejects.toThrow();
 		});
 	});
 });

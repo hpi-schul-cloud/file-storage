@@ -1,5 +1,7 @@
+import { Logger } from '@infra/logger';
 import { type ReadableStreamWithFileType } from 'file-type';
 import { PassThrough } from 'node:stream';
+import { FileTypeErrorLoggable } from './file-type-error.loggable';
 import { fileTypeStream } from './file-type-stream.import';
 
 const isFileTypePackageSupported = (mimeType: string): boolean => {
@@ -14,8 +16,11 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 	return !unsupportedMimeTypes.includes(mimeType);
 };
 
-export const resolveMimeType = (fileTypeStreamResult: ReadableStreamWithFileType, fallbackMimeType: string): string => {
-	const detectedMimeType = fileTypeStreamResult.fileType?.mime;
+export const resolveMimeType = (
+	fallbackMimeType: string,
+	fileTypeStreamResult?: ReadableStreamWithFileType
+): string => {
+	const detectedMimeType = fileTypeStreamResult?.fileType?.mime;
 	const mimeType = filterDetectedMimeType(detectedMimeType) ?? fallbackMimeType;
 
 	return mimeType;
@@ -29,15 +34,19 @@ export const filterDetectedMimeType = (mimeType?: string): string | undefined =>
 	return mimeType;
 };
 
-export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackMimeType: string): Promise<string> {
+export async function detectMimeTypeByStream(
+	passThrough: PassThrough,
+	fallbackMimeType: string,
+	logger: Logger
+): Promise<string> {
 	if (!isFileTypePackageSupported(fallbackMimeType)) {
 		return fallbackMimeType;
 	}
-	/* istanbul ignore next */
-	const fileTypeStreamResult = await fileTypeStream(passThrough);
+
+	const fileTypeStreamResult = await tryDetectMimeTypeByStream(passThrough, logger);
 
 	/* istanbul ignore next */
-	const mimeType = resolveMimeType(fileTypeStreamResult, fallbackMimeType);
+	const mimeType = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
 
 	// Clean up the fileTypeStream to prevent memory leaks
 	if (fileTypeStreamResult && typeof fileTypeStreamResult.destroy === 'function') {
@@ -46,5 +55,18 @@ export async function detectMimeTypeByStream(passThrough: PassThrough, fallbackM
 
 	return mimeType;
 }
+
+const tryDetectMimeTypeByStream = async (
+	passThrough: PassThrough,
+	logger: Logger
+): Promise<ReadableStreamWithFileType | undefined> => {
+	try {
+		const fileTypeStreamResult = await fileTypeStream(passThrough);
+
+		return fileTypeStreamResult;
+	} catch (error) {
+		logger.debug(new FileTypeErrorLoggable(`Failed to detect mime type by stream: ${error}`));
+	}
+};
 
 export default { detectMimeTypeByStream };

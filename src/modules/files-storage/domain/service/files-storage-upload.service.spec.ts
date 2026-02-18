@@ -31,6 +31,7 @@ describe('FilesStorageService upload methods', () => {
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
 	let config: FileStorageConfig;
+	let logger: DeepMocked<Logger>;
 
 	beforeEach(async () => {
 		module = await Test.createTestingModule({
@@ -73,6 +74,7 @@ describe('FilesStorageService upload methods', () => {
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
 		config = module.get(FileStorageConfig);
+		logger = module.get(Logger);
 	});
 
 	afterEach(() => {
@@ -433,7 +435,7 @@ describe('FilesStorageService upload methods', () => {
 
 				await service.updateFileContents(fileRecord, file);
 
-				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(Readable), expect.any(String));
+				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(Readable), expect.any(String), logger);
 			});
 
 			it('should call fileRecordRepo.save ', async () => {
@@ -788,7 +790,7 @@ describe('FilesStorageService upload methods', () => {
 
 				await service.updateFileContents(fileRecord, file);
 
-				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(Readable), file.mimeType);
+				expect(mimeTypeSpy).toHaveBeenCalledWith(expect.any(Readable), file.mimeType, logger);
 			});
 		});
 

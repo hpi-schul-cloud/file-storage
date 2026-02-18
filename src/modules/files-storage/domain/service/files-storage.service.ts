@@ -151,7 +151,7 @@ export class FilesStorageService {
 
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
 		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
-		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType);
+		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType, this.logger);
 		const file = PassThroughFileDtoFactory.create(sourceFile, filesStorageStream, mimeType, newFileName);
 
 		return file;
