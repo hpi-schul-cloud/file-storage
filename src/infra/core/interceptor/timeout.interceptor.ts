@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 import { IncomingMessage } from 'node:http';
 import { Observable, throwError, TimeoutError } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
-import { AbortableRequest, TimeoutInterceptorConfig } from './interfaces';
+import { AbortableRequest, CoreTimeoutInterceptorConfig, TimeoutInterceptorConfig } from './interfaces';
 
 /**
  * This interceptor leaves the request execution after a given timeout in ms.
@@ -13,7 +13,7 @@ import { AbortableRequest, TimeoutInterceptorConfig } from './interfaces';
  */
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
-	private readonly defaultConfigKey: keyof TimeoutInterceptorConfig = 'coreIncomingRequestTimeoutMs';
+	private readonly defaultConfigKey: keyof CoreTimeoutInterceptorConfig = 'coreIncomingRequestTimeoutMs';
 
 	constructor(private readonly config: TimeoutInterceptorConfig) {}
 
