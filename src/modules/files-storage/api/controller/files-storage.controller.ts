@@ -29,6 +29,7 @@ import { ApiConsumes, ApiHeader, ApiOperation, ApiProduces, ApiResponse, ApiTags
 import { RequestTimeout } from '@shared/decorator';
 import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
+import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '../../files-storage.config';
 import {
 	ArchiveFileParams,
 	CopyFileListResponse,
@@ -50,8 +51,6 @@ import {
 } from '../dto';
 import { StreamableFileMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
-
-export const INCOMING_REQUEST_TIMEOUT_COPY_API_KEY = 'incomingRequestTimeoutCopyApiMs';
 
 @ApiTags('file')
 @JwtAuthentication()

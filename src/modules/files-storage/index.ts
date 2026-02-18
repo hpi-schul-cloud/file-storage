@@ -1,4 +1,4 @@
-export { FilesStorageConsumer, FilesStorageExchange, INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from './api';
+export { FilesStorageConsumer, FilesStorageExchange } from './api';
 export {
 	FileDtoFactory,
 	FileRecord,
@@ -15,5 +15,6 @@ export {
 	FILES_STORAGE_S3_CONNECTION,
 	FileStorageConfig,
 	FileStoragePublicApiConfig,
+	INCOMING_REQUEST_TIMEOUT_COPY_API_KEY,
 } from './files-storage.config';
 export { FilesStorageModule } from './files-storage.module';

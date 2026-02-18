@@ -8,6 +8,8 @@ export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
 export const FILE_STORAGE_CONFIG_TOKEN = 'FILE_STORAGE_CONFIG_TOKEN';
 export const FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN = 'FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN';
 
+export const INCOMING_REQUEST_TIMEOUT_COPY_API_KEY = 'incomingRequestTimeoutCopyApiMs';
+
 @Configuration()
 export class FileStoragePublicApiConfig {
 	@IsNumber()
