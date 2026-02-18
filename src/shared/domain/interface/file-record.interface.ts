@@ -1,4 +1,3 @@
-import { FileRecordParentType } from '@modules/files-storage/domain/interface/file-storage-parent-type.enum';
 import { EntityId } from '@shared/domain/types';
 
 /**
@@ -20,5 +19,7 @@ export interface MultipleFileRecordIdentifier {
  */
 export interface ParentIdentifier {
 	parentId: EntityId;
-	parentType: FileRecordParentType;
+	// Only the keys of ParentIdentifier interface are used in the RequestLoggingLoggable class, so we can allow any type for parentType here without affecting type safety in that context.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	parentType: any;
 }

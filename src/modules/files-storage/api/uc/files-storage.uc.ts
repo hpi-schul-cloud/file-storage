@@ -16,7 +16,6 @@ import {
 	NotFoundException,
 	UnprocessableEntityException,
 } from '@nestjs/common';
-import { ParentIdentifier } from '@shared/domain/interface/file-record.interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -26,6 +25,7 @@ import internal from 'stream';
 import {
 	ErrorType,
 	FileRecord,
+	FileRecordParentType,
 	FilesStorageMapper,
 	FilesStorageService,
 	GetFileResponse,
@@ -58,6 +58,11 @@ export const FileStorageAuthorizationContext = {
 	update: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_EDIT]),
 	delete: AuthorizationContextBuilder.write([AuthorizationContextParamsRequiredPermissions.FILESTORAGE_REMOVE]),
 };
+
+export interface ParentInfo {
+	parentId: EntityId;
+	parentType: FileRecordParentType;
+}
 
 @Injectable()
 export class FilesStorageUC {
@@ -465,14 +470,14 @@ export class FilesStorageUC {
 	}
 
 	// private: permission checks
-	private async checkPermission(parentInfo: ParentIdentifier, context: AuthorizationContextParams): Promise<void> {
+	private async checkPermission(parentInfo: ParentInfo, context: AuthorizationContextParams): Promise<void> {
 		const { parentType, parentId } = parentInfo;
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
 	}
 
-	private async checkPermissions(parentInfo: ParentIdentifier[], context: AuthorizationContextParams): Promise<void> {
+	private async checkPermissions(parentInfo: ParentInfo[], context: AuthorizationContextParams): Promise<void> {
 		const references = parentInfo.map((info) => {
 			const { parentType, parentId } = info;
 			const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
@@ -483,7 +488,7 @@ export class FilesStorageUC {
 		await this.authorizationClientAdapter.checkPermissionsByManyReferences({ references });
 	}
 
-	private async checkDeletePermission(parentInfo: ParentIdentifier[]): Promise<void> {
+	private async checkDeletePermission(parentInfo: ParentInfo[]): Promise<void> {
 		await this.checkPermissions(parentInfo, FileStorageAuthorizationContext.delete);
 	}
 
