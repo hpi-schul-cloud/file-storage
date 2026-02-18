@@ -38,10 +38,6 @@ async function bootstrap(): Promise<void> {
 		logger.info(appStartLoggable);
 	});
 
-	console.log('#########################################');
-	console.log(`### Started Files Storage Server ###`);
-	console.log('#########################################');
-
 	appServer.requestTimeout = 0;
 
 	const metricsPort = 9090;
@@ -53,9 +49,5 @@ async function bootstrap(): Promise<void> {
 		logger.setContext('METRICS');
 		logger.info(appStartLoggable);
 	});
-
-	console.log('#########################################');
-	console.log(`### Started Metrics Server ###`);
-	console.log('#########################################');
 }
 void bootstrap();
