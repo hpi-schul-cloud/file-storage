@@ -21,8 +21,6 @@ import { CopyFileListResponse } from '../../dto';
 
 jest.mock('../../../domain/utils/detect-mime-type.utils');
 
-const createRndInt = (max: number) => Math.floor(Math.random() * max);
-
 describe('files-storage controller (API) - Copy Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
@@ -32,9 +30,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 
 	const baseRouteName = '/file';
 
-	beforeEach(async () => {
-		const appPort = 10000 + createRndInt(10000);
-
+	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			imports: [FilesStorageTestModule],
 		})
@@ -55,7 +51,6 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 
 		app = module.createNestApplication();
 		await app.init();
-		await app.listen(appPort);
 
 		testApiClient = new TestApiClient(app, baseRouteName);
 		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
@@ -106,7 +101,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 
 		describe('WHEN copy request exceeds server timeout', () => {
 			it('should handle server timeout and return REQUEST_TIMEOUT status', async () => {
-				requestTimeoutConfig.incomingRequestTimeoutCopyApiMs = 10;
+				requestTimeoutConfig.incomingRequestTimeoutCopyApiMs = 1;
 
 				const { loggedInClient, validId, copyFilesParams } = await setup();
 
