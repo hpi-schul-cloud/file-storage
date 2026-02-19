@@ -1,5 +1,4 @@
 import { ConfigProperty, Configuration } from '@infra/configuration';
-import { S3Config } from '@infra/s3-client';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
 import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
 
@@ -32,23 +31,23 @@ export class FileStorageConfig extends FileStoragePublicApiConfig {
 
 	@IsUrl({ require_tld: false })
 	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
-	filesStorageS3Endpoint = 'http://localhost:9000/';
+	endpoint = 'http://localhost:9000/';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_REGION')
-	filesStorageS3Region = 'eu-central-1';
+	region = 'eu-central-1';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_BUCKET')
-	filesStorageS3Bucket = 'schulcloud';
+	bucket = 'schulcloud';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_ACCESS_KEY_ID')
-	filesStorageS3AccessKeyId = 'miniouser';
+	accessKeyId = 'miniouser';
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
-	filesStorageS3SecretAccessKey = 'miniouser';
+	secretAccessKey = 'miniouser';
 
 	/**
 	 * @deprecated is config from wopi module, but we need it here until we refactor isCollaboraEditable logic
@@ -58,14 +57,3 @@ export class FileStorageConfig extends FileStoragePublicApiConfig {
 	@ConfigProperty('COLLABORA_MAX_FILE_SIZE_IN_BYTES')
 	collaboraMaxFileSizeInBytes = 104857600;
 }
-
-export const createS3ModuleOptions = (config: FileStorageConfig): S3Config => {
-	return {
-		connectionName: FILES_STORAGE_S3_CONNECTION,
-		endpoint: config.filesStorageS3Endpoint,
-		region: config.filesStorageS3Region,
-		bucket: config.filesStorageS3Bucket,
-		accessKeyId: config.filesStorageS3AccessKeyId,
-		secretAccessKey: config.filesStorageS3SecretAccessKey,
-	};
-};
