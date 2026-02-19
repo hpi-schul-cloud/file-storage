@@ -11,9 +11,12 @@ export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',
 }
 
-export interface ParentInfo {
+export interface ParentInfo extends ParentReference {
 	storageLocationId: EntityId;
 	storageLocation: StorageLocation;
+}
+
+export interface ParentReference {
 	parentId: EntityId;
 	parentType: FileRecordParentType;
 }
