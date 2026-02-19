@@ -1,66 +1,31 @@
+import { ConfigurationModule } from '@infra/configuration';
 import { DomainErrorHandler, ErrorModule } from '@infra/error';
 import { Logger, LoggerModule } from '@infra/logger';
-import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { S3Config } from './interface';
-import { S3_CLIENT_OPTIONS, S3ClientModuleAsyncOptions } from './interface/module-options.type';
-import { S3ClientAdapter } from './s3-client.adapter';
+import { DynamicModule, Module } from '@nestjs/common';
+import { S3ClientModuleOptions, S3Config } from './interface';
 import { S3ClientFactory } from './s3-client.factory';
 
 @Module({})
 export class S3ClientModule {
-	public static register(injectionToken: string, config: S3Config): DynamicModule {
+	public static register(options: S3ClientModuleOptions): DynamicModule {
 		const providers = [
 			{
-				provide: injectionToken,
-				useFactory: (
-					clientFactory: S3ClientFactory,
-					logger: Logger,
-					domainErrorHandler: DomainErrorHandler
-				): S3ClientAdapter => clientFactory.build(config, logger, domainErrorHandler),
-				inject: [S3ClientFactory, Logger, DomainErrorHandler],
+				provide: options.clientInjectionToken,
+				useFactory: (config: S3Config, logger: Logger, domainErrorHandler: DomainErrorHandler) =>
+					S3ClientFactory.build(config, logger, domainErrorHandler, options.clientInjectionToken),
+				inject: [options.configInjectionToken, Logger, DomainErrorHandler],
 			},
 		];
 
 		return {
 			module: S3ClientModule,
-			imports: [LoggerModule, ErrorModule],
-			providers: [...providers, S3ClientFactory],
+			imports: [
+				LoggerModule,
+				ErrorModule,
+				ConfigurationModule.register(options.configInjectionToken, options.configConstructor),
+			],
+			providers,
 			exports: providers,
 		};
-	}
-
-	public static registerAsync(options: S3ClientModuleAsyncOptions): DynamicModule {
-		const providers = [
-			{
-				provide: options.injectionToken,
-				useFactory: (
-					clientFactory: S3ClientFactory,
-					logger: Logger,
-					domainErrorHandler: DomainErrorHandler,
-					config: S3Config
-				): S3ClientAdapter => clientFactory.build(config, logger, domainErrorHandler),
-				inject: [S3ClientFactory, Logger, DomainErrorHandler, S3_CLIENT_OPTIONS],
-			},
-			S3ClientModule.createAsyncProviders(options),
-		];
-
-		return {
-			module: S3ClientModule,
-			imports: [LoggerModule, ErrorModule, ...(options.imports ?? [])],
-			providers: [...providers, S3ClientFactory],
-			exports: providers,
-		};
-	}
-
-	private static createAsyncProviders(options: S3ClientModuleAsyncOptions): Provider {
-		if (options.useFactory) {
-			return {
-				provide: S3_CLIENT_OPTIONS,
-				useFactory: options.useFactory,
-				inject: options.inject ?? [],
-			};
-		} else {
-			throw new Error('S3ClientModule: useFactory is required');
-		}
 	}
 }
