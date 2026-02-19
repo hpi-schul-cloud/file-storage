@@ -2,7 +2,7 @@ import { ConfigurationModule } from '@infra/configuration';
 import { defineConfig, EntityClass } from '@mikro-orm/mongodb';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Module } from '@nestjs/common';
-import { DatabaseConfig } from './database.config';
+import { DATABASE_CONFIG_TOKEN, DatabaseConfig } from './database.config';
 import { findOneOrFailHandler } from './database.not-found.error';
 
 @Module({})
@@ -15,16 +15,16 @@ export class DatabaseModule {
 					useFactory: (config: DatabaseConfig) => {
 						return defineConfig({
 							findOneOrFailHandler,
-							clientUrl: config.DB_URL,
-							password: config.DB_PASSWORD,
-							user: config.DB_USERNAME,
+							clientUrl: config.dbUrl,
+							password: config.dbPassword,
+							user: config.dbUsername,
 							entities,
-							ensureIndexes: config.DB_ENSURE_INDEXES,
-							debug: config.DB_DEBUG,
+							ensureIndexes: config.dbEnsureIndexes,
+							debug: config.dbDebug,
 						});
 					},
-					inject: [DatabaseConfig],
-					imports: [ConfigurationModule.register(DatabaseConfig)],
+					inject: [DATABASE_CONFIG_TOKEN],
+					imports: [ConfigurationModule.register(DATABASE_CONFIG_TOKEN, DatabaseConfig)],
 				}),
 			],
 			providers: [],

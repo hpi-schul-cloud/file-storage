@@ -13,21 +13,17 @@ import {
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough } from 'node:stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
+import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
 import {
 	CollaboraEditabilityStatus,
-	CopyFileResult,
-	FILE_RECORD_REPO,
-	FileRecordRepo,
 	FileRecordStatus,
 	FileRecordWithStatus,
-	GetFileResponse,
-	StorageLocationParams,
-} from '../interface';
+} from '../interface/file-record-status.interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { detectMimeTypeByStream, duplicateStream } from '../utils';
@@ -39,7 +35,7 @@ export class FilesStorageService {
 		@Inject(FILE_RECORD_REPO) private readonly fileRecordRepo: FileRecordRepo,
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
 		private readonly antivirusService: AntivirusService,
-		private readonly config: FileStorageConfig,
+		@Inject(FILE_STORAGE_CONFIG_TOKEN) private readonly config: FileStorageConfig,
 		private readonly logger: Logger,
 		private readonly domainErrorHandler: DomainErrorHandler
 	) {
@@ -106,9 +102,9 @@ export class FilesStorageService {
 
 	public getCollaboraEditabilityStatus(fileRecord: FileRecord): CollaboraEditabilityStatus {
 		const status = {
-			isCollaboraEditable: fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES),
+			isCollaboraEditable: fileRecord.isCollaboraEditable(this.config.collaboraMaxFileSizeInBytes),
 			exceedsCollaboraEditableFileSize: fileRecord.exceedsCollaboraEditableFileSize(
-				this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES
+				this.config.collaboraMaxFileSizeInBytes
 			),
 		};
 
@@ -160,7 +156,7 @@ export class FilesStorageService {
 	private checkFileLimitPerParent(count: number, additionalFiles = 1): void {
 		const totalFiles = count + additionalFiles;
 
-		if (totalFiles > this.config.FILES_STORAGE_MAX_FILES_PER_PARENT) {
+		if (totalFiles > this.config.filesStorageMaxFilesPerParent) {
 			throw new ForbiddenException(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
 		}
 	}
@@ -200,8 +196,8 @@ export class FilesStorageService {
 
 		fileRecord.markAsUploaded(
 			file.fileSize,
-			this.config.FILES_STORAGE_MAX_FILE_SIZE,
-			this.config.FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE
+			this.config.filesStorageMaxFileSize,
+			this.config.filesStorageMaxSecurityCheckFileSize
 		);
 		await this.fileRecordRepo.save(fileRecord);
 
@@ -240,9 +236,9 @@ export class FilesStorageService {
 	}
 
 	private shouldStreamToAntivirus(fileRecord: FileRecord): boolean {
-		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.collaboraMaxFileSizeInBytes);
 		const shouldStreamToAntiVirus =
-			this.config.FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS && (fileRecord.isPreviewPossible() || isCollaboraEditable);
+			this.config.filesStorageUseStreamToAntivirus && (fileRecord.isPreviewPossible() || isCollaboraEditable);
 
 		return shouldStreamToAntiVirus;
 	}

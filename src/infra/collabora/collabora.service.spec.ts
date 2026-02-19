@@ -6,7 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { axiosResponseFactory } from '@testing/factory/axios-response.factory';
 import { AxiosError } from 'axios';
 import { of, throwError } from 'rxjs';
-import { CollaboraConfig } from './collabora.config';
+import { COLLABORA_CONFIG_TOKEN, CollaboraConfig } from './collabora.config';
 import { CollaboraService } from './collabora.service';
 
 describe('CollaboraService', () => {
@@ -27,7 +27,7 @@ describe('CollaboraService', () => {
 			providers: [
 				CollaboraService,
 				{ provide: HttpService, useValue: httpService },
-				{ provide: CollaboraConfig, useValue: collaboraConfig },
+				{ provide: COLLABORA_CONFIG_TOKEN, useValue: collaboraConfig },
 			],
 		}).compile();
 
@@ -47,7 +47,7 @@ describe('CollaboraService', () => {
 					const xmlString = `<wopi-discovery><net-zone><app name='${mimeType}'><action urlsrc='${urlsrc}'/></app></net-zone></wopi-discovery>`;
 					const response = axiosResponseFactory.build({ data: xmlString, status: 200 });
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(of(response));
 
 					return {
@@ -71,7 +71,7 @@ describe('CollaboraService', () => {
 					const response = axiosResponseFactory.build({ data: '', status: 404 });
 					const error = new Error('Request failed. Status Code: 404');
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(of(response));
 
 					return {
@@ -97,7 +97,7 @@ describe('CollaboraService', () => {
 						locator: { lineNumber: 0 },
 					});
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(of(response));
 
 					return {
@@ -128,7 +128,7 @@ describe('CollaboraService', () => {
 					const response = axiosResponseFactory.build({ data: xmlString, status: 200 });
 					const error = new Error('Type is not an array with elements.');
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(of(response));
 
 					return {
@@ -153,7 +153,7 @@ describe('CollaboraService', () => {
 					const response = axiosResponseFactory.build({ data: xmlString, status: 200 });
 					const error = new Error('The requested mime type is not handled');
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(of(response));
 
 					return {
@@ -178,7 +178,7 @@ describe('CollaboraService', () => {
 					const mimeType = 'application/vnd.oasis.opendocument.text';
 					const error = new Error('Request failed');
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(throwError(() => error));
 
 					return {
@@ -201,7 +201,7 @@ describe('CollaboraService', () => {
 					const mimeType = 'application/vnd.oasis.opendocument.text';
 					const error = new AxiosError();
 
-					collaboraConfig.COLLABORA_ONLINE_URL = 'https://collabora.test';
+					collaboraConfig.collaboraOnlineUrl = 'https://collabora.test';
 					httpService.get.mockReturnValueOnce(throwError(() => error));
 
 					return {

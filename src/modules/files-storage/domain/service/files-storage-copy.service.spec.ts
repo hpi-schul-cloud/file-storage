@@ -6,7 +6,7 @@ import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FileRecordFactory } from '../factory';
@@ -43,10 +43,8 @@ describe('FilesStorageService copy methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: FileStorageConfig,
-					useValue: createMock<FileStorageConfig>({
-						FILES_STORAGE_MAX_FILES_PER_PARENT: 1000,
-					}),
+					provide: FILE_STORAGE_CONFIG_TOKEN,
+					useValue: createMock<FileStorageConfig>({ filesStorageMaxFilesPerParent: 1000 }),
 				},
 				{
 					provide: DomainErrorHandler,
@@ -59,7 +57,7 @@ describe('FilesStorageService copy methods', () => {
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
-		config = module.get(FileStorageConfig);
+		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 	});
 
 	beforeEach(() => {
@@ -159,9 +157,9 @@ describe('FilesStorageService copy methods', () => {
 				const sourceParentInfo = ParentInfoTestFactory.build();
 				const targetParentInfo = ParentInfoTestFactory.build();
 				const sourceFiles = fileRecordTestFactory().withParentInfo(sourceParentInfo).buildList(2);
-				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 				const maxFilesPerParent = 1;
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
 				fileRecordRepo.findByParentId.mockResolvedValueOnce([[], maxFilesPerParent]);
 
@@ -175,7 +173,7 @@ describe('FilesStorageService copy methods', () => {
 					new ForbiddenException(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED)
 				);
 
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 			});
 		});
 

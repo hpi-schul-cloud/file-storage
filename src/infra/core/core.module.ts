@@ -10,10 +10,10 @@ import { GlobalValidationPipe } from './pipe';
  */
 @Module({})
 export class CoreModule {
-	public static register<T extends object>(Constructor: new () => T): DynamicModule {
+	public static register<T extends object>(injectionToken: string, Constructor: new () => T): DynamicModule {
 		return {
 			module: CoreModule,
-			imports: [ConfigurationModule.register(Constructor)],
+			imports: [ConfigurationModule.register(injectionToken, Constructor)],
 			providers: [
 				{
 					provide: APP_PIPE,
@@ -26,7 +26,7 @@ export class CoreModule {
 				{
 					provide: APP_INTERCEPTOR,
 					useFactory: (config: TimeoutInterceptorConfig): TimeoutInterceptor => new TimeoutInterceptor(config),
-					inject: [Constructor],
+					inject: [injectionToken],
 				},
 			],
 		};

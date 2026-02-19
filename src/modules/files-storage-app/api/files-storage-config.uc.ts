@@ -1,20 +1,24 @@
-import { FileStorageConfig } from '@modules/files-storage';
-import { WopiPublicApiConfig } from '@modules/wopi';
-import { Injectable } from '@nestjs/common';
+import {
+	FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN,
+	FileStoragePublicApiConfig,
+} from '@modules/files-storage/files-storage.config';
+import { WOPI_PUBLIC_API_CONFIG_TOKEN, WopiPublicApiConfig } from '@modules/wopi';
+import { Inject, Injectable } from '@nestjs/common';
 import { FilesStorageConfigResponse } from './dto';
 import { ConfigResponseMapper } from './mapper.ts';
 
 @Injectable()
 export class FilesStorageConfigUc {
 	constructor(
-		private readonly wopiConfig: WopiPublicApiConfig,
-		private readonly filesStorageConfig: FileStorageConfig
+		@Inject(WOPI_PUBLIC_API_CONFIG_TOKEN) private readonly wopiConfig: WopiPublicApiConfig,
+		@Inject(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN) private readonly filesStorageConfig: FileStoragePublicApiConfig
 	) {}
 
 	public getPublicConfig(): FilesStorageConfigResponse {
-		const maxFileSize = this.filesStorageConfig.FILES_STORAGE_MAX_FILE_SIZE;
-		const collaboraMaxFileSize = this.wopiConfig.COLLABORA_MAX_FILE_SIZE_IN_BYTES;
-		const maxFilesPerParent = this.filesStorageConfig.FILES_STORAGE_MAX_FILES_PER_PARENT;
+		const maxFileSize = this.filesStorageConfig.filesStorageMaxFileSize;
+		const collaboraMaxFileSize = this.wopiConfig.collaboraMaxFileSizeInBytes;
+		const maxFilesPerParent = this.filesStorageConfig.filesStorageMaxFilesPerParent;
+
 		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize, collaboraMaxFileSize, maxFilesPerParent);
 
 		return configResponse;

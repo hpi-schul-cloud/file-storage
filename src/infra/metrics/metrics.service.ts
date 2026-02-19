@@ -1,10 +1,10 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { collectDefaultMetrics, Gauge, Histogram, register } from 'prom-client';
-import { MetricConfig } from './metrics.config';
+import { METRIC_CONFIG_TOKEN, MetricConfig } from './metrics.config';
 
 @Injectable()
 export class MetricsService implements OnModuleInit {
-	constructor(private readonly config: MetricConfig) {}
+	constructor(@Inject(METRIC_CONFIG_TOKEN) private readonly config: MetricConfig) {}
 
 	private static maxConcurrentUploads = 0;
 	private static currentUploadsCount = 0;
@@ -12,7 +12,7 @@ export class MetricsService implements OnModuleInit {
 	private static currentDownloadsCount = 0;
 
 	public onModuleInit(): void {
-		if (this.config.COLLECT_DEFAULT_METRICS) {
+		if (this.config.collectDefaultMetrics) {
 			collectDefaultMetrics();
 		}
 	}
@@ -45,6 +45,7 @@ export class MetricsService implements OnModuleInit {
 
 	public async getMetrics(): Promise<string> {
 		const metrics = await register.metrics();
+
 		return metrics;
 	}
 
@@ -83,5 +84,4 @@ export class MetricsService implements OnModuleInit {
 			this.maxConcurrentDownloadsGauge.set(this.maxConcurrentDownloads);
 		}
 	}
-
 }

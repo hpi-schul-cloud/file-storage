@@ -12,7 +12,11 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, ScanStatus } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
+import {
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	FileStorageConfig,
+} from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
 import { availableParentTypes } from './mocks';
@@ -46,7 +50,7 @@ describe('files-storage controller (API)', () => {
 			.useValue(createMock<NodeClam>())
 			.overrideProvider(AuthorizationClientAdapter)
 			.useValue(createMock<AuthorizationClientAdapter>())
-			.overrideProvider(FileStorageConfig)
+			.overrideProvider(FILE_STORAGE_CONFIG_TOKEN)
 			.useValue(new FileStorageConfig())
 			.compile();
 
@@ -56,7 +60,7 @@ describe('files-storage controller (API)', () => {
 
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
-		config = module.get(FileStorageConfig);
+		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -245,15 +249,15 @@ describe('files-storage controller (API)', () => {
 			let defaultMaxFilesPerParent: number;
 
 			afterEach(() => {
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 			});
 
 			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
 				const { loggedInClient, validId } = setup();
 
-				defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 				const maxFilesPerParent = 0;
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
 				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				expect(response.status).toEqual(403);
@@ -625,16 +629,16 @@ describe('files-storage controller (API)', () => {
 						},
 					};
 
-					defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+					defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 					const maxFilesPerParent = 0;
 
-					config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+					config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
 					return { validId, fileId, loggedInClient, body, user: studentUser };
 				};
 
 				afterEach(() => {
-					config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+					config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 				});
 
 				it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {

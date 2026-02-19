@@ -1,5 +1,8 @@
-export interface TimeoutInterceptorConfig {
-	[key: string]: number;
+export interface CoreTimeoutInterceptorConfig {
+	coreIncomingRequestTimeoutMs: number;
+}
 
-	CORE_INCOMING_REQUEST_TIMEOUT_MS: number;
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+export interface TimeoutInterceptorConfig extends CoreTimeoutInterceptorConfig {
+	[key: string]: number;
 }

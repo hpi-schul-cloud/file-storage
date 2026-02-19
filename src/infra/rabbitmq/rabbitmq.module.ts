@@ -1,7 +1,7 @@
 import { AmqpConnectionManager, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigurationModule } from '@infra/configuration';
 import { DynamicModule, Global, Module, OnModuleDestroy } from '@nestjs/common';
-import { RabbitMqConfig } from './rabbitmq.config';
+import { RABBITMQ_CONFIG_TOKEN, RabbitMqConfig } from './rabbitmq.config';
 
 /**
  * https://www.npmjs.com/package/@golevelup/nestjs-rabbitmq#usage
@@ -19,18 +19,18 @@ export class RabbitMQWrapperModule {
 			imports: [
 				RabbitMQModule.forRootAsync({
 					useFactory: (config: RabbitMqConfig) => ({
-						prefetchCount: config.RABBITMQ_GLOBAL_PREFETCH_COUNT,
+						prefetchCount: config.rabbitmqGlobalPrefetchCount,
 						exchanges: exchanges.map((exchange) => ({
 							name: exchange,
 							type: 'direct',
 						})),
-						uri: config.RABBITMQ_URI,
+						uri: config.rabbitmqUri,
 						connectionManagerOptions: {
-							heartbeatIntervalInSeconds: config.RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS,
+							heartbeatIntervalInSeconds: config.rabbitmqHeartbeatIntervalInSeconds,
 						},
 					}),
-					inject: [RabbitMqConfig],
-					imports: [ConfigurationModule.register(RabbitMqConfig)],
+					inject: [RABBITMQ_CONFIG_TOKEN],
+					imports: [ConfigurationModule.register(RABBITMQ_CONFIG_TOKEN, RabbitMqConfig)],
 				}),
 			],
 			exports: [RabbitMQModule],
@@ -41,17 +41,17 @@ export class RabbitMQWrapperModule {
 @Global()
 @Module({
 	imports: [
-		ConfigurationModule.register(RabbitMqConfig),
+		ConfigurationModule.register(RABBITMQ_CONFIG_TOKEN, RabbitMqConfig),
 		RabbitMQModule.forRootAsync({
 			useFactory: (config: RabbitMqConfig) => ({
-				prefetchCount: config.RABBITMQ_GLOBAL_PREFETCH_COUNT,
-				uri: config.RABBITMQ_URI,
+				prefetchCount: config.rabbitmqGlobalPrefetchCount,
+				uri: config.rabbitmqUri,
 				connectionManagerOptions: {
-					heartbeatIntervalInSeconds: config.RABBITMQ_HEARTBEAT_INTERVAL_IN_SECONDS,
+					heartbeatIntervalInSeconds: config.rabbitmqHeartbeatIntervalInSeconds,
 				},
 			}),
-			inject: [RabbitMqConfig],
-			imports: [ConfigurationModule.register(RabbitMqConfig)],
+			inject: [RABBITMQ_CONFIG_TOKEN],
+			imports: [ConfigurationModule.register(RABBITMQ_CONFIG_TOKEN, RabbitMqConfig)],
 		}),
 	],
 	exports: [RabbitMQModule],

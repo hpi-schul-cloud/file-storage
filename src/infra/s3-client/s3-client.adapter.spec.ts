@@ -45,7 +45,7 @@ describe(S3ClientAdapter.name, () => {
 				},
 			},
 		});
-		service = new S3ClientAdapter(client, configuration, logger, errorHandler);
+		service = new S3ClientAdapter(client, configuration, logger, errorHandler, 'clientInjectionToken');
 	});
 
 	afterEach(() => {

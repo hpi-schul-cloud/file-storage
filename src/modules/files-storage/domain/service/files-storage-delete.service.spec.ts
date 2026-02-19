@@ -5,7 +5,7 @@ import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FileRecord, FileRecordProps } from '../file-record.do';
@@ -42,7 +42,7 @@ describe('FilesStorageService delete methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: FileStorageConfig,
+					provide: FILE_STORAGE_CONFIG_TOKEN,
 					useValue: createMock<FileStorageConfig>(),
 				},
 				{

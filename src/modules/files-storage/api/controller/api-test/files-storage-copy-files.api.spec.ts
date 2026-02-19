@@ -12,7 +12,11 @@ import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, FileRecordParentType, StorageLocation } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
+import {
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	FileStorageConfig,
+} from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
 import { availableParentTypes } from './mocks';
@@ -39,14 +43,14 @@ describe(`${baseRouteName} (api)`, () => {
 			.useValue(createMock<NodeClam>())
 			.overrideProvider(AuthorizationClientAdapter)
 			.useValue(createMock<AuthorizationClientAdapter>())
-			.overrideProvider(FileStorageConfig)
+			.overrideProvider(FILE_STORAGE_CONFIG_TOKEN)
 			.useValue(new FileStorageConfig())
 			.compile();
 
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		config = module.get(FileStorageConfig);
+		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -236,15 +240,15 @@ describe(`${baseRouteName} (api)`, () => {
 					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
 
 				// Now set the limit to 0 to block the copy operation
-				defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 				const maxFilesPerParent = 0;
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
 				return { validId, copyFilesParams, loggedInClient };
 			};
 
 			afterEach(() => {
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 			});
 
 			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
@@ -431,15 +435,15 @@ describe(`${baseRouteName} (api)`, () => {
 				const fileRecordId = response.id;
 
 				// Now set the limit to 0 to block the copy operation
-				defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 				const maxFilesPerParent = 0;
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
 				return { fileRecordId, copyFileParams, loggedInClient };
 			};
 
 			afterEach(() => {
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 			});
 
 			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {

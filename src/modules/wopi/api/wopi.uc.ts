@@ -8,11 +8,11 @@ import {
 import { CollaboraService } from '@infra/collabora';
 import { Logger } from '@infra/logger';
 import { FileRecord, FilesStorageMapper, GetFileResponse } from '@modules/files-storage';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types';
 import { Request } from 'express';
 import { AuthorizedCollaboraDocumentUrlFactory, WopiPayload, WopiPayloadFactory, WopiService } from '../domain';
-import { WopiConfig } from '../wopi.config';
+import { WOPI_CONFIG_TOKEN, WopiConfig } from '../wopi.config';
 import {
 	AuthorizedCollaboraDocumentUrlParams,
 	AuthorizedCollaboraDocumentUrlResponse,
@@ -29,7 +29,7 @@ export class WopiUc {
 		private readonly logger: Logger,
 		private readonly collaboraService: CollaboraService,
 		private readonly wopiService: WopiService,
-		private readonly config: WopiConfig
+		@Inject(WOPI_CONFIG_TOKEN) private readonly config: WopiConfig
 	) {
 		this.logger.setContext(WopiUc.name);
 	}
@@ -54,7 +54,7 @@ export class WopiUc {
 		const payload = this.buildWopiPayload(userId, params);
 		const accessToken = await this.checkPermissionAndCreateAccessToken(fileRecord, params, payload);
 		const collaboraUrl = await this.collaboraService.discoverUrl(fileRecord.mimeType);
-		const wopiUrl = this.config.WOPI_URL;
+		const wopiUrl = this.config.wopiUrl;
 
 		const url = AuthorizedCollaboraDocumentUrlFactory.buildFromParams(
 			collaboraUrl,
@@ -77,7 +77,7 @@ export class WopiUc {
 		const response = WopiFileInfoResponseFactory.buildFromFileRecordAndUser(
 			fileRecord,
 			wopiUser,
-			this.config.WOPI_POST_MESSAGE_ORIGIN
+			this.config.wopiPostMessageOrigin
 		);
 
 		return response;
@@ -103,7 +103,7 @@ export class WopiUc {
 	private async resolveWopiPayloadByToken(wopiToken: WopiAccessTokenParams): Promise<WopiPayload> {
 		const result = await this.authorizationClientAdapter.resolveToken(
 			wopiToken.access_token,
-			this.config.WOPI_TOKEN_TTL_IN_SECONDS
+			this.config.wopiTokenTtlInSeconds
 		);
 		const payload = WopiPayloadFactory.buildFromUnknownObject(result.payload);
 
@@ -124,7 +124,7 @@ export class WopiUc {
 			referenceId: parentId,
 			context: authorizationContext,
 			payload,
-			tokenTtlInSeconds: this.config.WOPI_TOKEN_TTL_IN_SECONDS,
+			tokenTtlInSeconds: this.config.wopiTokenTtlInSeconds,
 		});
 
 		return accessToken;
@@ -142,7 +142,7 @@ export class WopiUc {
 	}
 
 	public ensureWopiEnabled(): void {
-		if (!this.config.FEATURE_COLUMN_BOARD_COLLABORA_ENABLED) {
+		if (!this.config.featureColumnBoardCollaboraEnabled) {
 			throw new NotFoundException('WOPI feature is disabled.');
 		}
 	}

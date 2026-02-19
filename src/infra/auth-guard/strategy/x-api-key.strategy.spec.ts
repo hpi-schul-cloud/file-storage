@@ -1,6 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { XApiKeyConfig } from '../x-api-key.config';
+import { X_API_KEY_CONFIG_TOKEN, XApiKeyConfig } from '../x-api-key.config';
 import { XApiKeyStrategy } from './x-api-key.strategy';
 
 describe('XApiKeyStrategy', () => {
@@ -14,16 +14,16 @@ describe('XApiKeyStrategy', () => {
 			providers: [
 				XApiKeyStrategy,
 				{
-					provide: XApiKeyConfig,
+					provide: X_API_KEY_CONFIG_TOKEN,
 					useValue: {
-						X_API_ALLOWED_KEYS: ['7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4'],
+						xApiAllowedKeys: ['7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4'],
 					},
 				},
 			],
 		}).compile();
 
 		strategy = module.get(XApiKeyStrategy);
-		config = module.get(XApiKeyConfig);
+		config = module.get(X_API_KEY_CONFIG_TOKEN);
 	});
 
 	afterAll(async () => {

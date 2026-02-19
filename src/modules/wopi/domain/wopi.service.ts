@@ -1,13 +1,13 @@
 import { FileDtoFactory, FileRecord, FilesStorageService, GetFileResponse } from '@modules/files-storage';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EntityId } from '@shared/domain/types/entity-id';
 import { Readable } from 'node:stream';
-import { WopiConfig } from '../wopi.config';
+import { WOPI_CONFIG_TOKEN, WopiConfig } from '../wopi.config';
 
 @Injectable()
 export class WopiService {
 	constructor(
-		private readonly config: WopiConfig,
+		@Inject(WOPI_CONFIG_TOKEN) private readonly config: WopiConfig,
 		private readonly filesStorageService: FilesStorageService
 	) {}
 
@@ -34,7 +34,7 @@ export class WopiService {
 	}
 
 	public throwIfNotCollaboraEditable(fileRecord: FileRecord): void {
-		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.COLLABORA_MAX_FILE_SIZE_IN_BYTES);
+		const isCollaboraEditable = fileRecord.isCollaboraEditable(this.config.collaboraMaxFileSizeInBytes);
 
 		if (!isCollaboraEditable) {
 			throw new NotFoundException(

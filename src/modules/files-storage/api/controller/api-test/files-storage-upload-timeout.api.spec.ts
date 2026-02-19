@@ -1,9 +1,12 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { RequestTimeoutConfig } from '@modules/files-storage-app/files-storage-app.config';
+import {
+	FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN,
+	RequestTimeoutConfig,
+} from '@modules/files-storage-app/files-storage-app.config';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -21,7 +24,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
 	let testApiClient: TestApiClient;
-	let requestTimeoutConfig: DeepMocked<RequestTimeoutConfig>;
+	let requestTimeoutConfig: RequestTimeoutConfig;
 
 	const baseRouteName = '/file';
 
@@ -39,10 +42,10 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 			.useValue(createMock<NodeClam>())
 			.overrideProvider(AuthorizationClientAdapter)
 			.useValue(createMock<AuthorizationClientAdapter>())
-			.overrideProvider(RequestTimeoutConfig)
+			.overrideProvider(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN)
 			.useValue({
-				CORE_INCOMING_REQUEST_TIMEOUT_MS: 15,
-				INCOMING_REQUEST_TIMEOUT_COPY_API_MS: 100,
+				coreIncomingRequestTimeoutMs: 15,
+				incomingRequestTimeoutCopyApiMs: 100,
 			})
 			.compile();
 
@@ -51,7 +54,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 		await app.listen(appPort);
 
 		testApiClient = new TestApiClient(app, baseRouteName);
-		requestTimeoutConfig = module.get(RequestTimeoutConfig);
+		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
 	});
 
 	afterAll(async () => {
@@ -117,7 +120,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 			it('should handle server timeout and return REQUEST_TIMEOUT status', async () => {
 				const { loggedInClient, validId } = setup();
 
-				// Server has CORE_INCOMING_REQUEST_TIMEOUT_MS set to 15ms
+				// Server has coreIncomingRequestTimeoutMs set to 15ms
 				// Create a buffer that will trigger server timeout due to processing time
 				const buffer = Buffer.alloc(2 * 1024 * 1024, 'A'); // 2MB
 
@@ -167,7 +170,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 		describe('WHEN upload request completes within timeout', () => {
 			it('should successfully upload small file within timeout limits', async () => {
 				// Temporarily override server timeout to be longer
-				requestTimeoutConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 5000; // 5 seconds
+				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 5000; // 5 seconds
 
 				const { loggedInClient, validId } = setup();
 
@@ -189,7 +192,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 		describe('WHEN testing timeout boundaries', () => {
 			it('should timeout exactly at the configured server timeout value', async () => {
 				// Set a very specific timeout value for precise testing before setup
-				requestTimeoutConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 10; // Very short timeout
+				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 10; // Very short timeout
 
 				const { loggedInClient, validId } = setup();
 
@@ -217,7 +220,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 
 			it('should handle upload when server timeout is longer than upload duration', async () => {
 				// Set a longer timeout to allow upload to complete
-				requestTimeoutConfig.CORE_INCOMING_REQUEST_TIMEOUT_MS = 5000; // 5 seconds
+				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 5000; // 5 seconds
 
 				const { loggedInClient, validId } = setup();
 

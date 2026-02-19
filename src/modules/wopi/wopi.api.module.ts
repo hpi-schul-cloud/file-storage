@@ -1,13 +1,13 @@
 import { AuthGuardModule, AuthGuardOptions } from '@infra/auth-guard';
 import { AuthorizationClientModule } from '@infra/authorization-client';
 import { CollaboraModule } from '@infra/collabora';
+import { ConfigurationModule } from '@infra/configuration';
 import { ErrorModule } from '@infra/error';
 import { LoggerModule } from '@infra/logger';
 import { Module } from '@nestjs/common';
 import { WopiController, WopiUc } from './api';
-import { WopiConfig } from './wopi.config';
+import { WOPI_CONFIG_TOKEN, WOPI_PUBLIC_API_CONFIG_TOKEN, WopiConfig, WopiPublicApiConfig } from './wopi.config';
 import { WopiModule } from './wopi.module';
-import { ConfigurationModule } from '@infra/configuration';
 
 const imports = [
 	WopiModule,
@@ -16,7 +16,8 @@ const imports = [
 	CollaboraModule,
 	AuthGuardModule.register([AuthGuardOptions.JWT]),
 	AuthorizationClientModule.register(),
-	ConfigurationModule.register(WopiConfig),
+	ConfigurationModule.register(WOPI_CONFIG_TOKEN, WopiConfig),
+	ConfigurationModule.register(WOPI_PUBLIC_API_CONFIG_TOKEN, WopiPublicApiConfig),
 ];
 const providers = [WopiUc];
 const controllers = [WopiController];
@@ -25,6 +26,6 @@ const controllers = [WopiController];
 	imports,
 	providers,
 	controllers,
-	exports: [],
+	exports: [ConfigurationModule.register(WOPI_PUBLIC_API_CONFIG_TOKEN, WopiPublicApiConfig)],
 })
 export class WopiApiModule {}

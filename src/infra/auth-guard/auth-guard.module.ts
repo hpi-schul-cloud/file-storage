@@ -1,9 +1,9 @@
 import { ConfigurationModule } from '@infra/configuration';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { AuthGuardConfig } from './auth-guard.config';
+import { AUTH_GUARD_CONFIG_TOKEN, AuthGuardConfig } from './auth-guard.config';
 import { JwtStrategy, XApiKeyStrategy } from './strategy';
-import { XApiKeyConfig } from './x-api-key.config';
+import { X_API_KEY_CONFIG_TOKEN, XApiKeyConfig } from './x-api-key.config';
 
 export enum AuthGuardOptions {
 	JWT = 'jwt',
@@ -18,12 +18,12 @@ export class AuthGuardModule {
 
 		if (options.includes(AuthGuardOptions.JWT)) {
 			providers.push(JwtStrategy);
-			imports.push(ConfigurationModule.register(AuthGuardConfig));
+			imports.push(ConfigurationModule.register(AUTH_GUARD_CONFIG_TOKEN, AuthGuardConfig));
 		}
 
 		if (options.includes(AuthGuardOptions.X_API_KEY)) {
 			providers.push(XApiKeyStrategy);
-			imports.push(ConfigurationModule.register(XApiKeyConfig));
+			imports.push(ConfigurationModule.register(X_API_KEY_CONFIG_TOKEN, XApiKeyConfig));
 		}
 
 		return {

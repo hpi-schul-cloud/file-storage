@@ -4,17 +4,17 @@ import { utilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { ErrorLogger } from './error-logger';
 import { Logger } from './logger';
-import { LoggerConfig } from './logger.config';
+import { LOGGER_CONFIG_TOKEN, LoggerConfig } from './logger.config';
 
 @Module({
 	imports: [
 		WinstonModule.forRootAsync({
-			imports: [ConfigurationModule.register(LoggerConfig)],
+			imports: [ConfigurationModule.register(LOGGER_CONFIG_TOKEN, LoggerConfig)],
 			useFactory: (config: LoggerConfig) => {
 				return {
 					levels: winston.config.syslog.levels,
-					level: config.LOGGER_LOG_LEVEL,
-					exitOnError: config.LOGGER_EXIT_ON_ERROR,
+					level: config.loggerLogLevel,
+					exitOnError: config.loggerExitOnError,
 					transports: [
 						new winston.transports.Console({
 							handleExceptions: true,
@@ -28,7 +28,7 @@ import { LoggerConfig } from './logger.config';
 					],
 				};
 			},
-			inject: [LoggerConfig],
+			inject: [LOGGER_CONFIG_TOKEN],
 		}),
 	],
 	providers: [Logger, ErrorLogger],

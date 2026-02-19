@@ -29,6 +29,7 @@ import { ApiConsumes, ApiHeader, ApiOperation, ApiProduces, ApiResponse, ApiTags
 import { RequestTimeout } from '@shared/decorator';
 import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
+import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '../../files-storage.config';
 import {
 	ArchiveFileParams,
 	CopyFileListResponse,
@@ -332,7 +333,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@RequestTimeout('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
+	@RequestTimeout(INCOMING_REQUEST_TIMEOUT_COPY_API_KEY)
 	@Post('/copy/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async copy(
 		@Param() params: FileRecordParams,

@@ -1,25 +1,32 @@
-import { Configuration } from '@infra/configuration';
+import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToBoolean } from '@shared/transformer';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
+
+export const DATABASE_CONFIG_TOKEN = 'DATABASE_CONFIG_TOKEN';
 
 @Configuration()
 export class DatabaseConfig {
 	@IsString()
-	DB_URL!: string;
+	@ConfigProperty('DB_URL')
+	dbUrl!: string;
 
 	@IsString()
 	@IsOptional()
-	DB_USERNAME!: string;
+	@ConfigProperty('DB_USERNAME')
+	dbUsername!: string;
 
 	@IsString()
 	@IsOptional()
-	DB_PASSWORD!: string;
+	@ConfigProperty('DB_PASSWORD')
+	dbPassword!: string;
 
 	@IsBoolean()
 	@StringToBoolean()
-	DB_ENSURE_INDEXES = true;
+	@ConfigProperty('DB_ENSURE_INDEXES')
+	dbEnsureIndexes = true;
 
 	@IsBoolean()
 	@StringToBoolean()
-	DB_DEBUG = false;
+	@ConfigProperty('DB_DEBUG')
+	dbDebug = false;
 }

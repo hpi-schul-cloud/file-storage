@@ -1,16 +1,16 @@
 import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { Document, DOMParser, Element, LiveNodeList } from '@xmldom/xmldom';
 import { isAxiosError } from 'axios';
 import { lastValueFrom } from 'rxjs';
-import { CollaboraConfig } from './collabora.config';
+import { COLLABORA_CONFIG_TOKEN, CollaboraConfig } from './collabora.config';
 
 @Injectable()
 export class CollaboraService {
 	constructor(
-		private readonly collaboraConfig: CollaboraConfig,
+		@Inject(COLLABORA_CONFIG_TOKEN) private readonly collaboraConfig: CollaboraConfig,
 		private readonly httpService: HttpService
 	) {}
 
@@ -28,7 +28,7 @@ export class CollaboraService {
 	}
 
 	private getCollaboraOnlineUrl(): string {
-		return this.collaboraConfig.COLLABORA_ONLINE_URL;
+		return this.collaboraConfig.collaboraOnlineUrl;
 	}
 
 	private handleDiscoveryError(error: unknown): never {

@@ -1,7 +1,12 @@
-import { Configuration } from '@infra/configuration';
+import { ConfigProperty, Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
+import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '@modules/files-storage';
 import { StringToNumber } from '@shared/transformer';
 import { IsNumber } from 'class-validator';
+
+export const FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN = 'FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN';
+export const FILES_STORAGE_AMQP_APP_REQUEST_TIMEOUT_CONFIG_TOKEN =
+	'FILES_STORAGE_AMQP_APP_REQUEST_TIMEOUT_CONFIG_TOKEN';
 
 @Configuration()
 export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
@@ -9,9 +14,11 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 
 	@IsNumber()
 	@StringToNumber()
-	CORE_INCOMING_REQUEST_TIMEOUT_MS!: number;
+	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
+	coreIncomingRequestTimeoutMs!: number;
 
 	@IsNumber()
 	@StringToNumber()
-	INCOMING_REQUEST_TIMEOUT_COPY_API_MS!: number;
+	@ConfigProperty('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
+	[INCOMING_REQUEST_TIMEOUT_COPY_API_KEY]!: number;
 }

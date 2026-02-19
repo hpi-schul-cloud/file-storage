@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
@@ -54,13 +54,14 @@ describe('FilesStorageService upload methods', () => {
 					useValue: createMock<AntivirusService>(),
 				},
 				{
-					provide: FileStorageConfig,
-					useValue: {
-						FILES_STORAGE_MAX_FILE_SIZE: 10000,
-						FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE: 10000,
-						FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS: false,
-						COLLABORA_MAX_FILE_SIZE_IN_BYTES: 100,
-					},
+					provide: FILE_STORAGE_CONFIG_TOKEN,
+					useValue: createMock<FileStorageConfig>({
+						filesStorageMaxFileSize: 10000,
+						filesStorageMaxSecurityCheckFileSize: 10000,
+						filesStorageUseStreamToAntivirus: false,
+						collaboraMaxFileSizeInBytes: 100,
+						filesStorageMaxFilesPerParent: 1000,
+					}),
 				},
 				{
 					provide: DomainErrorHandler,
@@ -73,7 +74,7 @@ describe('FilesStorageService upload methods', () => {
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
-		config = module.get(FileStorageConfig);
+		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 		logger = module.get(Logger);
 	});
 
@@ -164,7 +165,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should call fileRecordRepo.save twice with correct params', async () => {
 				const { params, file, userId } = setup();
 
-				jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+				jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 				const markAsUploadingSpy = jest.spyOn(FileRecord.prototype, 'markAsUploading');
 				const markAsUploadedSpy = jest.spyOn(FileRecord.prototype, 'markAsUploaded');
 				const result = await service.uploadFile(userId, params, file);
@@ -209,7 +210,7 @@ describe('FilesStorageService upload methods', () => {
 				describe('when useStreamToAntivirus is true', () => {
 					it('should call antivirusService.scanStream with PassThrough stream', async () => {
 						const { params, file, userId } = setup();
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 
 						await service.uploadFile(userId, params, file);
 
@@ -220,7 +221,7 @@ describe('FilesStorageService upload methods', () => {
 				describe('when useStreamToAntivirus is false', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const { params, file, userId } = setup();
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
 						const fileRecord = await service.uploadFile(userId, params, file);
 
@@ -233,10 +234,10 @@ describe('FilesStorageService upload methods', () => {
 		describe('WHEN parent already has maximum number of files', () => {
 			const setup = () => {
 				const { params, file, userId } = createUploadFileParams();
-				const defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 				const maxFilesPerParent = 0;
 
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 				fileRecordRepo.findByParentId.mockResolvedValueOnce([[], maxFilesPerParent]);
 
 				return { params, file, userId, defaultMaxFilesPerParent };
@@ -249,7 +250,7 @@ describe('FilesStorageService upload methods', () => {
 					new ForbiddenException(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED)
 				);
 
-				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+				config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 			});
 		});
 
@@ -303,7 +304,7 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
 				fileRecordRepo.save.mockResolvedValue(Promise.resolve());
-				jest.replaceProperty(config, 'FILES_STORAGE_MAX_FILE_SIZE', 2);
+				jest.replaceProperty(config, 'filesStorageMaxFileSize', 2);
 
 				return { params, file, userId };
 			};
@@ -323,7 +324,7 @@ describe('FilesStorageService upload methods', () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams();
 
 				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
-				jest.replaceProperty(config, 'FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE', 2);
+				jest.replaceProperty(config, 'filesStorageMaxSecurityCheckFileSize', 2);
 				fileRecordRepo.save.mockResolvedValue(Promise.resolve());
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
 
@@ -498,7 +499,7 @@ describe('FilesStorageService upload methods', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const file = passThroughFileDtoTestFactory().asPng().build();
 						const { fileRecord } = setup(file);
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 
 						await service.updateFileContents(fileRecord, file);
 
@@ -511,7 +512,7 @@ describe('FilesStorageService upload methods', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const file = passThroughFileDtoTestFactory().asText().build();
 						const { fileRecord } = setup(file);
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 
 						await service.updateFileContents(fileRecord, file);
 
@@ -524,7 +525,7 @@ describe('FilesStorageService upload methods', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const file = passThroughFileDtoTestFactory().asAac().build();
 						const { fileRecord } = setup(file);
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 
 						await service.updateFileContents(fileRecord, file);
 
@@ -537,7 +538,7 @@ describe('FilesStorageService upload methods', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const file = passThroughFileDtoTestFactory().asPng().build();
 						const { fileRecord } = setup(file);
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
 						await service.updateFileContents(fileRecord, file);
 
@@ -550,7 +551,7 @@ describe('FilesStorageService upload methods', () => {
 					it('should call antivirusService.send with fileRecord', async () => {
 						const file = passThroughFileDtoTestFactory().asText().build();
 						const { fileRecord } = setup(file);
-						jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+						jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
 						await service.updateFileContents(fileRecord, file);
 
@@ -564,7 +565,7 @@ describe('FilesStorageService upload methods', () => {
 		describe('WHEN storageClient throws error', () => {
 			describe('when useStreamToAntivirus is true', () => {
 				const setup = () => {
-					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+					jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 
 					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
@@ -590,7 +591,7 @@ describe('FilesStorageService upload methods', () => {
 
 			describe('when useStreamToAntivirus is false', () => {
 				const setup = () => {
-					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+					jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
 					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
@@ -623,7 +624,7 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN file is too big', () => {
 			const setup = () => {
-				jest.replaceProperty(config, 'FILES_STORAGE_MAX_FILE_SIZE', 0);
+				jest.replaceProperty(config, 'filesStorageMaxFileSize', 0);
 
 				const file = passThroughFileDtoTestFactory().asPng().build();
 				const fileRecord = fileRecordTestFactory().build(file);
@@ -645,7 +646,7 @@ describe('FilesStorageService upload methods', () => {
 
 		describe('WHEN file size is bigger than maxSecurityCheckFileSize', () => {
 			const setup = () => {
-				jest.replaceProperty(config, 'FILES_STORAGE_MAX_SECURITY_CHECK_FILE_SIZE', 0);
+				jest.replaceProperty(config, 'filesStorageMaxSecurityCheckFileSize', 0);
 
 				const file = passThroughFileDtoTestFactory().asPng().build();
 				const fileRecord = fileRecordTestFactory().build(file);
@@ -681,7 +682,7 @@ describe('FilesStorageService upload methods', () => {
 		describe('WHEN antivirusService throws error', () => {
 			describe('when useStreamToAntivirus is true', () => {
 				const setup = () => {
-					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', true);
+					jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', true);
 
 					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
@@ -706,7 +707,7 @@ describe('FilesStorageService upload methods', () => {
 
 			describe('when useStreamToAntivirus is false', () => {
 				const setup = () => {
-					jest.replaceProperty(config, 'FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS', false);
+					jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
 					const file = passThroughFileDtoTestFactory().asPng().build();
 					const fileRecord = fileRecordTestFactory().build(file);
