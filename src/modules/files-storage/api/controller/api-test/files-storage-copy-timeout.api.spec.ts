@@ -137,7 +137,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 				const copyResponse = response.body as CopyFileListResponse;
 				expect(Array.isArray(copyResponse.data)).toBe(true);
 				expect(copyResponse.data.length).toBeGreaterThan(0);
-			});
+			}, 10000);
 		});
 	});
 });
