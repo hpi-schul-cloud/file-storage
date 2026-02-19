@@ -10,9 +10,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { FileRecordParentType, StorageLocation } from '../../../domain';
+import { ErrorType, FileRecordParentType, StorageLocation } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
-import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
+import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordListResponse, FileRecordResponse } from '../../dto';
 import { availableParentTypes } from './mocks';
@@ -25,6 +25,7 @@ describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
 	let testApiClient: TestApiClient;
+	let config: FileStorageConfig;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -38,11 +39,14 @@ describe(`${baseRouteName} (api)`, () => {
 			.useValue(createMock<NodeClam>())
 			.overrideProvider(AuthorizationClientAdapter)
 			.useValue(createMock<AuthorizationClientAdapter>())
+			.overrideProvider(FileStorageConfig)
+			.useValue(new FileStorageConfig())
 			.compile();
 
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
+		config = module.get(FileStorageConfig);
 		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -201,6 +205,57 @@ describe(`${baseRouteName} (api)`, () => {
 				});
 			});
 		});
+
+		describe('when parent already has the maximum number of files allowed', () => {
+			let defaultMaxFilesPerParent: number;
+
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+				const validId = new ObjectId().toHexString();
+				const targetParentId = new ObjectId().toHexString();
+
+				const copyFilesParams = {
+					target: {
+						storageLocation: StorageLocation.SCHOOL,
+						storageLocationId: validId,
+						parentId: targetParentId,
+						parentType: FileRecordParentType.Course,
+					},
+				};
+
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+
+				// Upload source files BEFORE setting the limit
+				await loggedInClient
+					.post(`/upload/school/${validId}/users/${validId}`)
+					.attach('file', Buffer.from('abcd'), 'test1.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+
+				// Now set the limit to 0 to block the copy operation
+				defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+
+				return { validId, copyFilesParams, loggedInClient };
+			};
+
+			afterEach(() => {
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+			});
+
+			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
+				const { loggedInClient, validId, copyFilesParams } = await setup();
+
+				const response = await loggedInClient.post(`/copy/school/${validId}/users/${validId}`, copyFilesParams);
+
+				expect(response.status).toEqual(403);
+				expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
+			});
+		});
 	});
 
 	describe('copy single file', () => {
@@ -340,6 +395,60 @@ describe(`${baseRouteName} (api)`, () => {
 				const response = result.body as FileRecordResponse;
 
 				expect(response.id).not.toEqual(fileRecordId);
+			});
+		});
+
+		describe('when parent already has the maximum number of files allowed', () => {
+			let defaultMaxFilesPerParent: number;
+
+			const setup = async () => {
+				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+				const validId = new ObjectId().toHexString();
+				const targetParentId = new ObjectId().toHexString();
+
+				const copyFileParams = {
+					target: {
+						storageLocation: StorageLocation.SCHOOL,
+						storageLocationId: validId,
+						parentId: targetParentId,
+						parentType: FileRecordParentType.Course,
+					},
+					fileNamePrefix: 'copy from',
+				};
+
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+
+				// Upload source file BEFORE setting the limit
+				const result = await loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.attach('file', Buffer.from('abcd'), 'test1.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+				const response = result.body as FileRecordResponse;
+				const fileRecordId = response.id;
+
+				// Now set the limit to 0 to block the copy operation
+				defaultMaxFilesPerParent = config.FILES_STORAGE_MAX_FILES_PER_PARENT;
+				const maxFilesPerParent = 0;
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = maxFilesPerParent;
+
+				return { fileRecordId, copyFileParams, loggedInClient };
+			};
+
+			afterEach(() => {
+				config.FILES_STORAGE_MAX_FILES_PER_PARENT = defaultMaxFilesPerParent;
+			});
+
+			it('should return status 403 with FILE_LIMIT_PER_PARENT_EXCEEDED error', async () => {
+				const { fileRecordId, copyFileParams, loggedInClient } = await setup();
+
+				const response = await loggedInClient.post(`/copy/${fileRecordId}`, copyFileParams);
+
+				expect(response.status).toEqual(403);
+				expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
 			});
 		});
 	});
