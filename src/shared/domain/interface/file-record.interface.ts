@@ -19,7 +19,7 @@ export interface MultipleFileRecordIdentifier {
  */
 export interface ParentIdentifier {
 	parentId: EntityId;
-	// Only the keys of ParentIdentifier interface are used in the RequestLoggingLoggable class, so we can allow any type for parentType here without affecting type safety in that context.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	parentType: any;
+	// Only the keys of ParentIdentifier interface are used in the RequestLoggingLoggable class,
+	// so we can allow any type for parentType here without affecting type safety in that context.
+	parentType: unknown;
 }
