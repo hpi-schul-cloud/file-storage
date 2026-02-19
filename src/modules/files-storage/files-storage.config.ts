@@ -15,6 +15,11 @@ export class FileStoragePublicApiConfig {
 	@StringToNumber()
 	@ConfigProperty('FILES_STORAGE_MAX_FILE_SIZE')
 	filesStorageMaxFileSize = 2684354560;
+
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_MAX_FILES_PER_PARENT')
+	filesStorageMaxFilesPerParent = 1000;
 }
 
 @Configuration()

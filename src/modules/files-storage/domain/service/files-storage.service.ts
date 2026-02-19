@@ -4,6 +4,7 @@ import { Logger } from '@infra/logger';
 import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
 import {
 	ConflictException,
+	ForbiddenException,
 	Inject,
 	Injectable,
 	InternalServerErrorException,
@@ -119,7 +120,9 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
-		const fileName = await this.resolveFileName(sourceFile.name, parentInfo);
+		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
+		this.checkFileLimitPerParent(count);
+		const fileName = this.resolveFileName(sourceFile.name, count, fileRecordsOfParent);
 		const file = await this.createPassThroughFileDto(sourceFile, fileName);
 		const fileRecord = await this.prepareFileRecordWithUploadingFlag(file, parentInfo, userId);
 
@@ -150,10 +153,17 @@ export class FilesStorageService {
 		return file;
 	}
 
-	private async resolveFileName(name: string, parentInfo: ParentInfo): Promise<string> {
+	private checkFileLimitPerParent(count: number, additionalFiles = 1): void {
+		const totalFiles = count + additionalFiles;
+
+		if (totalFiles > this.config.filesStorageMaxFilesPerParent) {
+			throw new ForbiddenException(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
+		}
+	}
+
+	private resolveFileName(name: string, count: number, fileRecordsOfParent: FileRecord[]): string {
 		let fileName = name;
 
-		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
 		if (count > 0) {
 			fileName = FileRecord.resolveFileNameDuplicates(fileRecordsOfParent, name);
 		}
@@ -395,6 +405,10 @@ export class FilesStorageService {
 	): Promise<CopyFileResult[]> {
 		this.logCopy(sourceFileRecords, targetParentInfo);
 		if (sourceFileRecords.length === 0) return [];
+
+		const [, count] = await this.getFileRecordsByParent(targetParentInfo.parentId);
+
+		this.checkFileLimitPerParent(count, sourceFileRecords.length);
 
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
 			try {

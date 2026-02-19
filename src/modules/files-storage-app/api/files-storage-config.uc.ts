@@ -1,4 +1,7 @@
-import { FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN, FileStoragePublicApiConfig } from '@modules/files-storage';
+import {
+	FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN,
+	FileStoragePublicApiConfig,
+} from '@modules/files-storage/files-storage.config';
 import { WOPI_PUBLIC_API_CONFIG_TOKEN, WopiPublicApiConfig } from '@modules/wopi';
 import { Inject, Injectable } from '@nestjs/common';
 import { FilesStorageConfigResponse } from './dto';
@@ -14,7 +17,9 @@ export class FilesStorageConfigUc {
 	public getPublicConfig(): FilesStorageConfigResponse {
 		const maxFileSize = this.filesStorageConfig.filesStorageMaxFileSize;
 		const collaboraMaxFileSize = this.wopiConfig.collaboraMaxFileSizeInBytes;
-		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize, collaboraMaxFileSize);
+		const maxFilesPerParent = this.filesStorageConfig.filesStorageMaxFilesPerParent;
+
+		const configResponse = ConfigResponseMapper.mapToResponse(maxFileSize, collaboraMaxFileSize, maxFilesPerParent);
 
 		return configResponse;
 	}

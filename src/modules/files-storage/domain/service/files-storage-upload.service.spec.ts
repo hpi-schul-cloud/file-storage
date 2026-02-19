@@ -3,7 +3,12 @@ import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
-import { BadRequestException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	InternalServerErrorException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
@@ -25,7 +30,7 @@ describe('FilesStorageService upload methods', () => {
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
-	let config: DeepMocked<FileStorageConfig>;
+	let config: FileStorageConfig;
 	let logger: DeepMocked<Logger>;
 
 	beforeEach(async () => {
@@ -55,6 +60,7 @@ describe('FilesStorageService upload methods', () => {
 						filesStorageMaxSecurityCheckFileSize: 10000,
 						filesStorageUseStreamToAntivirus: false,
 						collaboraMaxFileSizeInBytes: 100,
+						filesStorageMaxFilesPerParent: 1000,
 					}),
 				},
 				{
@@ -222,6 +228,29 @@ describe('FilesStorageService upload methods', () => {
 						expect(antivirusService.send).toHaveBeenCalledWith(fileRecord.getSecurityToken());
 					});
 				});
+			});
+		});
+
+		describe('WHEN parent already has maximum number of files', () => {
+			const setup = () => {
+				const { params, file, userId } = createUploadFileParams();
+				const defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
+				const maxFilesPerParent = 0;
+
+				config.filesStorageMaxFilesPerParent = maxFilesPerParent;
+				fileRecordRepo.findByParentId.mockResolvedValueOnce([[], maxFilesPerParent]);
+
+				return { params, file, userId, defaultMaxFilesPerParent };
+			};
+
+			it('should throw ForbiddenException with FILE_LIMIT_PER_PARENT_EXCEEDED', async () => {
+				const { params, file, userId, defaultMaxFilesPerParent } = setup();
+
+				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(
+					new ForbiddenException(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED)
+				);
+
+				config.filesStorageMaxFilesPerParent = defaultMaxFilesPerParent;
 			});
 		});
 
