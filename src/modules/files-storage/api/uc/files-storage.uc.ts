@@ -16,7 +16,6 @@ import {
 	NotFoundException,
 	UnprocessableEntityException,
 } from '@nestjs/common';
-import { ParentIdentifier } from '@shared/domain/interface/file-record.interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
@@ -29,6 +28,7 @@ import {
 	FilesStorageMapper,
 	FilesStorageService,
 	GetFileResponse,
+	ParentReference,
 	PreviewService,
 	StorageLocation,
 } from '../../domain';
@@ -465,14 +465,14 @@ export class FilesStorageUC {
 	}
 
 	// private: permission checks
-	private async checkPermission(parentInfo: ParentIdentifier, context: AuthorizationContextParams): Promise<void> {
+	private async checkPermission(parentInfo: ParentReference, context: AuthorizationContextParams): Promise<void> {
 		const { parentType, parentId } = parentInfo;
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
 	}
 
-	private async checkPermissions(parentInfo: ParentIdentifier[], context: AuthorizationContextParams): Promise<void> {
+	private async checkPermissions(parentInfo: ParentReference[], context: AuthorizationContextParams): Promise<void> {
 		const references = parentInfo.map((info) => {
 			const { parentType, parentId } = info;
 			const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
@@ -483,7 +483,7 @@ export class FilesStorageUC {
 		await this.authorizationClientAdapter.checkPermissionsByManyReferences({ references });
 	}
 
-	private async checkDeletePermission(parentInfo: ParentIdentifier[]): Promise<void> {
+	private async checkDeletePermission(parentInfo: ParentReference[]): Promise<void> {
 		await this.checkPermissions(parentInfo, FileStorageAuthorizationContext.delete);
 	}
 

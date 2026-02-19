@@ -6,12 +6,12 @@ import { RabbitMQWrapperModule } from '@infra/rabbitmq';
 import { FilesStorageConsumer, FilesStorageExchange, FilesStorageModule } from '@modules/files-storage';
 import { ENTITIES } from '@modules/files-storage/files-storage.entity.imports';
 import { Module } from '@nestjs/common';
-import { FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN, RequestTimeoutConfig } from './files-storage-app.config';
+import { FILES_STORAGE_AMQP_APP_REQUEST_TIMEOUT_CONFIG_TOKEN, RequestTimeoutConfig } from './files-storage-app.config';
 
 @Module({
 	imports: [
 		FilesStorageModule,
-		CoreModule.register(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN, RequestTimeoutConfig),
+		CoreModule.register(FILES_STORAGE_AMQP_APP_REQUEST_TIMEOUT_CONFIG_TOKEN, RequestTimeoutConfig),
 		LoggerModule,
 		DatabaseModule.forRoot(ENTITIES),
 		RabbitMQWrapperModule.forRoot([FilesStorageExchange]),
