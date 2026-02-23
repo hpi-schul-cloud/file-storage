@@ -406,6 +406,112 @@ describe('PreviewGeneratorService', () => {
 			});
 		});
 
+		describe('WHEN stdout is missing', () => {
+			const setup = () => {
+				setupImageMagickMock();
+
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const originFile = createFile(undefined, 'image/jpeg');
+				s3ClientAdapter.get.mockResolvedValueOnce(originFile);
+
+				const stderr = new PassThrough();
+
+				streamMock = jest
+					.fn()
+					.mockImplementation(
+						(_format: string, callback: (err: Error | null, stdout?: PassThrough, stderr?: PassThrough) => void) => {
+							callback(null, undefined, stderr);
+						}
+					);
+
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error when stdout is undefined', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
+
+		describe('WHEN stderr is missing', () => {
+			const setup = () => {
+				setupImageMagickMock();
+
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const originFile = createFile(undefined, 'image/jpeg');
+				s3ClientAdapter.get.mockResolvedValueOnce(originFile);
+
+				const stdout = new PassThrough();
+
+				streamMock = jest
+					.fn()
+					.mockImplementation(
+						(_format: string, callback: (err: Error | null, stdout?: PassThrough, stderr?: PassThrough) => void) => {
+							callback(null, stdout, undefined);
+						}
+					);
+
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error when stderr is undefined', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
+
+		describe('WHEN both stdout and stderr are missing', () => {
+			const setup = () => {
+				setupImageMagickMock();
+
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const originFile = createFile(undefined, 'image/jpeg');
+				s3ClientAdapter.get.mockResolvedValueOnce(originFile);
+
+				streamMock = jest
+					.fn()
+					.mockImplementation(
+						(_format: string, callback: (err: Error | null, stdout?: PassThrough, stderr?: PassThrough) => void) => {
+							callback(null, undefined, undefined);
+						}
+					);
+
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error when both streams are undefined', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
+
 		describe('WHEN s3ClientAdapter throws an error', () => {
 			const setup = () => {
 				setupImageMagickMock();
