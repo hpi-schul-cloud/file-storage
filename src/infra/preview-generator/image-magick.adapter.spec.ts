@@ -153,17 +153,13 @@ describe('ImageMagickAdapter', () => {
 			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', 'webp:-']);
 		});
 
-		it('should pipe input stream to process stdin', (done) => {
+		it('should pipe input stream to process stdin', () => {
 			const adapter = new ImageMagickAdapter(inputStream);
 			const pipeSpy = jest.spyOn(inputStream, 'pipe');
 
 			adapter.stream('webp', jest.fn());
 
-			// Give time for pipe to be called
-			setImmediate(() => {
-				expect(pipeSpy).toHaveBeenCalledWith(mockProcess.stdin);
-				done();
-			});
+			expect(pipeSpy).toHaveBeenCalledWith(mockProcess.stdin);
 		});
 
 		it('should call callback with stdout and stderr on success', (done) => {
@@ -182,7 +178,6 @@ describe('ImageMagickAdapter', () => {
 			const stdin = new PassThrough();
 			const processEmitter = new EventEmitter();
 
-			// Create mock process WITHOUT stdout/stderr (spawn failed)
 			const failedMockProcess = {
 				stdin,
 				stdout: null,
@@ -202,12 +197,9 @@ describe('ImageMagickAdapter', () => {
 				done();
 			});
 
-			// Simulate ENOENT error immediately
-			setImmediate(() => {
-				const enoentError = new Error('spawn magick ENOENT') as NodeJS.ErrnoException;
-				enoentError.code = 'ENOENT';
-				processEmitter.emit('error', enoentError);
-			});
+			const enoentError = new Error('spawn magick ENOENT') as NodeJS.ErrnoException;
+			enoentError.code = 'ENOENT';
+			processEmitter.emit('error', enoentError);
 		});
 
 		it('should handle other spawn errors', (done) => {
@@ -216,7 +208,6 @@ describe('ImageMagickAdapter', () => {
 			const processEmitter = new EventEmitter();
 			const testError = new Error('Test error');
 
-			// Create mock process WITHOUT stdout/stderr (spawn failed)
 			const failedMockProcess = {
 				stdin,
 				stdout: null,
@@ -233,10 +224,7 @@ describe('ImageMagickAdapter', () => {
 				done();
 			});
 
-			// Simulate error immediately
-			setImmediate(() => {
-				processEmitter.emit('error', testError);
-			});
+			processEmitter.emit('error', testError);
 		});
 
 		it('should handle stdin errors before successful callback', (done) => {
@@ -244,11 +232,10 @@ describe('ImageMagickAdapter', () => {
 			const testError = new Error('Stdin error');
 			const stdin = new PassThrough();
 
-			// Setup mock WITHOUT stdout/stderr initially (process starting but not ready)
 			const mockProcessWithError = {
 				stdin,
-				stdout: null, // Not ready yet
-				stderr: null, // Not ready yet
+				stdout: null,
+				stderr: null,
 				on: jest.fn(),
 			};
 			mockSpawn.mockReturnValue(mockProcessWithError);
@@ -258,10 +245,7 @@ describe('ImageMagickAdapter', () => {
 				done();
 			});
 
-			// Emit stdin error after stream is called but before stdout/stderr are ready
-			setImmediate(() => {
-				stdin.emit('error', testError);
-			});
+			stdin.emit('error', testError);
 		});
 
 		it('should support method chaining before stream', () => {
