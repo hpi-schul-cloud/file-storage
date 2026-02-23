@@ -1,10 +1,10 @@
 import { UnprocessableEntityException } from '@nestjs/common';
-import { spawn } from 'child_process';
-import { Readable } from 'stream';
+import { spawn } from 'node:child_process';
+import { Readable } from 'node:stream';
 
 export class ImageMagickAdapter {
-	private args: string[] = [];
-	private inputStream: Readable;
+	private readonly args: string[] = [];
+	private readonly inputStream: Readable;
 	private frameSelector?: string;
 
 	constructor(inputStream: Readable) {
