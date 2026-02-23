@@ -83,7 +83,3 @@ export class ImageMagickAdapter {
 		}
 	}
 }
-
-export function createImageMagickAdapter(inputStream: Readable): ImageMagickAdapter {
-	return new ImageMagickAdapter(inputStream);
-}
