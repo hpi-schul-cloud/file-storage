@@ -154,6 +154,10 @@ export class FilesStorageController {
 		if (etag === fileResponse.etag) {
 			response.status(HttpStatus.NOT_MODIFIED);
 
+			response.set({
+				'Content-Disposition': `attachment; filename="${fileResponse.name}"`,
+			});
+
 			return undefined;
 		}
 
