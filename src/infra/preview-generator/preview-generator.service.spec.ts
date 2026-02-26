@@ -8,22 +8,14 @@ import { ErrorType } from './interface/error-status.enum';
 import { PreviewNotPossibleException } from './loggable/preview-exception';
 import { FILE_STORAGE_CLIENT, PreviewGeneratorService } from './preview-generator.service';
 
-let streamMock = jest.fn();
-const resizeMock = jest.fn();
-const coalesceMock = jest.fn();
-const selectFrameMock = jest.fn();
-const imageMagickMock = () => {
+let streamMock: jest.Mock;
+let resizeMock: jest.Mock;
+let coalesceMock: jest.Mock;
+let selectFrameMock: jest.Mock;
+
+jest.mock('./image-magick.adapter', () => {
 	return {
-		stream: streamMock,
-		resize: resizeMock,
-		selectFrame: selectFrameMock,
-		coalesce: coalesceMock,
-		data: Buffer.from('text'),
-	};
-};
-jest.mock('gm', () => {
-	return {
-		subClass: () => imageMagickMock,
+		ImageMagickAdapter: jest.fn(),
 	};
 });
 
@@ -40,6 +32,32 @@ const createFile = (contentRange?: string, contentType?: string): GetFile => {
 	};
 
 	return fileResponse;
+};
+
+const setupImageMagickMock = () => {
+	const { ImageMagickAdapter } = require('./image-magick.adapter');
+
+	// Initialize mocks
+	streamMock = jest.fn();
+	resizeMock = jest.fn();
+	coalesceMock = jest.fn();
+	selectFrameMock = jest.fn();
+
+	// Setup the mock implementation
+	(ImageMagickAdapter as jest.Mock).mockImplementation(() => {
+		const mockInstance = {
+			stream: streamMock,
+			resize: resizeMock,
+			selectFrame: selectFrameMock,
+			coalesce: coalesceMock,
+		};
+		// Enable method chaining
+		resizeMock.mockReturnValue(mockInstance);
+		coalesceMock.mockReturnValue(mockInstance);
+		selectFrameMock.mockReturnValue(mockInstance);
+
+		return mockInstance;
+	});
 };
 
 const createMockStream = (err: Error | null = null) => {
@@ -86,7 +104,7 @@ describe('PreviewGeneratorService', () => {
 	});
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		jest.clearAllMocks();
 	});
 
 	it('should be defined', () => {
@@ -98,6 +116,8 @@ describe('PreviewGeneratorService', () => {
 			describe('WHEN preview is possible', () => {
 				describe('WHEN mime type is jpeg', () => {
 					const setup = (width = 500) => {
+						setupImageMagickMock();
+
 						const params = {
 							originFilePath: 'file/test.jpeg',
 							previewFilePath: 'preview/text.webp',
@@ -171,6 +191,8 @@ describe('PreviewGeneratorService', () => {
 
 				describe('WHEN mime type is pdf', () => {
 					const setup = (width = 500) => {
+						setupImageMagickMock();
+
 						const params = {
 							originFilePath: 'file/test.pdf',
 							previewFilePath: 'preview/text.webp',
@@ -204,6 +226,8 @@ describe('PreviewGeneratorService', () => {
 
 				describe('WHEN mime type is gif', () => {
 					const setup = (width = 500) => {
+						setupImageMagickMock();
+
 						const params = {
 							originFilePath: 'file/test.gif',
 							previewFilePath: 'preview/text.webp',
@@ -238,6 +262,8 @@ describe('PreviewGeneratorService', () => {
 
 			describe('WHEN preview is not possible', () => {
 				const setup = (mimeType?: string, width = 500) => {
+					setupImageMagickMock();
+
 					const params = {
 						originFilePath: 'file/test.jpeg',
 						previewFilePath: 'preview/text.webp',
@@ -274,6 +300,8 @@ describe('PreviewGeneratorService', () => {
 
 		describe('WHEN previewParams.width not set', () => {
 			const setup = (width = 500) => {
+				setupImageMagickMock();
+
 				const params = {
 					originFilePath: 'file/test.jpeg',
 					previewFilePath: 'preview/text.webp',
@@ -307,6 +335,8 @@ describe('PreviewGeneratorService', () => {
 
 		describe('WHEN STDERR stream has an error', () => {
 			const setup = () => {
+				setupImageMagickMock();
+
 				const params = {
 					originFilePath: 'file/test.jpeg',
 					previewFilePath: 'preview/text.webp',
@@ -350,6 +380,8 @@ describe('PreviewGeneratorService', () => {
 
 		describe('WHEN GM library has an error', () => {
 			const setup = () => {
+				setupImageMagickMock();
+
 				const params = {
 					originFilePath: 'file/test.jpeg',
 					previewFilePath: 'preview/text.webp',
@@ -374,8 +406,116 @@ describe('PreviewGeneratorService', () => {
 			});
 		});
 
+		describe('WHEN stdout is missing', () => {
+			const setup = () => {
+				setupImageMagickMock();
+
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const originFile = createFile(undefined, 'image/jpeg');
+				s3ClientAdapter.get.mockResolvedValueOnce(originFile);
+
+				const stderr = new PassThrough();
+
+				streamMock = jest
+					.fn()
+					.mockImplementation(
+						(_format: string, callback: (err: Error | null, stdout?: PassThrough, stderr?: PassThrough) => void) => {
+							callback(null, undefined, stderr);
+						}
+					);
+
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error when stdout is undefined', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
+
+		describe('WHEN stderr is missing', () => {
+			const setup = () => {
+				setupImageMagickMock();
+
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const originFile = createFile(undefined, 'image/jpeg');
+				s3ClientAdapter.get.mockResolvedValueOnce(originFile);
+
+				const stdout = new PassThrough();
+
+				streamMock = jest
+					.fn()
+					.mockImplementation(
+						(_format: string, callback: (err: Error | null, stdout?: PassThrough, stderr?: PassThrough) => void) => {
+							callback(null, stdout, undefined);
+						}
+					);
+
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error when stderr is undefined', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
+
+		describe('WHEN both stdout and stderr are missing', () => {
+			const setup = () => {
+				setupImageMagickMock();
+
+				const params = {
+					originFilePath: 'file/test.jpeg',
+					previewFilePath: 'preview/text.webp',
+					previewOptions: {
+						format: 'webp',
+					},
+				};
+				const originFile = createFile(undefined, 'image/jpeg');
+				s3ClientAdapter.get.mockResolvedValueOnce(originFile);
+
+				streamMock = jest
+					.fn()
+					.mockImplementation(
+						(_format: string, callback: (err: Error | null, stdout?: PassThrough, stderr?: PassThrough) => void) => {
+							callback(null, undefined, undefined);
+						}
+					);
+
+				const expectedError = new UnprocessableEntityException(ErrorType.CREATE_PREVIEW_NOT_POSSIBLE);
+
+				return { params, expectedError };
+			};
+
+			it('should throw error when both streams are undefined', async () => {
+				const { params, expectedError } = setup();
+
+				await expect(service.generatePreview(params)).rejects.toThrow(expectedError);
+			});
+		});
+
 		describe('WHEN s3ClientAdapter throws an error', () => {
 			const setup = () => {
+				setupImageMagickMock();
+
 				const params = {
 					originFilePath: 'file/test.jpeg',
 					previewFilePath: 'preview/text.webp',

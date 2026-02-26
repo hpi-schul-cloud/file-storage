@@ -1,8 +1,8 @@
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import m, { subClass } from 'gm';
 import { PassThrough } from 'stream';
+import { ImageMagickAdapter } from './image-magick.adapter';
 import { PreviewFileOptions, PreviewInputMimeTypes, PreviewOptions, PreviewResponseMessage } from './interface';
 import { PreviewActionsLoggable } from './loggable/preview-actions.loggable';
 import { PreviewNotPossibleException } from './loggable/preview-exception';
@@ -11,8 +11,6 @@ import { PreviewGeneratorBuilder } from './preview-generator.builder';
 export const FILE_STORAGE_CLIENT = 'FILE_STORAGE_CLIENT';
 @Injectable()
 export class PreviewGeneratorService {
-	private readonly imageMagick = subClass({ imageMagick: '7+' });
-
 	constructor(
 		@Inject(FILE_STORAGE_CLIENT) private readonly storageClient: S3ClientAdapter,
 		private readonly logger: Logger
@@ -68,7 +66,7 @@ export class PreviewGeneratorService {
 	private resizeAndConvert(original: GetFile, previewParams: PreviewOptions): Promise<PassThrough> {
 		const { format, width } = previewParams;
 
-		const preview = this.imageMagick(original.data);
+		const preview = new ImageMagickAdapter(original.data);
 
 		if (original.contentType === PreviewInputMimeTypes.APPLICATION_PDF) {
 			preview.selectFrame(0);
@@ -85,11 +83,19 @@ export class PreviewGeneratorService {
 		return this.convert(preview, format);
 	}
 
-	private convert(preview: m.State, format: string): Promise<PassThrough> {
+	private convert(preview: ImageMagickAdapter, format: string): Promise<PassThrough> {
 		const promise = new Promise<PassThrough>((resolve, reject) => {
 			preview.stream(format, (err, stdout, stderr) => {
 				if (err) {
 					reject(new UnprocessableEntityException('Convert not possible', { cause: err }));
+
+					return;
+				}
+
+				if (!stdout || !stderr) {
+					reject(new UnprocessableEntityException('No output streams received from ImageMagick'));
+
+					return;
 				}
 
 				const throughStream = new PassThrough();
