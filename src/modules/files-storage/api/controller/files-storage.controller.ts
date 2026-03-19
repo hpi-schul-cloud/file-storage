@@ -28,6 +28,7 @@ import {
 import { ApiConsumes, ApiHeader, ApiOperation, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequestTimeout } from '@shared/decorator';
 import { Request, Response } from 'express';
+import { Logger } from '@infra/logger';
 import { GetFileResponse } from '../../domain';
 import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '../../files-storage.config';
 import {
@@ -51,12 +52,13 @@ import {
 } from '../dto';
 import { StreamableFileMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
+import { RessourceUsage } from '@shared/loggable';
 
 @ApiTags('file')
 @JwtAuthentication()
 @Controller('file')
 export class FilesStorageController {
-	constructor(private readonly filesStorageUC: FilesStorageUC) {}
+	constructor(private readonly filesStorageUC: FilesStorageUC, private readonly logger: Logger) {}
 
 	@ApiOperation({ summary: 'Upload file from url' })
 	@ApiResponse({ status: 201, type: FileRecordResponse })
@@ -90,6 +92,7 @@ export class FilesStorageController {
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request
 	): Promise<FileRecordResponse> {
+		this.logRessourceUsage(params, currentUser);
 		const response = await this.filesStorageUC.upload(currentUser.userId, params, req);
 
 		return response;
@@ -379,5 +382,17 @@ export class FilesStorageController {
 		const fileStatsResponse = await this.filesStorageUC.getParentStatistic(params);
 
 		return fileStatsResponse;
+	}
+
+	private logRessourceUsage(params: FileRecordParams, currentUser: ICurrentUser) {
+		// feature flag
+		const paramsForLog = {
+			storageLocation: params.storageLocation,
+			storageLocationId: params.storageLocationId,
+			parentType: params.parentType,
+			parentId: params.parentId,
+			userId: currentUser.userId,
+		};
+		this.logger.warning(new RessourceUsage('[UPLOAD-RESOURCE-SNAPSHOT]', paramsForLog));
 	}
 }
