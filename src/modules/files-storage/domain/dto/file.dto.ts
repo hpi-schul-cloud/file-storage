@@ -7,6 +7,7 @@ export class FileDto implements File {
 		this.data = file.data;
 		this.mimeType = file.mimeType;
 		this.abortSignal = file.abortSignal;
+		this.rootDirectory = file.rootDirectory;
 	}
 
 	name: string;
@@ -16,4 +17,6 @@ export class FileDto implements File {
 	mimeType: string;
 
 	abortSignal?: AbortSignal;
+
+	rootDirectory: string | undefined = undefined;
 }

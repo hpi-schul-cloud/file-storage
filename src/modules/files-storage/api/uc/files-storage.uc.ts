@@ -61,6 +61,8 @@ export const FileStorageAuthorizationContext = {
 
 @Injectable()
 export class FilesStorageUC {
+	private readonly tempFolderName = 'temp';
+
 	constructor(
 		private readonly logger: Logger,
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
@@ -98,6 +100,28 @@ export class FilesStorageUC {
 		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 
+		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
+
+		return fileRecordResponse;
+	}
+
+	public async tempDownload(params: DownloadFileParams, bytesRange: string | undefined): Promise<GetFileResponse> {
+		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
+		const parentInfo = fileRecord.getParentInfo();
+
+		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
+
+		return this.filesStorageService.downloadFile(fileRecord, bytesRange, this.tempFolderName);
+	}
+
+	public async tempUpload(userId: string, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
+		await Promise.all([
+			this.checkPermission(params, FileStorageAuthorizationContext.create),
+			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
+		]);
+
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, this.tempFolderName);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
@@ -341,7 +365,12 @@ export class FilesStorageUC {
 	}
 
 	// private: stream helper
-	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: AbortableRequest): Promise<FileRecord> {
+	private uploadFileWithBusboy(
+		userId: EntityId,
+		params: FileRecordParams,
+		req: AbortableRequest,
+		rootDirectory?: string
+	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
 			const abortController = new AbortController();
@@ -397,7 +426,7 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				if (isResolved) return; // Already resolved/rejected
 
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal);
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, rootDirectory);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					return this.filesStorageService.uploadFile(userId, params, fileDto);

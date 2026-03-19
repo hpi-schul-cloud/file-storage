@@ -126,6 +126,49 @@ export class FilesStorageController {
 		return streamableFile;
 	}
 
+	@ApiOperation({ summary: 'Streamable download of a temporary file.' })
+	@ApiProduces('application/octet-stream')
+	@ApiResponse({ status: 200, schema: { type: 'string', format: 'binary' } })
+	@ApiResponse({ status: 206, schema: { type: 'string', format: 'binary' } })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 404, type: NotFoundException })
+	@ApiResponse({ status: 406, type: NotAcceptableException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@ApiHeader({ name: 'Range', required: false })
+	@UseInterceptors(CurrentDownloadMetricsInterceptor)
+	@Get('/temp/download/:fileRecordId/:fileName')
+	public async tempDownload(
+		@Param() params: DownloadFileParams,
+		@Req() req: Request,
+		@Res({ passthrough: true }) response: Response,
+		@Headers('Range') bytesRange?: string
+	): Promise<StreamableFile> {
+		const fileResponse = await this.filesStorageUC.tempDownload(params, bytesRange);
+		const streamableFile = this.streamFileToClient(req, fileResponse, response, bytesRange);
+
+		return streamableFile;
+	}
+
+	@ApiOperation({ summary: 'Temporäres Hochladen einer Datei.' })
+	@ApiResponse({ status: 201, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@ApiConsumes('multipart/form-data')
+	@Post('/temp/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async tempUpload(
+		@Body() _: FileParams,
+		@Param() params: FileRecordParams,
+		@CurrentUser() currentUser: ICurrentUser,
+		@Req() req: Request
+	): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.tempUpload(currentUser.userId, params, req);
+
+		return response;
+	}
+
 	@ApiOperation({ summary: 'Streamable download of a preview file.' })
 	@ApiResponse({ status: 200, type: StreamableFile })
 	@ApiResponse({ status: 206, type: StreamableFile })

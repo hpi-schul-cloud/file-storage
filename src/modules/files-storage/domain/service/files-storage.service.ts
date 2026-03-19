@@ -207,7 +207,7 @@ export class FilesStorageService {
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = fileRecord.createPath(file.rootDirectory);
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = file.data.pipe(new PassThrough());
@@ -299,8 +299,12 @@ export class FilesStorageService {
 		}
 	}
 
-	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
-		const pathToFile = fileRecord.createPath();
+	public async downloadFile(
+		fileRecord: FileRecord,
+		bytesRange?: string,
+		rootDirectory?: string
+	): Promise<GetFileResponse> {
+		const pathToFile = fileRecord.createPath(rootDirectory);
 		const file = await this.storageClient.get(pathToFile, bytesRange);
 		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 

@@ -7,7 +7,8 @@ export class PassThroughFileDtoFactory {
 		sourceFile: FileDto,
 		passThrough: PassThrough,
 		mimeType: string,
-		newFileName?: string
+		newFileName?: string,
+		rootDirectory?: string
 	): PassThroughFileDto {
 		const streamCompletion = awaitStreamCompletion(passThrough, sourceFile.abortSignal);
 		const file = new PassThroughFileDto({
@@ -17,6 +18,7 @@ export class PassThroughFileDtoFactory {
 			abortSignal: sourceFile.abortSignal,
 			streamCompletion,
 			fileSize: 0,
+			rootDirectory: rootDirectory ?? sourceFile.rootDirectory,
 		});
 
 		return file;
