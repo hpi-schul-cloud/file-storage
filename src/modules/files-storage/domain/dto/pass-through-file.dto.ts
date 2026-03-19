@@ -9,6 +9,7 @@ export class PassThroughFileDto implements FileDto {
 		this.abortSignal = file.abortSignal;
 		this.streamCompletion = file.streamCompletion;
 		this.fileSize = file.fileSize;
+		this.rootDirectory = file.rootDirectory;
 	}
 
 	name: string;
@@ -22,4 +23,6 @@ export class PassThroughFileDto implements FileDto {
 	streamCompletion?: Promise<void>;
 
 	fileSize: number;
+
+	rootDirectory: string | undefined;
 }

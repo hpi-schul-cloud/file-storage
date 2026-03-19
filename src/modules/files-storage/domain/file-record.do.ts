@@ -338,8 +338,8 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		}
 	}
 
-	public createPath(): string {
-		const path = [this.props.storageLocationId, this.id].join('/');
+	public createPath(rootDirectory?: string): string {
+		const path = [rootDirectory, this.props.storageLocationId, this.id].filter(Boolean).join('/');
 
 		return path;
 	}
