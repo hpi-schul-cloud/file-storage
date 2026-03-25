@@ -125,7 +125,7 @@ export class FilesStorageUC {
 		await this.filesStorageService.markForTemp(fileRecord);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
-		// @todo replace url to /temp/download/{fileRecordId}/ in response
+		// @todo replace response dto url to /temp/download/{fileRecordId}/ and expiration time
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
 		return fileRecordResponse;
