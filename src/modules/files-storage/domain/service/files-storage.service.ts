@@ -42,6 +42,12 @@ export class FilesStorageService {
 		this.logger.setContext(FilesStorageService.name);
 	}
 
+	public async markForTemp(fileRecord: FileRecord): Promise<void> {
+		// @todo check why we need to reload the file record here. Can we mark for temp without reloading?
+		const fileRecordReloaded = await this.fileRecordRepo.findOneById(fileRecord.id);
+		await this.markFileRecordsForDelete([fileRecordReloaded]);
+	}
+
 	// find
 	public async getFileRecord(fileRecordId: EntityId): Promise<FileRecord> {
 		const fileRecord = await this.fileRecordRepo.findOneById(fileRecordId);

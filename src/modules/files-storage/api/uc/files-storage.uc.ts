@@ -107,7 +107,7 @@ export class FilesStorageUC {
 	}
 
 	public async tempDownload(params: DownloadFileParams, bytesRange: string | undefined): Promise<GetFileResponse> {
-		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
+		const fileRecord = await this.filesStorageService.getFileRecordMarkedForDelete(params.fileRecordId);
 		const parentInfo = fileRecord.getParentInfo();
 
 		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
@@ -122,7 +122,10 @@ export class FilesStorageUC {
 		]);
 
 		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, this.tempFolderName);
+		await this.filesStorageService.markForTemp(fileRecord);
+
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
+		// @todo replace url to /temp/download/{fileRecordId}/ in response
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
 		return fileRecordResponse;
