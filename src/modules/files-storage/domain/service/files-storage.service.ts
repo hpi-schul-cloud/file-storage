@@ -187,7 +187,13 @@ export class FilesStorageService {
 		parentInfo: ParentInfo,
 		userId: EntityId
 	): Promise<FileRecord> {
-		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(
+			file.name,
+			file.mimeType,
+			parentInfo,
+			userId,
+			file.storageDirectory
+		);
 		fileRecord.markAsUploading();
 		await this.fileRecordRepo.save(fileRecord);
 

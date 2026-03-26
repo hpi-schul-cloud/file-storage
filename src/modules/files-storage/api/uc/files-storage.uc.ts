@@ -30,6 +30,7 @@ import {
 	GetFileResponse,
 	ParentReference,
 	PreviewService,
+	StorageDirectory,
 	StorageLocation,
 } from '../../domain';
 import { UploadAbortLoggable } from '../../loggable';
@@ -61,8 +62,6 @@ export const FileStorageAuthorizationContext = {
 
 @Injectable()
 export class FilesStorageUC {
-	private readonly tempFolderName = 'temp';
-
 	constructor(
 		private readonly logger: Logger,
 		private readonly authorizationClientAdapter: AuthorizationClientAdapter,
@@ -117,7 +116,7 @@ export class FilesStorageUC {
 			await this.filesStorageService.saveFileRecord(fileRecord);
 		};
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, this.tempFolderName, afterUpload);
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageDirectory.TEMP, afterUpload);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		// @todo replace response dto url to /temp/download/{fileRecordId}/ and expiration time
@@ -367,7 +366,7 @@ export class FilesStorageUC {
 		userId: EntityId,
 		params: FileRecordParams,
 		req: AbortableRequest,
-		rootDirectory?: string,
+		storageDirectory?: StorageDirectory,
 		afterUpload?: (fileRecord: FileRecord) => Promise<void>
 	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
@@ -425,7 +424,7 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				if (isResolved) return; // Already resolved/rejected
 
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, rootDirectory);
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, storageDirectory);
 
 				fileRecordPromise = RequestContext.create(this.em, async () => {
 					const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);

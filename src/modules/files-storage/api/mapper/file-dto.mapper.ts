@@ -1,7 +1,7 @@
 import { AxiosResponse } from 'axios';
 import { FileInfo as BusboyFileInfo } from 'busboy';
 import { Readable } from 'node:stream';
-import { FileDto, FileDtoFactory } from '../../domain';
+import { FileDto, FileDtoFactory, StorageDirectory } from '../../domain';
 
 export class FileDtoMapper {
 	public static mapFromAxiosResponse(name: string, response: AxiosResponse<Readable>): FileDto {
@@ -15,9 +15,9 @@ export class FileDtoMapper {
 		fileInfo: BusboyFileInfo,
 		stream: Readable,
 		abortSignal?: AbortSignal,
-		rootDirectory?: string
+		storageDirectory?: StorageDirectory
 	): FileDto {
-		const file = FileDtoFactory.create(fileInfo.filename, stream, fileInfo.mimeType, abortSignal, rootDirectory);
+		const file = FileDtoFactory.create(fileInfo.filename, stream, fileInfo.mimeType, abortSignal, storageDirectory);
 
 		return file;
 	}

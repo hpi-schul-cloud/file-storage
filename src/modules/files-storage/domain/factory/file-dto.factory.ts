@@ -1,5 +1,6 @@
 import { Readable } from 'node:stream';
 import { FileDto } from '../dto';
+import { StorageDirectory } from '../file-record.do';
 
 export class FileDtoFactory {
 	public static create(
@@ -7,14 +8,14 @@ export class FileDtoFactory {
 		stream: Readable,
 		mimeType: string,
 		abortSignal?: AbortSignal,
-		rootDirectory?: string
+		storageDirectory?: StorageDirectory
 	): FileDto {
 		const file = new FileDto({
 			name,
 			data: stream,
 			mimeType,
 			abortSignal,
-			rootDirectory,
+			storageDirectory,
 		});
 
 		return file;

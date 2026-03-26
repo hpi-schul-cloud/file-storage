@@ -30,6 +30,10 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
 
+export enum StorageDirectory {
+	TEMP = 'temp',
+}
+
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
@@ -66,7 +70,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
-	storageDirectory?: string; // TODO: Enum, default etc..
+	storageDirectory?: StorageDirectory;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {

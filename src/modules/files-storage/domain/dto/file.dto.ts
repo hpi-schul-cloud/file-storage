@@ -1,5 +1,6 @@
 import { File } from '@infra/s3-client';
 import { Readable } from 'node:stream';
+import { StorageDirectory } from '../file-record.do';
 
 export class FileDto implements File {
 	constructor(file: FileDto) {
@@ -7,7 +8,7 @@ export class FileDto implements File {
 		this.data = file.data;
 		this.mimeType = file.mimeType;
 		this.abortSignal = file.abortSignal;
-		this.rootDirectory = file.rootDirectory;
+		this.storageDirectory = file.storageDirectory;
 	}
 
 	name: string;
@@ -18,5 +19,5 @@ export class FileDto implements File {
 
 	abortSignal?: AbortSignal;
 
-	rootDirectory: string | undefined = undefined;
+	storageDirectory?: StorageDirectory;
 }

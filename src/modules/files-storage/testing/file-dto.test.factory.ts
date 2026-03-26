@@ -16,7 +16,7 @@ class FileDtoTestFactory {
 		data: Readable.from('abc'),
 		mimeType: 'application/octet-stream',
 		abortSignal: new AbortController().signal,
-		rootDirectory: undefined,
+		storageDirectory: undefined,
 	};
 
 	private static readonly mimeTypeMap = new Map<string, () => Readable>([
