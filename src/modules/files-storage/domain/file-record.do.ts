@@ -66,6 +66,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
+	storageDirectory?: string; // TODO: Enum, default etc..
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -338,8 +339,8 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		}
 	}
 
-	public createPath(rootDirectory?: string): string {
-		const path = [rootDirectory, this.props.storageLocationId, this.id].filter(Boolean).join('/');
+	public createPath(): string {
+		const path = [this.props.storageDirectory, this.props.storageLocationId, this.id].filter(Boolean).join('/');
 
 		return path;
 	}

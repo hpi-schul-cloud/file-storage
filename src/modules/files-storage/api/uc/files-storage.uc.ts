@@ -106,15 +106,6 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	public async tempDownload(params: DownloadFileParams, bytesRange: string | undefined): Promise<GetFileResponse> {
-		const fileRecord = await this.filesStorageService.getFileRecordMarkedForDelete(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
-
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
-
-		return this.filesStorageService.downloadFile(fileRecord, bytesRange, this.tempFolderName);
-	}
-
 	public async tempUpload(userId: string, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
@@ -122,7 +113,8 @@ export class FilesStorageUC {
 		]);
 
 		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, this.tempFolderName);
-		await this.filesStorageService.markForTemp(fileRecord);
+		fileRecord.markForDelete();
+		await this.filesStorageService.saveFileRecord(fileRecord);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		// @todo replace response dto url to /temp/download/{fileRecordId}/ and expiration time

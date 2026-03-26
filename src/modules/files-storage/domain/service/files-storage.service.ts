@@ -42,12 +42,6 @@ export class FilesStorageService {
 		this.logger.setContext(FilesStorageService.name);
 	}
 
-	public async markForTemp(fileRecord: FileRecord): Promise<void> {
-		// @todo check why we need to reload the file record here. Can we mark for temp without reloading?
-		const fileRecordReloaded = await this.fileRecordRepo.findOneById(fileRecord.id);
-		await this.markFileRecordsForDelete([fileRecordReloaded]);
-	}
-
 	// find
 	public async getFileRecord(fileRecordId: EntityId): Promise<FileRecord> {
 		const fileRecord = await this.fileRecordRepo.findOneById(fileRecordId);
@@ -151,6 +145,11 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
+	// TODO: Prüfe Lösung
+	public async saveFileRecord(fileRecord: FileRecord): Promise<void> {
+		await this.fileRecordRepo.save(fileRecord);
+	}
+
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
 		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType, this.logger);
@@ -213,7 +212,7 @@ export class FilesStorageService {
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		const filePath = fileRecord.createPath(file.rootDirectory);
+		const filePath = fileRecord.createPath();
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = file.data.pipe(new PassThrough());
@@ -305,12 +304,8 @@ export class FilesStorageService {
 		}
 	}
 
-	public async downloadFile(
-		fileRecord: FileRecord,
-		bytesRange?: string,
-		rootDirectory?: string
-	): Promise<GetFileResponse> {
-		const pathToFile = fileRecord.createPath(rootDirectory);
+	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
+		const pathToFile = fileRecord.createPath();
 		const file = await this.storageClient.get(pathToFile, bytesRange);
 		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
