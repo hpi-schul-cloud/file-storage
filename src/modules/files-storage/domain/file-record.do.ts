@@ -208,6 +208,17 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		this.props.deletedSince = undefined;
 	}
 
+	public getExpiresAt(): Date | undefined {
+		if (!this.isTempFile() || !this.props.deletedSince) {
+			return;
+		}
+
+		const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+		const expiresAt = new Date(this.props.deletedSince.getTime() + sevenDaysInMs);
+
+		return expiresAt;
+	}
+
 	public setName(name: string): void {
 		if (name.length === 0) {
 			throw new BadRequestException(ErrorType.FILE_NAME_EMPTY);
@@ -371,5 +382,9 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 
 	private touchContentLastModifiedAt(): void {
 		this.props.contentLastModifiedAt = new Date();
+	}
+
+	private isTempFile(): boolean {
+		return this.props.storageDirectory === StorageDirectory.TEMP;
 	}
 }
