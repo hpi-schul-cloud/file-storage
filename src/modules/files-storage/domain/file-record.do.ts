@@ -34,6 +34,8 @@ export enum StorageDirectory {
 	TEMP = 'temp',
 }
 
+export const DELETED_FILE_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
@@ -213,8 +215,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 			return;
 		}
 
-		const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
-		const expiresAt = new Date(this.props.deletedSince.getTime() + sevenDaysInMs);
+		const expiresAt = new Date(this.props.deletedSince.getTime() + DELETED_FILE_EXPIRY_SECONDS * 1000);
 
 		return expiresAt;
 	}

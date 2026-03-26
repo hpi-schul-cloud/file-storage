@@ -2,7 +2,7 @@ import { Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
 import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
-import { FileRecord, FileRecordProps, StorageDirectory } from '../domain';
+import { DELETED_FILE_EXPIRY_SECONDS, FileRecord, FileRecordProps, StorageDirectory } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
 import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 
@@ -24,7 +24,7 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 	},
 })
 export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRecordProps {
-	@Index({ options: { expireAfterSeconds: 7 * 24 * 60 * 60 } })
+	@Index({ options: { expireAfterSeconds: DELETED_FILE_EXPIRY_SECONDS } })
 	@Property({ nullable: true })
 	deletedSince?: Date;
 
