@@ -112,9 +112,12 @@ export class FilesStorageUC {
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, this.tempFolderName);
-		fileRecord.markForDelete();
-		await this.filesStorageService.saveFileRecord(fileRecord);
+		const afterUpload = async (fileRecord: FileRecord): Promise<void> => {
+			fileRecord.markForDelete();
+			await this.filesStorageService.saveFileRecord(fileRecord);
+		};
+
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, this.tempFolderName, afterUpload);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		// @todo replace response dto url to /temp/download/{fileRecordId}/ and expiration time
@@ -364,7 +367,8 @@ export class FilesStorageUC {
 		userId: EntityId,
 		params: FileRecordParams,
 		req: AbortableRequest,
-		rootDirectory?: string
+		rootDirectory?: string,
+		afterUpload?: (fileRecord: FileRecord) => Promise<void>
 	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
@@ -423,8 +427,11 @@ export class FilesStorageUC {
 
 				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, rootDirectory);
 
-				fileRecordPromise = RequestContext.create(this.em, () => {
-					return this.filesStorageService.uploadFile(userId, params, fileDto);
+				fileRecordPromise = RequestContext.create(this.em, async () => {
+					const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
+					if (afterUpload) await afterUpload(fileRecord);
+
+					return fileRecord;
 				});
 
 				// Handle upload errors immediately
