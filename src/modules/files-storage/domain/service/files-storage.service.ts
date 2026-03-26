@@ -145,11 +145,6 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	// TODO: Prüfe Lösung
-	public async saveFileRecord(fileRecord: FileRecord): Promise<void> {
-		await this.fileRecordRepo.save(fileRecord);
-	}
-
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
 		const [mimeTypeStream, filesStorageStream] = duplicateStream(sourceFile.data, 2);
 		const mimeType = await detectMimeTypeByStream(mimeTypeStream, sourceFile.mimeType, this.logger);

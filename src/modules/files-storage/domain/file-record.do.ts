@@ -78,6 +78,9 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		props: FileRecordProps,
 		private securityCheck: FileRecordSecurityCheck
 	) {
+		if (props.storageDirectory === StorageDirectory.TEMP && !props.deletedSince) {
+			props.deletedSince = new Date();
+		}
 		super(props);
 	}
 
