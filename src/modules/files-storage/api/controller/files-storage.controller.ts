@@ -126,7 +126,7 @@ export class FilesStorageController {
 		return streamableFile;
 	}
 
-	@ApiOperation({ summary: 'Temporäres Hochladen einer Datei.' })
+	@ApiOperation({ summary: 'Temporary upload of a file.' })
 	@ApiResponse({ status: 201, type: FileRecordResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
