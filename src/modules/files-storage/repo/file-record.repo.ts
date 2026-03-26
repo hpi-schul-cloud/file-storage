@@ -16,7 +16,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 	}
 
 	public async findOneById(id: EntityId): Promise<FileRecord> {
-		const scope = new FileRecordScope().byFileRecordId(id).byMarkedForDelete(false);
+		const scope = new FileRecordScope().byFileRecordId(id).byNotDeletedOrTemp();
 		const fileRecord = await this.findOneOrFail(scope);
 
 		return fileRecord;
