@@ -34,7 +34,7 @@ export class FileRecordResponse {
 		this.isCollaboraEditable = status.isCollaboraEditable;
 		this.exceedsCollaboraEditableFileSize = status.exceedsCollaboraEditableFileSize;
 		this.contentLastModifiedAt = props.contentLastModifiedAt;
-		this.expiresAt = fileRecord.getExpiresAt();
+		this.expiresAt = props.expiresAt;
 	}
 
 	@ApiProperty()

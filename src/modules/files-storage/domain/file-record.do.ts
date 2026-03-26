@@ -34,7 +34,7 @@ export enum StorageDirectory {
 	TEMP = 'temp',
 }
 
-export const DELETED_FILE_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+export const TEMP_FILE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -66,6 +66,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	storageLocation: StorageLocation;
 	storageLocationId: EntityId;
 	deletedSince?: Date;
+	expiresAt?: Date;
 	isCopyFrom?: EntityId;
 	isUploading?: boolean;
 	previewGenerationFailed?: boolean;
@@ -80,8 +81,8 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		props: FileRecordProps,
 		private securityCheck: FileRecordSecurityCheck
 	) {
-		if (props.storageDirectory === StorageDirectory.TEMP && !props.deletedSince) {
-			props.deletedSince = new Date();
+		if (props.storageDirectory === StorageDirectory.TEMP && !props.expiresAt) {
+			props.expiresAt = new Date(Date.now() + TEMP_FILE_EXPIRY_MS);
 		}
 		super(props);
 	}
@@ -208,16 +209,6 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 
 	public unmarkForDelete(): void {
 		this.props.deletedSince = undefined;
-	}
-
-	public getExpiresAt(): Date | undefined {
-		if (!this.isTempFile() || !this.props.deletedSince) {
-			return;
-		}
-
-		const expiresAt = new Date(this.props.deletedSince.getTime() + DELETED_FILE_EXPIRY_SECONDS * 1000);
-
-		return expiresAt;
 	}
 
 	public setName(name: string): void {
@@ -383,9 +374,5 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 
 	private touchContentLastModifiedAt(): void {
 		this.props.contentLastModifiedAt = new Date();
-	}
-
-	private isTempFile(): boolean {
-		return this.props.storageDirectory === StorageDirectory.TEMP;
 	}
 }

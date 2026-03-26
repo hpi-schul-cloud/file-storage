@@ -1,6 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import { Scope } from '@shared/repo/scope';
-import { StorageDirectory, StorageLocation } from '../domain';
+import { StorageLocation } from '../domain';
 import { FileRecordEntity } from './file-record.entity';
 
 export class FileRecordScope extends Scope<FileRecordEntity> {
@@ -43,12 +43,6 @@ export class FileRecordScope extends Scope<FileRecordEntity> {
 	public byMarkedForDelete(isMarked = true): this {
 		const query = isMarked ? { deletedSince: { $ne: null } } : { deletedSince: null };
 		this.addQuery(query);
-
-		return this;
-	}
-
-	public byNotDeletedOrTemp(): this {
-		this.addQuery({ $or: [{ deletedSince: null }, { storageDirectory: StorageDirectory.TEMP }] });
 
 		return this;
 	}
