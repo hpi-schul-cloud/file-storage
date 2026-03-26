@@ -95,6 +95,25 @@ export class FilesStorageController {
 		return response;
 	}
 
+	@ApiOperation({ summary: 'Temporary upload of a file.' })
+	@ApiResponse({ status: 201, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@ApiConsumes('multipart/form-data')
+	@Post('/temp/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async tempUpload(
+		@Body() _: FileParams,
+		@Param() params: FileRecordParams,
+		@CurrentUser() currentUser: ICurrentUser,
+		@Req() req: Request
+	): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.tempUpload(currentUser.userId, params, req);
+
+		return response;
+	}
+
 	@ApiOperation({ summary: 'Streamable download of a binary file.' })
 	@ApiProduces('application/octet-stream')
 	@ApiResponse({
@@ -124,25 +143,6 @@ export class FilesStorageController {
 		const streamableFile = this.streamFileToClient(req, fileResponse, response, bytesRange);
 
 		return streamableFile;
-	}
-
-	@ApiOperation({ summary: 'Temporary upload of a file.' })
-	@ApiResponse({ status: 201, type: FileRecordResponse })
-	@ApiResponse({ status: 400, type: ApiValidationError })
-	@ApiResponse({ status: 400, type: BadRequestException })
-	@ApiResponse({ status: 403, type: ForbiddenException })
-	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@ApiConsumes('multipart/form-data')
-	@Post('/temp/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
-	public async tempUpload(
-		@Body() _: FileParams,
-		@Param() params: FileRecordParams,
-		@CurrentUser() currentUser: ICurrentUser,
-		@Req() req: Request
-	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.tempUpload(currentUser.userId, params, req);
-
-		return response;
 	}
 
 	@ApiOperation({ summary: 'Streamable download of a preview file.' })
