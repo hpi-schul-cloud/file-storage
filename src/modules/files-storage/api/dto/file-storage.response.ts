@@ -34,6 +34,7 @@ export class FileRecordResponse {
 		this.isCollaboraEditable = status.isCollaboraEditable;
 		this.exceedsCollaboraEditableFileSize = status.exceedsCollaboraEditableFileSize;
 		this.contentLastModifiedAt = props.contentLastModifiedAt;
+		this.expiresAt = props.expiresAt;
 	}
 
 	@ApiProperty()
@@ -87,6 +88,9 @@ export class FileRecordResponse {
 
 	@ApiPropertyOptional()
 	contentLastModifiedAt?: Date;
+
+	@ApiPropertyOptional()
+	expiresAt?: Date;
 }
 
 export class FileRecordListResponse extends PaginationResponse<FileRecordResponse[]> {

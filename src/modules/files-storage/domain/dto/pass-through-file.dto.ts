@@ -1,4 +1,5 @@
 import { PassThrough } from 'node:stream';
+import { StorageDirectory } from '../file-record.do';
 import { FileDto } from './file.dto';
 
 export class PassThroughFileDto implements FileDto {
@@ -9,6 +10,7 @@ export class PassThroughFileDto implements FileDto {
 		this.abortSignal = file.abortSignal;
 		this.streamCompletion = file.streamCompletion;
 		this.fileSize = file.fileSize;
+		this.storageDirectory = file.storageDirectory;
 	}
 
 	name: string;
@@ -22,4 +24,6 @@ export class PassThroughFileDto implements FileDto {
 	streamCompletion?: Promise<void>;
 
 	fileSize: number;
+
+	storageDirectory?: StorageDirectory;
 }

@@ -30,6 +30,12 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
 
+export enum StorageDirectory {
+	TEMP = 'temp',
+}
+
+export const TEMP_FILE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
@@ -60,12 +66,14 @@ export interface FileRecordProps extends AuthorizableObject {
 	storageLocation: StorageLocation;
 	storageLocationId: EntityId;
 	deletedSince?: Date;
+	expiresAt?: Date;
 	isCopyFrom?: EntityId;
 	isUploading?: boolean;
 	previewGenerationFailed?: boolean;
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
+	storageDirectory?: StorageDirectory;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -73,6 +81,9 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		props: FileRecordProps,
 		private securityCheck: FileRecordSecurityCheck
 	) {
+		if (props.storageDirectory === StorageDirectory.TEMP && !props.expiresAt) {
+			props.expiresAt = new Date(Date.now() + TEMP_FILE_EXPIRY_MS);
+		}
 		super(props);
 	}
 
@@ -339,7 +350,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public createPath(): string {
-		const path = [this.props.storageLocationId, this.id].join('/');
+		const path = [this.props.storageDirectory, this.props.storageLocationId, this.id].filter(Boolean).join('/');
 
 		return path;
 	}
