@@ -3,11 +3,13 @@ import {
 	CopyObjectCommandOutput,
 	CreateBucketCommand,
 	DeleteObjectsCommand,
+	ExpirationStatus,
 	GetObjectCommand,
 	HeadObjectCommand,
 	HeadObjectCommandOutput,
 	ListObjectsV2Command,
 	ListObjectsV2CommandOutput,
+	PutBucketLifecycleConfigurationCommand,
 	PutObjectCommandInput,
 	S3Client,
 	ServiceOutputTypes,
@@ -34,6 +36,37 @@ export class S3ClientAdapter {
 		private readonly clientInjectionToken: string
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
+	}
+
+	public async configureFolderLifecycle(folderName: string, expirationDays: number): Promise<void> {
+		const lifecycleConfig = {
+			Bucket: this.config.bucket,
+			LifecycleConfiguration: {
+				Rules: [
+					{
+						ID: `${folderName}CleanupRule`,
+						Status: ExpirationStatus.Enabled,
+						Expiration: { Days: expirationDays },
+						Filter: { Prefix: `${folderName}/` },
+					},
+				],
+			},
+		};
+		try {
+			const command = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
+			await this.client.send(command);
+			this.logger.info(
+				new S3ClientActionLoggable(`S3 Lifecycle for /${folderName}/* set to ${expirationDays} days`, {
+					action: 'configureLifecycle',
+					bucket: this.config.bucket,
+				})
+			);
+		} catch (err) {
+			if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
+				await this.createBucket();
+			}
+			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
+		}
 	}
 
 	// is public but only used internally
