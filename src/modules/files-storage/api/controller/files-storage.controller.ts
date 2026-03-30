@@ -351,7 +351,7 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Copy all files of a parent entityId to a target entitId' })
+	@ApiOperation({ summary: 'Copy all files of a parent entityId to a target entityId' })
 	@ApiResponse({ status: 201, type: CopyFileListResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
@@ -389,7 +389,9 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Get stats (count and total size) of all files for a parent entityId.' })
+	@ApiOperation({
+		summary: 'Get stats (count and total size) of files for a parent entityId. Excludes temporary and deleted files.',
+	})
 	@ApiResponse({ status: 200, type: ParentStatisticResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
