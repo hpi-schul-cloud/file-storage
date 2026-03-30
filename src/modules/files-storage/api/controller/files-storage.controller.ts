@@ -252,7 +252,7 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Get a list of file meta data of a parent entityId.' })
+	@ApiOperation({ summary: 'Get a list of file meta data by parent entityId. Excludes temporary and deleted files.' })
 	@ApiResponse({ status: 200, type: FileRecordListResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
