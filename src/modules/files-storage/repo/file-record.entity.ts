@@ -2,7 +2,7 @@ import { Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
 import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
-import { FileRecord, FileRecordProps, StorageDirectory } from '../domain';
+import { FileRecord, FileRecordProps, StorageType, TEMP_FILE_EXPIRY_SECONDS } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
 import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 
@@ -23,14 +23,18 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 		partialFilterExpression: { isUploading: true },
 	},
 })
+@Index({
+	name: 'temp_file_ttl_idx',
+	properties: ['createdAt'],
+	options: {
+		expireAfterSeconds: TEMP_FILE_EXPIRY_SECONDS,
+		partialFilterExpression: { storageType: 'temp' },
+	},
+})
 export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRecordProps {
 	@Index({ options: { expireAfterSeconds: 7 * 24 * 60 * 60 } })
 	@Property({ nullable: true })
 	deletedSince?: Date;
-
-	@Index({ options: { expireAfterSeconds: 0 } })
-	@Property({ nullable: true })
-	expiresAt?: Date;
 
 	@Property({ nullable: true })
 	contentLastModifiedAt?: Date;
@@ -78,5 +82,5 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	domainObject: FileRecord | undefined;
 
 	@Property({ nullable: true })
-	storageDirectory?: StorageDirectory;
+	storageType?: StorageType;
 }

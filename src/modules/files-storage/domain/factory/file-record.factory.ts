@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
-import { FileRecord, FileRecordProps, ParentInfo, StorageDirectory } from '../file-record.do';
+import { FileRecord, FileRecordProps, ParentInfo, StorageType } from '../file-record.do';
 import { FileRecordSecurityCheck } from '../vo';
 
 export class FileRecordFactory {
@@ -15,7 +15,7 @@ export class FileRecordFactory {
 		mimeType: string,
 		params: ParentInfo,
 		userId: string,
-		storageDirectory?: StorageDirectory
+		storageType?: StorageType
 	): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
@@ -32,7 +32,7 @@ export class FileRecordFactory {
 			isUploading: true,
 			createdAt: new Date(),
 			updatedAt: new Date(),
-			storageDirectory,
+			storageType: storageType ?? StorageType.STANDARD,
 		};
 
 		const fileRecord = FileRecordFactory.build(props, defaultSecurityCheck);
@@ -47,7 +47,7 @@ export class FileRecordFactory {
 	}
 
 	public static copy(fileRecord: FileRecord, userId: EntityId, targetParentInfo: ParentInfo): FileRecord {
-		const { size, name, mimeType, id } = fileRecord.getProps();
+		const { size, name, mimeType, id, storageType } = fileRecord.getProps();
 		const { parentType, parentId, storageLocation, storageLocationId } = targetParentInfo;
 		const newSecurityCheck = fileRecord.createSecurityScanBasedOnStatus();
 
@@ -65,6 +65,7 @@ export class FileRecordFactory {
 			isCopyFrom: id,
 			createdAt: new Date(),
 			updatedAt: new Date(),
+			storageType,
 		};
 
 		const fileRecordCopy = FileRecordFactory.build(props, newSecurityCheck);

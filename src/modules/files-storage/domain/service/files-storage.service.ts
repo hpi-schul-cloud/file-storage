@@ -198,7 +198,7 @@ export class FilesStorageService implements OnModuleInit {
 			file.mimeType,
 			parentInfo,
 			userId,
-			file.storageDirectory
+			file.storageType
 		);
 		fileRecord.markAsUploading();
 		await this.fileRecordRepo.save(fileRecord);

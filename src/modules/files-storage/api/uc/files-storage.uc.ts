@@ -30,8 +30,8 @@ import {
 	GetFileResponse,
 	ParentReference,
 	PreviewService,
-	StorageDirectory,
 	StorageLocation,
+	StorageType,
 } from '../../domain';
 import { UploadAbortLoggable } from '../../loggable';
 import {
@@ -111,7 +111,7 @@ export class FilesStorageUC {
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageDirectory.TEMP);
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.TEMP);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
@@ -360,7 +360,7 @@ export class FilesStorageUC {
 		userId: EntityId,
 		params: FileRecordParams,
 		req: AbortableRequest,
-		storageDirectory?: StorageDirectory
+		storageType?: StorageType
 	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
@@ -417,7 +417,7 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				if (isResolved) return; // Already resolved/rejected
 
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, storageDirectory);
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, storageType);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					return this.filesStorageService.uploadFile(userId, params, fileDto);
