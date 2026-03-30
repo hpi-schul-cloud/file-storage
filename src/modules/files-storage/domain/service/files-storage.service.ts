@@ -10,7 +10,6 @@ import {
 	InternalServerErrorException,
 	NotAcceptableException,
 	NotFoundException,
-	OnModuleInit,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
 import { PassThrough } from 'node:stream';
@@ -31,7 +30,7 @@ import { detectMimeTypeByStream, duplicateStream } from '../utils';
 import { ParentStatistic } from '../vo';
 
 @Injectable()
-export class FilesStorageService implements OnModuleInit {
+export class FilesStorageService {
 	constructor(
 		@Inject(FILE_RECORD_REPO) private readonly fileRecordRepo: FileRecordRepo,
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
@@ -41,16 +40,6 @@ export class FilesStorageService implements OnModuleInit {
 		private readonly domainErrorHandler: DomainErrorHandler
 	) {
 		this.logger.setContext(FilesStorageService.name);
-	}
-
-	public async onModuleInit(): Promise<void> {
-		// TODO: Enum for folder names? Check expiration days for temp and preview folders?
-		const promises = [
-			this.storageClient.configureFolderLifecycle('trash', 7),
-			this.storageClient.configureFolderLifecycle('temp', 7),
-			this.storageClient.configureFolderLifecycle('preview', 7),
-		];
-		await Promise.all(promises);
 	}
 
 	// find

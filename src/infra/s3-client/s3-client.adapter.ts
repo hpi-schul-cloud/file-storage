@@ -18,14 +18,15 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
-import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'stream';
-import { CopyFiles, File, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
+import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
-export class S3ClientAdapter {
+export class S3ClientAdapter implements OnModuleInit {
 	private readonly deletedFolderName = 'trash';
+	private readonly deletedFolderExpirationDays = 7;
 	private readonly S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
 
 	constructor(
@@ -33,9 +34,19 @@ export class S3ClientAdapter {
 		private readonly config: S3Config,
 		private readonly logger: Logger,
 		private readonly errorHandler: DomainErrorHandler,
-		private readonly clientInjectionToken: string
+		private readonly clientInjectionToken: string,
+		private readonly folderLifecycleRules: FolderLifecycleRule[] = []
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
+	}
+
+	public async onModuleInit(): Promise<void> {
+		await Promise.all([
+			this.configureFolderLifecycle(this.deletedFolderName, this.deletedFolderExpirationDays),
+			...this.folderLifecycleRules.map(({ folder, expirationDays }) =>
+				this.configureFolderLifecycle(folder, expirationDays)
+			),
+		]);
 	}
 
 	public async configureFolderLifecycle(folderName: string, expirationDays: number): Promise<void> {
