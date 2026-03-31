@@ -13,6 +13,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
+import { FileRecordPathBuilder } from '../../repo';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
@@ -480,7 +481,7 @@ describe('FilesStorageService upload methods', () => {
 					fileSize: 8,
 					streamCompletion: expect.any(Promise),
 				};
-				expect(storageClient.create).toHaveBeenCalledWith(fileRecord.createPath(), expectedCalledParams);
+				expect(storageClient.create).toHaveBeenCalledWith(FileRecordPathBuilder.build(fileRecord), expectedCalledParams);
 			});
 
 			it('should return an instance of FileRecord', async () => {

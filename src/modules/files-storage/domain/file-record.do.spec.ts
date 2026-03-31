@@ -322,36 +322,6 @@ describe('FileRecord', () => {
 		});
 	});
 
-	describe('createPath', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const props = fileRecord.getProps();
-			const expectedPath = props.storageLocationId + '/' + fileRecord.id;
-
-			return { fileRecord, expectedPath };
-		};
-
-		it('should create path', () => {
-			const { fileRecord, expectedPath } = setup();
-
-			const path = fileRecord.createPath();
-
-			expect(path).toBe(expectedPath);
-		});
-	});
-
-	describe('FileRecord.getPaths', () => {
-		it('should return paths for all file records', () => {
-			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
-			const path1 = fileRecord1.createPath();
-			const path2 = fileRecord2.createPath();
-
-			const paths = FileRecord.getPaths([fileRecord1, fileRecord2]);
-
-			expect(paths).toEqual([path1, path2]);
-		});
-	});
-
 	describe('getPreviewStatus', () => {
 		it('should return PREVIEW_POSSIBLE if security check is verified and MIME type is valid', () => {
 			const fileRecord = fileRecordTestFactory().withScanStatus(ScanStatus.VERIFIED).build({ mimeType: 'image/png' });

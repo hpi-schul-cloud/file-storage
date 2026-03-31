@@ -27,6 +27,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { detectMimeTypeByStream, duplicateStream } from '../utils';
+import { FileRecordPathBuilder } from '../../repo';
 import { ParentStatistic } from '../vo';
 
 @Injectable()
@@ -213,7 +214,7 @@ export class FilesStorageService {
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = FileRecordPathBuilder.build(fileRecord);
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = file.data.pipe(new PassThrough());
@@ -250,7 +251,7 @@ export class FilesStorageService {
 	}
 
 	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = FileRecordPathBuilder.build(fileRecord);
 		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
@@ -306,7 +307,7 @@ export class FilesStorageService {
 	}
 
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
-		const pathToFile = fileRecord.createPath();
+		const pathToFile = FileRecordPathBuilder.build(fileRecord);
 		const file = await this.storageClient.get(pathToFile, bytesRange);
 		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
@@ -336,12 +337,12 @@ export class FilesStorageService {
 
 	// delete and restore
 	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
+		const paths = FileRecordPathBuilder.buildAll(fileRecords);
 		await this.storageClient.moveToTrash(paths);
 	}
 
 	private async restoreBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
+		const paths = FileRecordPathBuilder.buildAll(fileRecords);
 		await this.storageClient.restore(paths);
 	}
 
@@ -456,8 +457,8 @@ export class FilesStorageService {
 	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
 		try {
 			const copyFiles: CopyFiles = {
-				sourcePath: sourceFile.createPath(),
-				targetPath: targetFile.createPath(),
+				sourcePath: FileRecordPathBuilder.build(sourceFile),
+				targetPath: FileRecordPathBuilder.build(targetFile),
 			};
 
 			await this.storageClient.copy([copyFiles]);

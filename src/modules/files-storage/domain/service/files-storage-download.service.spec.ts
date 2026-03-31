@@ -9,6 +9,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Readable } from 'node:stream';
 import { ScanStatus } from '../../domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FileRecordPathBuilder } from '../../repo';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { ArchiveFactory } from '../factory';
@@ -192,7 +193,7 @@ describe('FilesStorageService download methods', () => {
 			it('calls get with correct params', async () => {
 				const { fileRecord } = setup();
 
-				const path = fileRecord.createPath();
+				const path = FileRecordPathBuilder.build(fileRecord);
 
 				await service.downloadFile(fileRecord);
 

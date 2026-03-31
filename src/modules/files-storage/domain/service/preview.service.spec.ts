@@ -11,6 +11,7 @@ import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { ScanStatus } from '../vo';
+import { FileRecordPathBuilder } from '../../repo';
 import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 
@@ -96,7 +97,7 @@ describe('PreviewService', () => {
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -165,7 +166,7 @@ describe('PreviewService', () => {
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -241,7 +242,7 @@ describe('PreviewService', () => {
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -289,7 +290,7 @@ describe('PreviewService', () => {
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -354,7 +355,7 @@ describe('PreviewService', () => {
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -430,7 +431,7 @@ describe('PreviewService', () => {
 
 						const hash = 'test hash';
 						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -469,7 +470,7 @@ describe('PreviewService', () => {
 
 					const hash = 'test hash';
 					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
+					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
@@ -507,7 +508,7 @@ describe('PreviewService', () => {
 
 					const hash = 'test hash';
 					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
+					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
@@ -545,7 +546,7 @@ describe('PreviewService', () => {
 
 					const hash = 'test hash';
 					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
+					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
@@ -583,7 +584,7 @@ describe('PreviewService', () => {
 
 					const hash = 'test hash';
 					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
+					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,

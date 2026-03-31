@@ -120,12 +120,6 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		});
 	}
 
-	public static getPaths(fileRecords: FileRecord[]): string[] {
-		const paths = fileRecords.map((fileRecord) => fileRecord.createPath());
-
-		return paths;
-	}
-
 	// ---------------------------------------------------------
 
 	public static getFormat(mimeType: string): string {
@@ -352,13 +346,6 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		}
 
 		return new Date(this.props.createdAt.getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000);
-	}
-
-	public createPath(): string {
-		const directory = this.props.storageType !== StorageType.STANDARD ? this.props.storageType : undefined;
-		const path = [directory, this.props.storageLocationId, this.id].filter(Boolean).join('/');
-
-		return path;
 	}
 
 	public createPreviewDirectoryPath(): string {

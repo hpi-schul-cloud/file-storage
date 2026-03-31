@@ -7,6 +7,7 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FileRecordPathBuilder } from '../../repo';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FileRecordFactory } from '../factory';
@@ -107,8 +108,8 @@ describe('FilesStorageService copy methods', () => {
 				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
 				const expectedParams: CopyFiles = {
-					sourcePath: sourceFile.createPath(),
-					targetPath: targetFile.createPath(),
+					sourcePath: FileRecordPathBuilder.build(sourceFile),
+					targetPath: FileRecordPathBuilder.build(targetFile),
 				};
 
 				expect(storageClient.copy).toHaveBeenCalledWith([expectedParams]);

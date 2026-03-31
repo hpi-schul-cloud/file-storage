@@ -8,6 +8,7 @@ import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConf
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FileRecordFactory } from '../factory';
 import { FileRecord, FileRecordProps } from '../file-record.do';
+import { FileRecordPathBuilder } from '../../repo';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -105,7 +106,7 @@ describe('FilesStorageService restore methods', () => {
 
 			it('should call storageClient.restore', async () => {
 				const { fileRecords } = setup();
-				const paths = FileRecord.getPaths(fileRecords);
+				const paths = FileRecordPathBuilder.buildAll(fileRecords);
 
 				await service.restoreFiles(fileRecords);
 
