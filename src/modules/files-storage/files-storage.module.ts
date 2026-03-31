@@ -7,9 +7,8 @@ import { S3ClientModule } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
 import { FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
 import { TEMP_FILE_EXPIRY_SECONDS } from './domain/file-record.do';
-import { TEMP_STORAGE_FOLDER } from './repo';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
-import { FileRecordMikroOrmRepo } from './repo';
+import { FileRecordMikroOrmRepo, TEMP_STORAGE_FOLDER } from './repo';
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 

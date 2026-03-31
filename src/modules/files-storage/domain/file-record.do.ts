@@ -35,7 +35,7 @@ export enum StorageType {
 	TEMP = 'temp',
 }
 
-export const TEMP_FILE_EXPIRY_SECONDS = 7 * 24 * 60 * 60;
+export const TEMP_FILE_EXPIRY_SECONDS = 1 * 24 * 60 * 60;
 
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
