@@ -10,6 +10,7 @@ import {
 	ListObjectsV2Command,
 	ListObjectsV2CommandOutput,
 	PutBucketLifecycleConfigurationCommand,
+	PutBucketLifecycleConfigurationCommandInput,
 	PutObjectCommandInput,
 	S3Client,
 	ServiceOutputTypes,
@@ -47,37 +48,6 @@ export class S3ClientAdapter implements OnModuleInit {
 				this.configureFolderLifecycle(folder, expirationDays)
 			),
 		]);
-	}
-
-	public async configureFolderLifecycle(folderName: string, expirationDays: number): Promise<void> {
-		const lifecycleConfig = {
-			Bucket: this.config.bucket,
-			LifecycleConfiguration: {
-				Rules: [
-					{
-						ID: `${folderName}CleanupRule`,
-						Status: ExpirationStatus.Enabled,
-						Expiration: { Days: expirationDays },
-						Filter: { Prefix: `${folderName}/` },
-					},
-				],
-			},
-		};
-		try {
-			const command = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
-			await this.client.send(command);
-			this.logger.info(
-				new S3ClientActionLoggable(`S3 Lifecycle for /${folderName}/* set to ${expirationDays} days`, {
-					action: 'configureLifecycle',
-					bucket: this.config.bucket,
-				})
-			);
-		} catch (err) {
-			if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
-				await this.createBucket();
-			}
-			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
-		}
 	}
 
 	// is public but only used internally
@@ -204,6 +174,57 @@ export class S3ClientAdapter implements OnModuleInit {
 			contentRange: data.ContentRange,
 			etag: data.ETag,
 		};
+	}
+
+	private async configureFolderLifecycle(folderName: string, expirationDays: number): Promise<void> {
+		const lifecycleConfig = {
+			Bucket: this.config.bucket,
+			LifecycleConfiguration: {
+				Rules: [
+					{
+						ID: `${folderName}CleanupRule`,
+						Status: ExpirationStatus.Enabled,
+						Expiration: { Days: expirationDays },
+						Filter: { Prefix: `${folderName}/` },
+					},
+				],
+			},
+		};
+
+		try {
+			await this.sendLifecycleConfiguration(lifecycleConfig, folderName, expirationDays);
+		} catch (err) {
+			await this.handleConfigureFolderLifecycleError(err, folderName, expirationDays);
+		}
+	}
+
+	private async sendLifecycleConfiguration(
+		lifecycleConfig: PutBucketLifecycleConfigurationCommandInput,
+		folderName: string,
+		expirationDays: number
+	): Promise<void> {
+		const command = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
+		await this.client.send(command);
+		this.logger.info(
+			new S3ClientActionLoggable(`S3 Lifecycle for /${folderName}/* set to ${expirationDays} days`, {
+				action: 'configureLifecycle',
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private async handleConfigureFolderLifecycleError(
+		err: unknown,
+		folderName: string,
+		expirationDays: number
+	): Promise<void> {
+		if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
+			await this.createBucket();
+			await this.configureFolderLifecycle(folderName, expirationDays);
+		}
+		if (TypeGuard.isError(err)) {
+			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
+		}
 	}
 
 	private async createBucketInternal(): Promise<void> {
