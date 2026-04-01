@@ -2,7 +2,14 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
-import { CollaboraMimeTypes, FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
+import {
+	CollaboraMimeTypes,
+	FileRecord,
+	PreviewOutputMimeTypes,
+	PreviewStatus,
+	StorageType,
+	TEMP_FILE_EXPIRY_SECONDS,
+} from './file-record.do';
 import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
 import { ScanStatus } from './vo';
 
@@ -586,6 +593,40 @@ describe('FileRecord', () => {
 			expect(() => fileRecord.markAsUploaded(invalidSize, maxSizeSmallerThanInvalidSize, maxSecurityCheckSize)).toThrow(
 				ErrorType.FILE_TOO_BIG
 			);
+		});
+	});
+
+	describe('getExpiresAt', () => {
+		describe('when storageType is TEMP', () => {
+			it('should return createdAt plus TEMP_FILE_EXPIRY_SECONDS', () => {
+				const createdAt = new Date('2024-01-01T00:00:00.000Z');
+				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP, createdAt });
+
+				const result = fileRecord.getExpiresAt();
+
+				const expected = new Date(createdAt.getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000);
+				expect(result).toEqual(expected);
+			});
+		});
+
+		describe('when storageType is STANDARD', () => {
+			it('should return undefined', () => {
+				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
+
+				const result = fileRecord.getExpiresAt();
+
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when storageType is undefined', () => {
+			it('should return undefined', () => {
+				const fileRecord = fileRecordTestFactory().build({ storageType: undefined });
+
+				const result = fileRecord.getExpiresAt();
+
+				expect(result).toBeUndefined();
+			});
 		});
 	});
 });
