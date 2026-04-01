@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { ErrorType, ScanStatus } from '../../../domain';
+import { ErrorType, ScanStatus, StorageType } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import {
 	FILE_STORAGE_CONFIG_TOKEN,
@@ -808,6 +808,38 @@ describe('files-storage controller (API)', () => {
 					const headers = response.headers as Record<string, string>;
 
 					expect(headers['content-disposition']).toMatch('inline');
+				});
+			});
+
+			describe(`when storageType is ${StorageType.TEMP}`, () => {
+				const setup = async () => {
+					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+
+					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+
+					const validId = new ObjectId().toHexString();
+
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+
+					const result = await loggedInClient
+						.post(`/temp/upload/school/${validId}/schools/${validId}`)
+						.attach('file', Buffer.from('abcd'), 'test.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const uploadedFile = result.body as FileRecordEntity;
+
+					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
+					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
+
+					return { uploadedFile, loggedInClient };
+				};
+
+				it('should return status 200 for successful download', async () => {
+					const { uploadedFile, loggedInClient } = await setup();
+
+					const response = await loggedInClient.get(`/download/${uploadedFile.id}/${uploadedFile.name}`);
+
+					expect(response.status).toEqual(200);
 				});
 			});
 		});

@@ -6,7 +6,7 @@ import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
 import { HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PassThrough, Readable } from 'node:stream';
-import { File, S3Config } from './interface';
+import { File, FolderLifecycleRule, S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 import { createListObjectsV2CommandOutput } from './testing';
 
@@ -55,6 +55,106 @@ describe(S3ClientAdapter.name, () => {
 
 	it('should be defined', () => {
 		expect(service).toBeDefined();
+	});
+
+	describe('onModuleInit', () => {
+		describe('WHEN called with default config', () => {
+			it('should call client.send with trash lifecycle configuration', async () => {
+				const { config } = createParameter();
+
+				await service.onModuleInit();
+
+				expect(client.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						input: expect.objectContaining({
+							Bucket: config.bucket,
+							LifecycleConfiguration: expect.objectContaining({
+								Rules: expect.arrayContaining([
+									expect.objectContaining({
+										ID: 'trashCleanupRule',
+										Filter: { Prefix: 'trash/' },
+									}),
+								]),
+							}),
+						}),
+					})
+				);
+			});
+		});
+
+		describe('WHEN called with additional folderLifecycleRules', () => {
+			it('should call client.send for each lifecycle rule', async () => {
+				const { config } = createParameter();
+				const logger = createMock<Logger>();
+				const configuration = createMock<S3Config>(config);
+				const localErrorHandler = createMock<DomainErrorHandler>();
+				const localClient = createMock<S3Client>({
+					config: { endpoint: () => ({ protocol: '', hostname: '' }) },
+				});
+				const folderLifecycleRules: FolderLifecycleRule[] = [{ folder: 'temp', expirationDays: 3 }];
+				const serviceWithRules = new S3ClientAdapter(
+					localClient,
+					configuration,
+					logger,
+					localErrorHandler,
+					'clientInjectionToken',
+					folderLifecycleRules
+				);
+
+				await serviceWithRules.onModuleInit();
+
+				expect(localClient.send).toHaveBeenCalledTimes(2);
+				expect(localClient.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						input: expect.objectContaining({
+							LifecycleConfiguration: expect.objectContaining({
+								Rules: expect.arrayContaining([
+									expect.objectContaining({ ID: 'trashCleanupRule', Filter: { Prefix: 'trash/' } }),
+								]),
+							}),
+						}),
+					})
+				);
+				expect(localClient.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						input: expect.objectContaining({
+							LifecycleConfiguration: expect.objectContaining({
+								Rules: expect.arrayContaining([
+									expect.objectContaining({ ID: 'tempCleanupRule', Filter: { Prefix: 'temp/' } }),
+								]),
+							}),
+						}),
+					})
+				);
+			});
+		});
+
+		describe('WHEN client throws NoSuchBucket error', () => {
+			it('should call createBucket and retry lifecycle configuration', async () => {
+				const createBucketSpy = jest.spyOn(service, 'createBucket').mockResolvedValueOnce();
+				// @ts-expect-error Testcase
+				client.send.mockRejectedValueOnce({ Code: 'NoSuchBucket', message: 'NoSuchBucket' });
+				// @ts-expect-error Testcase
+				client.send.mockResolvedValueOnce({});
+
+				await service.onModuleInit();
+
+				expect(createBucketSpy).toHaveBeenCalled();
+				expect(client.send).toHaveBeenCalledTimes(2);
+			});
+		});
+
+		describe('WHEN client throws other error', () => {
+			it('should call errorHandler.exec with error message and bucket name', async () => {
+				const error = new Error('Internal error');
+				// @ts-expect-error Testcase
+				client.send.mockRejectedValueOnce(error);
+
+				await service.onModuleInit();
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(expect.stringContaining('test-bucket'));
+			});
+		});
 	});
 
 	describe('createBucket', () => {

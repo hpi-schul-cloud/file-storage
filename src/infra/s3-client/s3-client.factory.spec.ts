@@ -51,7 +51,7 @@ describe(S3ClientFactory.name, () => {
 			const { config, logger, errorHandler, client, clientInjectionToken } = setup();
 			S3ClientFactory.build(config, logger, errorHandler, clientInjectionToken);
 
-			expect(S3ClientAdapter).toHaveBeenCalledWith(client, config, logger, errorHandler, clientInjectionToken);
+			expect(S3ClientAdapter).toHaveBeenCalledWith(client, config, logger, errorHandler, clientInjectionToken, []);
 		});
 
 		it('should return an instance of S3ClientAdapter', () => {

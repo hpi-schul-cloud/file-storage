@@ -1,7 +1,7 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AxiosResponse } from 'axios';
 import { Readable } from 'node:stream';
-import { FileDto } from '../../domain';
+import { FileDto, StorageType } from '../../domain';
 import { busboyFileInfoTestFactory } from '../../testing';
 import { FileDtoMapper } from './file-dto.mapper';
 
@@ -62,24 +62,50 @@ describe('FileDtoMapper', () => {
 	});
 
 	describe('mapFromBusboyFileInfo', () => {
-		const setup = () => {
-			const readable = Readable.from('abc');
-			const busboyFileInfo = busboyFileInfoTestFactory().build();
-			const expectedFile = new FileDto({
-				name: busboyFileInfo.filename,
-				data: readable,
-				mimeType: busboyFileInfo.mimeType,
+		describe('when storageType is not provided', () => {
+			const setup = () => {
+				const readable = Readable.from('abc');
+				const busboyFileInfo = busboyFileInfoTestFactory().build();
+				const expectedFile = new FileDto({
+					name: busboyFileInfo.filename,
+					data: readable,
+					mimeType: busboyFileInfo.mimeType,
+				});
+
+				return { busboyFileInfo, readable, expectedFile };
+			};
+
+			it('should return file from busboy fileInfo', () => {
+				const { busboyFileInfo, readable, expectedFile } = setup();
+
+				const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable);
+
+				expect(result).toEqual(expectedFile);
 			});
+		});
 
-			return { busboyFileInfo, readable, expectedFile };
-		};
+		describe('when storageType is provided', () => {
+			const setup = () => {
+				const readable = Readable.from('abc');
+				const storageType = StorageType.TEMP;
+				const busboyFileInfo = busboyFileInfoTestFactory().build();
+				const expectedFile = new FileDto({
+					name: busboyFileInfo.filename,
+					data: readable,
+					mimeType: busboyFileInfo.mimeType,
+					storageType,
+				});
 
-		it('should return file from busboy fileInfo', () => {
-			const { busboyFileInfo, readable, expectedFile } = setup();
+				return { busboyFileInfo, readable, expectedFile, storageType };
+			};
 
-			const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable);
+			it('should return file with storageType from busboy fileInfo', () => {
+				const { busboyFileInfo, readable, expectedFile, storageType } = setup();
 
-			expect(result).toEqual(expectedFile);
+				const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable, undefined, storageType);
+
+				expect(result).toEqual(expectedFile);
+			});
 		});
 	});
 });
