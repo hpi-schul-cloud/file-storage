@@ -28,7 +28,7 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 	properties: ['createdAt'],
 	options: {
 		expireAfterSeconds: TEMP_FILE_EXPIRY_SECONDS,
-		partialFilterExpression: { storageType: 'temp' },
+		partialFilterExpression: { storageType: StorageType.TEMP },
 	},
 })
 export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRecordProps {
