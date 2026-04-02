@@ -224,8 +224,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
 			await this.createBucket();
 			await this.configureAllFolderLifecycles(rules);
-		}
-		if (TypeGuard.isError(err)) {
+		} else if (TypeGuard.isError(err)) {
 			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
 		}
 	}
