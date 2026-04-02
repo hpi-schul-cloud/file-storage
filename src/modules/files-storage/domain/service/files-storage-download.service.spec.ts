@@ -6,14 +6,14 @@ import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import path from 'node:path';
 import { Readable } from 'node:stream';
 import { ScanStatus } from '../../domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileRecordPathBuilder } from '../../repo';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { ArchiveFactory } from '../factory';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 
@@ -31,7 +31,7 @@ describe('FilesStorageService download methods', () => {
 	let service: FilesStorageService;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let logger: DeepMocked<Logger>;
-
+	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
 			providers: [
@@ -60,12 +60,17 @@ describe('FilesStorageService download methods', () => {
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
 				},
+				{
+					provide: FILE_RECORD_PATH_BUILDER,
+					useValue: createMock<FileRecordPathBuilder>(),
+				},
 			],
 		}).compile();
 
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		logger = module.get(Logger);
+		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	beforeEach(() => {
@@ -187,17 +192,17 @@ describe('FilesStorageService download methods', () => {
 				storageClient.get.mockResolvedValueOnce(fileResponse);
 				const expectedResponse = FileResponseFactory.create(fileResponse, fileRecord.getName());
 
+				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(path.join('originPath', fileRecord.id));
+
 				return { fileRecord, expectedResponse };
 			};
 
 			it('calls get with correct params', async () => {
 				const { fileRecord } = setup();
 
-				const path = FileRecordPathBuilder.build(fileRecord);
-
 				await service.downloadFile(fileRecord);
 
-				expect(storageClient.get).toHaveBeenCalledWith(path, undefined);
+				expect(storageClient.get).toHaveBeenCalledWith(path.join('originPath', fileRecord.id), undefined);
 			});
 
 			it('returns correct response', async () => {

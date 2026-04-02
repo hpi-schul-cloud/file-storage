@@ -5,10 +5,10 @@ import { LoggerModule } from '@infra/logger';
 import { PreviewGeneratorProducerModule } from '@infra/preview-generator';
 import { S3ClientModule, TRASH_STORAGE_FOLDER } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
-import { FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
+import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
 import { TEMP_FILE_EXPIRY_SECONDS } from './domain/file-record.do';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
-import { FileRecordMikroOrmRepo, PREVIEW_STORAGE_FOLDER, TEMP_STORAGE_FOLDER } from './repo';
+import { FileRecordMikroOrmRepo, PREVIEW_STORAGE_FOLDER, S3FileRecordPathBuilder, TEMP_STORAGE_FOLDER } from './repo';
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
@@ -43,6 +43,7 @@ const providers = [
 	FilesStorageService,
 	PreviewService,
 	{ provide: FILE_RECORD_REPO, useClass: FileRecordMikroOrmRepo },
+	{ provide: FILE_RECORD_PATH_BUILDER, useClass: S3FileRecordPathBuilder },
 ];
 
 @Module({

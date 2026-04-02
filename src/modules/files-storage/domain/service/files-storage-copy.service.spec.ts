@@ -2,16 +2,21 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
+import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FileRecordPathBuilder } from '../../repo';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FileRecordFactory } from '../factory';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import {
+	CopyFileResult,
+	FILE_RECORD_PATH_BUILDER,
+	FILE_RECORD_REPO,
+	FileRecordPathBuilder,
+	FileRecordRepo,
+} from '../interface';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
@@ -22,6 +27,7 @@ describe('FilesStorageService copy methods', () => {
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
 	let config: FileStorageConfig;
+	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -51,6 +57,10 @@ describe('FilesStorageService copy methods', () => {
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
 				},
+				{
+					provide: FILE_RECORD_PATH_BUILDER,
+					useValue: createMock<FileRecordPathBuilder>(),
+				},
 			],
 		}).compile();
 
@@ -59,6 +69,7 @@ describe('FilesStorageService copy methods', () => {
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		antivirusService = module.get(AntivirusService);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
+		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	beforeEach(() => {
@@ -85,6 +96,9 @@ describe('FilesStorageService copy methods', () => {
 
 				jest.spyOn(FileRecordFactory, 'copy').mockImplementationOnce(() => targetFile);
 
+				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce('sourceOriginPath');
+				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce('targetOriginPath');
+
 				return {
 					sourceFile,
 					targetFile,
@@ -103,16 +117,13 @@ describe('FilesStorageService copy methods', () => {
 			});
 
 			it('should call copy with correct params', async () => {
-				const { sourceFile, targetFile, sourceParentInfo, userId } = setup();
+				const { sourceFile, sourceParentInfo, userId } = setup();
 
 				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
-				const expectedParams: CopyFiles = {
-					sourcePath: FileRecordPathBuilder.build(sourceFile),
-					targetPath: FileRecordPathBuilder.build(targetFile),
-				};
-
-				expect(storageClient.copy).toHaveBeenCalledWith([expectedParams]);
+				expect(storageClient.copy).toHaveBeenCalledWith([
+					{ sourcePath: 'sourceOriginPath', targetPath: 'targetOriginPath' },
+				]);
 			});
 
 			it('should return file response array', async () => {

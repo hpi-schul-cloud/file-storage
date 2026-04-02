@@ -1,4 +1,4 @@
-import { FileRecord, StorageType } from '../domain';
+import { FileRecord, FileRecordPathBuilder, StorageType } from '../domain';
 
 export const TEMP_STORAGE_FOLDER = 'temp';
 export const PREVIEW_STORAGE_FOLDER = 'previews';
@@ -7,8 +7,8 @@ export const STORAGE_TYPE_FOLDER_MAP: Partial<Record<StorageType, string>> = {
 	[StorageType.TEMP]: TEMP_STORAGE_FOLDER,
 };
 
-export class FileRecordPathBuilder {
-	public static build(fileRecord: FileRecord): string {
+export class S3FileRecordPathBuilder implements FileRecordPathBuilder {
+	public buildOriginPath(fileRecord: FileRecord): string {
 		const { storageType, storageLocationId } = fileRecord.getProps();
 		const directory = storageType ? STORAGE_TYPE_FOLDER_MAP[storageType] : undefined;
 		const path = [directory, storageLocationId, fileRecord.id].filter(Boolean).join('/');
@@ -16,15 +16,15 @@ export class FileRecordPathBuilder {
 		return path;
 	}
 
-	public static buildAll(fileRecords: FileRecord[]): string[] {
-		return fileRecords.map((fileRecord) => FileRecordPathBuilder.build(fileRecord));
+	public buildOriginPaths(fileRecords: FileRecord[]): string[] {
+		return fileRecords.map((fileRecord) => this.buildOriginPath(fileRecord));
 	}
 
-	public static buildPreviewDirectoryPath(fileRecord: FileRecord): string {
+	public buildPreviewDirectoryPath(fileRecord: FileRecord): string {
 		return [PREVIEW_STORAGE_FOLDER, fileRecord.getProps().storageLocationId, fileRecord.id].join('/');
 	}
 
-	public static buildPreviewFilePath(fileRecord: FileRecord, hash: string): string {
-		return [FileRecordPathBuilder.buildPreviewDirectoryPath(fileRecord), hash].join('/');
+	public buildPreviewFilePath(fileRecord: FileRecord, hash: string): string {
+		return [this.buildPreviewDirectoryPath(fileRecord), hash].join('/');
 	}
 }

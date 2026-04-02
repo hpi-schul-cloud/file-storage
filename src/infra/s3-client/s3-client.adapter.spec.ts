@@ -59,7 +59,7 @@ describe(S3ClientAdapter.name, () => {
 
 	describe('onModuleInit', () => {
 		describe('WHEN called with default config', () => {
-			it('should call client.send with trash lifecycle configuration', async () => {
+			it('should call client.send with empty lifecycle configuration', async () => {
 				const { config } = createParameter();
 
 				await service.onModuleInit();
@@ -69,12 +69,7 @@ describe(S3ClientAdapter.name, () => {
 						input: expect.objectContaining({
 							Bucket: config.bucket,
 							LifecycleConfiguration: expect.objectContaining({
-								Rules: expect.arrayContaining([
-									expect.objectContaining({
-										ID: 'trashCleanupRule',
-										Filter: { Prefix: 'trash/' },
-									}),
-								]),
+								Rules: [],
 							}),
 						}),
 					})
@@ -109,7 +104,6 @@ describe(S3ClientAdapter.name, () => {
 						input: expect.objectContaining({
 							LifecycleConfiguration: expect.objectContaining({
 								Rules: expect.arrayContaining([
-									expect.objectContaining({ ID: 'trashCleanupRule', Filter: { Prefix: 'trash/' } }),
 									expect.objectContaining({ ID: 'tempCleanupRule', Filter: { Prefix: 'temp/' } }),
 								]),
 							}),

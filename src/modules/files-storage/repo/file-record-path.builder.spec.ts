@@ -1,6 +1,6 @@
 import { StorageType } from '../domain';
 import { fileRecordTestFactory } from '../testing';
-import { FileRecordPathBuilder, STORAGE_TYPE_FOLDER_MAP, TEMP_STORAGE_FOLDER } from './file-record-path.builder';
+import { S3FileRecordPathBuilder, STORAGE_TYPE_FOLDER_MAP, TEMP_STORAGE_FOLDER } from './file-record-path.builder';
 
 describe('FileRecordPathBuilder', () => {
 	describe('STORAGE_TYPE_FOLDER_MAP', () => {
@@ -15,7 +15,7 @@ describe('FileRecordPathBuilder', () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
 				const { storageLocationId } = fileRecord.getProps();
 
-				const result = FileRecordPathBuilder.build(fileRecord);
+				const result = new S3FileRecordPathBuilder().buildOriginPath(fileRecord);
 
 				expect(result).toBe(`${storageLocationId}/${fileRecord.id}`);
 			});
@@ -27,7 +27,7 @@ describe('FileRecordPathBuilder', () => {
 				const { storageLocationId } = fileRecord.getProps();
 				const folder = STORAGE_TYPE_FOLDER_MAP[StorageType.TEMP];
 
-				const result = FileRecordPathBuilder.build(fileRecord);
+				const result = new S3FileRecordPathBuilder().buildOriginPath(fileRecord);
 
 				expect(result).toBe(`${folder}/${storageLocationId}/${fileRecord.id}`);
 			});
@@ -38,7 +38,7 @@ describe('FileRecordPathBuilder', () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: undefined });
 				const { storageLocationId } = fileRecord.getProps();
 
-				const result = FileRecordPathBuilder.build(fileRecord);
+				const result = new S3FileRecordPathBuilder().buildOriginPath(fileRecord);
 
 				expect(result).toBe(`${storageLocationId}/${fileRecord.id}`);
 			});
@@ -49,9 +49,12 @@ describe('FileRecordPathBuilder', () => {
 		it('should return paths for all file records', () => {
 			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
 
-			const paths = FileRecordPathBuilder.buildAll([fileRecord1, fileRecord2]);
+			const paths = new S3FileRecordPathBuilder().buildOriginPaths([fileRecord1, fileRecord2]);
 
-			expect(paths).toEqual([FileRecordPathBuilder.build(fileRecord1), FileRecordPathBuilder.build(fileRecord2)]);
+			expect(paths).toEqual([
+				new S3FileRecordPathBuilder().buildOriginPath(fileRecord1),
+				new S3FileRecordPathBuilder().buildOriginPath(fileRecord2),
+			]);
 		});
 	});
 
@@ -61,7 +64,7 @@ describe('FileRecordPathBuilder', () => {
 			const { storageLocationId } = fileRecord.getProps();
 			const expectedPath = ['previews', storageLocationId, fileRecord.id].join('/');
 
-			const result = FileRecordPathBuilder.buildPreviewDirectoryPath(fileRecord);
+			const result = new S3FileRecordPathBuilder().buildPreviewDirectoryPath(fileRecord);
 
 			expect(result).toBe(expectedPath);
 		});
@@ -74,7 +77,7 @@ describe('FileRecordPathBuilder', () => {
 			const hash = 'randomHash';
 			const expectedPath = ['previews', storageLocationId, fileRecord.id, hash].join('/');
 
-			const result = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
+			const result = new S3FileRecordPathBuilder().buildPreviewFilePath(fileRecord, hash);
 
 			expect(result).toBe(expectedPath);
 		});

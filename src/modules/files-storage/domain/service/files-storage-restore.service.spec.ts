@@ -8,8 +8,7 @@ import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConf
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FileRecordFactory } from '../factory';
 import { FileRecord, FileRecordProps } from '../file-record.do';
-import { FileRecordPathBuilder } from '../../repo';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
@@ -27,6 +26,7 @@ describe('FilesStorageService restore methods', () => {
 	let service: FilesStorageService;
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
+	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -56,12 +56,17 @@ describe('FilesStorageService restore methods', () => {
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
 				},
+				{
+					provide: FILE_RECORD_PATH_BUILDER,
+					useValue: createMock<FileRecordPathBuilder>(),
+				},
 			],
 		}).compile();
 
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
+		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	beforeEach(() => {
@@ -82,6 +87,10 @@ describe('FilesStorageService restore methods', () => {
 				const { fileRecords } = buildFileRecordsWithParams();
 
 				fileRecordRepo.save.mockResolvedValueOnce();
+
+				fileRecordPathBuilder.buildOriginPaths.mockReturnValueOnce(
+					fileRecords.map((fileRecord) => `path/${fileRecord.id}`)
+				);
 
 				return { fileRecords };
 			};
@@ -106,11 +115,10 @@ describe('FilesStorageService restore methods', () => {
 
 			it('should call storageClient.restore', async () => {
 				const { fileRecords } = setup();
-				const paths = FileRecordPathBuilder.buildAll(fileRecords);
 
 				await service.restoreFiles(fileRecords);
 
-				expect(storageClient.restore).toHaveBeenCalledWith(paths);
+				expect(storageClient.restore).toHaveBeenCalledWith(fileRecords.map((fileRecord) => `path/${fileRecord.id}`));
 			});
 		});
 

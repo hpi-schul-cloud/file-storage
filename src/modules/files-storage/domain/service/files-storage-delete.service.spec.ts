@@ -9,8 +9,13 @@ import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConf
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FileRecord, FileRecordProps } from '../file-record.do';
-import { FileRecordPathBuilder } from '../../repo';
-import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
+import {
+	FILE_RECORD_PATH_BUILDER,
+	FILE_RECORD_REPO,
+	FileRecordPathBuilder,
+	FileRecordRepo,
+	StorageLocation,
+} from '../interface';
 import { StorageLocationDeleteLoggableException } from '../loggable';
 import { FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -21,6 +26,7 @@ describe('FilesStorageService delete methods', () => {
 	let fileRecordRepo: DeepMocked<FileRecordRepo>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 	let domainErrorHandler: DeepMocked<DomainErrorHandler>;
+	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -50,6 +56,10 @@ describe('FilesStorageService delete methods', () => {
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
 				},
+				{
+					provide: FILE_RECORD_PATH_BUILDER,
+					useValue: createMock<FileRecordPathBuilder>(),
+				},
 			],
 		}).compile();
 
@@ -57,6 +67,7 @@ describe('FilesStorageService delete methods', () => {
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 		fileRecordRepo = module.get(FILE_RECORD_REPO);
 		domainErrorHandler = module.get(DomainErrorHandler);
+		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	beforeEach(() => {
@@ -77,6 +88,9 @@ describe('FilesStorageService delete methods', () => {
 				const fileRecords = fileRecordTestFactory().buildList(3);
 
 				fileRecordRepo.save.mockResolvedValueOnce();
+				fileRecordPathBuilder.buildOriginPaths.mockReturnValueOnce(
+					fileRecords.map((fileRecord) => `path/${fileRecord.id}`)
+				);
 
 				return { fileRecords };
 			};
@@ -113,11 +127,12 @@ describe('FilesStorageService delete methods', () => {
 
 			it('should call storageClient.moveToTrash', async () => {
 				const { fileRecords } = setup();
-				const paths = FileRecordPathBuilder.buildAll(fileRecords);
 
 				await service.deleteFiles(fileRecords);
 
-				expect(storageClient.moveToTrash).toHaveBeenCalledWith(paths);
+				expect(storageClient.moveToTrash).toHaveBeenCalledWith(
+					fileRecords.map((fileRecord) => `path/${fileRecord.id}`)
+				);
 			});
 		});
 

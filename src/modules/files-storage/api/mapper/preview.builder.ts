@@ -1,7 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import crypto from 'crypto';
 import { FileRecord, PreviewFileParams } from '../../domain';
-import { FileRecordPathBuilder } from '../../repo';
 import { PreviewParams } from '../dto';
 
 export class PreviewBuilder {
@@ -11,18 +10,14 @@ export class PreviewBuilder {
 		bytesRange: string | undefined
 	): PreviewFileParams {
 		const { id, mimeType } = fileRecord;
-		const originFilePath = FileRecordPathBuilder.build(fileRecord);
 		const format = FileRecord.getFormat(previewParams.outputFormat ?? mimeType);
 
 		const hash = PreviewBuilder.createPreviewNameHash(id, previewParams);
-		const previewFilePath = fileRecord.createPreviewFilePath(hash);
 
 		const previewFileParams = {
 			fileRecord,
 			previewParams,
 			hash,
-			previewFilePath,
-			originFilePath,
 			format,
 			bytesRange,
 		};

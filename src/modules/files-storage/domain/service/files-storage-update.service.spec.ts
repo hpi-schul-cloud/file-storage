@@ -10,7 +10,7 @@ import _ from 'lodash';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 
@@ -55,6 +55,10 @@ describe('FilesStorageService update methods', () => {
 				{
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
+				},
+				{
+					provide: FILE_RECORD_PATH_BUILDER,
+					useValue: createMock<FileRecordPathBuilder>(),
 				},
 			],
 		}).compile();
