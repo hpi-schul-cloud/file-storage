@@ -348,19 +348,6 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return new Date(this.props.createdAt.getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000);
 	}
 
-	public createPreviewDirectoryPath(): string {
-		const path = ['previews', this.props.storageLocationId, this.id].join('/');
-
-		return path;
-	}
-
-	public createPreviewFilePath(hash: string): string {
-		const folderPath = this.createPreviewDirectoryPath();
-		const filePath = [folderPath, hash].join('/');
-
-		return filePath;
-	}
-
 	public getContentLastModifiedAt(): Date | undefined {
 		return this.props.contentLastModifiedAt;
 	}

@@ -54,4 +54,29 @@ describe('FileRecordPathBuilder', () => {
 			expect(paths).toEqual([FileRecordPathBuilder.build(fileRecord1), FileRecordPathBuilder.build(fileRecord2)]);
 		});
 	});
+
+	describe('buildPreviewDirectoryPath', () => {
+		it('should build preview directory path from file record', () => {
+			const fileRecord = fileRecordTestFactory().build();
+			const { storageLocationId } = fileRecord.getProps();
+			const expectedPath = ['previews', storageLocationId, fileRecord.id].join('/');
+
+			const result = FileRecordPathBuilder.buildPreviewDirectoryPath(fileRecord);
+
+			expect(result).toBe(expectedPath);
+		});
+	});
+
+	describe('buildPreviewFilePath', () => {
+		it('should build preview file path from file record and hash', () => {
+			const fileRecord = fileRecordTestFactory().build();
+			const { storageLocationId } = fileRecord.getProps();
+			const hash = 'randomHash';
+			const expectedPath = ['previews', storageLocationId, fileRecord.id, hash].join('/');
+
+			const result = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
+
+			expect(result).toBe(expectedPath);
+		});
+	});
 });

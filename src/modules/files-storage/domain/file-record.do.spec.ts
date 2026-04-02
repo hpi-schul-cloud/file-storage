@@ -421,43 +421,6 @@ describe('FileRecord', () => {
 		});
 	});
 
-	describe('createPreviewFilePath', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build({ name: 'file.txt' });
-			const inputHash = 'randomHash';
-			const props = fileRecord.getProps();
-			const expectedPath = ['previews', props.storageLocationId, props.id, inputHash].join('/');
-
-			return { fileRecord, inputHash, expectedPath };
-		};
-
-		it('should create path', () => {
-			const { fileRecord, inputHash, expectedPath } = setup();
-
-			const path = fileRecord.createPreviewFilePath(inputHash);
-
-			expect(path).toBe(expectedPath);
-		});
-	});
-
-	describe('createPreviewDirectoryPath', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build({ name: 'file.txt' });
-			const props = fileRecord.getProps();
-			const expectedPath = ['previews', props.storageLocationId, props.id].join('/');
-
-			return { fileRecord, expectedPath };
-		};
-
-		it('should create path', () => {
-			const { fileRecord, expectedPath } = setup();
-
-			const path = fileRecord.createPreviewDirectoryPath();
-
-			expect(path).toBe(expectedPath);
-		});
-	});
-
 	describe('getUniqueParents', () => {
 		describe('WHEN filerRecords has parent duplicates', () => {
 			it('should return a map with unique parentId as key and parentType as value', () => {

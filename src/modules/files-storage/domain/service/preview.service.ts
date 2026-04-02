@@ -3,6 +3,7 @@ import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FileRecordPathBuilder } from '../../repo';
 import { ErrorType } from '../error';
 import { FileRecord, PreviewStatus } from '../file-record.do';
 import { GetFileResponse, PreviewFileParams } from '../interface';
@@ -28,7 +29,7 @@ export class PreviewService {
 	}
 
 	public async deletePreviews(fileRecords: FileRecord[]): Promise<void> {
-		const paths = fileRecords.map((fileRecord) => fileRecord.createPreviewDirectoryPath());
+		const paths = fileRecords.map((fileRecord) => FileRecordPathBuilder.buildPreviewDirectoryPath(fileRecord));
 		const promises = paths.map((path) => this.storageClient.deleteDirectory(path));
 		await Promise.all(promises);
 	}

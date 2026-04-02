@@ -26,9 +26,10 @@ import { PassThrough, Readable } from 'stream';
 import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
+export const TRASH_STORAGE_FOLDER = 'trash';
+
 export class S3ClientAdapter implements OnModuleInit {
-	private readonly deletedFolderName = 'trash';
-	private readonly deletedFolderExpirationDays = 7;
+	private readonly deletedFolderName = TRASH_STORAGE_FOLDER;
 	private readonly S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
 
 	constructor(
@@ -43,11 +44,7 @@ export class S3ClientAdapter implements OnModuleInit {
 	}
 
 	public async onModuleInit(): Promise<void> {
-		const allRules: FolderLifecycleRule[] = [
-			{ folder: this.deletedFolderName, expirationDays: this.deletedFolderExpirationDays },
-			...this.folderLifecycleRules,
-		];
-		await this.configureAllFolderLifecycles(allRules);
+		await this.configureAllFolderLifecycles(this.folderLifecycleRules);
 	}
 
 	// is public but only used internally

@@ -5,13 +5,13 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { FileRecordPathBuilder } from '../../repo';
 import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { ScanStatus } from '../vo';
-import { FileRecordPathBuilder } from '../../repo';
 import { FilesStorageService } from './files-storage.service';
 import { PreviewService } from './preview.service';
 
@@ -96,7 +96,7 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
+						const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
@@ -165,7 +165,7 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
+						const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
@@ -241,7 +241,7 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
+						const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
@@ -289,7 +289,7 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
+						const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
@@ -354,7 +354,7 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
+						const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
@@ -430,7 +430,7 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
+						const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 						const originPath = FileRecordPathBuilder.build(fileRecord);
 
 						const previewFileParams: PreviewFileParams = {
@@ -469,7 +469,7 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
+					const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
@@ -507,7 +507,7 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
+					const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
@@ -545,7 +545,7 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
+					const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
@@ -583,7 +583,7 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
+					const previewPath = FileRecordPathBuilder.buildPreviewFilePath(fileRecord, hash);
 					const originPath = FileRecordPathBuilder.build(fileRecord);
 
 					const previewFileParams: PreviewFileParams = {
@@ -622,7 +622,7 @@ describe('PreviewService', () => {
 					...defaultPreviewParams,
 				};
 				const format = previewParams.outputFormat.split('/')[1];
-				const directoryPath = fileRecord.createPreviewDirectoryPath();
+				const directoryPath = FileRecordPathBuilder.buildPreviewDirectoryPath(fileRecord);
 
 				return {
 					fileRecord,
