@@ -83,7 +83,7 @@ describe(S3ClientAdapter.name, () => {
 		});
 
 		describe('WHEN called with additional folderLifecycleRules', () => {
-			it('should call client.send for each lifecycle rule', async () => {
+			it('should call client.send once with all lifecycle rules combined, then verify with a get', async () => {
 				const { config } = createParameter();
 				const logger = createMock<Logger>();
 				const configuration = createMock<S3Config>(config);
@@ -110,6 +110,7 @@ describe(S3ClientAdapter.name, () => {
 							LifecycleConfiguration: expect.objectContaining({
 								Rules: expect.arrayContaining([
 									expect.objectContaining({ ID: 'trashCleanupRule', Filter: { Prefix: 'trash/' } }),
+									expect.objectContaining({ ID: 'tempCleanupRule', Filter: { Prefix: 'temp/' } }),
 								]),
 							}),
 						}),
@@ -118,11 +119,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(localClient.send).toHaveBeenCalledWith(
 					expect.objectContaining({
 						input: expect.objectContaining({
-							LifecycleConfiguration: expect.objectContaining({
-								Rules: expect.arrayContaining([
-									expect.objectContaining({ ID: 'tempCleanupRule', Filter: { Prefix: 'temp/' } }),
-								]),
-							}),
+							Bucket: config.bucket,
 						}),
 					})
 				);
@@ -140,7 +137,7 @@ describe(S3ClientAdapter.name, () => {
 				await service.onModuleInit();
 
 				expect(createBucketSpy).toHaveBeenCalled();
-				expect(client.send).toHaveBeenCalledTimes(2);
+				expect(client.send).toHaveBeenCalledTimes(3);
 			});
 		});
 
