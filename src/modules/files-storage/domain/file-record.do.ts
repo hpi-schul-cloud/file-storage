@@ -30,6 +30,13 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
 
+export enum StorageType {
+	STANDARD = 'standard',
+	TEMP = 'temp',
+}
+
+export const TEMP_FILE_EXPIRY_SECONDS = 1 * 24 * 60 * 60;
+
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
@@ -66,6 +73,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
+	storageType?: StorageType;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -110,12 +118,6 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		fileRecords.forEach((fileRecord) => {
 			fileRecord.unmarkForDelete();
 		});
-	}
-
-	public static getPaths(fileRecords: FileRecord[]): string[] {
-		const paths = fileRecords.map((fileRecord) => fileRecord.createPath());
-
-		return paths;
 	}
 
 	// ---------------------------------------------------------
@@ -338,23 +340,12 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		}
 	}
 
-	public createPath(): string {
-		const path = [this.props.storageLocationId, this.id].join('/');
+	public getExpiresAt(): Date | undefined {
+		if (this.props.storageType !== StorageType.TEMP) {
+			return undefined;
+		}
 
-		return path;
-	}
-
-	public createPreviewDirectoryPath(): string {
-		const path = ['previews', this.props.storageLocationId, this.id].join('/');
-
-		return path;
-	}
-
-	public createPreviewFilePath(hash: string): string {
-		const folderPath = this.createPreviewDirectoryPath();
-		const filePath = [folderPath, hash].join('/');
-
-		return filePath;
+		return new Date(this.props.createdAt.getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000);
 	}
 
 	public getContentLastModifiedAt(): Date | undefined {

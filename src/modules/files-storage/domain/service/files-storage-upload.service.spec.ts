@@ -17,7 +17,7 @@ import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -32,6 +32,7 @@ describe('FilesStorageService upload methods', () => {
 	let antivirusService: DeepMocked<AntivirusService>;
 	let config: FileStorageConfig;
 	let logger: DeepMocked<Logger>;
+	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 
 	beforeEach(async () => {
 		module = await Test.createTestingModule({
@@ -67,6 +68,10 @@ describe('FilesStorageService upload methods', () => {
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
 				},
+				{
+					provide: FILE_RECORD_PATH_BUILDER,
+					useValue: createMock<FileRecordPathBuilder>(),
+				},
 			],
 		}).compile();
 
@@ -76,6 +81,7 @@ describe('FilesStorageService upload methods', () => {
 		antivirusService = module.get(AntivirusService);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 		logger = module.get(Logger);
+		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	afterEach(() => {
@@ -146,11 +152,15 @@ describe('FilesStorageService upload methods', () => {
 
 				fileRecordRepo.save.mockResolvedValue();
 
+				const filePath = [fileRecord.getParentInfo().storageLocationId, fileRecord.id].join('/');
+				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(filePath);
+
 				return {
 					params,
 					file,
 					userId,
 					getFileRecordsByParentSpy,
+					filePath,
 				};
 			};
 
@@ -180,12 +190,9 @@ describe('FilesStorageService upload methods', () => {
 			});
 
 			it('should call storageClient.create with correct params', async () => {
-				const { params, file, userId } = setup();
+				const { params, file, userId, filePath } = setup();
 
-				const fileRecord = await service.uploadFile(userId, params, file);
-
-				const parentInfo = fileRecord.getParentInfo();
-				const filePath = [parentInfo.storageLocationId, fileRecord.id].join('/');
+				await service.uploadFile(userId, params, file);
 
 				expect(storageClient.create).toHaveBeenCalledWith(
 					filePath,
@@ -423,6 +430,8 @@ describe('FilesStorageService upload methods', () => {
 					error: undefined,
 				});
 
+				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(`path/${fileRecord.id}`);
+
 				return {
 					mimeTypeSpy,
 					fileRecord,
@@ -480,7 +489,7 @@ describe('FilesStorageService upload methods', () => {
 					fileSize: 8,
 					streamCompletion: expect.any(Promise),
 				};
-				expect(storageClient.create).toHaveBeenCalledWith(fileRecord.createPath(), expectedCalledParams);
+				expect(storageClient.create).toHaveBeenCalledWith(`path/${fileRecord.id}`, expectedCalledParams);
 			});
 
 			it('should return an instance of FileRecord', async () => {

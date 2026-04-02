@@ -12,6 +12,12 @@ export interface S3ClientModuleOptions {
 	clientInjectionToken: string;
 	configInjectionToken: string;
 	configConstructor: new () => S3Config;
+	folderLifecycleRules?: FolderLifecycleRule[];
+}
+
+export interface FolderLifecycleRule {
+	folder: string;
+	expirationDays: number;
 }
 
 export interface GetFile {

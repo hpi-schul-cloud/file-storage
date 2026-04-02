@@ -3,11 +3,15 @@ import {
 	CopyObjectCommandOutput,
 	CreateBucketCommand,
 	DeleteObjectsCommand,
+	ExpirationStatus,
+	GetBucketLifecycleConfigurationCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
 	HeadObjectCommandOutput,
 	ListObjectsV2Command,
 	ListObjectsV2CommandOutput,
+	PutBucketLifecycleConfigurationCommand,
+	PutBucketLifecycleConfigurationCommandInput,
 	PutObjectCommandInput,
 	S3Client,
 	ServiceOutputTypes,
@@ -16,14 +20,16 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
-import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'stream';
-import { CopyFiles, File, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
+import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
-export class S3ClientAdapter {
-	private readonly deletedFolderName = 'trash';
+export const TRASH_STORAGE_FOLDER = 'trash';
+
+export class S3ClientAdapter implements OnModuleInit {
+	private readonly deletedFolderName = TRASH_STORAGE_FOLDER;
 	private readonly S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
 
 	constructor(
@@ -31,9 +37,16 @@ export class S3ClientAdapter {
 		private readonly config: S3Config,
 		private readonly logger: Logger,
 		private readonly errorHandler: DomainErrorHandler,
-		private readonly clientInjectionToken: string
+		private readonly clientInjectionToken: string,
+		private readonly folderLifecycleRules?: FolderLifecycleRule[]
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
+	}
+
+	public async onModuleInit(): Promise<void> {
+		if (this.folderLifecycleRules) {
+			await this.configureAllFolderLifecycles(this.folderLifecycleRules);
+		}
 	}
 
 	// is public but only used internally
@@ -160,6 +173,61 @@ export class S3ClientAdapter {
 			contentRange: data.ContentRange,
 			etag: data.ETag,
 		};
+	}
+
+	private async configureAllFolderLifecycles(rules: FolderLifecycleRule[]): Promise<void> {
+		const lifecycleConfig: PutBucketLifecycleConfigurationCommandInput = {
+			Bucket: this.config.bucket,
+			LifecycleConfiguration: {
+				Rules: rules.map(({ folder, expirationDays }) => ({
+					ID: `${folder}CleanupRule`,
+					Status: ExpirationStatus.Enabled,
+					Expiration: { Days: expirationDays },
+					Filter: { Prefix: `${folder}/` },
+				})),
+			},
+		};
+
+		try {
+			await this.sendLifecycleConfiguration(lifecycleConfig, rules);
+		} catch (err) {
+			await this.handleConfigureFolderLifecycleError(err, rules);
+		}
+	}
+
+	private async sendLifecycleConfiguration(
+		lifecycleConfig: PutBucketLifecycleConfigurationCommandInput,
+		rules: FolderLifecycleRule[]
+	): Promise<void> {
+		const putCommand = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
+		await this.client.send(putCommand);
+		for (const { folder, expirationDays } of rules) {
+			this.logger.info(
+				new S3ClientActionLoggable(`S3 Lifecycle for /${folder}/* set to ${expirationDays} days`, {
+					action: 'configureLifecycle',
+					bucket: this.config.bucket,
+				})
+			);
+		}
+
+		const getCommand = new GetBucketLifecycleConfigurationCommand({ Bucket: this.config.bucket });
+		const result = await this.client.send(getCommand);
+		this.logger.info(
+			new S3ClientActionLoggable(`S3 Lifecycle configuration after update: ${JSON.stringify(result.Rules)}`, {
+				action: 'verifyLifecycle',
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private async handleConfigureFolderLifecycleError(err: unknown, rules: FolderLifecycleRule[]): Promise<void> {
+		if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
+			await this.createBucket();
+			await this.configureAllFolderLifecycles(rules);
+		}
+		if (TypeGuard.isError(err)) {
+			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
+		}
 	}
 
 	private async createBucketInternal(): Promise<void> {

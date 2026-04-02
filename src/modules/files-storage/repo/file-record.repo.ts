@@ -2,7 +2,14 @@ import { EntityManager, EntityName, ObjectId, Utils } from '@mikro-orm/mongodb';
 import { Injectable } from '@nestjs/common';
 import { FindOptions, SortOrder } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
-import { FileRecord, FileRecordRepo, ParentStatistic, ParentStatisticFactory, StorageLocation } from '../domain';
+import {
+	FileRecord,
+	FileRecordRepo,
+	ParentStatistic,
+	ParentStatisticFactory,
+	StorageLocation,
+	StorageType,
+} from '../domain';
 import { FileRecordScope } from './file-record-scope';
 import { FileRecordEntity } from './file-record.entity';
 import { FileRecordEntityMapper } from './mapper';
@@ -43,7 +50,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		parentId: EntityId,
 		options?: FindOptions<FileRecordEntity>
 	): Promise<Counted<FileRecord[]>> {
-		const scope = new FileRecordScope().byParentId(parentId).byMarkedForDelete(false);
+		const scope = new FileRecordScope().byParentId(parentId).byMarkedForDelete(false).byNotTemp();
 		const result = await this.findAndCount(scope, options);
 
 		return result;
@@ -117,6 +124,7 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 				$match: {
 					parent: new ObjectId(parentId),
 					deletedSince: { $eq: null },
+					storageType: { $ne: StorageType.TEMP },
 				},
 			},
 			{

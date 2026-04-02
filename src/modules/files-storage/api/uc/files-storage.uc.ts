@@ -31,6 +31,7 @@ import {
 	ParentReference,
 	PreviewService,
 	StorageLocation,
+	StorageType,
 } from '../../domain';
 import { UploadAbortLoggable } from '../../loggable';
 import {
@@ -97,6 +98,20 @@ export class FilesStorageUC {
 		const response = await this.getResponse(params);
 		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
+
+		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
+
+		return fileRecordResponse;
+	}
+
+	public async tempUpload(userId: string, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
+		await Promise.all([
+			this.checkPermission(params, FileStorageAuthorizationContext.create),
+			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
+		]);
+
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.TEMP);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
@@ -341,7 +356,12 @@ export class FilesStorageUC {
 	}
 
 	// private: stream helper
-	private uploadFileWithBusboy(userId: EntityId, params: FileRecordParams, req: AbortableRequest): Promise<FileRecord> {
+	private uploadFileWithBusboy(
+		userId: EntityId,
+		params: FileRecordParams,
+		req: AbortableRequest,
+		storageType?: StorageType
+	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
 			const abortController = new AbortController();
@@ -397,7 +417,7 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				if (isResolved) return; // Already resolved/rejected
 
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal);
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, storageType);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					return this.filesStorageService.uploadFile(userId, params, fileDto);

@@ -13,7 +13,13 @@ export class S3ClientModule {
 			{
 				provide: options.clientInjectionToken,
 				useFactory: (config: S3Config, logger: Logger, domainErrorHandler: DomainErrorHandler): S3ClientAdapter =>
-					S3ClientFactory.build(config, logger, domainErrorHandler, options.clientInjectionToken),
+					S3ClientFactory.build(
+						config,
+						logger,
+						domainErrorHandler,
+						options.clientInjectionToken,
+						options.folderLifecycleRules
+					),
 				inject: [options.configInjectionToken, Logger, DomainErrorHandler],
 			},
 		];

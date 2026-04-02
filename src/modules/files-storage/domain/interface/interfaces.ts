@@ -23,8 +23,6 @@ export interface PreviewFileParams {
 	fileRecord: FileRecord;
 	previewParams: PreviewInfo;
 	hash: string;
-	originFilePath: string;
-	previewFilePath: string;
 	format: string;
 	bytesRange?: string;
 }

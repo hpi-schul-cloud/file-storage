@@ -3,11 +3,14 @@ import { ConfigurationModule } from '@infra/configuration';
 import { ErrorModule } from '@infra/error';
 import { LoggerModule } from '@infra/logger';
 import { PreviewGeneratorProducerModule } from '@infra/preview-generator';
-import { S3ClientModule } from '@infra/s3-client';
+import { S3ClientModule, TRASH_STORAGE_FOLDER } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
-import { FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
+import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
+import { TEMP_FILE_EXPIRY_SECONDS } from './domain/file-record.do';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
-import { FileRecordMikroOrmRepo } from './repo';
+import { FileRecordMikroOrmRepo, PREVIEW_STORAGE_FOLDER, S3FileRecordPathBuilder, TEMP_STORAGE_FOLDER } from './repo';
+
+const SECONDS_PER_DAY = 24 * 60 * 60;
 
 const imports = [
 	ConfigurationModule.register(FILE_STORAGE_CONFIG_TOKEN, FileStorageConfig),
@@ -18,6 +21,20 @@ const imports = [
 		clientInjectionToken: FILES_STORAGE_S3_CONNECTION,
 		configInjectionToken: FILE_STORAGE_CONFIG_TOKEN,
 		configConstructor: FileStorageConfig,
+		folderLifecycleRules: [
+			{
+				folder: TRASH_STORAGE_FOLDER,
+				expirationDays: 7,
+			},
+			{
+				folder: TEMP_STORAGE_FOLDER,
+				expirationDays: Math.ceil(TEMP_FILE_EXPIRY_SECONDS / SECONDS_PER_DAY),
+			},
+			{
+				folder: PREVIEW_STORAGE_FOLDER,
+				expirationDays: 180,
+			},
+		],
 	}),
 	PreviewGeneratorProducerModule,
 ];
@@ -26,6 +43,7 @@ const providers = [
 	FilesStorageService,
 	PreviewService,
 	{ provide: FILE_RECORD_REPO, useClass: FileRecordMikroOrmRepo },
+	{ provide: FILE_RECORD_PATH_BUILDER, useClass: S3FileRecordPathBuilder },
 ];
 
 @Module({

@@ -23,8 +23,14 @@ const setup = () => {
 	const logger = createMock<Logger>();
 	const errorHandler = createMock<DomainErrorHandler>();
 	const client = createMock<S3Client>();
+	const folderLifecycleRules = [
+		{
+			folder: 'temp',
+			expirationDays: 3,
+		},
+	];
 
-	return { config, bucket, logger, errorHandler, client, clientInjectionToken };
+	return { config, bucket, logger, errorHandler, client, clientInjectionToken, folderLifecycleRules };
 };
 
 describe(S3ClientFactory.name, () => {
@@ -48,10 +54,17 @@ describe(S3ClientFactory.name, () => {
 		});
 
 		it('should create S3ClientAdapter with correctly config', () => {
-			const { config, logger, errorHandler, client, clientInjectionToken } = setup();
-			S3ClientFactory.build(config, logger, errorHandler, clientInjectionToken);
+			const { config, logger, errorHandler, client, clientInjectionToken, folderLifecycleRules } = setup();
+			S3ClientFactory.build(config, logger, errorHandler, clientInjectionToken, folderLifecycleRules);
 
-			expect(S3ClientAdapter).toHaveBeenCalledWith(client, config, logger, errorHandler, clientInjectionToken);
+			expect(S3ClientAdapter).toHaveBeenCalledWith(
+				client,
+				config,
+				logger,
+				errorHandler,
+				clientInjectionToken,
+				folderLifecycleRules
+			);
 		});
 
 		it('should return an instance of S3ClientAdapter', () => {

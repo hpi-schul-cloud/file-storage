@@ -1,6 +1,6 @@
 import { EntityId } from '@shared/domain/types';
 import { Scope } from '@shared/repo/scope';
-import { StorageLocation } from '../domain';
+import { StorageLocation, StorageType } from '../domain';
 import { FileRecordEntity } from './file-record.entity';
 
 export class FileRecordScope extends Scope<FileRecordEntity> {
@@ -49,6 +49,12 @@ export class FileRecordScope extends Scope<FileRecordEntity> {
 
 	public byCreatorId(creatorId: EntityId): this {
 		this.addQuery({ creatorId: creatorId });
+
+		return this;
+	}
+
+	public byNotTemp(): this {
+		this.addQuery({ storageType: { $ne: StorageType.TEMP } });
 
 		return this;
 	}

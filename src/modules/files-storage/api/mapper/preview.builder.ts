@@ -10,18 +10,14 @@ export class PreviewBuilder {
 		bytesRange: string | undefined
 	): PreviewFileParams {
 		const { id, mimeType } = fileRecord;
-		const originFilePath = fileRecord.createPath();
 		const format = FileRecord.getFormat(previewParams.outputFormat ?? mimeType);
 
 		const hash = PreviewBuilder.createPreviewNameHash(id, previewParams);
-		const previewFilePath = fileRecord.createPreviewFilePath(hash);
 
 		const previewFileParams = {
 			fileRecord,
 			previewParams,
 			hash,
-			previewFilePath,
-			originFilePath,
 			format,
 			bytesRange,
 		};

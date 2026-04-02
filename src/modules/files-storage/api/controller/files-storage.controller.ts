@@ -95,6 +95,25 @@ export class FilesStorageController {
 		return response;
 	}
 
+	@ApiOperation({ summary: 'Temporary upload of a file.' })
+	@ApiResponse({ status: 201, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@ApiConsumes('multipart/form-data')
+	@Post('/temp/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async tempUpload(
+		@Body() _: FileParams,
+		@Param() params: FileRecordParams,
+		@CurrentUser() currentUser: ICurrentUser,
+		@Req() req: Request
+	): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.tempUpload(currentUser.userId, params, req);
+
+		return response;
+	}
+
 	@ApiOperation({ summary: 'Streamable download of a binary file.' })
 	@ApiProduces('application/octet-stream')
 	@ApiResponse({
@@ -233,7 +252,7 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Get a list of file meta data of a parent entityId.' })
+	@ApiOperation({ summary: 'Get a list of file meta data by parent entityId. Excludes temporary and deleted files.' })
 	@ApiResponse({ status: 200, type: FileRecordListResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
@@ -332,7 +351,7 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Copy all files of a parent entityId to a target entitId' })
+	@ApiOperation({ summary: 'Copy all files of a parent entityId to a target entityId' })
 	@ApiResponse({ status: 201, type: CopyFileListResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
@@ -370,7 +389,9 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Get stats (count and total size) of all files for a parent entityId.' })
+	@ApiOperation({
+		summary: 'Get stats (count and total size) of files for a parent entityId. Excludes temporary and deleted files.',
+	})
 	@ApiResponse({ status: 200, type: ParentStatisticResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })

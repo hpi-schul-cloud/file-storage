@@ -18,7 +18,15 @@ import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
 import { FileRecord, ParentInfo } from '../file-record.do';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import {
+	CopyFileResult,
+	FILE_RECORD_PATH_BUILDER,
+	FILE_RECORD_REPO,
+	FileRecordPathBuilder,
+	FileRecordRepo,
+	GetFileResponse,
+	StorageLocationParams,
+} from '../interface';
 import {
 	CollaboraEditabilityStatus,
 	FileRecordStatus,
@@ -37,7 +45,8 @@ export class FilesStorageService {
 		private readonly antivirusService: AntivirusService,
 		@Inject(FILE_STORAGE_CONFIG_TOKEN) private readonly config: FileStorageConfig,
 		private readonly logger: Logger,
-		private readonly domainErrorHandler: DomainErrorHandler
+		private readonly domainErrorHandler: DomainErrorHandler,
+		@Inject(FILE_RECORD_PATH_BUILDER) private readonly pathBuilder: FileRecordPathBuilder
 	) {
 		this.logger.setContext(FilesStorageService.name);
 	}
@@ -182,7 +191,13 @@ export class FilesStorageService {
 		parentInfo: ParentInfo,
 		userId: EntityId
 	): Promise<FileRecord> {
-		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(
+			file.name,
+			file.mimeType,
+			parentInfo,
+			userId,
+			file.storageType
+		);
 		fileRecord.markAsUploading();
 		await this.fileRecordRepo.save(fileRecord);
 
@@ -207,7 +222,7 @@ export class FilesStorageService {
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = this.pathBuilder.buildOriginPath(fileRecord);
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = file.data.pipe(new PassThrough());
@@ -244,7 +259,7 @@ export class FilesStorageService {
 	}
 
 	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = this.pathBuilder.buildOriginPath(fileRecord);
 		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
@@ -300,7 +315,7 @@ export class FilesStorageService {
 	}
 
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
-		const pathToFile = fileRecord.createPath();
+		const pathToFile = this.pathBuilder.buildOriginPath(fileRecord);
 		const file = await this.storageClient.get(pathToFile, bytesRange);
 		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
@@ -330,12 +345,12 @@ export class FilesStorageService {
 
 	// delete and restore
 	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
+		const paths = this.pathBuilder.buildOriginPaths(fileRecords);
 		await this.storageClient.moveToTrash(paths);
 	}
 
 	private async restoreBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
+		const paths = this.pathBuilder.buildOriginPaths(fileRecords);
 		await this.storageClient.restore(paths);
 	}
 
@@ -450,8 +465,8 @@ export class FilesStorageService {
 	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
 		try {
 			const copyFiles: CopyFiles = {
-				sourcePath: sourceFile.createPath(),
-				targetPath: targetFile.createPath(),
+				sourcePath: this.pathBuilder.buildOriginPath(sourceFile),
+				targetPath: this.pathBuilder.buildOriginPath(targetFile),
 			};
 
 			await this.storageClient.copy([copyFiles]);

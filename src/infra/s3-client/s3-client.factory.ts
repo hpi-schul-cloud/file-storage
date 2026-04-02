@@ -2,7 +2,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { ConfiguredRetryStrategy, RETRY_MODES } from '@aws-sdk/util-retry';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { S3Config } from './interface';
+import { FolderLifecycleRule, S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 
 const MAXIMUM_ATTEMPTS = 3;
@@ -13,7 +13,8 @@ export class S3ClientFactory {
 		config: S3Config,
 		logger: Logger,
 		domainErrorHandler: DomainErrorHandler,
-		clientInjectionToken: string
+		clientInjectionToken: string,
+		folderLifecycleRules?: FolderLifecycleRule[]
 	): S3ClientAdapter {
 		const { region, accessKeyId, secretAccessKey, endpoint } = config;
 		const retryStrategy = new ConfiguredRetryStrategy(
@@ -34,6 +35,13 @@ export class S3ClientFactory {
 			retryStrategy,
 		});
 
-		return new S3ClientAdapter(s3Client, config, logger, domainErrorHandler, clientInjectionToken);
+		return new S3ClientAdapter(
+			s3Client,
+			config,
+			logger,
+			domainErrorHandler,
+			clientInjectionToken,
+			folderLifecycleRules
+		);
 	}
 }
