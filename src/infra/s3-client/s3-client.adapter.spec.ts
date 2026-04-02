@@ -59,21 +59,10 @@ describe(S3ClientAdapter.name, () => {
 
 	describe('onModuleInit', () => {
 		describe('WHEN called with default config', () => {
-			it('should call client.send with empty lifecycle configuration', async () => {
-				const { config } = createParameter();
-
+			it('should not call client.send when no folderLifecycleRules are provided', async () => {
 				await service.onModuleInit();
 
-				expect(client.send).toHaveBeenCalledWith(
-					expect.objectContaining({
-						input: expect.objectContaining({
-							Bucket: config.bucket,
-							LifecycleConfiguration: expect.objectContaining({
-								Rules: [],
-							}),
-						}),
-					})
-				);
+				expect(client.send).not.toHaveBeenCalled();
 			});
 		});
 
@@ -122,28 +111,58 @@ describe(S3ClientAdapter.name, () => {
 
 		describe('WHEN client throws NoSuchBucket error', () => {
 			it('should call createBucket and retry lifecycle configuration', async () => {
-				const createBucketSpy = jest.spyOn(service, 'createBucket').mockResolvedValueOnce();
+				const { config } = createParameter();
+				const logger = createMock<Logger>();
+				const configuration = createMock<S3Config>(config);
+				const localErrorHandler = createMock<DomainErrorHandler>();
+				const localClient = createMock<S3Client>({
+					config: { endpoint: () => ({ protocol: '', hostname: '' }) },
+				});
+				const serviceWithRules = new S3ClientAdapter(
+					localClient,
+					configuration,
+					logger,
+					localErrorHandler,
+					'clientInjectionToken',
+					[{ folder: 'temp', expirationDays: 3 }]
+				);
+				const createBucketSpy = jest.spyOn(serviceWithRules, 'createBucket').mockResolvedValueOnce();
 				// @ts-expect-error Testcase
-				client.send.mockRejectedValueOnce({ Code: 'NoSuchBucket', message: 'NoSuchBucket' });
+				localClient.send.mockRejectedValueOnce({ Code: 'NoSuchBucket', message: 'NoSuchBucket' });
 				// @ts-expect-error Testcase
-				client.send.mockResolvedValueOnce({});
+				localClient.send.mockResolvedValueOnce({});
 
-				await service.onModuleInit();
+				await serviceWithRules.onModuleInit();
 
 				expect(createBucketSpy).toHaveBeenCalled();
-				expect(client.send).toHaveBeenCalledTimes(3);
+				expect(localClient.send).toHaveBeenCalledTimes(3);
 			});
 		});
 
 		describe('WHEN client throws other error', () => {
 			it('should call errorHandler.exec with error message and bucket name', async () => {
+				const { config } = createParameter();
+				const logger = createMock<Logger>();
+				const configuration = createMock<S3Config>(config);
+				const localErrorHandler = createMock<DomainErrorHandler>();
+				const localClient = createMock<S3Client>({
+					config: { endpoint: () => ({ protocol: '', hostname: '' }) },
+				});
+				const serviceWithRules = new S3ClientAdapter(
+					localClient,
+					configuration,
+					logger,
+					localErrorHandler,
+					'clientInjectionToken',
+					[{ folder: 'temp', expirationDays: 3 }]
+				);
 				const error = new Error('Internal error');
 				// @ts-expect-error Testcase
-				client.send.mockRejectedValueOnce(error);
+				localClient.send.mockRejectedValueOnce(error);
 
-				await service.onModuleInit();
+				await serviceWithRules.onModuleInit();
 
-				expect(errorHandler.exec).toHaveBeenCalledWith(expect.stringContaining('test-bucket'));
+				expect(localErrorHandler.exec).toHaveBeenCalledWith(expect.stringContaining('test-bucket'));
 			});
 		});
 	});

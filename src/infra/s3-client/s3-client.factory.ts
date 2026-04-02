@@ -14,7 +14,7 @@ export class S3ClientFactory {
 		logger: Logger,
 		domainErrorHandler: DomainErrorHandler,
 		clientInjectionToken: string,
-		folderLifecycleRules: FolderLifecycleRule[] = []
+		folderLifecycleRules?: FolderLifecycleRule[]
 	): S3ClientAdapter {
 		const { region, accessKeyId, secretAccessKey, endpoint } = config;
 		const retryStrategy = new ConfiguredRetryStrategy(

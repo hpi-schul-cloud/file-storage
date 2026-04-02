@@ -38,13 +38,15 @@ export class S3ClientAdapter implements OnModuleInit {
 		private readonly logger: Logger,
 		private readonly errorHandler: DomainErrorHandler,
 		private readonly clientInjectionToken: string,
-		private readonly folderLifecycleRules: FolderLifecycleRule[] = []
+		private readonly folderLifecycleRules?: FolderLifecycleRule[]
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
 	}
 
 	public async onModuleInit(): Promise<void> {
-		await this.configureAllFolderLifecycles(this.folderLifecycleRules);
+		if (this.folderLifecycleRules) {
+			await this.configureAllFolderLifecycles(this.folderLifecycleRules);
+		}
 	}
 
 	// is public but only used internally
