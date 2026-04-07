@@ -26,7 +26,8 @@
 			"@shared/*": ["./shared/*"],
 			"@infra/*": ["./infra/*"],
 			"@modules/*": ["./modules/*"],
-			"@testing/*": ["./testing/*"]
+			"@testing/*": ["./testing/*"],
+			"file-type": ["../node_modules/file-type/source/index"]
 		}
 	},
 	"exclude": ["scripts", "dist"],
