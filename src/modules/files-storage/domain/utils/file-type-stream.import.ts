@@ -1,4 +1,4 @@
-import type { AnyWebReadableByteStreamWithFileType, FileTypeResult } from 'file-type';
+import type { FileTypeResult } from 'file-type';
 import { loadEsm } from 'load-esm';
 import { Readable } from 'stream';
 
@@ -12,6 +12,6 @@ export async function fileTypeStream(file: Readable): Promise<FileTypeResult | u
 	return stream;
 }
 
-export type { AnyWebReadableByteStreamWithFileType, FileTypeResult };
+export type { AnyWebReadableByteStreamWithFileType, FileTypeResult } from 'file-type';
 
 export default { fileTypeStream };
