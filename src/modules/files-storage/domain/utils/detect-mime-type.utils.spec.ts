@@ -79,8 +79,7 @@ describe('detectFileTypeFromStream', () => {
 
 			const mockFileTypeResult = { mime: 'image/png', ext: 'png' };
 
-			//@ts-ignore
-			FileTypeStream.detectFileTypeFromStream.mockResolvedValueOnce(mockFileTypeResult);
+			jest.mocked(FileTypeStream.detectFileTypeFromStream).mockResolvedValueOnce(mockFileTypeResult);
 
 			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
@@ -91,8 +90,7 @@ describe('detectFileTypeFromStream', () => {
 			const passThrough = new PassThrough();
 			const fallbackMimeType = 'application/octet-stream';
 
-			//@ts-ignore
-			FileTypeStream.detectFileTypeFromStream.mockResolvedValueOnce(undefined);
+			jest.mocked(FileTypeStream.detectFileTypeFromStream).mockResolvedValueOnce(undefined);
 
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
@@ -106,8 +104,7 @@ describe('detectFileTypeFromStream', () => {
 			const passThrough = new PassThrough();
 			const fallbackMimeType = 'application/octet-stream';
 
-			//@ts-ignore
-			FileTypeStream.detectFileTypeFromStream.mockRejectedValueOnce(new Error('Stream error'));
+			jest.mocked(FileTypeStream.detectFileTypeFromStream).mockRejectedValueOnce(new Error('Stream error'));
 
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
