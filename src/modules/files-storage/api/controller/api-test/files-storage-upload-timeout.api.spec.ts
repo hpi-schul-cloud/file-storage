@@ -137,17 +137,9 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 				} catch (error) {
 					// EPIPE/ECONNRESET can occur when the server closes the connection
 					// mid-upload due to timeout, while the client is still writing data
-					if (
-						error.code === 'EPIPE' ||
-						error.code === 'ECONNRESET' ||
-						error.message.includes('write EPIPE') ||
-						error.message.includes('write ECONNRESET')
-					) {
-						// This is expected behavior when server timeout occurs during upload
-						expect(true).toBe(true);
-					} else {
-						throw error;
-					}
+					expect(error).toMatchObject({
+						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
+					});
 				}
 			});
 
@@ -167,18 +159,11 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 					// If we get here, it should be a timeout response
 					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
 				} catch (error) {
-					// Handle EPIPE/ECONNRESET error which can occur when server closes connection during timeout
-					if (
-						error.code === 'EPIPE' ||
-						error.code === 'ECONNRESET' ||
-						error.message.includes('write EPIPE') ||
-						error.message.includes('write ECONNRESET')
-					) {
-						// This is expected behavior when server timeout occurs
-						expect(true).toBe(true); // Test passes - timeout occurred as expected
-					} else {
-						throw error; // Re-throw unexpected errors
-					}
+					// EPIPE/ECONNRESET can occur when the server closes the connection
+					// mid-upload due to timeout, while the client is still writing data
+					expect(error).toMatchObject({
+						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
+					});
 				}
 			});
 		});
@@ -224,13 +209,11 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 					// If we get here, it should be a timeout response
 					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
 				} catch (error) {
-					// Handle EPIPE error which can occur when server closes connection during timeout
-					if (error.code === 'EPIPE' || error.code === 'ECONNRESET' || error.message.includes('write EPIPE')) {
-						// This is expected behavior when server timeout occurs
-						expect(true).toBe(true); // Test passes - timeout occurred as expected
-					} else {
-						throw error; // Re-throw unexpected errors
-					}
+					// EPIPE/ECONNRESET can occur when the server closes the connection
+					// mid-upload due to timeout, while the client is still writing data
+					expect(error).toMatchObject({
+						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
+					});
 				}
 			});
 
