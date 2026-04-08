@@ -6,7 +6,6 @@ import {
 	InternalServerErrorException,
 	UnprocessableEntityException,
 } from '@nestjs/common';
-import _ from 'lodash';
 import { ErrorMapper } from './error.mapper';
 
 describe('ErrorMapper', () => {
@@ -14,7 +13,7 @@ describe('ErrorMapper', () => {
 		it('Should map any 400 error to BadRequestException.', () => {
 			const errorText = 'BadRequestException ABC';
 			const e = new BadRequestException(errorText);
-			const json = _.toPlainObject(e) as RpcError;
+			const json = Object.assign({}, e) as unknown as RpcError;
 
 			const result = ErrorMapper.mapRpcErrorResponseToDomainError(json);
 
@@ -23,7 +22,7 @@ describe('ErrorMapper', () => {
 
 		it('Should map 403 error response to ForbiddenException.', () => {
 			const errorText = 'ForbiddenException ABC';
-			const rpcResponseError = _.toPlainObject(new ForbiddenException(errorText)) as RpcError;
+			const rpcResponseError = Object.assign({}, new ForbiddenException(errorText)) as unknown as RpcError;
 
 			const result = ErrorMapper.mapRpcErrorResponseToDomainError(rpcResponseError);
 
@@ -32,7 +31,7 @@ describe('ErrorMapper', () => {
 
 		it('Should map 500 error response to InternalServerErrorException.', () => {
 			const errorText = 'InternalServerErrorException ABC';
-			const json = _.toPlainObject(new InternalServerErrorException(errorText)) as RpcError;
+			const json = Object.assign({}, new InternalServerErrorException(errorText)) as unknown as RpcError;
 
 			const result = ErrorMapper.mapRpcErrorResponseToDomainError(json);
 
@@ -41,7 +40,7 @@ describe('ErrorMapper', () => {
 
 		it('Should map 422 error response to UnprocessableEntityException.', () => {
 			const errorText = 'UnprocessableEntityException ABC';
-			const json = _.toPlainObject(new UnprocessableEntityException(errorText)) as RpcError;
+			const json = Object.assign({}, new UnprocessableEntityException(errorText)) as unknown as RpcError;
 
 			const result = ErrorMapper.mapRpcErrorResponseToDomainError(json);
 
@@ -50,7 +49,7 @@ describe('ErrorMapper', () => {
 
 		it('Should map unknown error code to InternalServerErrorException.', () => {
 			const errorText = 'Any error text';
-			const json = _.toPlainObject(new ConflictException(errorText)) as RpcError;
+			const json = Object.assign({}, new ConflictException(errorText)) as unknown as RpcError;
 
 			const result = ErrorMapper.mapRpcErrorResponseToDomainError(json);
 

@@ -2,9 +2,8 @@ import { findOneOrFailHandler } from '@infra/database/database.not-found.error';
 import { defineConfig, EntityClass, EntityManager } from '@mikro-orm/mongodb';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Module, OnModuleDestroy } from '@nestjs/common';
-import _ from 'lodash';
 
-const getDbName = (): string => _.times(20, () => _.random(35).toString(36)).join('');
+const getDbName = (): string => Array.from({ length: 20 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
 
 @Module({})
 export class MongoMemoryDatabaseModule implements OnModuleDestroy {
