@@ -1,7 +1,7 @@
 import { Logger } from '@infra/logger';
 import { PassThrough } from 'node:stream';
 import { FileTypeErrorLoggable } from './file-type-error.loggable';
-import { FileTypeResult, fileTypeStream } from './file-type-stream.import';
+import { FileTypeResult, detectFileTypeFromStream } from './file-type-stream.import';
 
 const isFileTypePackageSupported = (mimeType: string): boolean => {
 	const unsupportedMimeTypes = [
@@ -52,7 +52,7 @@ const tryDetectMimeTypeByStream = async (
 	logger: Logger
 ): Promise<FileTypeResult | undefined> => {
 	try {
-		const fileTypeResult = await fileTypeStream(passThrough);
+		const fileTypeResult = await detectFileTypeFromStream(passThrough);
 
 		return fileTypeResult;
 	} catch (error) {
