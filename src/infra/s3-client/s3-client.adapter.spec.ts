@@ -126,6 +126,49 @@ describe(S3ClientAdapter.name, () => {
 			});
 		});
 
+		describe('WHEN all lifecycle rules already exist', () => {
+			const setup = () => {
+				const { config } = createParameter();
+				const logger = createMock<Logger>();
+				const configuration = createMock<S3Config>(config);
+				const localErrorHandler = createMock<DomainErrorHandler>();
+				const localClient = createMock<S3Client>({
+					config: { endpoint: () => ({ protocol: '', hostname: '' }) },
+				});
+				const folderLifecycleRules: FolderLifecycleRule[] = [{ folder: 'temp', expirationDays: 3 }];
+				const serviceWithRules = new S3ClientAdapter(
+					localClient,
+					configuration,
+					logger,
+					localErrorHandler,
+					'clientInjectionToken',
+					folderLifecycleRules
+				);
+
+				// Mock for GetBucketLifecycleConfigurationCommand - returns existing rules that match
+				// @ts-expect-error Testcase
+				localClient.send.mockResolvedValueOnce({
+					Rules: [{ ID: 'tempCleanupRule', Filter: { Prefix: 'temp/' }, Status: 'Enabled' }],
+				});
+				// @ts-expect-error Testcase
+				localClient.send.mockResolvedValueOnce({});
+
+				return {
+					localClient,
+					serviceWithRules,
+					logger,
+				};
+			};
+
+			it('should not call PutBucketLifecycleConfigurationCommand when all rules already exist', async () => {
+				const { localClient, serviceWithRules } = setup();
+
+				await serviceWithRules.onModuleInit();
+
+				expect(localClient.send).toHaveBeenCalledTimes(1);
+			});
+		});
+
 		describe('WHEN client throws NoSuchBucket error', () => {
 			const setup = () => {
 				const { config } = createParameter();
