@@ -178,7 +178,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		if (!rules || rules.length === 0) return;
 
 		try {
-			const existingRules = await this.getLifecycleConfigurationRules();
+			const existingRules = await this.getExistingLifecycleConfigurationRules();
 			const rulesToCreate = this.filterMissingFolderLifecycleRules(existingRules, rules);
 
 			if (rulesToCreate.length === 0) {
@@ -224,7 +224,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		return newRules;
 	}
 
-	private async getLifecycleConfigurationRules(): Promise<LifecycleRule[]> {
+	private async getExistingLifecycleConfigurationRules(): Promise<LifecycleRule[]> {
 		const getCommand = new GetBucketLifecycleConfigurationCommand({ Bucket: this.config.bucket });
 		const existingConfig = await this.client.send(getCommand);
 

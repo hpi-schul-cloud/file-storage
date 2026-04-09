@@ -67,7 +67,7 @@ describe(S3ClientAdapter.name, () => {
 		});
 
 		describe('WHEN called with additional folderLifecycleRules', () => {
-			it('should call client.send once with all lifecycle rules combined, then verify with a get', async () => {
+			const setup = () => {
 				const { config } = createParameter();
 				const logger = createMock<Logger>();
 				const configuration = createMock<S3Config>(config);
@@ -84,6 +84,23 @@ describe(S3ClientAdapter.name, () => {
 					'clientInjectionToken',
 					folderLifecycleRules
 				);
+
+				// Mock for GetBucketLifecycleConfigurationCommand - returns empty rules
+				// @ts-expect-error Testcase
+				localClient.send.mockResolvedValueOnce({ Rules: [] });
+				// Mock for PutBucketLifecycleConfigurationCommand
+				// @ts-expect-error Testcase
+				localClient.send.mockResolvedValueOnce({});
+
+				return {
+					bucket: config.bucket,
+					localClient,
+					serviceWithRules,
+				};
+			};
+
+			it('should call client.send once with all lifecycle rules combined, then verify with a get', async () => {
+				const { localClient, serviceWithRules, bucket } = setup();
 
 				await serviceWithRules.onModuleInit();
 
@@ -102,7 +119,7 @@ describe(S3ClientAdapter.name, () => {
 				expect(localClient.send).toHaveBeenCalledWith(
 					expect.objectContaining({
 						input: expect.objectContaining({
-							Bucket: config.bucket,
+							Bucket: bucket,
 						}),
 					})
 				);
@@ -110,7 +127,7 @@ describe(S3ClientAdapter.name, () => {
 		});
 
 		describe('WHEN client throws NoSuchBucket error', () => {
-			it('should call createBucket and retry lifecycle configuration', async () => {
+			const setup = () => {
 				const { config } = createParameter();
 				const logger = createMock<Logger>();
 				const configuration = createMock<S3Config>(config);
@@ -132,6 +149,16 @@ describe(S3ClientAdapter.name, () => {
 				// @ts-expect-error Testcase
 				localClient.send.mockResolvedValueOnce({});
 
+				return {
+					createBucketSpy,
+					serviceWithRules,
+					localClient,
+				};
+			};
+
+			it('should call createBucket and retry lifecycle configuration', async () => {
+				const { createBucketSpy, serviceWithRules, localClient } = setup();
+
 				await serviceWithRules.onModuleInit();
 
 				expect(createBucketSpy).toHaveBeenCalled();
@@ -140,7 +167,7 @@ describe(S3ClientAdapter.name, () => {
 		});
 
 		describe('WHEN client throws other error', () => {
-			it('should call errorHandler.exec with error message and bucket name', async () => {
+			const setup = () => {
 				const { config } = createParameter();
 				const logger = createMock<Logger>();
 				const configuration = createMock<S3Config>(config);
@@ -159,6 +186,15 @@ describe(S3ClientAdapter.name, () => {
 				const error = new Error('Internal error');
 				// @ts-expect-error Testcase
 				localClient.send.mockRejectedValueOnce(error);
+
+				return {
+					serviceWithRules,
+					localErrorHandler,
+				};
+			};
+
+			it('should call errorHandler.exec with error message and bucket name', async () => {
+				const { serviceWithRules, localErrorHandler } = setup();
 
 				await serviceWithRules.onModuleInit();
 
