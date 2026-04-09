@@ -102,6 +102,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
 	@ApiConsumes('multipart/form-data')
+	@UseInterceptors(CurrentUploadMetricsInterceptor)
 	@Post('/temp/upload/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async tempUpload(
 		@Body() _: FileParams,
