@@ -8,6 +8,7 @@ import {
 	GetObjectCommand,
 	HeadObjectCommand,
 	HeadObjectCommandOutput,
+	LifecycleRule,
 	ListObjectsV2Command,
 	ListObjectsV2CommandOutput,
 	PutBucketLifecycleConfigurationCommand,
@@ -44,9 +45,7 @@ export class S3ClientAdapter implements OnModuleInit {
 	}
 
 	public async onModuleInit(): Promise<void> {
-		if (this.folderLifecycleRules) {
-			await this.configureAllFolderLifecycles(this.folderLifecycleRules);
-		}
+		await this.configureAllFolderLifecycles(this.folderLifecycleRules);
 	}
 
 	// is public but only used internally
@@ -175,49 +174,61 @@ export class S3ClientAdapter implements OnModuleInit {
 		};
 	}
 
-	private async configureAllFolderLifecycles(rules: FolderLifecycleRule[]): Promise<void> {
-		const lifecycleConfig: PutBucketLifecycleConfigurationCommandInput = {
-			Bucket: this.config.bucket,
-			LifecycleConfiguration: {
-				Rules: rules.map(({ folder, expirationDays }) => ({
-					ID: `${folder}CleanupRule`,
-					Status: ExpirationStatus.Enabled,
-					Expiration: { Days: expirationDays },
-					Filter: { Prefix: `${folder}/` },
-				})),
-			},
-		};
+	private async configureAllFolderLifecycles(rules: FolderLifecycleRule[] | undefined): Promise<void> {
+		if (!rules || rules.length === 0) return;
 
 		try {
-			await this.sendLifecycleConfiguration(lifecycleConfig, rules);
+			const existingRules = await this.getLifecycleConfigurationRules();
+			const rulesToCreate = this.filterMissingFolderLifecycleRules(existingRules, rules);
+
+			if (rulesToCreate.length === 0) {
+				this.logLifeCycleConfigurationUpToDate();
+
+				return;
+			}
+
+			const newRules = this.createCleanupRulesForFolders(rulesToCreate);
+
+			const lifecycleConfig: PutBucketLifecycleConfigurationCommandInput = {
+				Bucket: this.config.bucket,
+				LifecycleConfiguration: {
+					Rules: [...existingRules, ...newRules],
+				},
+			};
+			const putCommand = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
+
+			await this.client.send(putCommand);
+			this.logLifecycleRulesConfigured(rules);
 		} catch (err) {
 			await this.handleConfigureFolderLifecycleError(err, rules);
 		}
 	}
 
-	private async sendLifecycleConfiguration(
-		lifecycleConfig: PutBucketLifecycleConfigurationCommandInput,
+	private filterMissingFolderLifecycleRules(
+		existingRules: LifecycleRule[] | undefined,
 		rules: FolderLifecycleRule[]
-	): Promise<void> {
-		const putCommand = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
-		await this.client.send(putCommand);
-		for (const { folder, expirationDays } of rules) {
-			this.logger.info(
-				new S3ClientActionLoggable(`S3 Lifecycle for /${folder}/* set to ${expirationDays} days`, {
-					action: 'configureLifecycle',
-					bucket: this.config.bucket,
-				})
-			);
-		}
+	): FolderLifecycleRule[] {
+		if (!existingRules) return rules;
 
+		return rules.filter(({ folder }) => !existingRules.some((rule) => rule.Filter?.Prefix === `${folder}/`));
+	}
+
+	private createCleanupRulesForFolders(rules: FolderLifecycleRule[]): LifecycleRule[] {
+		const newRules = rules.map(({ folder, expirationDays }) => ({
+			ID: `${folder}CleanupRule`,
+			Status: ExpirationStatus.Enabled,
+			Expiration: { Days: expirationDays },
+			Filter: { Prefix: `${folder}/` },
+		}));
+
+		return newRules;
+	}
+
+	private async getLifecycleConfigurationRules(): Promise<LifecycleRule[]> {
 		const getCommand = new GetBucketLifecycleConfigurationCommand({ Bucket: this.config.bucket });
-		const result = await this.client.send(getCommand);
-		this.logger.info(
-			new S3ClientActionLoggable(`S3 Lifecycle configuration after update: ${JSON.stringify(result.Rules)}`, {
-				action: 'verifyLifecycle',
-				bucket: this.config.bucket,
-			})
-		);
+		const existingConfig = await this.client.send(getCommand);
+
+		return existingConfig.Rules ?? [];
 	}
 
 	private async handleConfigureFolderLifecycleError(err: unknown, rules: FolderLifecycleRule[]): Promise<void> {
@@ -703,5 +714,25 @@ export class S3ClientAdapter implements OnModuleInit {
 				bucket: this.config.bucket,
 			})
 		);
+	}
+
+	private logLifeCycleConfigurationUpToDate(): void {
+		this.logger.info(
+			new S3ClientActionLoggable('All lifecycle rules already exist, no update needed', {
+				action: 'configureLifecycle',
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logLifecycleRulesConfigured(rules: FolderLifecycleRule[]): void {
+		for (const { folder, expirationDays } of rules) {
+			this.logger.info(
+				new S3ClientActionLoggable(`S3 Lifecycle for /${folder}/* set to ${expirationDays} days`, {
+					action: 'configureLifecycle',
+					bucket: this.config.bucket,
+				})
+			);
+		}
 	}
 }
