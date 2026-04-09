@@ -7,7 +7,7 @@ const { detectMimeTypeByStream, resolveMimeType } = require('./detect-mime-type.
 
 jest.mock('./file-type-stream.import');
 
-describe('detectMimeTypeByStream', () => {
+describe('detectFileTypeFromStream', () => {
 	describe('when fallback mime type is not supported by file-type package', () => {
 		it('should return fallback mime type for text/csv', async () => {
 			const passThrough = new PassThrough();
@@ -77,12 +77,9 @@ describe('detectMimeTypeByStream', () => {
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
 
-			const mockFileTypeResult = {
-				fileType: { mime: 'image/png' },
-			};
+			const mockFileTypeResult = { mime: 'image/png', ext: 'png' };
 
-			//@ts-ignore
-			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
+			jest.mocked(FileTypeStream.detectFileTypeFromStream).mockResolvedValueOnce(mockFileTypeResult);
 
 			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
 
@@ -93,11 +90,7 @@ describe('detectMimeTypeByStream', () => {
 			const passThrough = new PassThrough();
 			const fallbackMimeType = 'application/octet-stream';
 
-			const mockFileTypeResult = {
-				fileType: null,
-			};
-			//@ts-ignore
-			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
+			jest.mocked(FileTypeStream.detectFileTypeFromStream).mockResolvedValueOnce(undefined);
 
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
@@ -107,32 +100,11 @@ describe('detectMimeTypeByStream', () => {
 			expect(result).toBe('application/octet-stream');
 		});
 
-		it('sould call fileTypeStreamResult.destroy(); to clean up the stream', async () => {
-			const passThrough = new PassThrough();
-			const fallbackMimeType = 'application/octet-stream';
-			const readable = octetStreamReadable();
-			readable.pipe(passThrough);
-
-			const mockFileTypeResult = {
-				fileType: { mime: 'image/png' },
-				destroy: jest.fn(),
-			};
-
-			//@ts-ignore
-			FileTypeStream.fileTypeStream.mockResolvedValueOnce(mockFileTypeResult);
-
-			const result = await detectMimeTypeByStream(passThrough, fallbackMimeType, createMock<Logger>());
-
-			expect(result).toBe('image/png');
-			expect(mockFileTypeResult.destroy).toHaveBeenCalled();
-		});
-
 		it('should return fallback mime type when fileTypeStream throws an error', async () => {
 			const passThrough = new PassThrough();
 			const fallbackMimeType = 'application/octet-stream';
 
-			//@ts-ignore
-			FileTypeStream.fileTypeStream.mockRejectedValueOnce(new Error('Stream error'));
+			jest.mocked(FileTypeStream.detectFileTypeFromStream).mockRejectedValueOnce(new Error('Stream error'));
 
 			const readable = octetStreamReadable();
 			readable.pipe(passThrough);
@@ -144,57 +116,39 @@ describe('detectMimeTypeByStream', () => {
 	});
 
 	describe('resolveMimeType', () => {
-		it('should return detected mime type when fileType.mime is available', () => {
-			const fileTypeStreamResult = {
-				fileType: { mime: 'image/png' },
-			};
+		it('should return detected mime type when mime is available', () => {
+			const fileTypeResult = { mime: 'image/png', ext: 'png' };
 			const fallbackMimeType = 'application/octet-stream';
 
-			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
+			//@ts-ignore
+			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 			expect(result).toBe('image/png');
 		});
 
-		it('should return fallback mime type when fileType is null', () => {
-			const fileTypeStreamResult = {
-				fileType: null,
-			};
+		it('should return fallback mime type when fileTypeResult is undefined', () => {
 			const fallbackMimeType = 'text/plain';
 
-			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
+			const result = resolveMimeType(fallbackMimeType, undefined);
 
 			expect(result).toBe('text/plain');
 		});
 
-		it('should return fallback mime type when fileType is undefined', () => {
-			const fileTypeStreamResult = {
-				fileType: undefined,
-			};
-			const fallbackMimeType = 'application/json';
-
-			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
-
-			expect(result).toBe('application/json');
-		});
-
-		it('should return fallback mime type when fileType.mime is undefined', () => {
-			const fileTypeStreamResult = {
-				fileType: { mime: undefined },
-			};
+		it('should return fallback mime type when mime is undefined', () => {
 			const fallbackMimeType = 'video/mp4';
 
-			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
+			//@ts-ignore
+			const result = resolveMimeType(fallbackMimeType, { mime: undefined });
 
 			expect(result).toBe('video/mp4');
 		});
 
-		it('should return fallback mime type when fileType.mime is application/x-cfb', () => {
-			const fileTypeStreamResult = {
-				fileType: { mime: 'application/x-cfb' },
-			};
+		it('should return fallback mime type when mime is application/x-cfb', () => {
+			const fileTypeResult = { mime: 'application/x-cfb', ext: 'cfb' };
 			const fallbackMimeType = 'video/mp4';
 
-			const result = resolveMimeType(fallbackMimeType, fileTypeStreamResult);
+			//@ts-ignore
+			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 			expect(result).toBe('video/mp4');
 		});
