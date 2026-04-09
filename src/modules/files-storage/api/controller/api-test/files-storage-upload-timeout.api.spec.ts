@@ -124,15 +124,23 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 				// Create a buffer that will trigger server timeout due to processing time
 				const buffer = Buffer.alloc(2 * 1024 * 1024, 'A'); // 2MB
 
-				const response = await loggedInClient
-					.post(`/upload/school/${validId}/schools/${validId}`)
-					.attach('file', buffer, 'large-file.txt')
-					.set('connection', 'keep-alive')
-					.set('content-type', 'multipart/form-data')
-					.timeout(1000); // Client timeout higher than server timeout
+				try {
+					const response = await loggedInClient
+						.post(`/upload/school/${validId}/schools/${validId}`)
+						.attach('file', buffer, 'large-file.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data')
+						.timeout(1000); // Client timeout higher than server timeout
 
-				expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
-				expect(response.text).toContain('Request timed out');
+					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
+					expect(response.text).toContain('Request timed out');
+				} catch (error) {
+					// EPIPE/ECONNRESET can occur when the server closes the connection
+					// mid-upload due to timeout, while the client is still writing data
+					expect(error).toMatchObject({
+						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
+					});
+				}
 			});
 
 			it('should handle server timeout with very large file that causes processing delay', async () => {
@@ -151,18 +159,11 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 					// If we get here, it should be a timeout response
 					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
 				} catch (error) {
-					// Handle EPIPE/ECONNRESET error which can occur when server closes connection during timeout
-					if (
-						error.code === 'EPIPE' ||
-						error.code === 'ECONNRESET' ||
-						error.message.includes('write EPIPE') ||
-						error.message.includes('write ECONNRESET')
-					) {
-						// This is expected behavior when server timeout occurs
-						expect(true).toBe(true); // Test passes - timeout occurred as expected
-					} else {
-						throw error; // Re-throw unexpected errors
-					}
+					// EPIPE/ECONNRESET can occur when the server closes the connection
+					// mid-upload due to timeout, while the client is still writing data
+					expect(error).toMatchObject({
+						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
+					});
 				}
 			});
 		});
@@ -208,13 +209,11 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 					// If we get here, it should be a timeout response
 					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
 				} catch (error) {
-					// Handle EPIPE error which can occur when server closes connection during timeout
-					if (error.code === 'EPIPE' || error.code === 'ECONNRESET' || error.message.includes('write EPIPE')) {
-						// This is expected behavior when server timeout occurs
-						expect(true).toBe(true); // Test passes - timeout occurred as expected
-					} else {
-						throw error; // Re-throw unexpected errors
-					}
+					// EPIPE/ECONNRESET can occur when the server closes the connection
+					// mid-upload due to timeout, while the client is still writing data
+					expect(error).toMatchObject({
+						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
+					});
 				}
 			});
 

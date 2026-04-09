@@ -1,14 +1,17 @@
-import type { ReadableStreamWithFileType } from 'file-type';
+import type { FileTypeResult } from 'file-type';
 import { loadEsm } from 'load-esm';
 import { Readable } from 'stream';
 
 /* istanbul ignore next */
-export async function fileTypeStream(file: Readable): Promise<ReadableStreamWithFileType> {
-	const { fileTypeStream } = await loadEsm<typeof import('file-type')>('file-type');
+export async function detectFileTypeFromStream(file: Readable): Promise<FileTypeResult | undefined> {
+	const { fileTypeFromStream } = await loadEsm<typeof import('file-type')>('file-type');
 
-	const stream = await fileTypeStream(file);
+	const webStream = Readable.toWeb(file);
+	const fileType = await fileTypeFromStream(webStream);
 
-	return stream;
+	return fileType;
 }
 
-export default { fileTypeStream };
+export type { AnyWebReadableByteStreamWithFileType, FileTypeResult } from 'file-type';
+
+export default { detectFileTypeFromStream };
