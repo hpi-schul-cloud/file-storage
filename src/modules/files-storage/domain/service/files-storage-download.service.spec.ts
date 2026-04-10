@@ -17,7 +17,6 @@ describe('FilesStorageService download methods', () => {
 	let module: TestingModule;
 	let service: FilesStorageService;
 	let storageClient: DeepMocked<S3ClientAdapter>;
-	let logger: DeepMocked<Logger>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -52,7 +51,6 @@ describe('FilesStorageService download methods', () => {
 
 		service = module.get(FilesStorageService);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
-		logger = module.get(Logger);
 	});
 
 	beforeEach(() => {

@@ -30,7 +30,7 @@ describe('ArchiveFactory', () => {
 			expect(Buffer.concat(chunks).length).toBeGreaterThan(0);
 			done();
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
 		archive.on('error', (err) => done(err));
 	});
 

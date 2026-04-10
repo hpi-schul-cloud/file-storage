@@ -2,7 +2,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import {
 	FILE_STORAGE_CONFIG_TOKEN,
@@ -12,6 +12,8 @@ import {
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Archiver } from 'archiver';
+import { Readable } from 'stream';
 import { ArchiveFactory } from '../factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileResponseFactory } from '../mapper';
@@ -88,20 +90,39 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 			}).toThrow(NotFoundException);
 		});
 	});
+	describe('when fileRecords is not empty', () => {
+		const setup = () => {
+			const { fileRecords, parentId } = buildFileRecordsWithParams();
+			const archiveName = 'test';
+			const fileResponse = createMock<GetFile>({
+				data: Readable.from('test data'),
+			});
 
-	it('should create archive and return file response', async () => {
-		const { fileRecords } = buildFileRecordsWithParams();
-		const fileResponse = {};
-		jest.spyOn(ArchiveFactory, 'createEmpty').mockReturnValue(archive as any);
-		// @ts-ignore
-		const populateSpy = jest.spyOn(service, 'populateArchiveAndFinalize').mockResolvedValue(undefined);
-		jest.spyOn(FileResponseFactory, 'createFromArchive').mockReturnValue(fileResponse as any);
+			const archive = createMock<Archiver>();
+			jest.spyOn(ArchiveFactory, 'createEmpty').mockReturnValueOnce(archive);
+			// @ts-ignore
+			const populateSpy = jest.spyOn(service, 'populateArchiveAndFinalize').mockResolvedValue();
 
-		const result = service.downloadFilesAsArchive(fileRecords as any, 'archive.zip');
-		expect(ArchiveFactory.createEmpty).toHaveBeenCalledWith(fileRecords, logger);
-		expect(populateSpy).toHaveBeenCalledWith(archive, fileRecords);
-		expect(FileResponseFactory.createFromArchive).toHaveBeenCalledWith('archive.zip', archive);
-		expect(result).toBe(fileResponse);
+			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
+			const fileResponses = fileRecords.map((fileRecord) => {
+				const response = FileResponseFactory.create(fileResponse, fileRecord.getName());
+				spyDownloadFile.mockResolvedValueOnce(response);
+
+				return response;
+			});
+
+			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse, archive, populateSpy };
+		};
+		it('should create archive and return file response', () => {
+			const { fileRecords, archiveName, fileResponses, archive, populateSpy } = setup();
+			jest.spyOn(FileResponseFactory, 'createFromArchive').mockReturnValueOnce(fileResponses[0]);
+
+			const result = service.downloadFilesAsArchive(fileRecords, archiveName);
+			expect(ArchiveFactory.createEmpty).toHaveBeenCalledWith(fileRecords, logger);
+			expect(populateSpy).toHaveBeenCalledWith(archive, fileRecords);
+			expect(FileResponseFactory.createFromArchive).toHaveBeenCalledWith(archiveName, archive);
+			expect(result).toBe(fileResponses[0]);
+		});
 	});
 
 	describe('when archive emits entry event', () => {
