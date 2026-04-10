@@ -114,6 +114,7 @@ describe('FilesStorageService update methods', () => {
 
 				await service.patchFilename(fileRecord, fileName);
 
+				expect(fileRecordRepo.save).toHaveBeenCalledTimes(1);
 				const [savedRecord] = fileRecordRepo.save.mock.calls[0] as [FileRecord];
 				expect(savedRecord.getName()).toBe(fileName);
 			});
