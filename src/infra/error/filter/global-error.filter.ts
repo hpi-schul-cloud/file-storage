@@ -87,13 +87,16 @@ export class GlobalErrorFilter<E extends RpcError> implements ExceptionFilter<E>
 
 	private static toSnakeCase(str: string): string {
 		return str
-			.replace(/([A-Z])/g, '_$1')
-			.toLowerCase()
-			.replace(/^_/, '');
+			.replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+			.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+			.toLowerCase();
 	}
 
 	private static toStartCase(str: string): string {
-		return str.replace(/([A-Z])/g, ' $1').trim();
+		return str
+			.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+			.replace(/([a-z\d])([A-Z])/g, '$1 $2')
+			.trim();
 	}
 
 	private createErrorResponseForUnknownError(): ErrorResponse {
