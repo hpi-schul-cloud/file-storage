@@ -12,6 +12,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
+import { Archiver } from 'archiver';
 import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
@@ -321,11 +322,45 @@ export class FilesStorageService {
 			throw new NotFoundException(ErrorType.NO_FILES_IN_ARCHIVE);
 		}
 
-		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
-		const archive = ArchiveFactory.create(files, fileRecords, this.logger);
+		const downloadableFiles = this.filterDownloadableFiles(fileRecords);
+
+		const archive = ArchiveFactory.createEmpty(downloadableFiles, this.logger);
+		this.populateArchiveAndFinalize(archive, downloadableFiles).catch((err: unknown) =>
+			archive.emit('error', err as Error)
+		);
+
 		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
 		return fileResponse;
+	}
+
+	private filterDownloadableFiles(fileRecords: FileRecord[]): FileRecord[] {
+		return fileRecords.filter((fileRecord) => !fileRecord.getProps().isUploading);
+	}
+
+	private async populateArchiveAndFinalize(archive: Archiver, files: FileRecord[]): Promise<void> {
+		for (const file of files) {
+			const fileResponse = await this.downloadFile(file);
+			await this.appendAndWaitForEntry(archive, fileResponse);
+		}
+
+		await archive.finalize();
+	}
+
+	private appendAndWaitForEntry(archive: Archiver, fileResponse: GetFileResponse): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			const onEntry = (): void => {
+				archive.off('error', onError);
+				resolve();
+			};
+			const onError = (err: Error): void => {
+				archive.off('entry', onEntry);
+				reject(err);
+			};
+			archive.once('entry', onEntry);
+			archive.once('error', onError);
+			ArchiveFactory.appendFile(archive, fileResponse);
+		});
 	}
 
 	// delete and restore
