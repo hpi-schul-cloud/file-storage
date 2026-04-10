@@ -12,7 +12,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
-import { Archiver } from 'archiver';
+import type { Archiver } from 'archiver';
 import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
@@ -317,25 +317,17 @@ export class FilesStorageService {
 		return fileResponse;
 	}
 
-	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+	public downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): GetFileResponse {
 		if (fileRecords.length === 0) {
 			throw new NotFoundException(ErrorType.NO_FILES_IN_ARCHIVE);
 		}
 
-		const downloadableFiles = this.filterDownloadableFiles(fileRecords);
-
-		const archive = ArchiveFactory.createEmpty(downloadableFiles, this.logger);
-		this.populateArchiveAndFinalize(archive, downloadableFiles).catch((err: unknown) =>
-			archive.emit('error', err as Error)
-		);
+		const archive = ArchiveFactory.createEmpty(fileRecords, this.logger);
+		this.populateArchiveAndFinalize(archive, fileRecords).catch((err: unknown) => archive.destroy(err as Error));
 
 		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
 		return fileResponse;
-	}
-
-	private filterDownloadableFiles(fileRecords: FileRecord[]): FileRecord[] {
-		return fileRecords.filter((fileRecord) => !fileRecord.getProps().isUploading);
 	}
 
 	private async populateArchiveAndFinalize(archive: Archiver, files: FileRecord[]): Promise<void> {

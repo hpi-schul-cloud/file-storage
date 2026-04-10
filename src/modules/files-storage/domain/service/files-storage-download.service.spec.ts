@@ -6,6 +6,7 @@ import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Archiver } from 'archiver';
 import { Readable } from 'node:stream';
 import { ScanStatus } from '../../domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
@@ -234,6 +235,11 @@ describe('FilesStorageService download methods', () => {
 				data: Readable.from('test data'),
 			});
 
+			const archive = createMock<Archiver>();
+			jest.spyOn(ArchiveFactory, 'createEmpty').mockReturnValueOnce(archive);
+			// @ts-ignore
+			const populateSpy = jest.spyOn(service, 'populateArchiveAndFinalize').mockResolvedValue();
+
 			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
 			const fileResponses = fileRecords.map((fileRecord) => {
 				const response = FileResponseFactory.create(fileResponse, fileRecord.getName());
@@ -242,35 +248,24 @@ describe('FilesStorageService download methods', () => {
 				return response;
 			});
 
-			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse };
+			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse, archive, populateSpy };
 		};
 
-		it('calls service.downloadFile with correct params', async () => {
-			const { fileRecords, archiveName, spyDownloadFile } = setup();
-
-			await service.downloadFilesAsArchive(fileRecords, archiveName);
-
-			expect(spyDownloadFile).toHaveBeenNthCalledWith(1, expect.objectContaining(fileRecords[0]));
-			expect(spyDownloadFile).toHaveBeenNthCalledWith(2, expect.objectContaining(fileRecords[1]));
-			expect(spyDownloadFile).toHaveBeenNthCalledWith(3, expect.objectContaining(fileRecords[2]));
+		it('should throw NotFoundException if fileRecords is empty', () => {
+			expect(() => {
+				service.downloadFilesAsArchive([], 'archive.zip');
+			}).toThrow(NotFoundException);
 		});
 
-		it('calls archiveFactory with correct params', async () => {
-			const { fileRecords, archiveName, fileResponses } = setup();
-			const archiveFactorySpy = jest.spyOn(ArchiveFactory, 'create');
+		it('should create archive and return file response', () => {
+			const { fileRecords, archiveName, fileResponses, archive, populateSpy } = setup();
+			jest.spyOn(FileResponseFactory, 'createFromArchive').mockReturnValueOnce(fileResponses[0]);
 
-			await service.downloadFilesAsArchive(fileRecords, archiveName);
-
-			expect(archiveFactorySpy).toHaveBeenCalledWith(fileResponses, fileRecords, logger);
-			expect(archiveFactorySpy).toHaveBeenCalledTimes(1);
-		});
-
-		it('throws error if fileRecords empty array', async () => {
-			const { archiveName } = setup();
-
-			await expect(service.downloadFilesAsArchive([], archiveName)).rejects.toThrow(
-				new NotFoundException(ErrorType.NO_FILES_IN_ARCHIVE)
-			);
+			const result = service.downloadFilesAsArchive(fileRecords, archiveName);
+			expect(ArchiveFactory.createEmpty).toHaveBeenCalledWith(fileRecords, logger);
+			expect(populateSpy).toHaveBeenCalledWith(archive, fileRecords);
+			expect(FileResponseFactory.createFromArchive).toHaveBeenCalledWith(archiveName, archive);
+			expect(result).toBe(fileResponses[0]);
 		});
 
 		it('returns correct response', async () => {
@@ -284,7 +279,6 @@ describe('FilesStorageService download methods', () => {
 					name: 'test.zip',
 				})
 			);
-			expect(response.data.constructor.name === 'Archiver').toBeTruthy();
 		});
 	});
 });
