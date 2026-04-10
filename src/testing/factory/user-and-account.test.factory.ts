@@ -1,5 +1,4 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import _ from 'lodash';
 import { AccountEntity } from '../entity/account.entity';
 import { Permission } from '../entity/user-role-permissions';
 import { UserEntity, UserProperties } from '../entity/user.entity';
@@ -14,13 +13,16 @@ export interface UserAndAccountParams extends UserProperties, AccountParams {}
 
 export class UserAndAccountTestFactory {
 	private static getUserParams(params: UserAndAccountParams): UserProperties {
-		const userParams = _.pick(params, 'school', 'roles');
+		const userParams: Partial<UserAndAccountParams> = {};
+		if ('school' in params) userParams.school = params.school;
+		if ('roles' in params) userParams.roles = params.roles;
 
 		return userParams;
 	}
 
 	private static buildAccount(user: UserEntity, params: UserAndAccountParams = {}): AccountEntity {
-		const accountParams = _.pick(params, 'userId');
+		const accountParams: AccountParams = {};
+		if ('userId' in params) accountParams.userId = params.userId;
 		const account = accountFactory.withUser(user).buildWithId(accountParams);
 
 		return account;

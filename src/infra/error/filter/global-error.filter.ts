@@ -1,7 +1,6 @@
 import { RpcError, RpcMessage } from '@infra/rabbitmq';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, InternalServerErrorException } from '@nestjs/common';
 import { Response } from 'express';
-import _ from 'lodash';
 import { ApiValidationError, BusinessError, DomainErrorHandler } from '../domain';
 import { ApiValidationErrorResponse, ErrorResponse } from '../dto';
 import { ErrorUtils } from '../utils';
@@ -80,10 +79,24 @@ export class GlobalErrorFilter<E extends RpcError> implements ExceptionFilter<E>
 		const code = exception.getStatus();
 		const msg = exception.message ?? 'Some error occurred';
 		const exceptionName = exception.constructor.name.replace('Loggable', '').replace('Exception', '');
-		const type = _.snakeCase(exceptionName).toUpperCase();
-		const title = _.startCase(exceptionName);
+		const type = GlobalErrorFilter.toSnakeCase(exceptionName).toUpperCase();
+		const title = GlobalErrorFilter.toStartCase(exceptionName);
 
 		return new ErrorResponse(type, title, msg, code);
+	}
+
+	private static toSnakeCase(str: string): string {
+		return str
+			.replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+			.replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+			.toLowerCase();
+	}
+
+	private static toStartCase(str: string): string {
+		return str
+			.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+			.replace(/([a-z\d])([A-Z])/g, '$1 $2')
+			.trim();
 	}
 
 	private createErrorResponseForUnknownError(): ErrorResponse {
