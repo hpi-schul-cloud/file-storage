@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 import { ObjectId } from '@mikro-orm/mongodb';
 import { DeepPartial } from 'fishery';
-import _ from 'lodash';
 import { RoleEntity, RoleName } from '../entity/role.entity';
 import {
 	adminPermissions,
@@ -29,7 +28,7 @@ class UserFactory extends EntityFactory<UserEntity, UserProperties> {
 	}
 
 	public asStudent(additionalPermissions: Permission[] = []): this {
-		const permissions = _.union(userPermissions, studentPermissions, additionalPermissions);
+		const permissions = [...new Set([...userPermissions, ...studentPermissions, ...additionalPermissions])];
 		const role = roleFactory.buildWithId({ permissions, name: RoleName.STUDENT });
 
 		const params: DeepPartial<UserProperties> = { roles: [role], school: new ObjectId() };
@@ -38,7 +37,7 @@ class UserFactory extends EntityFactory<UserEntity, UserProperties> {
 	}
 
 	public asTeacher(additionalPermissions: Permission[] = []): this {
-		const permissions = _.union(userPermissions, teacherPermissions, additionalPermissions);
+		const permissions = [...new Set([...userPermissions, ...teacherPermissions, ...additionalPermissions])];
 		const role = roleFactory.buildWithId({ permissions, name: RoleName.TEACHER });
 
 		const params: DeepPartial<UserProperties> = { roles: [role], school: new ObjectId() };
@@ -47,7 +46,7 @@ class UserFactory extends EntityFactory<UserEntity, UserProperties> {
 	}
 
 	public asAdmin(additionalPermissions: Permission[] = []): this {
-		const permissions = _.union(userPermissions, adminPermissions, additionalPermissions);
+		const permissions = [...new Set([...userPermissions, ...adminPermissions, ...additionalPermissions])];
 		const role = roleFactory.buildWithId({ permissions, name: RoleName.ADMINISTRATOR });
 
 		const params: DeepPartial<UserProperties> = { roles: [role], school: new ObjectId() };
@@ -56,7 +55,7 @@ class UserFactory extends EntityFactory<UserEntity, UserProperties> {
 	}
 
 	public asSuperhero(additionalPermissions: Permission[] = []): this {
-		const permissions = _.union(userPermissions, superheroPermissions, additionalPermissions);
+		const permissions = [...new Set([...userPermissions, ...superheroPermissions, ...additionalPermissions])];
 		const role = roleFactory.buildWithId({ permissions, name: RoleName.SUPERHERO });
 
 		const params: DeepPartial<UserProperties> = { roles: [role], school: new ObjectId() };

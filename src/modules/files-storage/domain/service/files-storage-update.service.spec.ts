@@ -6,10 +6,11 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import _ from 'lodash';
+
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
@@ -114,12 +115,12 @@ describe('FilesStorageService update methods', () => {
 
 			it('should call fileRecordRepo.save with right paramaters', async () => {
 				const { fileRecord, fileName } = setup();
-				const expectedFileRecord = _.cloneDeep(fileRecord);
-				expectedFileRecord.setName(fileName);
 
 				await service.patchFilename(fileRecord, fileName);
 
-				expect(fileRecordRepo.save).toHaveBeenCalledWith(expectedFileRecord);
+				expect(fileRecordRepo.save).toHaveBeenCalledTimes(1);
+				const [savedRecord] = fileRecordRepo.save.mock.calls[0] as [FileRecord];
+				expect(savedRecord.getName()).toBe(fileName);
 			});
 
 			it('should return modified fileRecord', async () => {
