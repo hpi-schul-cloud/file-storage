@@ -12,7 +12,7 @@ import {
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Archiver } from 'archiver';
+import type { Archiver } from 'archiver';
 import { Readable } from 'stream';
 import { ArchiveFactory } from '../factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
