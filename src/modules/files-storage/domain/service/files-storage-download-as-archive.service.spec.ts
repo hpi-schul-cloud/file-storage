@@ -130,7 +130,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 			const fileResponse = { name: 'test.txt', stream: {} };
 
 			// Mock ArchiveFactory.appendFile
-			jest.spyOn(ArchiveFactory, 'appendFile').mockImplementation(() => {});
+			jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
 
 			// Set up the archive.once mock to immediately call the onEntry handler
 			archive.once.mockImplementation((event: string, handler: Function) => {
@@ -161,7 +161,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 			const testError = new Error('Archive error');
 
 			// Mock ArchiveFactory.appendFile
-			jest.spyOn(ArchiveFactory, 'appendFile').mockImplementation(() => {});
+			jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
 
 			// Set up the archive.once mock to immediately call the onError handler
 			archive.once.mockImplementation((event: string, handler: Function) => {
@@ -224,7 +224,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 		let onErrorHandler: Function | undefined;
 
 		// Mock ArchiveFactory.appendFile
-		jest.spyOn(ArchiveFactory, 'appendFile').mockImplementation(() => {});
+		jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
 
 		// Capture the event handlers
 		archive.once.mockImplementation((event: string, handler: Function) => {
@@ -243,6 +243,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 
 		try {
 			await promise;
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		} catch (error) {
 			// Expected error
 		}
@@ -260,7 +261,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 		let capturedOnEntry: Function | undefined;
 
 		// Mock ArchiveFactory.appendFile
-		jest.spyOn(ArchiveFactory, 'appendFile').mockImplementation(() => {});
+		jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
 
 		// Capture the error and entry handlers
 		archive.once.mockImplementation((event: string, handler: Function) => {
@@ -305,7 +306,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 			archive.off.mockClear();
 
 			// Mock ArchiveFactory.appendFile
-			jest.spyOn(ArchiveFactory, 'appendFile').mockImplementation(() => {});
+			jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
 
 			// Capture handlers
 			archive.once.mockImplementation((event: string, handler: Function) => {
