@@ -10,14 +10,23 @@ export class FileRecordEntityMapper {
 			return fileRecordEntity.domainObject;
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { securityCheck: securityCheckEmbeddable, domainObject, ...fileRecordProps } = fileRecordEntity;
+		const { securityCheckEmbeddable, fileRecordProps } = this.extractCleanFileRecordProps(fileRecordEntity);
 		this.reAssignIdToAvoidIdLost(fileRecordProps, fileRecordEntity);
 		this.runtimeMigration(fileRecordProps);
 		const fileRecord = this.createFileRecord(fileRecordProps, securityCheckEmbeddable);
 		this.attachDoReferenceToEntityMap(fileRecord, fileRecordEntity);
 
 		return fileRecord;
+	}
+
+	private static extractCleanFileRecordProps(fileRecordEntity: FileRecordEntity): {
+		fileRecordProps: FileRecordProps;
+		securityCheckEmbeddable: FileRecordSecurityCheckEmbeddable;
+	} {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { securityCheck: securityCheckEmbeddable, domainObject, ...fileRecordProps } = fileRecordEntity;
+
+		return { fileRecordProps, securityCheckEmbeddable };
 	}
 
 	private static createFileRecord(
@@ -44,11 +53,10 @@ export class FileRecordEntityMapper {
 
 	public static mapDoToEntity(em: EntityManager, fileRecord: FileRecord): FileRecordEntity {
 		const props = fileRecord.getProps();
-		const { ...restProps } = props;
 
 		const entity =
 			em.getUnitOfWork().getById<FileRecordEntity>(FileRecordEntity.name, props.id) ?? new FileRecordEntity();
-		em.assign(entity, { ...restProps });
+		em.assign(entity, props);
 
 		entity.securityCheck = FileRecordEntityMapper.mapDoToEmbeddable(em, fileRecord);
 
