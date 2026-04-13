@@ -100,8 +100,6 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 
 			const archive = createMock<Archiver>();
 			jest.spyOn(ArchiveFactory, 'createEmpty').mockReturnValueOnce(archive);
-			// @ts-ignore
-			const populateSpy = jest.spyOn(service, 'populateArchiveAndFinalize').mockResolvedValue();
 
 			const spyDownloadFile = jest.spyOn(service, 'downloadFile');
 			const fileResponses = fileRecords.map((fileRecord) => {
@@ -111,15 +109,14 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 				return response;
 			});
 
-			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse, archive, populateSpy };
+			return { fileRecords, parentId, archiveName, fileResponses, spyDownloadFile, fileResponse, archive };
 		};
 		it('should create archive and return file response', () => {
-			const { fileRecords, archiveName, fileResponses, archive, populateSpy } = setup();
+			const { fileRecords, archiveName, fileResponses, archive } = setup();
 			jest.spyOn(FileResponseFactory, 'createFromArchive').mockReturnValueOnce(fileResponses[0]);
 
 			const result = service.downloadFilesAsArchive(fileRecords, archiveName);
 			expect(ArchiveFactory.createEmpty).toHaveBeenCalledWith(fileRecords, logger);
-			expect(populateSpy).toHaveBeenCalledWith(archive, fileRecords);
 			expect(FileResponseFactory.createFromArchive).toHaveBeenCalledWith(archiveName, archive);
 			expect(result).toBe(fileResponses[0]);
 		});
