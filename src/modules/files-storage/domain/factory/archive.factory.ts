@@ -1,20 +1,20 @@
 import { Logger } from '@infra/logger';
 import archiver from 'archiver';
 import { FileRecord } from '../file-record.do';
-import { CreateArchiveLoggable } from '../loggable';
 import { GetFileResponse } from '../interface';
+import { CreateArchiveLoggable } from '../loggable';
 
 export class ArchiveFactory {
 	public static create(
-		fileResponse: GetFileResponse[],
-		files: FileRecord[],
+		fileResponses: GetFileResponse[],
+		fileRecords: FileRecord[],
 		logger: Logger,
 		archiveType: archiver.Format = 'zip'
 	): archiver.Archiver {
-		const archive = this.createEmpty(files, logger, archiveType);
+		const archive = this.createEmpty(fileRecords, logger, archiveType);
 
-		for (const file of fileResponse) {
-			this.appendFile(archive, file);
+		for (const fileResponse of fileResponses) {
+			this.appendFile(archive, fileResponse);
 		}
 
 		archive.finalize();
@@ -23,7 +23,7 @@ export class ArchiveFactory {
 	}
 
 	public static createEmpty(
-		files: FileRecord[],
+		fileRecords: FileRecord[],
 		logger: Logger,
 		archiveType: archiver.Format = 'zip'
 	): archiver.Archiver {
@@ -31,18 +31,21 @@ export class ArchiveFactory {
 
 		archive.on('warning', (err) => {
 			if (err.code === 'ENOENT') {
-				this.logWarning(files, logger);
+				this.logWarning(fileRecords, logger);
 			} else {
-				logger.warning(new CreateArchiveLoggable('Warning while creating archive', 'createArchive', files, err));
+				logger.warning(new CreateArchiveLoggable('Warning while creating archive', 'createArchive', fileRecords, err));
 			}
 		});
 
 		archive.on('error', (err) => {
-			logger.warning(new CreateArchiveLoggable('Error while creating archive', 'createArchive', files, err));
+			logger.warning(new CreateArchiveLoggable('Error while creating archive', 'createArchive', fileRecords, err));
+			if (!archive.destroyed) {
+				archive.destroy(err);
+			}
 		});
 
 		archive.on('close', () => {
-			this.logClose(files, logger);
+			this.logClose(fileRecords, logger);
 		});
 
 		return archive;

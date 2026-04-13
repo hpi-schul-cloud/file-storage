@@ -153,15 +153,13 @@ export class FilesStorageUC {
 
 	public async downloadFilesOfParentAsArchive(params: ArchiveFileParams): Promise<GetFileResponse> {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-		const uploadableFileRecords = fileRecords.filter(
-			(fileRecord) => !fileRecord.isBlocked() && !fileRecord.getProps().isUploading
-		);
+		const downloadableFileRecords = fileRecords.filter((fileRecord) => fileRecord.isDownloadable());
 
-		const uniqueParentInfos = FileRecord.getUniqueParentInfos(uploadableFileRecords);
+		const uniqueParentInfos = FileRecord.getUniqueParentInfos(downloadableFileRecords);
 
 		await this.checkPermissions(uniqueParentInfos, FileStorageAuthorizationContext.read);
 
-		const fileResponse = this.filesStorageService.downloadFilesAsArchive(uploadableFileRecords, params.archiveName);
+		const fileResponse = this.filesStorageService.downloadFilesAsArchive(downloadableFileRecords, params.archiveName);
 
 		return fileResponse;
 	}

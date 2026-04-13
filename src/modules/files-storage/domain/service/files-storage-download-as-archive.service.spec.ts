@@ -193,7 +193,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 		let onErrorHandler: Function | undefined;
 
 		// Mock ArchiveFactory.appendFile
-		jest.spyOn(ArchiveFactory, 'appendFile').mockImplementation(() => {});
+		jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
 
 		// Capture the event handlers
 		archive.once.mockImplementation((event: string, handler: Function) => {

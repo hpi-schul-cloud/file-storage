@@ -10,12 +10,22 @@ export class CreateArchiveLoggable implements Loggable {
 	) {}
 
 	public getLogMessage(): LogMessage {
+		const errorData =
+			this.error instanceof Error
+				? {
+						error: this.error.message,
+						...(this.error.stack !== undefined && { errorStack: this.error.stack }),
+					}
+				: this.error !== undefined
+					? { error: String(this.error) }
+					: {};
+
 		const log = {
 			message: this.message,
 			data: {
 				action: this.action,
 				fileIds: this.files.map((file) => file.id).join(','),
-				...(this.error !== undefined && { error: String(this.error) }),
+				...errorData,
 			},
 		};
 
