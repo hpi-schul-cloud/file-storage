@@ -332,7 +332,12 @@ export class FilesStorageService {
 
 	private async populateArchiveAndFinalize(archive: Archiver, files: FileRecord[]): Promise<void> {
 		for (const file of files) {
+			if (archive.destroyed) {
+				return;
+			}
+
 			const fileResponse = await this.downloadFile(file);
+
 			await this.appendAndWaitForEntry(archive, fileResponse);
 		}
 
@@ -341,16 +346,41 @@ export class FilesStorageService {
 
 	private appendAndWaitForEntry(archive: Archiver, fileResponse: GetFileResponse): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			const onEntry = (): void => {
+			if (archive.destroyed) {
+				resolve();
+
+				return;
+			}
+
+			const cleanup = (): void => {
+				archive.off('entry', onEntry);
 				archive.off('error', onError);
+				archive.off('close', onClose);
+			};
+
+			const onEntry = (): void => {
+				cleanup();
 				resolve();
 			};
 			const onError = (err: Error): void => {
-				archive.off('entry', onEntry);
+				cleanup();
 				reject(err);
 			};
+			const onClose = (): void => {
+				cleanup();
+				resolve();
+			};
+
 			archive.once('entry', onEntry);
 			archive.once('error', onError);
+			archive.once('close', onClose);
+
+			if (archive.destroyed) {
+				cleanup();
+				resolve();
+
+				return;
+			}
 			ArchiveFactory.appendFile(archive, fileResponse);
 		});
 	}
