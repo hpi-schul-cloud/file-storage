@@ -323,7 +323,7 @@ export class FilesStorageService {
 		}
 
 		const archive = ArchiveFactory.createEmpty(fileRecords, this.logger);
-		this.populateArchiveAndFinalize(archive, fileRecords).catch((err: unknown) => archive.destroy(err as Error));
+		this.populateArchiveAndFinalize(archive, fileRecords).catch((err) => archive.destroy(err));
 
 		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
