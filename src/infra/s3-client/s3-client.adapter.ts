@@ -37,7 +37,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		private readonly errorHandler: DomainErrorHandler,
 		private readonly clientInjectionToken: string,
 		private readonly folderLifecycleRules?: FolderLifecycleRule[],
-		private readonly trashFolderName = 'trash'
+		private readonly deletedFolderName = 'trash'
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
 	}
@@ -271,7 +271,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		if (paths.length === 0) return;
 
 		const copyPaths = paths.map((path) => {
-			return { sourcePath: path, targetPath: `${this.trashFolderName}/${path}` };
+			return { sourcePath: path, targetPath: `${this.deletedFolderName}/${path}` };
 		});
 
 		await this.copyFiles(copyPaths);
@@ -298,7 +298,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		this.logRestoreFiles(paths);
 
 		const copyPaths = paths.map((path) => {
-			return { sourcePath: `${this.trashFolderName}/${path}`, targetPath: path };
+			return { sourcePath: `${this.deletedFolderName}/${path}`, targetPath: path };
 		});
 
 		const result = await this.copyFiles(copyPaths);

@@ -25,7 +25,7 @@ const imports = [
 		clientInjectionToken: FILES_STORAGE_S3_CONNECTION,
 		configInjectionToken: FILE_STORAGE_CONFIG_TOKEN,
 		configConstructor: FileStorageConfig,
-		trashFolderName: StorageFolders.TRASH,
+		deletedFolderName: StorageFolders.TRASH,
 		folderLifecycleRules: [
 			{
 				folder: StorageFolders.TRASH,
