@@ -1,5 +1,5 @@
 import { EntityManager } from '@mikro-orm/mongodb';
-import { FileRecord, FileRecordFactory, FileRecordSecurityCheck } from '../../domain';
+import { FileRecord, FileRecordFactory, FileRecordProps, FileRecordSecurityCheck, StorageType } from '../../domain';
 import { FileRecordEntity } from '../file-record.entity';
 import { FileRecordSecurityCheckEmbeddable } from '../security-check.embeddable';
 
@@ -14,6 +14,7 @@ export class FileRecordEntityMapper {
 		const { securityCheck: securityCheckEmbeddable, domainObject, ...fileRecordProps } = fileRecordEntity;
 		// we need to "copy" the "id" property manually, as otherwise the "id" will get lost
 		fileRecordProps.id = fileRecordEntity.id;
+		this.runtimeMigration(fileRecordProps);
 		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
 		// It is very important to hand over "fileRecordProps" CLEAN (meaning no additional properties)!!!
 		const fileRecord = FileRecordFactory.buildFromFileRecordProps(fileRecordProps, securityCheck);
@@ -22,6 +23,10 @@ export class FileRecordEntityMapper {
 		fileRecordEntity.domainObject = fileRecord;
 
 		return fileRecord;
+	}
+
+	private static runtimeMigration(fileRecordProps: FileRecordProps): void {
+		fileRecordProps.storageType ??= StorageType.STANDARD;
 	}
 
 	public static mapDoToEntity(em: EntityManager, fileRecord: FileRecord): FileRecordEntity {
