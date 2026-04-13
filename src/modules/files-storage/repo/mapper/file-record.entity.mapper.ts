@@ -12,21 +12,34 @@ export class FileRecordEntityMapper {
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { securityCheck: securityCheckEmbeddable, domainObject, ...fileRecordProps } = fileRecordEntity;
-		// we need to "copy" the "id" property manually, as otherwise the "id" will get lost
-		fileRecordProps.id = fileRecordEntity.id;
+		this.reAssignIdToAvoidIdLost(fileRecordProps, fileRecordEntity);
 		this.runtimeMigration(fileRecordProps);
-		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
-		// It is very important to hand over "fileRecordProps" CLEAN (meaning no additional properties)!!!
-		const fileRecord = FileRecordFactory.buildFromFileRecordProps(fileRecordProps, securityCheck);
-
-		// attach to identity map
-		fileRecordEntity.domainObject = fileRecord;
+		const fileRecord = this.createFileRecord(fileRecordProps, securityCheckEmbeddable);
+		this.attachDoReferenceToEntityMap(fileRecord, fileRecordEntity);
 
 		return fileRecord;
 	}
 
+	private static createFileRecord(
+		runtimeCleanFileRecordProps: FileRecordProps,
+		securityCheckEmbeddable: FileRecordSecurityCheckEmbeddable
+	): FileRecord {
+		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
+		const fileRecord = FileRecordFactory.buildFromFileRecordProps(runtimeCleanFileRecordProps, securityCheck);
+
+		return fileRecord;
+	}
+
+	private static reAssignIdToAvoidIdLost(fileRecordProps: FileRecordProps, fileRecordEntity: FileRecordEntity): void {
+		fileRecordProps.id = fileRecordEntity.id;
+	}
+
 	private static runtimeMigration(fileRecordProps: FileRecordProps): void {
 		fileRecordProps.storageType ??= StorageType.STANDARD;
+	}
+
+	private static attachDoReferenceToEntityMap(fileRecord: FileRecord, fileRecordEntity: FileRecordEntity): void {
+		fileRecordEntity.domainObject = fileRecord;
 	}
 
 	public static mapDoToEntity(em: EntityManager, fileRecord: FileRecord): FileRecordEntity {
