@@ -15,7 +15,7 @@ export class S3ClientFactory {
 		domainErrorHandler: DomainErrorHandler,
 		clientInjectionToken: string,
 		folderLifecycleRules?: FolderLifecycleRule[],
-		trashFolderName?: string
+		deletedFolderName?: string
 	): S3ClientAdapter {
 		const { region, accessKeyId, secretAccessKey, endpoint } = config;
 		const retryStrategy = new ConfiguredRetryStrategy(
@@ -43,7 +43,7 @@ export class S3ClientFactory {
 			domainErrorHandler,
 			clientInjectionToken,
 			folderLifecycleRules,
-			trashFolderName
+			deletedFolderName
 		);
 	}
 }
