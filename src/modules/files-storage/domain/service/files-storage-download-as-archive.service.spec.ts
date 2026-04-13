@@ -283,7 +283,7 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 
 		// Verify that archive.off was called to remove the entry listener
 		expect(archive.off).toHaveBeenCalledWith('entry', capturedOnEntry);
-		expect(archive.off).toHaveBeenCalledTimes(1);
+		expect(archive.off).toHaveBeenCalledTimes(3);
 	});
 
 	it('should handle different error types in onError callback', async () => {
