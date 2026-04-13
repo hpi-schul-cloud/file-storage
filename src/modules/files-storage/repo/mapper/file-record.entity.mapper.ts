@@ -11,12 +11,24 @@ export class FileRecordEntityMapper {
 		}
 
 		const { securityCheckEmbeddable, fileRecordProps } = this.extractCleanFileRecordProps(fileRecordEntity);
-		this.reAssignIdToAvoidIdLost(fileRecordProps, fileRecordEntity);
+		this.reAssignIdToAvoidLost(fileRecordProps, fileRecordEntity);
 		this.runtimeMigration(fileRecordProps);
 		const fileRecord = this.createFileRecord(fileRecordProps, securityCheckEmbeddable);
 		this.attachDoReferenceToEntityMap(fileRecord, fileRecordEntity);
 
 		return fileRecord;
+	}
+
+	public static mapDoToEntity(em: EntityManager, fileRecord: FileRecord): FileRecordEntity {
+		const props = fileRecord.getProps();
+
+		const entity =
+			em.getUnitOfWork().getById<FileRecordEntity>(FileRecordEntity.name, props.id) ?? new FileRecordEntity();
+		em.assign(entity, props);
+
+		entity.securityCheck = FileRecordEntityMapper.mapDoToEmbeddable(em, fileRecord);
+
+		return entity;
 	}
 
 	private static extractCleanFileRecordProps(fileRecordEntity: FileRecordEntity): {
@@ -39,7 +51,7 @@ export class FileRecordEntityMapper {
 		return fileRecord;
 	}
 
-	private static reAssignIdToAvoidIdLost(fileRecordProps: FileRecordProps, fileRecordEntity: FileRecordEntity): void {
+	private static reAssignIdToAvoidLost(fileRecordProps: FileRecordProps, fileRecordEntity: FileRecordEntity): void {
 		fileRecordProps.id = fileRecordEntity.id;
 	}
 
@@ -49,18 +61,6 @@ export class FileRecordEntityMapper {
 
 	private static attachDoReferenceToEntityMap(fileRecord: FileRecord, fileRecordEntity: FileRecordEntity): void {
 		fileRecordEntity.domainObject = fileRecord;
-	}
-
-	public static mapDoToEntity(em: EntityManager, fileRecord: FileRecord): FileRecordEntity {
-		const props = fileRecord.getProps();
-
-		const entity =
-			em.getUnitOfWork().getById<FileRecordEntity>(FileRecordEntity.name, props.id) ?? new FileRecordEntity();
-		em.assign(entity, props);
-
-		entity.securityCheck = FileRecordEntityMapper.mapDoToEmbeddable(em, fileRecord);
-
-		return entity;
 	}
 
 	private static mapDoToEmbeddable(em: EntityManager, fileRecord: FileRecord): FileRecordSecurityCheckEmbeddable {
