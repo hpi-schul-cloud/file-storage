@@ -52,7 +52,7 @@ export class ArchiveFactory {
 	}
 
 	public static appendFile(archive: archiver.Archiver, fileResponse: GetFileResponse): void {
-		fileResponse.data.on('error', (err: unknown) => {
+		fileResponse.data.once('error', (err: unknown) => {
 			const normalizedError = this.toError(err);
 
 			if (typeof fileResponse.data.destroy === 'function') {
@@ -74,8 +74,9 @@ export class ArchiveFactory {
 			return new Error(err);
 		}
 
-		return new Error(`Non-Error thrown: ${JSON.stringify(err)}`);
+		return new Error(`Non-Error thrown:`, { cause: err });
 	}
+
 	private static logWarning(fileRecords: FileRecord[], logger: Logger): void {
 		logger.warning(new CreateArchiveLoggable('Warning while creating archive', 'createArchive', fileRecords));
 	}
