@@ -120,18 +120,6 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		});
 	}
 
-	// ---------------------------------------------------------
-
-	public static getFormat(mimeType: string): string {
-		const format = mimeType.split('/')[1];
-
-		if (!format) {
-			throw new Error(`could not get format from mime type: ${mimeType}`);
-		}
-
-		return format;
-	}
-
 	public static getUniqueParentInfos(fileRecords: FileRecord[]): ParentInfo[] {
 		const parentMap = new Map<EntityId, ParentInfo>();
 
@@ -146,6 +134,18 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		const parentInfos = Array.from(parentMap.values());
 
 		return parentInfos;
+	}
+
+	// ---------------------------------------------------------
+
+	public static getFormat(mimeType: string): string {
+		const format = mimeType.split('/')[1];
+
+		if (!format) {
+			throw new Error(`could not get format from mime type: ${mimeType}`);
+		}
+
+		return format;
 	}
 
 	public getSecurityCheckProps(): FileRecordSecurityCheckProps {
