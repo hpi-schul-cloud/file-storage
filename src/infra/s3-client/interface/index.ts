@@ -13,6 +13,7 @@ export interface S3ClientModuleOptions {
 	configInjectionToken: string;
 	configConstructor: new () => S3Config;
 	folderLifecycleRules?: FolderLifecycleRule[];
+	trashFolderName?: string;
 }
 
 export interface FolderLifecycleRule {

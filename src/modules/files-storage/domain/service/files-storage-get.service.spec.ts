@@ -7,7 +7,7 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, parentStatisticTestFactory } from '../../testing';
-import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
+import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {
@@ -61,10 +61,6 @@ describe('FilesStorageService get methods', () => {
 				{
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
-				},
-				{
-					provide: FILE_RECORD_PATH_BUILDER,
-					useValue: createMock<FileRecordPathBuilder>(),
 				},
 			],
 		}).compile();

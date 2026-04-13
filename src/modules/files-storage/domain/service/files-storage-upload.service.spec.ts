@@ -15,9 +15,9 @@ import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConf
 import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
+import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
+import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -32,7 +32,6 @@ describe('FilesStorageService upload methods', () => {
 	let antivirusService: DeepMocked<AntivirusService>;
 	let config: FileStorageConfig;
 	let logger: DeepMocked<Logger>;
-	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 
 	beforeEach(async () => {
 		module = await Test.createTestingModule({
@@ -68,10 +67,6 @@ describe('FilesStorageService upload methods', () => {
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
 				},
-				{
-					provide: FILE_RECORD_PATH_BUILDER,
-					useValue: createMock<FileRecordPathBuilder>(),
-				},
 			],
 		}).compile();
 
@@ -81,7 +76,6 @@ describe('FilesStorageService upload methods', () => {
 		antivirusService = module.get(AntivirusService);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
 		logger = module.get(Logger);
-		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	afterEach(() => {
@@ -152,8 +146,8 @@ describe('FilesStorageService upload methods', () => {
 
 				fileRecordRepo.save.mockResolvedValue();
 
-				const filePath = [fileRecord.getParentInfo().storageLocationId, fileRecord.id].join('/');
-				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(filePath);
+				const filePath = [fileRecord.getStorageReference().storageLocationId, fileRecord.id].join('/');
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(filePath);
 
 				return {
 					params,
@@ -385,8 +379,8 @@ describe('FilesStorageService upload methods', () => {
 			const setup = () => {
 				const sourceFile = passThroughFileDtoTestFactory().asTiff().build();
 				const fileRecord = fileRecordTestFactory().build(sourceFile);
-				const parentInfo = fileRecord.getParentInfo();
 				const fileDtoWithFailingStream = passThroughFileDtoTestFactory().withForcedStreamError().build(sourceFile);
+				const params = ParentInfoTestFactory.build(fileRecord.getProps());
 
 				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
@@ -399,9 +393,9 @@ describe('FilesStorageService upload methods', () => {
 				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithFailingStream);
 
 				return {
-					params: parentInfo,
+					params,
 					file: sourceFile,
-					userId: parentInfo.parentId,
+					userId: params.parentId,
 				};
 			};
 
@@ -430,7 +424,7 @@ describe('FilesStorageService upload methods', () => {
 					error: undefined,
 				});
 
-				fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(`path/${fileRecord.id}`);
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(`path/${fileRecord.id}`);
 
 				return {
 					mimeTypeSpy,

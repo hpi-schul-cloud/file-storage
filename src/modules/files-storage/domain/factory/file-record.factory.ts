@@ -1,6 +1,7 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityId } from '@shared/domain/types';
-import { FileRecord, FileRecordProps, ParentInfo, StorageType } from '../file-record.do';
+import { FileRecord, FileRecordProps, ParentInfo } from '../file-record.do';
+import { StorageType } from '../storage-paths';
 import { FileRecordSecurityCheck } from '../vo';
 
 export class FileRecordFactory {

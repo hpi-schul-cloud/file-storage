@@ -7,8 +7,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { FilePathFactory } from '../factory';
 import { PreviewOutputMimeTypes } from '../file-record.do';
-import { FILE_RECORD_PATH_BUILDER, FileRecordPathBuilder, PreviewFileParams, PreviewWidth } from '../interface';
+import { PreviewFileParams, PreviewWidth } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -39,7 +40,6 @@ describe('PreviewService', () => {
 	let previewService: PreviewService;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let previewProducer: DeepMocked<PreviewProducer>;
-	let fileRecordPathBuilder: DeepMocked<FileRecordPathBuilder>;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -58,14 +58,12 @@ describe('PreviewService', () => {
 					useValue: createMock<Logger>(),
 				},
 				{ provide: PreviewProducer, useValue: createMock<PreviewProducer>() },
-				{ provide: FILE_RECORD_PATH_BUILDER, useValue: createMock<FileRecordPathBuilder>() },
 			],
 		}).compile();
 
 		previewService = module.get(PreviewService);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		previewProducer = module.get(PreviewProducer);
-		fileRecordPathBuilder = module.get(FILE_RECORD_PATH_BUILDER);
 	});
 
 	afterAll(async () => {
@@ -101,9 +99,9 @@ describe('PreviewService', () => {
 
 						const originPath = 'originPath';
 						const previewPath = 'previewPath';
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
-						fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(originPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -173,10 +171,10 @@ describe('PreviewService', () => {
 						const hash = 'test hash';
 						const originPath = 'originPath';
 						const previewPath = 'previewPath';
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
 
-						fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(originPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -297,8 +295,8 @@ describe('PreviewService', () => {
 						const hash = 'test hash';
 						const originPath = 'originPath';
 						const previewPath = 'previewPath';
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
-						fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(originPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -363,9 +361,9 @@ describe('PreviewService', () => {
 						const hash = 'test hash';
 						const originPath = 'originPath';
 						const previewPath = 'previewPath';
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
-						fileRecordPathBuilder.buildPreviewFilePath.mockReturnValueOnce(previewPath);
-						fileRecordPathBuilder.buildOriginPath.mockReturnValueOnce(originPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
@@ -613,7 +611,7 @@ describe('PreviewService', () => {
 				};
 				const format = previewParams.outputFormat.split('/')[1];
 				const directoryPath = 'directoryPath';
-				fileRecordPathBuilder.buildPreviewDirectoryPath.mockReturnValueOnce(directoryPath);
+				jest.spyOn(FilePathFactory, 'createPreviewDirectory').mockReturnValueOnce(directoryPath);
 
 				return {
 					fileRecord,

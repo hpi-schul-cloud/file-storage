@@ -122,9 +122,9 @@ export class FilesStorageUC {
 	// download
 	public async download(params: DownloadFileParams, bytesRange?: string): Promise<GetFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
+		await this.checkPermission(parentReference, FileStorageAuthorizationContext.read);
 
 		return this.filesStorageService.download(fileRecord, params.fileName, bytesRange);
 	}
@@ -147,9 +147,9 @@ export class FilesStorageUC {
 			throw new NotFoundException(ErrorType.PREVIEW_NOT_POSSIBLE);
 		}
 
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
+		await this.checkPermission(parentReference, FileStorageAuthorizationContext.read);
 		this.filesStorageService.checkFileName(fileRecord, params.fileName);
 
 		const previewFileParams = PreviewBuilder.buildParams(fileRecord, previewParams, bytesRange);
@@ -170,9 +170,9 @@ export class FilesStorageUC {
 		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 		const unblockedFileRecords = fileRecords.filter((fileRecord) => !fileRecord.isBlocked());
 
-		const uniqueParentInfos = FileRecord.getUniqueParentInfos(unblockedFileRecords);
+		const uniqueParentReferences = FileRecord.getUniqueParentReferences(unblockedFileRecords);
 
-		await this.checkPermissions(uniqueParentInfos, FileStorageAuthorizationContext.read);
+		await this.checkPermissions(uniqueParentReferences, FileStorageAuthorizationContext.read);
 
 		const fileResponse = await this.filesStorageService.downloadFilesAsArchive(
 			unblockedFileRecords,
@@ -185,9 +185,9 @@ export class FilesStorageUC {
 	// delete
 	public async deleteFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
-		const parentInfo = params;
+		const parentReference = params;
 
-		await this.checkDeletePermission([parentInfo]);
+		await this.checkDeletePermission([parentReference]);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordsWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -198,9 +198,9 @@ export class FilesStorageUC {
 
 	public async deleteFile(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
-		await this.checkDeletePermission([parentInfo]);
+		await this.checkDeletePermission([parentReference]);
 
 		await this.deletePreviewsAndFiles([fileRecord]);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -211,9 +211,9 @@ export class FilesStorageUC {
 
 	public async deleteMultipleFilesOfParent(params: MultiFileParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
-		const parentInfos = FileRecord.getUniqueParentInfos(fileRecords);
+		const parentReferences = FileRecord.getUniqueParentReferences(fileRecords);
 
-		await this.checkDeletePermission(parentInfos);
+		await this.checkDeletePermission(parentReferences);
 
 		await this.deletePreviewsAndFiles(fileRecords);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
@@ -241,9 +241,9 @@ export class FilesStorageUC {
 
 	public async restoreFile(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecordMarkedForDelete(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.create);
+		await this.checkPermission(parentReference, FileStorageAuthorizationContext.create);
 
 		await this.filesStorageService.restoreFiles([fileRecord]);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -275,10 +275,10 @@ export class FilesStorageUC {
 		targetParams: FileRecordParams
 	): Promise<CopyFileResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
 		await Promise.all([
-			this.checkPermission(parentInfo, FileStorageAuthorizationContext.create),
+			this.checkPermission(parentReference, FileStorageAuthorizationContext.create),
 			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
@@ -297,9 +297,9 @@ export class FilesStorageUC {
 	// update
 	public async patchFilename(params: SingleFileParams, data: RenameFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.update);
+		await this.checkPermission(parentReference, FileStorageAuthorizationContext.update);
 
 		const modifiedFileRecord = await this.filesStorageService.patchFilename(fileRecord, data.fileName);
 		const status = this.filesStorageService.getFileRecordStatus(modifiedFileRecord);
@@ -318,9 +318,9 @@ export class FilesStorageUC {
 	// get
 	public async getFileRecord(params: SingleFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
-		const parentInfo = fileRecord.getParentInfo();
+		const parentReference = fileRecord.getParentReference();
 
-		await this.checkPermission(parentInfo, FileStorageAuthorizationContext.read);
+		await this.checkPermission(parentReference, FileStorageAuthorizationContext.read);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
@@ -485,15 +485,18 @@ export class FilesStorageUC {
 	}
 
 	// private: permission checks
-	private async checkPermission(parentInfo: ParentReference, context: AuthorizationContextParams): Promise<void> {
-		const { parentType, parentId } = parentInfo;
+	private async checkPermission(parentReference: ParentReference, context: AuthorizationContextParams): Promise<void> {
+		const { parentType, parentId } = parentReference;
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
 		await this.authorizationClientAdapter.checkPermissionsByReference(referenceType, parentId, context);
 	}
 
-	private async checkPermissions(parentInfo: ParentReference[], context: AuthorizationContextParams): Promise<void> {
-		const references = parentInfo.map((info) => {
+	private async checkPermissions(
+		parentReference: ParentReference[],
+		context: AuthorizationContextParams
+	): Promise<void> {
+		const references = parentReference.map((info) => {
 			const { parentType, parentId } = info;
 			const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 
@@ -503,8 +506,8 @@ export class FilesStorageUC {
 		await this.authorizationClientAdapter.checkPermissionsByManyReferences({ references });
 	}
 
-	private async checkDeletePermission(parentInfo: ParentReference[]): Promise<void> {
-		await this.checkPermissions(parentInfo, FileStorageAuthorizationContext.delete);
+	private async checkDeletePermission(parentReference: ParentReference[]): Promise<void> {
+		await this.checkPermissions(parentReference, FileStorageAuthorizationContext.delete);
 	}
 
 	private async checkStorageLocationCanRead(

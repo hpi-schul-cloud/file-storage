@@ -7,10 +7,9 @@ import {
 	FileRecord,
 	PreviewOutputMimeTypes,
 	PreviewStatus,
-	StorageType,
 	TEMP_FILE_EXPIRY_SECONDS,
 } from './file-record.do';
-import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
+import { StorageType } from './storage-paths';
 import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
@@ -421,33 +420,6 @@ describe('FileRecord', () => {
 		});
 	});
 
-	describe('getUniqueParents', () => {
-		describe('WHEN filerRecords has parent duplicates', () => {
-			it('should return a map with unique parentId as key and parentType as value', () => {
-				const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2, {
-					parentType: FileRecordParentType.User,
-					parentId: 'id1',
-				});
-				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
-				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
-
-				const result = FileRecord.getUniqueParentInfos(fileRecords);
-
-				expect(result.length).toBe(2);
-				expect(result[0]).toEqual(fileRecord1.getParentInfo());
-				expect(result[1]).toEqual(fileRecord3.getParentInfo());
-			});
-		});
-
-		describe('WHEN fileRecords is empty', () => {
-			it('should return an empty map if fileRecords is empty', () => {
-				const result = FileRecord.getUniqueParentInfos([]);
-
-				expect(result.length).toBe(0);
-			});
-		});
-	});
-
 	describe('getName', () => {
 		it('should return the name of the file record', () => {
 			const name = 'test-file.txt';
@@ -561,8 +533,8 @@ describe('FileRecord', () => {
 
 	describe('getExpiresAt', () => {
 		describe('when storageType is TEMP', () => {
-			it('should return createdAt plus TEMP_FILE_EXPIRY_SECONDS', () => {
-				const createdAt = new Date('2024-01-01T00:00:00.000Z');
+			it('should return expiration date based on TEMP_FILE_EXPIRY_SECONDS', () => {
+				const createdAt = new Date('2024-01-01T15:30:00.000Z');
 				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP, createdAt });
 
 				const result = fileRecord.getExpiresAt();

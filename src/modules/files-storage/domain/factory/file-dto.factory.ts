@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 import { FileDto } from '../dto';
-import { StorageType } from '../file-record.do';
+import { StorageType } from '../storage-paths';
 
 export class FileDtoFactory {
 	public static create(

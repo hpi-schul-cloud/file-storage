@@ -115,7 +115,7 @@ export class WopiUc {
 		params: AuthorizedCollaboraDocumentUrlParams,
 		payload: WopiPayload
 	): Promise<AccessToken> {
-		const { parentId, parentType } = fileRecord.getParentInfo();
+		const { parentId, parentType } = fileRecord.getParentReference();
 		const referenceType = FilesStorageMapper.mapToAllowedAuthorizationEntityType(parentType);
 		const authorizationContext = this.authorizationContext(params.editorMode);
 

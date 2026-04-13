@@ -12,6 +12,7 @@ export * from './interface';
 export { FileStorageActionsLoggable } from './loggable';
 export { FilesStorageMapper } from './mapper';
 export { FilesStorageService, PreviewService } from './service';
+export * from './storage-paths';
 export {
 	FileRecordSecurityCheck,
 	FileRecordSecurityCheckProps,
