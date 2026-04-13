@@ -53,11 +53,29 @@ export class ArchiveFactory {
 
 	public static appendFile(archive: archiver.Archiver, fileResponse: GetFileResponse): void {
 		fileResponse.data.on('error', (err: unknown) => {
-			archive.emit('error', err as Error);
+			const normalizedError = this.toError(err);
+
+			if (typeof fileResponse.data.destroy === 'function') {
+				fileResponse.data.destroy(normalizedError);
+			}
+
+			archive.abort();
+			archive.emit('error', normalizedError);
 		});
 		archive.append(fileResponse.data, { name: fileResponse.name });
 	}
 
+	private static toError(err: unknown): Error {
+		if (err instanceof Error) {
+			return err;
+		}
+
+		if (typeof err === 'string') {
+			return new Error(err);
+		}
+
+		return new Error(`Non-Error thrown: ${JSON.stringify(err)}`);
+	}
 	private static logWarning(fileRecords: FileRecord[], logger: Logger): void {
 		logger.warning(new CreateArchiveLoggable('Warning while creating archive', 'createArchive', fileRecords));
 	}
