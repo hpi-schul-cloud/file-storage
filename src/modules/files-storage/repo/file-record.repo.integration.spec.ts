@@ -163,8 +163,8 @@ describe('FileRecordRepo', () => {
 			expect(entity.updatedAt.getTime()).toBeGreaterThan(origUpdatedAt.getTime());
 		});
 
-		describe('when storageType is STANDARD', () => {
-			it('should persist entity without storageType field', async () => {
+		describe('when storageType is STANDARD in fileRecord', () => {
+			it('should persist entity with storageType field', async () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
 
 				await repo.save(fileRecord);
@@ -172,11 +172,11 @@ describe('FileRecordRepo', () => {
 
 				const entity = await em.findOneOrFail(FileRecordEntity, fileRecord.id);
 
-				expect(entity.storageType).toBeUndefined();
+				expect(entity.storageType).toBe(StorageType.STANDARD);
 			});
 		});
 
-		describe('when storageType is TEMP', () => {
+		describe('when storageType is TEMP in fileRecord', () => {
 			it('should persist entity with storageType TEMP', async () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP });
 
