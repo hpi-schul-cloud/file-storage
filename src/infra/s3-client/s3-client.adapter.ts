@@ -208,7 +208,12 @@ export class S3ClientAdapter implements OnModuleInit {
 	): FolderLifecycleRule[] {
 		if (!existingRules) return rules;
 
-		return rules.filter(({ folder }) => !existingRules.some((rule) => rule.Filter?.Prefix === `${folder}/`));
+		return rules.filter(({ folder }) => {
+			const expectedPrefix = `${folder}/`;
+
+			// Check both modern Filter.Prefix and legacy top-level Prefix field
+			return !existingRules.some((rule) => rule.Filter?.Prefix === expectedPrefix || rule.Prefix === expectedPrefix);
+		});
 	}
 
 	private createCleanupRulesForFolders(rules: FolderLifecycleRule[]): LifecycleRule[] {
