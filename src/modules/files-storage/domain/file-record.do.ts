@@ -5,7 +5,7 @@ import { EntityId } from '@shared/domain/types';
 import path from 'path';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
-import { FolderExpirationDays, SECONDS_PER_DAY, StorageType } from './storage-paths';
+import { FolderExpirationDays, StorageType } from './storage-paths';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {
@@ -38,6 +38,7 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
 
+const SECONDS_PER_DAY = 24 * 60 * 60;
 export const TEMP_FILE_EXPIRY_SECONDS = FolderExpirationDays[StorageType.TEMP] * SECONDS_PER_DAY;
 
 export enum CollaboraMimeTypes {

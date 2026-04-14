@@ -28,8 +28,6 @@ export const StorageFolders = {
 	TRASH: 'trash',
 } as const satisfies Record<string, string>;
 
-export const SECONDS_PER_DAY = 24 * 60 * 60;
-
 /**
  * S3 lifecycle expiration configuration in days.
  * Objects in these folders are automatically deleted after midnight UTC on the expiration day.

@@ -2,10 +2,11 @@ import { Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
 import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
-import { FileRecord, FileRecordProps, FolderExpirationDays, SECONDS_PER_DAY, StorageType } from '../domain';
+import { FileRecord, FileRecordProps, FolderExpirationDays, StorageType } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
 import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 
+const SECONDS_PER_DAY = 24 * 60 * 60;
 /**
  * Note: The file record entity will not manage any entity relations by itself.
  * That's why we do not map any relations in the entity class
