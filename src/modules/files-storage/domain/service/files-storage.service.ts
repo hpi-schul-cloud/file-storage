@@ -40,6 +40,7 @@ import {
 } from '../interface/file-record-status.interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
+import { StorageType } from '../storage-paths.const';
 import { detectMimeTypeByStream, duplicateStream } from '../utils';
 import { ParentStatistic } from '../vo';
 
@@ -81,8 +82,11 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async getFileRecordsByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
-		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId);
+	public async getFileRecordsByParentAndStorageType(
+		parentId: EntityId,
+		storageType?: StorageType
+	): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId, undefined, storageType);
 
 		return countedFileRecords;
 	}
@@ -134,7 +138,10 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
-		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
+		const [fileRecordsOfParent, count] = await this.getFileRecordsByParentAndStorageType(
+			parentInfo.parentId,
+			sourceFile.storageType
+		);
 		this.checkFileLimitPerParent(count);
 		const fileName = this.resolveFileName(sourceFile.name, count, fileRecordsOfParent);
 		const file = await this.createPassThroughFileDto(sourceFile, fileName);
@@ -279,7 +286,7 @@ export class FilesStorageService {
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
 		const { parentId } = fileRecord.getParentReference();
-		const [fileRecords] = await this.getFileRecordsByParent(parentId);
+		const [fileRecords] = await this.getFileRecordsByParentAndStorageType(parentId);
 
 		this.checkDuplicatedNames(fileRecords, fileName, fileRecord.id);
 		fileRecord.setName(fileName);
@@ -484,7 +491,7 @@ export class FilesStorageService {
 		this.logCopy(sourceFileRecords, targetParentInfo);
 		if (sourceFileRecords.length === 0) return [];
 
-		const [, count] = await this.getFileRecordsByParent(targetParentInfo.parentId);
+		const [, count] = await this.getFileRecordsByParentAndStorageType(targetParentInfo.parentId);
 
 		this.checkFileLimitPerParent(count, sourceFileRecords.length);
 

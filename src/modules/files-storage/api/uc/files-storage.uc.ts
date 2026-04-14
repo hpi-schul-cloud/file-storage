@@ -181,7 +181,7 @@ export class FilesStorageUC {
 
 	// delete
 	public async deleteFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
 		const parentReference = params;
 
 		await this.checkDeletePermission([parentReference]);
@@ -260,7 +260,7 @@ export class FilesStorageUC {
 			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
 
 		return [copyFileResults, count];
@@ -331,7 +331,7 @@ export class FilesStorageUC {
 	): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
 			fileRecordWithStatus,

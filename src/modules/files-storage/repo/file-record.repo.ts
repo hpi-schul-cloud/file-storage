@@ -48,9 +48,10 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 
 	public async findByParentId(
 		parentId: EntityId,
-		options?: FindOptions<FileRecordEntity>
+		options?: FindOptions<FileRecordEntity>,
+		storageType?: StorageType
 	): Promise<Counted<FileRecord[]>> {
-		const scope = new FileRecordScope().byParentId(parentId).byMarkedForDelete(false).byNotTemp();
+		const scope = new FileRecordScope().byParentId(parentId).byMarkedForDelete(false).byStorageType(storageType);
 		const result = await this.findAndCount(scope, options);
 
 		return result;
