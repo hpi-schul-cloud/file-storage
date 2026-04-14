@@ -1,4 +1,4 @@
-import { fileRecordTestFactory } from '@modules/files-storage/testing';
+import { fileRecordTestFactory } from '../../testing';
 import { StorageFolders, StorageType } from '../storage-paths.const';
 import { FilePathFactory } from './file-path.factory';
 
