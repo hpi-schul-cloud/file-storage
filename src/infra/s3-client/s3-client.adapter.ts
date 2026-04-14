@@ -229,7 +229,10 @@ export class S3ClientAdapter implements OnModuleInit {
 
 			return existingConfig.Rules ?? [];
 		} catch (err) {
-			if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchLifecycleConfiguration') {
+			// S3 throws NoSuchLifecycleConfiguration when no lifecycle rules exist yet - treat as empty
+			const errorCode = TypeGuard.getValueFromObjectKey(err, 'Code');
+			const errorName = TypeGuard.getValueFromObjectKey(err, 'name');
+			if (errorCode === 'NoSuchLifecycleConfiguration' || errorName === 'NoSuchLifecycleConfiguration') {
 				return [];
 			}
 			throw err;
