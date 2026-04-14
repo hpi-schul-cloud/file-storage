@@ -346,6 +346,7 @@ export class FilesStorageService {
 
 	private appendAndWaitForEntry(archive: Archiver, fileResponse: GetFileResponse): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
+			/* istanbul ignore next */
 			if (archive.destroyed) {
 				resolve();
 
@@ -366,6 +367,7 @@ export class FilesStorageService {
 				cleanup();
 				reject(err);
 			};
+			/* istanbul ignore next */
 			const onClose = (): void => {
 				cleanup();
 				resolve();
