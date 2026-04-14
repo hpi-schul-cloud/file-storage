@@ -23,8 +23,15 @@ import {
 	PassThroughFileDtoFactory,
 	StreamFileSizeObserver,
 } from '../factory';
-import { FileRecord, ParentInfo } from '../file-record.do';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import { FileRecord } from '../file-record.do';
+import {
+	CopyFileResult,
+	FILE_RECORD_REPO,
+	FileRecordRepo,
+	GetFileResponse,
+	ParentInfo,
+	StorageLocationParams,
+} from '../interface';
 import {
 	CollaboraEditabilityStatus,
 	FileRecordStatus,
