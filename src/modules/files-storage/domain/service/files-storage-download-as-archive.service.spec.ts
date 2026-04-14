@@ -325,4 +325,34 @@ describe('FilesStorageService.downloadFilesAsArchive', () => {
 			expect(archive.off).toHaveBeenCalledWith('entry', capturedOnEntry);
 		}
 	});
+
+	it('should handle archive destroyed after event handlers setup', async () => {
+		const fileResponse = { name: 'test.txt', stream: {} };
+
+		// Mock ArchiveFactory.appendFile
+		const appendFileSpy = jest.spyOn(ArchiveFactory, 'appendFile').mockReturnValueOnce();
+
+		// Set archive.destroyed to false initially, then true after event handlers are set
+		let destroyedCheckCount = 0;
+		Object.defineProperty(archive, 'destroyed', {
+			get: () => {
+				destroyedCheckCount++;
+
+				return destroyedCheckCount >= 2;
+			},
+		});
+
+		// @ts-ignore - Access private method
+		const promise = service.appendAndWaitForEntry(archive, fileResponse);
+
+		await expect(promise).resolves.toBeUndefined();
+
+		// Verify that cleanup was called (archive.off should be called for all event types)
+		expect(archive.off).toHaveBeenCalledWith('entry', expect.any(Function));
+		expect(archive.off).toHaveBeenCalledWith('error', expect.any(Function));
+		expect(archive.off).toHaveBeenCalledWith('close', expect.any(Function));
+
+		// Verify that ArchiveFactory.appendFile was NOT called because archive was destroyed
+		expect(appendFileSpy).not.toHaveBeenCalled();
+	});
 });
