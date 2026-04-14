@@ -27,10 +27,7 @@ import { PassThrough, Readable } from 'stream';
 import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
-export const TRASH_STORAGE_FOLDER = 'trash';
-
 export class S3ClientAdapter implements OnModuleInit {
-	private readonly deletedFolderName = TRASH_STORAGE_FOLDER;
 	private readonly S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
 
 	constructor(
@@ -39,7 +36,8 @@ export class S3ClientAdapter implements OnModuleInit {
 		private readonly logger: Logger,
 		private readonly errorHandler: DomainErrorHandler,
 		private readonly clientInjectionToken: string,
-		private readonly folderLifecycleRules?: FolderLifecycleRule[]
+		private readonly folderLifecycleRules?: FolderLifecycleRule[],
+		private readonly deletedFolderName = 'trash'
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
 	}

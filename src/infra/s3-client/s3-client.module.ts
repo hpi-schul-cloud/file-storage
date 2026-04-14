@@ -18,7 +18,8 @@ export class S3ClientModule {
 						logger,
 						domainErrorHandler,
 						options.clientInjectionToken,
-						options.folderLifecycleRules
+						options.folderLifecycleRules,
+						options.deletedFolderName
 					),
 				inject: [options.configInjectionToken, Logger, DomainErrorHandler],
 			},

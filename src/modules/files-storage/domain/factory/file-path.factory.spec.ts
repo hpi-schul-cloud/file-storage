@@ -1,11 +1,11 @@
-import { StorageType } from '../domain';
-import { fileRecordTestFactory } from '../testing';
-import { S3FileRecordPathBuilder, STORAGE_TYPE_FOLDER_MAP, TEMP_STORAGE_FOLDER } from './file-record-path.builder';
+import { fileRecordTestFactory } from '../../testing';
+import { StorageFolders, StorageType } from '../storage-paths.const';
+import { FilePathFactory } from './file-path.factory';
 
-describe('FileRecordPathBuilder', () => {
-	describe('STORAGE_TYPE_FOLDER_MAP', () => {
+describe('FilePathFactory', () => {
+	describe('StorageFolders', () => {
 		it('should map StorageType.TEMP to TEMP_STORAGE_FOLDER', () => {
-			expect(STORAGE_TYPE_FOLDER_MAP[StorageType.TEMP]).toBe(TEMP_STORAGE_FOLDER);
+			expect(StorageFolders[StorageType.TEMP]).toBe(StorageFolders[StorageType.TEMP]);
 		});
 	});
 
@@ -15,7 +15,7 @@ describe('FileRecordPathBuilder', () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
 				const { storageLocationId } = fileRecord.getProps();
 
-				const result = new S3FileRecordPathBuilder().buildOriginPath(fileRecord);
+				const result = FilePathFactory.create(fileRecord);
 
 				expect(result).toBe(`${storageLocationId}/${fileRecord.id}`);
 			});
@@ -25,9 +25,9 @@ describe('FileRecordPathBuilder', () => {
 			it('should return path prefixed with the temp folder name', () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP });
 				const { storageLocationId } = fileRecord.getProps();
-				const folder = STORAGE_TYPE_FOLDER_MAP[StorageType.TEMP];
+				const folder = StorageFolders[StorageType.TEMP];
 
-				const result = new S3FileRecordPathBuilder().buildOriginPath(fileRecord);
+				const result = FilePathFactory.create(fileRecord);
 
 				expect(result).toBe(`${folder}/${storageLocationId}/${fileRecord.id}`);
 			});
@@ -38,46 +38,43 @@ describe('FileRecordPathBuilder', () => {
 				const fileRecord = fileRecordTestFactory().build({ storageType: undefined });
 				const { storageLocationId } = fileRecord.getProps();
 
-				const result = new S3FileRecordPathBuilder().buildOriginPath(fileRecord);
+				const result = FilePathFactory.create(fileRecord);
 
 				expect(result).toBe(`${storageLocationId}/${fileRecord.id}`);
 			});
 		});
 	});
 
-	describe('buildAll', () => {
+	describe('createMany', () => {
 		it('should return paths for all file records', () => {
 			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
 
-			const paths = new S3FileRecordPathBuilder().buildOriginPaths([fileRecord1, fileRecord2]);
+			const paths = FilePathFactory.createMany([fileRecord1, fileRecord2]);
 
-			expect(paths).toEqual([
-				new S3FileRecordPathBuilder().buildOriginPath(fileRecord1),
-				new S3FileRecordPathBuilder().buildOriginPath(fileRecord2),
-			]);
+			expect(paths).toEqual([FilePathFactory.create(fileRecord1), FilePathFactory.create(fileRecord2)]);
 		});
 	});
 
-	describe('buildPreviewDirectoryPath', () => {
+	describe('createPreviewDirectory', () => {
 		it('should build preview directory path from file record', () => {
 			const fileRecord = fileRecordTestFactory().build();
 			const { storageLocationId } = fileRecord.getProps();
 			const expectedPath = ['previews', storageLocationId, fileRecord.id].join('/');
 
-			const result = new S3FileRecordPathBuilder().buildPreviewDirectoryPath(fileRecord);
+			const result = FilePathFactory.createPreviewDirectory(fileRecord);
 
 			expect(result).toBe(expectedPath);
 		});
 	});
 
-	describe('buildPreviewFilePath', () => {
+	describe('createPreview', () => {
 		it('should build preview file path from file record and hash', () => {
 			const fileRecord = fileRecordTestFactory().build();
 			const { storageLocationId } = fileRecord.getProps();
 			const hash = 'randomHash';
 			const expectedPath = ['previews', storageLocationId, fileRecord.id, hash].join('/');
 
-			const result = new S3FileRecordPathBuilder().buildPreviewFilePath(fileRecord, hash);
+			const result = FilePathFactory.createPreview(fileRecord, hash);
 
 			expect(result).toBe(expectedPath);
 		});

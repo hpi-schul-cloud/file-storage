@@ -4,8 +4,9 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { ErrorType } from '../error';
+import { FilePathFactory } from '../factory';
 import { FileRecord, PreviewStatus } from '../file-record.do';
-import { FILE_RECORD_PATH_BUILDER, FileRecordPathBuilder, GetFileResponse, PreviewFileParams } from '../interface';
+import { GetFileResponse, PreviewFileParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseFactory, PreviewFileOptionsMapper } from '../mapper';
 
@@ -14,8 +15,7 @@ export class PreviewService {
 	constructor(
 		@Inject(FILES_STORAGE_S3_CONNECTION) private readonly storageClient: S3ClientAdapter,
 		private readonly logger: Logger,
-		private readonly previewProducer: PreviewProducer,
-		@Inject(FILE_RECORD_PATH_BUILDER) private readonly pathBuilder: FileRecordPathBuilder
+		private readonly previewProducer: PreviewProducer
 	) {
 		this.logger.setContext(PreviewService.name);
 	}
@@ -29,7 +29,7 @@ export class PreviewService {
 	}
 
 	public async deletePreviews(fileRecords: FileRecord[]): Promise<void> {
-		const paths = fileRecords.map((fileRecord) => this.pathBuilder.buildPreviewDirectoryPath(fileRecord));
+		const paths = fileRecords.map((fileRecord) => FilePathFactory.createPreviewDirectory(fileRecord));
 		const promises = paths.map((path) => this.storageClient.deleteDirectory(path));
 		await Promise.all(promises);
 	}
@@ -69,7 +69,7 @@ export class PreviewService {
 
 	private async getPreviewFile(params: PreviewFileParams): Promise<GetFileResponse> {
 		const { fileRecord, bytesRange, previewParams } = params;
-		const previewFilePath = this.pathBuilder.buildPreviewFilePath(fileRecord, params.hash);
+		const previewFilePath = FilePathFactory.createPreview(fileRecord, params.hash);
 		const name = fileRecord.getPreviewName(previewParams.outputFormat);
 		const file = await this.storageClient.get(previewFilePath, bytesRange);
 
@@ -79,8 +79,8 @@ export class PreviewService {
 	}
 
 	private async generatePreview(params: PreviewFileParams): Promise<void> {
-		const originFilePath = this.pathBuilder.buildOriginPath(params.fileRecord);
-		const previewFilePath = this.pathBuilder.buildPreviewFilePath(params.fileRecord, params.hash);
+		const originFilePath = FilePathFactory.create(params.fileRecord);
+		const previewFilePath = FilePathFactory.createPreview(params.fileRecord, params.hash);
 		const payload = PreviewFileOptionsMapper.fromPreviewFileParams(params, originFilePath, previewFilePath);
 
 		await this.previewProducer.generate(payload);

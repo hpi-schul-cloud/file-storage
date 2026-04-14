@@ -11,7 +11,7 @@ import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConf
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FileRecord } from '../file-record.do';
-import { FILE_RECORD_PATH_BUILDER, FILE_RECORD_REPO, FileRecordPathBuilder, FileRecordRepo } from '../interface';
+import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 
@@ -56,10 +56,6 @@ describe('FilesStorageService update methods', () => {
 				{
 					provide: DomainErrorHandler,
 					useValue: createMock<DomainErrorHandler>(),
-				},
-				{
-					provide: FILE_RECORD_PATH_BUILDER,
-					useValue: createMock<FileRecordPathBuilder>(),
 				},
 			],
 		}).compile();
@@ -106,11 +102,11 @@ describe('FilesStorageService update methods', () => {
 
 			it('should call getFilesOfParent with right paramaters', async () => {
 				const { fileRecord, fileName } = setup();
-				const parentInfo = fileRecord.getParentInfo();
+				const parentReference = fileRecord.getParentReference();
 
 				await service.patchFilename(fileRecord, fileName);
 
-				expect(spy).toHaveBeenCalledWith(parentInfo.parentId);
+				expect(spy).toHaveBeenCalledWith(parentReference.parentId);
 			});
 
 			it('should call fileRecordRepo.save with right paramaters', async () => {

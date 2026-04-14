@@ -55,6 +55,29 @@ describe(S3ClientFactory.name, () => {
 
 		it('should create S3ClientAdapter with correctly config', () => {
 			const { config, logger, errorHandler, client, clientInjectionToken, folderLifecycleRules } = setup();
+			const deletedFolderName = 'test-trash';
+			S3ClientFactory.build(
+				config,
+				logger,
+				errorHandler,
+				clientInjectionToken,
+				folderLifecycleRules,
+				deletedFolderName
+			);
+
+			expect(S3ClientAdapter).toHaveBeenCalledWith(
+				client,
+				config,
+				logger,
+				errorHandler,
+				clientInjectionToken,
+				folderLifecycleRules,
+				deletedFolderName
+			);
+		});
+
+		it('should create S3ClientAdapter without deletedFolderName when not provided', () => {
+			const { config, logger, errorHandler, client, clientInjectionToken, folderLifecycleRules } = setup();
 			S3ClientFactory.build(config, logger, errorHandler, clientInjectionToken, folderLifecycleRules);
 
 			expect(S3ClientAdapter).toHaveBeenCalledWith(
@@ -63,7 +86,8 @@ describe(S3ClientFactory.name, () => {
 				logger,
 				errorHandler,
 				clientInjectionToken,
-				folderLifecycleRules
+				folderLifecycleRules,
+				undefined
 			);
 		});
 

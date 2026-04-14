@@ -16,15 +16,20 @@ import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
-import { FileRecord, ParentInfo } from '../file-record.do';
+import {
+	ArchiveFactory,
+	FilePathFactory,
+	FileRecordFactory,
+	PassThroughFileDtoFactory,
+	StreamFileSizeObserver,
+} from '../factory';
+import { FileRecord } from '../file-record.do';
 import {
 	CopyFileResult,
-	FILE_RECORD_PATH_BUILDER,
 	FILE_RECORD_REPO,
-	FileRecordPathBuilder,
 	FileRecordRepo,
 	GetFileResponse,
+	ParentInfo,
 	StorageLocationParams,
 } from '../interface';
 import {
@@ -45,8 +50,7 @@ export class FilesStorageService {
 		private readonly antivirusService: AntivirusService,
 		@Inject(FILE_STORAGE_CONFIG_TOKEN) private readonly config: FileStorageConfig,
 		private readonly logger: Logger,
-		private readonly domainErrorHandler: DomainErrorHandler,
-		@Inject(FILE_RECORD_PATH_BUILDER) private readonly pathBuilder: FileRecordPathBuilder
+		private readonly domainErrorHandler: DomainErrorHandler
 	) {
 		this.logger.setContext(FilesStorageService.name);
 	}
@@ -222,7 +226,7 @@ export class FilesStorageService {
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		const filePath = this.pathBuilder.buildOriginPath(fileRecord);
+		const filePath = FilePathFactory.create(fileRecord);
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = file.data.pipe(new PassThrough());
@@ -259,7 +263,7 @@ export class FilesStorageService {
 	}
 
 	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
-		const filePath = this.pathBuilder.buildOriginPath(fileRecord);
+		const filePath = FilePathFactory.create(fileRecord);
 		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
@@ -273,8 +277,8 @@ export class FilesStorageService {
 	}
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
-		const parentInfo = fileRecord.getParentInfo();
-		const [fileRecords] = await this.getFileRecordsByParent(parentInfo.parentId);
+		const { parentId } = fileRecord.getParentReference();
+		const [fileRecords] = await this.getFileRecordsByParent(parentId);
 
 		this.checkDuplicatedNames(fileRecords, fileName, fileRecord.id);
 		fileRecord.setName(fileName);
@@ -315,7 +319,7 @@ export class FilesStorageService {
 	}
 
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
-		const pathToFile = this.pathBuilder.buildOriginPath(fileRecord);
+		const pathToFile = FilePathFactory.create(fileRecord);
 		const file = await this.storageClient.get(pathToFile, bytesRange);
 		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
@@ -345,12 +349,12 @@ export class FilesStorageService {
 
 	// delete and restore
 	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = this.pathBuilder.buildOriginPaths(fileRecords);
+		const paths = FilePathFactory.createMany(fileRecords);
 		await this.storageClient.moveToTrash(paths);
 	}
 
 	private async restoreBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = this.pathBuilder.buildOriginPaths(fileRecords);
+		const paths = FilePathFactory.createMany(fileRecords);
 		await this.storageClient.restore(paths);
 	}
 
@@ -465,8 +469,8 @@ export class FilesStorageService {
 	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
 		try {
 			const copyFiles: CopyFiles = {
-				sourcePath: this.pathBuilder.buildOriginPath(sourceFile),
-				targetPath: this.pathBuilder.buildOriginPath(targetFile),
+				sourcePath: FilePathFactory.create(sourceFile),
+				targetPath: FilePathFactory.create(targetFile),
 			};
 
 			await this.storageClient.copy([copyFiles]);
