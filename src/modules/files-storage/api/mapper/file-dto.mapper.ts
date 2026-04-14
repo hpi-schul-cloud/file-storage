@@ -10,7 +10,10 @@ export class FileDtoMapper {
 		storageType: StorageType,
 		abortSignal?: AbortSignal
 	): FileDto {
-		const mimeType = response.headers['Content-Type']?.toString() ?? 'application/octet-stream';
+		const responseHeader1 = response.headers['Content-Type']?.toString();
+		const responseHeader2 = response.headers['content-type']?.toString();
+
+		const mimeType = responseHeader1 ?? responseHeader2 ?? 'application/octet-stream';
 		const file = FileDtoFactory.create(name, response.data, mimeType, abortSignal, storageType);
 
 		return file;
