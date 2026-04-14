@@ -12,6 +12,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
+import type { Archiver } from 'archiver';
 import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
@@ -316,16 +317,74 @@ export class FilesStorageService {
 		return fileResponse;
 	}
 
-	public async downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): Promise<GetFileResponse> {
+	public downloadFilesAsArchive(fileRecords: FileRecord[], archiveName: string): GetFileResponse {
 		if (fileRecords.length === 0) {
 			throw new NotFoundException(ErrorType.NO_FILES_IN_ARCHIVE);
 		}
 
-		const files = await Promise.all(fileRecords.map((fileRecord: FileRecord) => this.downloadFile(fileRecord)));
-		const archive = ArchiveFactory.create(files, fileRecords, this.logger);
+		const archive = ArchiveFactory.createEmpty(fileRecords, this.logger);
+		this.populateArchiveAndFinalize(archive, fileRecords).catch((err) => archive.destroy(err));
+
 		const fileResponse = FileResponseFactory.createFromArchive(archiveName, archive);
 
 		return fileResponse;
+	}
+
+	private async populateArchiveAndFinalize(archive: Archiver, files: FileRecord[]): Promise<void> {
+		for (const file of files) {
+			if (archive.destroyed) {
+				return;
+			}
+
+			const fileResponse = await this.downloadFile(file);
+
+			await this.appendAndWaitForEntry(archive, fileResponse);
+		}
+
+		await archive.finalize();
+	}
+
+	private appendAndWaitForEntry(archive: Archiver, fileResponse: GetFileResponse): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			/* istanbul ignore next */
+			if (archive.destroyed) {
+				resolve();
+
+				return;
+			}
+
+			const cleanup = (): void => {
+				archive.off('entry', onEntry);
+				archive.off('error', onError);
+				archive.off('close', onClose);
+			};
+
+			const onEntry = (): void => {
+				cleanup();
+				resolve();
+			};
+			const onError = (err: Error): void => {
+				cleanup();
+				reject(err);
+			};
+			/* istanbul ignore next */
+			const onClose = (): void => {
+				cleanup();
+				resolve();
+			};
+
+			archive.once('entry', onEntry);
+			archive.once('error', onError);
+			archive.once('close', onClose);
+
+			if (archive.destroyed) {
+				cleanup();
+				resolve();
+
+				return;
+			}
+			ArchiveFactory.appendFile(archive, fileResponse);
+		});
 	}
 
 	// delete and restore

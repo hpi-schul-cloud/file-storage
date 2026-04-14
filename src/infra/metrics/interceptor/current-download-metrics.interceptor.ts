@@ -5,7 +5,6 @@ import { MetricsService } from '../metrics.service';
 
 @Injectable()
 export class CurrentDownloadMetricsInterceptor implements NestInterceptor {
-
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
 		const response = context.switchToHttp().getResponse<Response>();
 
