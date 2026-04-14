@@ -207,6 +207,14 @@ export class S3ClientAdapter implements OnModuleInit {
 		return rule.Filter?.Prefix ?? rule.Prefix;
 	}
 
+	/**
+	 * Filters out lifecycle rules that already exist in the bucket.
+	 *
+	 * Note: This only checks for existence by prefix - it does NOT update existing rules
+	 * if expirationDays or other settings have changed. To modify existing lifecycle rules,
+	 * they must be manually deleted from the S3 bucket first, then the application will
+	 * recreate them with the new settings on next startup.
+	 */
 	private filterMissingFolderLifecycleRules(
 		existingRules: LifecycleRule[] | undefined,
 		rules: FolderLifecycleRule[]
