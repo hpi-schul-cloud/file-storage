@@ -53,12 +53,6 @@ export class FileRecordScope extends Scope<FileRecordEntity> {
 		return this;
 	}
 
-	public byNotTemp(): this {
-		this.addQuery({ storageType: { $ne: StorageType.TEMP } });
-
-		return this;
-	}
-
 	public byStorageType(storageType?: StorageType): this {
 		if (!storageType || storageType === StorageType.STANDARD) {
 			this.addQuery({
