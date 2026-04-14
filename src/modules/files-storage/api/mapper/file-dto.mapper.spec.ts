@@ -20,6 +20,7 @@ describe('FileDtoMapper', () => {
 					name,
 					data: readable,
 					mimeType,
+					storageType: StorageType.STANDARD,
 				});
 
 				return { name, response, expectedFile };
@@ -46,6 +47,7 @@ describe('FileDtoMapper', () => {
 					name,
 					data: readable,
 					mimeType: 'application/octet-stream',
+					storageType: StorageType.STANDARD,
 				});
 
 				return { name, response, expectedFile };
@@ -62,34 +64,6 @@ describe('FileDtoMapper', () => {
 	});
 
 	describe('mapFromBusboyFileInfo', () => {
-		describe('when storageType is not provided', () => {
-			const setup = () => {
-				const abortController = new AbortController();
-				const readable = Readable.from('abc');
-				const busboyFileInfo = busboyFileInfoTestFactory().build();
-				const expectedFile = new FileDto({
-					name: busboyFileInfo.filename,
-					data: readable,
-					mimeType: busboyFileInfo.mimeType,
-				});
-
-				return { busboyFileInfo, readable, expectedFile, abortController };
-			};
-
-			it('should return file from busboy fileInfo', () => {
-				const { busboyFileInfo, readable, expectedFile, abortController } = setup();
-
-				const result = FileDtoMapper.mapFromBusboyFileInfo(
-					busboyFileInfo,
-					readable,
-					StorageType.STANDARD,
-					abortController.signal
-				);
-
-				expect(result).toEqual(expectedFile);
-			});
-		});
-
 		describe('when storageType is provided', () => {
 			const setup = () => {
 				const abortController = new AbortController();
@@ -101,6 +75,7 @@ describe('FileDtoMapper', () => {
 					data: readable,
 					mimeType: busboyFileInfo.mimeType,
 					storageType,
+					abortSignal: abortController.signal,
 				});
 
 				return { busboyFileInfo, readable, expectedFile, storageType, abortController };
@@ -116,7 +91,11 @@ describe('FileDtoMapper', () => {
 					abortController.signal
 				);
 
-				expect(result).toEqual(expectedFile);
+				expect(result.name).toEqual(expectedFile.name);
+				expect(result.mimeType).toEqual(expectedFile.mimeType);
+				expect(result.storageType).toEqual(expectedFile.storageType);
+				expect(result.data).toBe(readable);
+				expect(result.abortSignal).toBe(abortController.signal);
 			});
 		});
 	});
