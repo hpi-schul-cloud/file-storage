@@ -223,10 +223,17 @@ export class S3ClientAdapter implements OnModuleInit {
 	}
 
 	private async getExistingLifecycleConfigurationRules(): Promise<LifecycleRule[]> {
-		const getCommand = new GetBucketLifecycleConfigurationCommand({ Bucket: this.config.bucket });
-		const existingConfig = await this.client.send(getCommand);
+		try {
+			const getCommand = new GetBucketLifecycleConfigurationCommand({ Bucket: this.config.bucket });
+			const existingConfig = await this.client.send(getCommand);
 
-		return existingConfig.Rules ?? [];
+			return existingConfig.Rules ?? [];
+		} catch (err) {
+			if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchLifecycleConfiguration') {
+				return [];
+			}
+			throw err;
+		}
 	}
 
 	private async handleConfigureFolderLifecycleError(err: unknown, rules: FolderLifecycleRule[]): Promise<void> {
