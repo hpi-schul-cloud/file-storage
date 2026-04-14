@@ -13,6 +13,7 @@ import { ErrorType } from '../error';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
+import { StorageType } from '../storage-paths.const';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecord = () => {
@@ -106,7 +107,7 @@ describe('FilesStorageService update methods', () => {
 
 				await service.patchFilename(fileRecord, fileName);
 
-				expect(spy).toHaveBeenCalledWith(parentReference.parentId);
+				expect(spy).toHaveBeenCalledWith(parentReference.parentId, StorageType.STANDARD);
 			});
 
 			it('should call fileRecordRepo.save with right paramaters', async () => {

@@ -286,7 +286,8 @@ export class FilesStorageService {
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
 		const { parentId } = fileRecord.getParentReference();
-		const [fileRecords] = await this.getFileRecordsByParentAndStorageType(parentId);
+		const { storageType } = fileRecord.getStorageReference();
+		const [fileRecords] = await this.getFileRecordsByParentAndStorageType(parentId, storageType);
 
 		this.checkDuplicatedNames(fileRecords, fileName, fileRecord.id);
 		fileRecord.setName(fileName);
