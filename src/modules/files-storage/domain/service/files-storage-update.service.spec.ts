@@ -90,7 +90,7 @@ describe('FilesStorageService update methods', () => {
 
 				const fileName = 'renamed';
 
-				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([[fileRecord], 1]);
+				spy = jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValueOnce([[fileRecord], 1]);
 
 				return {
 					fileName,
@@ -134,7 +134,7 @@ describe('FilesStorageService update methods', () => {
 				const fileName = 'renamed';
 
 				const spyGetFilesOfParent = jest
-					.spyOn(service, 'getFileRecordsByParent')
+					.spyOn(service, 'getFileRecordsByParentAndStorageType')
 					.mockResolvedValueOnce([[fileRecord], 1]);
 				fileRecordRepo.save.mockRejectedValueOnce(new Error('bla'));
 
@@ -165,7 +165,9 @@ describe('FilesStorageService update methods', () => {
 				const otherFileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				const fileName = otherFileRecord.getName();
 
-				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([[fileRecord, otherFileRecord], 2]);
+				spy = jest
+					.spyOn(service, 'getFileRecordsByParentAndStorageType')
+					.mockResolvedValueOnce([[fileRecord, otherFileRecord], 2]);
 
 				return {
 					fileName,
@@ -196,7 +198,7 @@ describe('FilesStorageService update methods', () => {
 				const fileRecord = fileRecordTestFactory().withParentInfo(parentInfo).build();
 				const fileName = fileRecord.getName();
 
-				spy = jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValueOnce([[fileRecord], 1]);
+				spy = jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValueOnce([[fileRecord], 1]);
 
 				return {
 					fileName,
