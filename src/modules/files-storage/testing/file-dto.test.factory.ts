@@ -1,6 +1,6 @@
 import { DeepPartial } from 'fishery';
 import { Readable } from 'node:stream';
-import { FileDto, FileDtoFactory } from '../domain';
+import { FileDto, FileDtoFactory, StorageType } from '../domain';
 import {
 	aacReadable,
 	octetStreamReadable,
@@ -91,7 +91,8 @@ class FileDtoTestFactory {
 			params.name ?? props.name,
 			data as Readable,
 			params.mimeType ?? props.mimeType,
-			abortSignal as AbortSignal
+			abortSignal as AbortSignal,
+			params.storageType ?? StorageType.STANDARD
 		);
 
 		return fileDto;

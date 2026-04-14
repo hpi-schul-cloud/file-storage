@@ -28,7 +28,7 @@ describe('FileDtoMapper', () => {
 			it('should return file from request', () => {
 				const { response, expectedFile, name } = setup();
 
-				const result = FileDtoMapper.mapFromAxiosResponse(name, response);
+				const result = FileDtoMapper.mapFromAxiosResponse(name, response, StorageType.STANDARD);
 
 				expect(result).toEqual(expectedFile);
 			});
@@ -54,7 +54,7 @@ describe('FileDtoMapper', () => {
 			it('should return file with default mime type', () => {
 				const { response, expectedFile, name } = setup();
 
-				const result = FileDtoMapper.mapFromAxiosResponse(name, response);
+				const result = FileDtoMapper.mapFromAxiosResponse(name, response, StorageType.STANDARD);
 
 				expect(result).toEqual(expectedFile);
 			});
@@ -64,6 +64,7 @@ describe('FileDtoMapper', () => {
 	describe('mapFromBusboyFileInfo', () => {
 		describe('when storageType is not provided', () => {
 			const setup = () => {
+				const abortController = new AbortController();
 				const readable = Readable.from('abc');
 				const busboyFileInfo = busboyFileInfoTestFactory().build();
 				const expectedFile = new FileDto({
@@ -72,13 +73,18 @@ describe('FileDtoMapper', () => {
 					mimeType: busboyFileInfo.mimeType,
 				});
 
-				return { busboyFileInfo, readable, expectedFile };
+				return { busboyFileInfo, readable, expectedFile, abortController };
 			};
 
 			it('should return file from busboy fileInfo', () => {
-				const { busboyFileInfo, readable, expectedFile } = setup();
+				const { busboyFileInfo, readable, expectedFile, abortController } = setup();
 
-				const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable);
+				const result = FileDtoMapper.mapFromBusboyFileInfo(
+					busboyFileInfo,
+					readable,
+					StorageType.STANDARD,
+					abortController.signal
+				);
 
 				expect(result).toEqual(expectedFile);
 			});
@@ -86,6 +92,7 @@ describe('FileDtoMapper', () => {
 
 		describe('when storageType is provided', () => {
 			const setup = () => {
+				const abortController = new AbortController();
 				const readable = Readable.from('abc');
 				const storageType = StorageType.TEMP;
 				const busboyFileInfo = busboyFileInfoTestFactory().build();
@@ -96,13 +103,18 @@ describe('FileDtoMapper', () => {
 					storageType,
 				});
 
-				return { busboyFileInfo, readable, expectedFile, storageType };
+				return { busboyFileInfo, readable, expectedFile, storageType, abortController };
 			};
 
 			it('should return file with storageType from busboy fileInfo', () => {
-				const { busboyFileInfo, readable, expectedFile, storageType } = setup();
+				const { busboyFileInfo, readable, expectedFile, storageType, abortController } = setup();
 
-				const result = FileDtoMapper.mapFromBusboyFileInfo(busboyFileInfo, readable, undefined, storageType);
+				const result = FileDtoMapper.mapFromBusboyFileInfo(
+					busboyFileInfo,
+					readable,
+					storageType,
+					abortController.signal
+				);
 
 				expect(result).toEqual(expectedFile);
 			});

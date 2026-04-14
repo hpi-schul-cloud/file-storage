@@ -82,7 +82,7 @@ export class FilesStorageUC {
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req);
+		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.STANDARD);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
@@ -96,7 +96,8 @@ export class FilesStorageUC {
 		]);
 
 		const response = await this.getResponse(params);
-		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response);
+		const abortSignal = undefined;
+		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response, StorageType.STANDARD, abortSignal);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -360,7 +361,7 @@ export class FilesStorageUC {
 		userId: EntityId,
 		params: FileRecordParams,
 		req: AbortableRequest,
-		storageType?: StorageType
+		storageType: StorageType
 	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
 			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
@@ -417,7 +418,7 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				if (isResolved) return; // Already resolved/rejected
 
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, abortController.signal, storageType);
+				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, storageType, abortController.signal);
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					return this.filesStorageService.uploadFile(userId, params, fileDto);

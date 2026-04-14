@@ -7,6 +7,7 @@ export {
 	FilesStorageService,
 	GetFileResponse,
 	ScanStatus,
+	StorageType,
 } from './domain';
 export { FilesStorageApiModule } from './files-storage.api.module';
 export {
