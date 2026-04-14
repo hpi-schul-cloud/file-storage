@@ -169,6 +169,70 @@ describe(S3ClientAdapter.name, () => {
 			});
 		});
 
+		describe('WHEN bucket has no lifecycle configuration (NoSuchLifecycleConfiguration)', () => {
+			const setup = () => {
+				const { config } = createParameter();
+				const logger = createMock<Logger>();
+				const configuration = createMock<S3Config>(config);
+				const localErrorHandler = createMock<DomainErrorHandler>();
+				const localClient = createMock<S3Client>({
+					config: { endpoint: () => ({ protocol: '', hostname: '' }) },
+				});
+				const folderLifecycleRules: FolderLifecycleRule[] = [{ folder: 'temp', expirationDays: 3 }];
+				const serviceWithRules = new S3ClientAdapter(
+					localClient,
+					configuration,
+					logger,
+					localErrorHandler,
+					'clientInjectionToken',
+					folderLifecycleRules
+				);
+
+				return {
+					localClient,
+					serviceWithRules,
+					localErrorHandler,
+				};
+			};
+
+			it('should treat NoSuchLifecycleConfiguration error (via Code) as empty rules and create new ones', async () => {
+				const { localClient, serviceWithRules, localErrorHandler } = setup();
+				// @ts-expect-error Testcase
+				localClient.send.mockRejectedValueOnce({ Code: 'NoSuchLifecycleConfiguration' });
+				// @ts-expect-error Testcase
+				localClient.send.mockResolvedValueOnce({});
+
+				await serviceWithRules.onModuleInit();
+
+				expect(localClient.send).toHaveBeenCalledTimes(2);
+				expect(localErrorHandler.exec).not.toHaveBeenCalled();
+				expect(localClient.send).toHaveBeenLastCalledWith(
+					expect.objectContaining({
+						input: expect.objectContaining({
+							LifecycleConfiguration: expect.objectContaining({
+								Rules: expect.arrayContaining([
+									expect.objectContaining({ ID: 'tempCleanupRule', Filter: { Prefix: 'temp/' } }),
+								]),
+							}),
+						}),
+					})
+				);
+			});
+
+			it('should treat NoSuchLifecycleConfiguration error (via name) as empty rules and create new ones', async () => {
+				const { localClient, serviceWithRules, localErrorHandler } = setup();
+				// @ts-expect-error Testcase
+				localClient.send.mockRejectedValueOnce({ name: 'NoSuchLifecycleConfiguration' });
+				// @ts-expect-error Testcase
+				localClient.send.mockResolvedValueOnce({});
+
+				await serviceWithRules.onModuleInit();
+
+				expect(localClient.send).toHaveBeenCalledTimes(2);
+				expect(localErrorHandler.exec).not.toHaveBeenCalled();
+			});
+		});
+
 		describe('WHEN client throws NoSuchBucket error', () => {
 			const setup = () => {
 				const { config } = createParameter();
