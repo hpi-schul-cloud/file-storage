@@ -5,7 +5,6 @@ import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { NotAcceptableException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import path from 'node:path';
 import { ScanStatus } from '../../domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
@@ -174,7 +173,7 @@ describe('FilesStorageService download methods', () => {
 				storageClient.get.mockResolvedValueOnce(fileResponse);
 				const expectedResponse = FileResponseFactory.create(fileResponse, fileRecord.getName());
 
-				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(path.join('originPath', fileRecord.id));
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(`originPath/${fileRecord.id}`);
 
 				return { fileRecord, expectedResponse };
 			};
@@ -184,7 +183,7 @@ describe('FilesStorageService download methods', () => {
 
 				await service.downloadFile(fileRecord);
 
-				expect(storageClient.get).toHaveBeenCalledWith(path.join('originPath', fileRecord.id), undefined);
+				expect(storageClient.get).toHaveBeenCalledWith(`originPath/${fileRecord.id}`, undefined);
 			});
 
 			it('returns correct response', async () => {

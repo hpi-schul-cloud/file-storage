@@ -174,8 +174,10 @@ describe('PreviewService', () => {
 						const hash = 'test hash';
 						const originPath = 'originPath';
 						const previewPath = 'previewPath';
-						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
-						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest
+							.spyOn(FilePathFactory, 'createPreview')
+							.mockReturnValueOnce(previewPath)
+							.mockReturnValueOnce(previewPath);
 
 						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
@@ -364,8 +366,10 @@ describe('PreviewService', () => {
 						const hash = 'test hash';
 						const originPath = 'originPath';
 						const previewPath = 'previewPath';
-						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
-						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest
+							.spyOn(FilePathFactory, 'createPreview')
+							.mockReturnValueOnce(previewPath)
+							.mockReturnValueOnce(previewPath);
 						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {

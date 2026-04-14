@@ -10,6 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
+import { TEMP_FILE_EXPIRY_SECONDS } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import {
 	FILE_STORAGE_CONFIG_TOKEN,
@@ -185,7 +186,7 @@ describe('files-storage temp upload controller (API)', () => {
 				const result = await uploadTempFile(`/temp/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				const response = result.body as FileRecordResponse;
 
-				const expectedExpirationTime = new Date(response.createdAt ?? 0).getTime() + 24 * 60 * 60 * 1000;
+				const expectedExpirationTime = new Date(response.createdAt ?? 0).getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000;
 				expect(response.expiresAt).toBeDefined();
 				expect(new Date(response.expiresAt ?? 0).getTime()).toBe(expectedExpirationTime);
 			});
