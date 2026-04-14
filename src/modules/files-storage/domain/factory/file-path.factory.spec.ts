@@ -5,7 +5,7 @@ import { FilePathFactory } from './file-path.factory';
 describe('FilePathFactory', () => {
 	describe('StorageFolders', () => {
 		it('should map StorageType.TEMP to TEMP_STORAGE_FOLDER', () => {
-			expect(StorageFolders[StorageType.TEMP]).toBe(StorageFolders[StorageType.TEMP]);
+			expect(StorageFolders[StorageType.TEMP]).toBe('temp');
 		});
 	});
 
