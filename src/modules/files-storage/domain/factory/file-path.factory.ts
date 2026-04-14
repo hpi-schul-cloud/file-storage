@@ -1,5 +1,5 @@
 import { FileRecord } from '../file-record.do';
-import { StorageFolders } from '../storage-paths';
+import { StorageFolders } from '../storage-paths.const';
 
 export class FilePathFactory {
 	/**

@@ -1,6 +1,6 @@
 import { File } from '@infra/s3-client';
 import { Readable } from 'node:stream';
-import { StorageType } from '../storage-paths';
+import { StorageType } from '../storage-paths.const';
 
 export class FileDto implements File {
 	constructor(file: FileDto) {

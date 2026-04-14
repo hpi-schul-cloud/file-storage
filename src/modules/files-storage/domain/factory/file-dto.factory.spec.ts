@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 import { FileDto } from '../dto';
-import { StorageType } from '../storage-paths';
+import { StorageType } from '../storage-paths.const';
 import { FileDtoFactory } from './file-dto.factory';
 
 describe('FileDtoFactory', () => {

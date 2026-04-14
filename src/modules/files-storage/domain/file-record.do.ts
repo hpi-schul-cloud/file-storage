@@ -5,7 +5,7 @@ import { EntityId } from '@shared/domain/types';
 import path from 'path';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
-import { FolderExpirationDays, StorageType } from './storage-paths';
+import { FolderExpirationDays, StorageType } from './storage-paths.const';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {

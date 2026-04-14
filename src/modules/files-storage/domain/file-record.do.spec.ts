@@ -10,7 +10,7 @@ import {
 	TEMP_FILE_EXPIRY_SECONDS,
 } from './file-record.do';
 import { FileRecordParentType } from './interface';
-import { StorageType } from './storage-paths';
+import { StorageType } from './storage-paths.const';
 import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {

@@ -1,5 +1,5 @@
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
-import { StorageFolders, StorageType } from '../storage-paths';
+import { StorageFolders, StorageType } from '../storage-paths.const';
 import { FilePathFactory } from './file-path.factory';
 
 describe('FilePathFactory', () => {

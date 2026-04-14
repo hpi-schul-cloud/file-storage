@@ -1,7 +1,7 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '@modules/files-storage/testing';
 import { FileRecordParentType, StorageLocation } from '../interface';
-import { StorageType } from '../storage-paths';
+import { StorageType } from '../storage-paths.const';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FileRecordFactory } from './file-record.factory';
 

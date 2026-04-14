@@ -1,5 +1,5 @@
 import { PassThrough } from 'node:stream';
-import { StorageType } from '../storage-paths';
+import { StorageType } from '../storage-paths.const';
 import { FileDto } from './file.dto';
 
 export class PassThroughFileDto implements FileDto {
