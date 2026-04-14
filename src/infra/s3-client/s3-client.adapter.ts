@@ -196,7 +196,7 @@ export class S3ClientAdapter implements OnModuleInit {
 			const putCommand = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
 
 			await this.client.send(putCommand);
-			this.logLifecycleRulesConfigured(rules);
+			this.logLifecycleRulesConfigured(rulesToCreate);
 		} catch (err) {
 			await this.handleConfigureFolderLifecycleError(err, rules);
 		}
