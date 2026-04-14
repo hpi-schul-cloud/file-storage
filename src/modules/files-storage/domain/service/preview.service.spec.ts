@@ -71,6 +71,7 @@ describe('PreviewService', () => {
 	});
 
 	afterEach(() => {
+		jest.resetAllMocks();
 		jest.restoreAllMocks();
 	});
 
