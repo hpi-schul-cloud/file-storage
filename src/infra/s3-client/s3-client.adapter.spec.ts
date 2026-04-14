@@ -1548,14 +1548,12 @@ describe(S3ClientAdapter.name, () => {
 			});
 
 			it('should log warning when upload.abort() promise is rejected', async () => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const { pathToFile, mockUpload, mockLogger, serviceAsAny } = setup();
 				const action = 'uploadAborted';
 
 				const loggerWarningSpy = jest.spyOn(mockLogger, 'warning');
 				mockUpload.abort.mockRejectedValue(new Error('Abort promise rejected'));
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				serviceAsAny.handleUploadAbortion(pathToFile, mockUpload, action);
 
 				// Wait for the promise to be rejected and caught
@@ -1566,7 +1564,7 @@ describe(S3ClientAdapter.name, () => {
 					1,
 					expect.objectContaining({
 						message: 'Upload aborted',
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 						payload: expect.objectContaining({
 							action,
 							objectPath: pathToFile,
@@ -1578,7 +1576,7 @@ describe(S3ClientAdapter.name, () => {
 					2,
 					expect.objectContaining({
 						message: 'Failed to abort upload',
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
 						payload: expect.objectContaining({
 							action: 'abortUploadError',
 							objectPath: pathToFile,

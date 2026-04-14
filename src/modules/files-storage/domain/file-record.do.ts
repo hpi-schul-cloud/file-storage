@@ -178,6 +178,10 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return this.securityCheck.requestToken;
 	}
 
+	public isDownloadable(): boolean {
+		return !this.securityCheck.isBlocked() && !this.props.isUploading;
+	}
+
 	public isBlocked(): boolean {
 		return this.securityCheck.isBlocked();
 	}

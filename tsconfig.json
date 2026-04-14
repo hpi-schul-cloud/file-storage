@@ -28,7 +28,8 @@
 			"@modules/*": ["./modules/*"],
 			"@testing/*": ["./testing/*"],
 			"file-type": ["../node_modules/file-type/source/index"]
-		}
+		},
+		"types": ["jest"]
 	},
 	"exclude": ["scripts", "dist"],
 	"include": ["src/**/*.ts", "src/**/*.tsx"],
