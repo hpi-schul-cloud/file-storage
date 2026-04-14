@@ -274,7 +274,7 @@ describe('FilesStorageService get methods', () => {
 
 				await service.getFileRecordsByParentAndStorageType(parentId);
 
-				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId);
+				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId, undefined, undefined);
 			});
 
 			it('should return the matched fileRecord', async () => {

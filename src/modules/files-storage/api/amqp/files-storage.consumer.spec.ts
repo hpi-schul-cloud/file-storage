@@ -134,7 +134,7 @@ describe('FilesStorageConsumer', () => {
 		});
 	});
 
-	describe('getFileRecordsByParentAndStorageType()', () => {
+	describe('getFilesOfParent()', () => {
 		describe('WHEN valid file exists', () => {
 			it('should call filesStorageService.getFileRecordsOfParent and filesStorageService.getFileRecordsWithStatus with params', async () => {
 				const parentId = new ObjectId().toHexString();
