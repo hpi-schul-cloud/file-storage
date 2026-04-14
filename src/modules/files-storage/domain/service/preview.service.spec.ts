@@ -71,7 +71,7 @@ describe('PreviewService', () => {
 	});
 
 	afterEach(() => {
-		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
 
 	describe('download is called', () => {
