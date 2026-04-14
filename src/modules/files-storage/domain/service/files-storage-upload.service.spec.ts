@@ -18,6 +18,7 @@ import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -481,6 +482,7 @@ describe('FilesStorageService upload methods', () => {
 					name: fileRecord.getName(),
 					abortSignal: file.abortSignal,
 					fileSize: 8,
+					storageType: StorageType.STANDARD,
 					streamCompletion: expect.any(Promise),
 				};
 				expect(storageClient.create).toHaveBeenCalledWith(`path/${fileRecord.id}`, expectedCalledParams);
