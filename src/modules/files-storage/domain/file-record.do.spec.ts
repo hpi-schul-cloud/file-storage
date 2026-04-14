@@ -9,6 +9,7 @@ import {
 	PreviewStatus,
 	TEMP_FILE_EXPIRY_SECONDS,
 } from './file-record.do';
+import { FileRecordParentType } from './interface';
 import { StorageType } from './storage-paths';
 import { ScanStatus } from './vo';
 
@@ -417,6 +418,33 @@ describe('FileRecord', () => {
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(BadRequestException);
 			// @ts-expect-error test only
 			expect(() => fileRecord.setSizeInByte(invalidSize, maxSize)).toThrow(ErrorType.FILE_TOO_BIG);
+		});
+	});
+
+	describe('getUniqueParentReferences', () => {
+		describe('WHEN filerRecords has parent duplicates', () => {
+			it('should return a map with unique parentId as key and parentType as value', () => {
+				const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2, {
+					parentType: FileRecordParentType.User,
+					parentId: 'id1',
+				});
+				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
+				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
+
+				const result = FileRecord.getUniqueParentReferences(fileRecords);
+
+				expect(result.length).toBe(2);
+				expect(result[0]).toEqual(fileRecord1.getParentReference());
+				expect(result[1]).toEqual(fileRecord3.getParentReference());
+			});
+		});
+
+		describe('WHEN fileRecords is empty', () => {
+			it('should return an empty map if fileRecords is empty', () => {
+				const result = FileRecord.getUniqueParentReferences([]);
+
+				expect(result.length).toBe(0);
+			});
 		});
 	});
 
