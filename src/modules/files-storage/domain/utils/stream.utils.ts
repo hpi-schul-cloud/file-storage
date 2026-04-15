@@ -1,5 +1,7 @@
 import { PassThrough, Readable } from 'node:stream';
 
+export const DEFAULT_CHUNK_SIZE = 64 * 1024; // = 64KB, because busboy send typical chunks with 8-64KB. Default is 16KB and will increase cpu load with many small writes.
+
 /**
  * Correct pipe-based stream duplication using a single distributor.
  * Fixes the issue where multiple .pipe() calls from the same source don't work.
@@ -9,7 +11,7 @@ export const duplicateStream = (sourceStream: Readable, count = 1): PassThrough[
 
 	for (let i = 0; i < count; i++) {
 		const passThrough = new PassThrough({
-			highWaterMark: 64 * 1024, // = 64KB, because busboy send typical chunks with 8-64KB. Default is 16KB and will increase cpu load with many small writes.
+			highWaterMark: DEFAULT_CHUNK_SIZE,
 		});
 		streams.push(passThrough);
 	}
