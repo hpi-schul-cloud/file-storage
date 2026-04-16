@@ -16,6 +16,7 @@ import { PaginationResponse } from './pagination.response';
 export class FileRecordResponse {
 	constructor(fileRecord: FileRecord, status: FileRecordStatus) {
 		const props = fileRecord.getProps();
+		const expiresAt = fileRecord.getExpiresAt();
 
 		this.id = props.id;
 		this.name = props.name;
@@ -34,6 +35,7 @@ export class FileRecordResponse {
 		this.isCollaboraEditable = status.isCollaboraEditable;
 		this.exceedsCollaboraEditableFileSize = status.exceedsCollaboraEditableFileSize;
 		this.contentLastModifiedAt = props.contentLastModifiedAt;
+		this.expiresAt = expiresAt;
 	}
 
 	@ApiProperty()
@@ -87,6 +89,9 @@ export class FileRecordResponse {
 
 	@ApiPropertyOptional()
 	contentLastModifiedAt?: Date;
+
+	@ApiPropertyOptional()
+	expiresAt?: Date;
 }
 
 export class FileRecordListResponse extends PaginationResponse<FileRecordResponse[]> {

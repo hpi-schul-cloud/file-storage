@@ -5,7 +5,14 @@ import { LoggerModule } from '@infra/logger';
 import { PreviewGeneratorProducerModule } from '@infra/preview-generator';
 import { S3ClientModule } from '@infra/s3-client';
 import { Module } from '@nestjs/common';
-import { FILE_RECORD_REPO, FilesStorageService, PreviewService } from './domain';
+import {
+	FILE_RECORD_REPO,
+	FilesStorageService,
+	FolderExpirationDays,
+	PreviewService,
+	StorageFolders,
+	StorageType,
+} from './domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
 import { FileRecordMikroOrmRepo } from './repo';
 
@@ -18,6 +25,21 @@ const imports = [
 		clientInjectionToken: FILES_STORAGE_S3_CONNECTION,
 		configInjectionToken: FILE_STORAGE_CONFIG_TOKEN,
 		configConstructor: FileStorageConfig,
+		deletedFolderName: StorageFolders.TRASH,
+		folderLifecycleRules: [
+			{
+				folder: StorageFolders.TRASH,
+				expirationDays: FolderExpirationDays.TRASH,
+			},
+			{
+				folder: StorageFolders[StorageType.TEMP],
+				expirationDays: FolderExpirationDays[StorageType.TEMP],
+			},
+			{
+				folder: StorageFolders.PREVIEW,
+				expirationDays: FolderExpirationDays.PREVIEW,
+			},
+		],
 	}),
 	PreviewGeneratorProducerModule,
 ];

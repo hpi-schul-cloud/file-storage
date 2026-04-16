@@ -6,7 +6,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
-import { FileRecordFactory } from '../factory';
+import { FilePathFactory, FileRecordFactory } from '../factory';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
@@ -82,6 +82,10 @@ describe('FilesStorageService restore methods', () => {
 
 				fileRecordRepo.save.mockResolvedValueOnce();
 
+				jest
+					.spyOn(FilePathFactory, 'createMany')
+					.mockReturnValueOnce(fileRecords.map((fileRecord) => `path/${fileRecord.id}`));
+
 				return { fileRecords };
 			};
 
@@ -105,11 +109,10 @@ describe('FilesStorageService restore methods', () => {
 
 			it('should call storageClient.restore', async () => {
 				const { fileRecords } = setup();
-				const paths = FileRecord.getPaths(fileRecords);
 
 				await service.restoreFiles(fileRecords);
 
-				expect(storageClient.restore).toHaveBeenCalledWith(paths);
+				expect(storageClient.restore).toHaveBeenCalledWith(fileRecords.map((fileRecord) => `path/${fileRecord.id}`));
 			});
 		});
 

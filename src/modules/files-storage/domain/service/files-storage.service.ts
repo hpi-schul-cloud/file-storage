@@ -17,9 +17,22 @@ import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
-import { ArchiveFactory, FileRecordFactory, PassThroughFileDtoFactory, StreamFileSizeObserver } from '../factory';
-import { FileRecord, ParentInfo } from '../file-record.do';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo, GetFileResponse, StorageLocationParams } from '../interface';
+import {
+	ArchiveFactory,
+	FilePathFactory,
+	FileRecordFactory,
+	PassThroughFileDtoFactory,
+	StreamFileSizeObserver,
+} from '../factory';
+import { FileRecord } from '../file-record.do';
+import {
+	CopyFileResult,
+	FILE_RECORD_REPO,
+	FileRecordRepo,
+	GetFileResponse,
+	ParentInfo,
+	StorageLocationParams,
+} from '../interface';
 import {
 	CollaboraEditabilityStatus,
 	FileRecordStatus,
@@ -27,6 +40,7 @@ import {
 } from '../interface/file-record-status.interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
+import { StorageType } from '../storage-paths.const';
 import { detectMimeTypeByStream, duplicateStream } from '../utils';
 import { ParentStatistic } from '../vo';
 
@@ -68,8 +82,11 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async getFileRecordsByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
-		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId);
+	public async getFileRecordsByParentAndStorageType(
+		parentId: EntityId,
+		storageType?: StorageType
+	): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId, undefined, storageType);
 
 		return countedFileRecords;
 	}
@@ -121,7 +138,10 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
-		const [fileRecordsOfParent, count] = await this.getFileRecordsByParent(parentInfo.parentId);
+		const [fileRecordsOfParent, count] = await this.getFileRecordsByParentAndStorageType(
+			parentInfo.parentId,
+			sourceFile.storageType
+		);
 		this.checkFileLimitPerParent(count);
 		const fileName = this.resolveFileName(sourceFile.name, count, fileRecordsOfParent);
 		const file = await this.createPassThroughFileDto(sourceFile, fileName);
@@ -183,7 +203,13 @@ export class FilesStorageService {
 		parentInfo: ParentInfo,
 		userId: EntityId
 	): Promise<FileRecord> {
-		const fileRecord = FileRecordFactory.buildFromExternalInput(file.name, file.mimeType, parentInfo, userId);
+		const fileRecord = FileRecordFactory.buildFromExternalInput(
+			file.name,
+			file.mimeType,
+			parentInfo,
+			userId,
+			file.storageType
+		);
 		fileRecord.markAsUploading();
 		await this.fileRecordRepo.save(fileRecord);
 
@@ -208,7 +234,7 @@ export class FilesStorageService {
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = FilePathFactory.create(fileRecord);
 
 		if (this.shouldStreamToAntivirus(fileRecord)) {
 			const pipedStream = file.data.pipe(new PassThrough());
@@ -245,7 +271,7 @@ export class FilesStorageService {
 	}
 
 	private async rollbackByFileRecord(fileRecord: FileRecord): Promise<void> {
-		const filePath = fileRecord.createPath();
+		const filePath = FilePathFactory.create(fileRecord);
 		await Promise.allSettled([this.storageClient.delete([filePath]), this.fileRecordRepo.delete(fileRecord)]);
 	}
 
@@ -259,8 +285,9 @@ export class FilesStorageService {
 	}
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
-		const parentInfo = fileRecord.getParentInfo();
-		const [fileRecords] = await this.getFileRecordsByParent(parentInfo.parentId);
+		const { parentId } = fileRecord.getParentReference();
+		const { storageType } = fileRecord.getStorageReference();
+		const [fileRecords] = await this.getFileRecordsByParentAndStorageType(parentId, storageType);
 
 		this.checkDuplicatedNames(fileRecords, fileName, fileRecord.id);
 		fileRecord.setName(fileName);
@@ -301,7 +328,7 @@ export class FilesStorageService {
 	}
 
 	public async downloadFile(fileRecord: FileRecord, bytesRange?: string): Promise<GetFileResponse> {
-		const pathToFile = fileRecord.createPath();
+		const pathToFile = FilePathFactory.create(fileRecord);
 		const file = await this.storageClient.get(pathToFile, bytesRange);
 		const fileResponse = FileResponseFactory.create(file, fileRecord.getName());
 
@@ -389,12 +416,12 @@ export class FilesStorageService {
 
 	// delete and restore
 	private async deleteBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
+		const paths = FilePathFactory.createMany(fileRecords);
 		await this.storageClient.moveToTrash(paths);
 	}
 
 	private async restoreBinaryFiles(fileRecords: FileRecord[]): Promise<void> {
-		const paths = FileRecord.getPaths(fileRecords);
+		const paths = FilePathFactory.createMany(fileRecords);
 		await this.storageClient.restore(paths);
 	}
 
@@ -465,7 +492,7 @@ export class FilesStorageService {
 		this.logCopy(sourceFileRecords, targetParentInfo);
 		if (sourceFileRecords.length === 0) return [];
 
-		const [, count] = await this.getFileRecordsByParent(targetParentInfo.parentId);
+		const [, count] = await this.getFileRecordsByParentAndStorageType(targetParentInfo.parentId);
 
 		this.checkFileLimitPerParent(count, sourceFileRecords.length);
 
@@ -509,8 +536,8 @@ export class FilesStorageService {
 	private async copyFilesWithRollbackOnError(sourceFile: FileRecord, targetFile: FileRecord): Promise<CopyFileResult> {
 		try {
 			const copyFiles: CopyFiles = {
-				sourcePath: sourceFile.createPath(),
-				targetPath: targetFile.createPath(),
+				sourcePath: FilePathFactory.create(sourceFile),
+				targetPath: FilePathFactory.create(targetFile),
 			};
 
 			await this.storageClient.copy([copyFiles]);

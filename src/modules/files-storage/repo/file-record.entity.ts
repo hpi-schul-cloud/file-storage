@@ -2,10 +2,11 @@ import { Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
 import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
-import { FileRecord, FileRecordProps } from '../domain';
+import { FileRecord, FileRecordProps, FolderExpirationDays, StorageType } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
 import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 
+const SECONDS_PER_DAY = 24 * 60 * 60;
 /**
  * Note: The file record entity will not manage any entity relations by itself.
  * That's why we do not map any relations in the entity class
@@ -23,8 +24,16 @@ import { FileRecordSecurityCheckEmbeddable } from './security-check.embeddable';
 		partialFilterExpression: { isUploading: true },
 	},
 })
+@Index({
+	name: 'temp_file_ttl_idx',
+	properties: ['createdAt'],
+	options: {
+		expireAfterSeconds: FolderExpirationDays[StorageType.TEMP] * SECONDS_PER_DAY,
+		partialFilterExpression: { storageType: StorageType.TEMP },
+	},
+})
 export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRecordProps {
-	@Index({ options: { expireAfterSeconds: 7 * 24 * 60 * 60 } })
+	@Index({ options: { expireAfterSeconds: FolderExpirationDays.TRASH * SECONDS_PER_DAY } })
 	@Property({ nullable: true })
 	deletedSince?: Date;
 
@@ -72,4 +81,7 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 
 	@Property({ persist: false })
 	domainObject: FileRecord | undefined;
+
+	@Enum({ items: () => StorageType, nullable: true })
+	storageType?: StorageType;
 }

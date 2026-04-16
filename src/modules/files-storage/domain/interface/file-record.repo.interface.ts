@@ -1,6 +1,7 @@
 import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import { FileRecord } from '../file-record.do';
+import { StorageType } from '../storage-paths.const';
 import { ParentStatistic } from '../vo';
 import { StorageLocation } from './storage-location.enum';
 
@@ -11,7 +12,11 @@ export interface FileRecordRepo {
 
 	findOneByIdMarkedForDelete(id: EntityId): Promise<FileRecord>;
 
-	findByParentId(parentId: EntityId, options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
+	findByParentId(
+		parentId: EntityId,
+		options?: FindOptions<FileRecord>,
+		storageType?: StorageType
+	): Promise<Counted<FileRecord[]>>;
 
 	findMarkedForDeleteByParentId(parentId: EntityId, options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
 

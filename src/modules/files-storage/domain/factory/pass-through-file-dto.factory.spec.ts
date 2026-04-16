@@ -1,6 +1,7 @@
 import { passThroughFileDtoTestFactory } from '@modules/files-storage/testing';
 import { PassThrough, Readable } from 'stream';
 import { FileDto, PassThroughFileDto } from '../dto';
+import { StorageType } from '../storage-paths.const';
 import { awaitStreamCompletion } from '../utils';
 import { PassThroughFileDtoFactory } from './pass-through-file-dto.factory';
 
@@ -11,6 +12,7 @@ describe('PassThroughFileDtoFactory', () => {
 			const data = Readable.from('abc');
 			const passThrough = data.pipe(new PassThrough());
 			const mimeType = 'text/plain';
+			const storageType = StorageType.TEMP;
 			const fileDto = new FileDto({
 				name,
 				data,
@@ -23,15 +25,16 @@ describe('PassThroughFileDtoFactory', () => {
 				mimeType,
 				streamCompletion: expect.any(Promise),
 				fileSize: 0,
+				storageType,
 			});
 
-			return { name, passThrough, mimeType, fileDto, expectedFile };
+			return { name, passThrough, mimeType, storageType, fileDto, expectedFile };
 		};
 
 		it('should return a FileDto with the provided values', () => {
-			const { fileDto, passThrough, mimeType, expectedFile } = setup();
+			const { fileDto, passThrough, mimeType, storageType, expectedFile } = setup();
 
-			const result = PassThroughFileDtoFactory.create(fileDto, passThrough, mimeType);
+			const result = PassThroughFileDtoFactory.create(fileDto, passThrough, mimeType, undefined, storageType);
 
 			expect(result).toEqual(expectedFile);
 		});

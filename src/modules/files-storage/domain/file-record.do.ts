@@ -5,15 +5,17 @@ import { EntityId } from '@shared/domain/types';
 import path from 'path';
 import { ErrorType } from './error';
 import { FileRecordParentType, StorageLocation } from './interface';
+import { FolderExpirationDays, StorageType } from './storage-paths.const';
 import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',
 }
 
-export interface ParentInfo extends ParentReference {
+export interface StorageReference {
 	storageLocationId: EntityId;
 	storageLocation: StorageLocation;
+	storageType: StorageType;
 }
 
 export interface ParentReference {
@@ -29,6 +31,9 @@ export enum PreviewStatus {
 	PREVIEW_NOT_POSSIBLE_SCAN_STATUS_BLOCKED = 'preview_not_possible_scan_status_blocked',
 	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
 }
+
+const SECONDS_PER_DAY = 24 * 60 * 60;
+export const TEMP_FILE_EXPIRY_SECONDS = FolderExpirationDays[StorageType.TEMP] * SECONDS_PER_DAY;
 
 export enum CollaboraMimeTypes {
 	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -66,6 +71,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
+	storageType?: StorageType;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -112,10 +118,20 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		});
 	}
 
-	public static getPaths(fileRecords: FileRecord[]): string[] {
-		const paths = fileRecords.map((fileRecord) => fileRecord.createPath());
+	public static getUniqueParentReferences(fileRecords: FileRecord[]): ParentReference[] {
+		const parentMap = new Map<EntityId, ParentReference>();
 
-		return paths;
+		for (const fileRecord of fileRecords) {
+			const parentReference = fileRecord.getParentReference();
+
+			if (!parentMap.has(parentReference.parentId)) {
+				parentMap.set(parentReference.parentId, parentReference);
+			}
+		}
+
+		const parentReferences = Array.from(parentMap.values());
+
+		return parentReferences;
 	}
 
 	// ---------------------------------------------------------
@@ -130,21 +146,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return format;
 	}
 
-	public static getUniqueParentInfos(fileRecords: FileRecord[]): ParentInfo[] {
-		const parentMap = new Map<EntityId, ParentInfo>();
-
-		for (const fileRecord of fileRecords) {
-			const parentInfo = fileRecord.getParentInfo();
-
-			if (!parentMap.has(parentInfo.parentId)) {
-				parentMap.set(parentInfo.parentId, parentInfo);
-			}
-		}
-
-		const parentInfos = Array.from(parentMap.values());
-
-		return parentInfos;
-	}
+	// ---------------------------------------------------------
 
 	public getSecurityCheckProps(): FileRecordSecurityCheckProps {
 		const securityCheckProps = this.securityCheck.getProps();
@@ -264,10 +266,17 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		return isEditable;
 	}
 
-	public getParentInfo(): ParentInfo {
-		const { parentId, parentType, storageLocation, storageLocationId } = this.getProps();
+	public getParentReference(): ParentReference {
+		const { parentId, parentType } = this.props;
 
-		return { parentId, parentType, storageLocation, storageLocationId };
+		return { parentId, parentType };
+	}
+
+	public getStorageReference(): StorageReference {
+		const { storageLocationId, storageLocation, storageType: storageTypeProps } = this.props;
+		const storageType = storageTypeProps ?? StorageType.STANDARD;
+
+		return { storageLocationId, storageLocation, storageType };
 	}
 
 	public getPreviewStatus(): PreviewStatus {
@@ -342,23 +351,12 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		}
 	}
 
-	public createPath(): string {
-		const path = [this.props.storageLocationId, this.id].join('/');
+	public getExpiresAt(): Date | undefined {
+		if (this.props.storageType !== StorageType.TEMP) {
+			return undefined;
+		}
 
-		return path;
-	}
-
-	public createPreviewDirectoryPath(): string {
-		const path = ['previews', this.props.storageLocationId, this.id].join('/');
-
-		return path;
-	}
-
-	public createPreviewFilePath(hash: string): string {
-		const folderPath = this.createPreviewDirectoryPath();
-		const filePath = [folderPath, hash].join('/');
-
-		return filePath;
+		return new Date(this.props.createdAt.getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000);
 	}
 
 	public getContentLastModifiedAt(): Date | undefined {

@@ -8,32 +8,32 @@ describe('PreviewFileOptionsMapper', () => {
 		const setup = () => {
 			const fileRecord = fileRecordTestFactory().build();
 			const previewParams = { outputFormat: PreviewOutputMimeTypes.IMAGE_WEBP };
+			const originFilePath = 'originFilePath';
+			const previewFilePath = 'previewFilePath';
 			const previewFileParams: PreviewFileParams = {
 				fileRecord,
 				previewParams,
 				hash: 'hash',
-				originFilePath: 'originFilePath',
-				previewFilePath: 'previewFilePath',
 				format: PreviewOutputMimeTypes.IMAGE_WEBP,
 				bytesRange: 'bytes=0-100',
 			};
 
 			const expectedResponse: PreviewFileOptions = {
-				originFilePath: previewFileParams.originFilePath,
-				previewFilePath: previewFileParams.previewFilePath,
+				originFilePath,
+				previewFilePath,
 				previewOptions: {
 					format: previewFileParams.format,
 					width: previewFileParams.previewParams.width,
 				},
 			};
 
-			return { previewFileParams, expectedResponse };
+			return { previewFileParams, expectedResponse, originFilePath, previewFilePath };
 		};
 
 		it('should return preview payload', () => {
-			const { previewFileParams, expectedResponse } = setup();
+			const { previewFileParams, expectedResponse, originFilePath, previewFilePath } = setup();
 
-			const result = PreviewFileOptionsMapper.fromPreviewFileParams(previewFileParams);
+			const result = PreviewFileOptionsMapper.fromPreviewFileParams(previewFileParams, originFilePath, previewFilePath);
 
 			expect(result).toEqual(expectedResponse);
 		});

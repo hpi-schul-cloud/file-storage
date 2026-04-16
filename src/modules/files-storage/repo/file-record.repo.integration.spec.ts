@@ -2,9 +2,9 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { cleanupCollections, MongoMemoryDatabaseModule } from '@testing/database';
-import { FileRecord, FileRecordParentType, StorageLocation } from '../domain';
+import { FileRecord, FileRecordParentType, StorageLocation, StorageType } from '../domain';
 import { TEST_ENTITIES } from '../files-storage.entity.imports';
-import { fileRecordEntityFactory } from '../testing';
+import { fileRecordEntityFactory, fileRecordTestFactory } from '../testing';
 import { FileRecordEntity } from './file-record.entity';
 import { FileRecordMikroOrmRepo } from './file-record.repo';
 import { FileRecordEntityMapper } from './mapper';
@@ -46,6 +46,32 @@ describe('FileRecordRepo', () => {
 
 			expect(result).toBeDefined();
 			expect(result.id).toEqual(fileRecord.id);
+		});
+
+		describe('when entity has no storageType stored in DB', () => {
+			it('should map to storageType STANDARD', async () => {
+				const entity = fileRecordEntityFactory.build({ storageType: undefined });
+
+				await em.persistAndFlush(entity);
+				em.clear();
+
+				const result = await repo.findOneById(entity.id);
+
+				expect(result.getProps().storageType).toBe(StorageType.STANDARD);
+			});
+		});
+
+		describe('when entity has storageType TEMP stored in DB', () => {
+			it('should map to storageType TEMP', async () => {
+				const entity = fileRecordEntityFactory.build({ storageType: StorageType.TEMP });
+
+				await em.persistAndFlush(entity);
+				em.clear();
+
+				const result = await repo.findOneById(entity.id);
+
+				expect(result.getProps().storageType).toBe(StorageType.TEMP);
+			});
 		});
 	});
 
@@ -135,6 +161,32 @@ describe('FileRecordRepo', () => {
 			// load also from DB and test if value is set
 
 			expect(entity.updatedAt.getTime()).toBeGreaterThan(origUpdatedAt.getTime());
+		});
+
+		describe('when storageType is STANDARD in fileRecord', () => {
+			it('should persist entity with storageType field', async () => {
+				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
+
+				await repo.save(fileRecord);
+				em.clear();
+
+				const entity = await em.findOneOrFail(FileRecordEntity, fileRecord.id);
+
+				expect(entity.storageType).toBe(StorageType.STANDARD);
+			});
+		});
+
+		describe('when storageType is TEMP in fileRecord', () => {
+			it('should persist entity with storageType TEMP', async () => {
+				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP });
+
+				await repo.save(fileRecord);
+				em.clear();
+
+				const entity = await em.findOneOrFail(FileRecordEntity, fileRecord.id);
+
+				expect(entity.storageType).toBe(StorageType.TEMP);
+			});
 		});
 	});
 
@@ -234,6 +286,25 @@ describe('FileRecordRepo', () => {
 			const { fileRecords1, markedForDeleteFileRecords, parentId1 } = setup();
 
 			await em.persistAndFlush([...fileRecords1, ...markedForDeleteFileRecords]);
+			em.clear();
+
+			const [results, count] = await repo.findByParentId(parentId1);
+			const expectedIds = fileRecords1.map((record) => record.id);
+
+			expect(count).toEqual(3);
+			expect(results).toHaveLength(3);
+			expect(results.map((result) => result.id)).toEqual(expect.arrayContaining(expectedIds));
+		});
+
+		it('should exclude TEMP files', async () => {
+			const { fileRecords1, parentId1 } = setup();
+			const tempFileRecords = fileRecordEntityFactory.buildList(3, {
+				parentType: FileRecordParentType.Task,
+				parentId: parentId1,
+				storageType: StorageType.TEMP,
+			});
+
+			await em.persistAndFlush([...fileRecords1, ...tempFileRecords]);
 			em.clear();
 
 			const [results, count] = await repo.findByParentId(parentId1);
@@ -482,6 +553,24 @@ describe('FileRecordRepo', () => {
 
 			expect(statistic.fileCount).toBe(0);
 			expect(statistic.totalSizeInBytes).toBe(0);
+		});
+
+		it('should exclude TEMP files from statistics', async () => {
+			const { fileRecords, parentId } = setup();
+			const tempFileRecords = fileRecordEntityFactory.buildList(2, {
+				parentType: FileRecordParentType.Task,
+				parentId,
+				size: 500,
+				storageType: StorageType.TEMP,
+			});
+
+			await em.persistAndFlush([...fileRecords, ...tempFileRecords]);
+			em.clear();
+
+			const statistic = await repo.getStatisticByParentId(parentId);
+
+			expect(statistic.fileCount).toBe(3);
+			expect(statistic.totalSizeInBytes).toBe(300);
 		});
 	});
 });

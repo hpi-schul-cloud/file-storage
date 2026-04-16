@@ -2,8 +2,12 @@ import { PreviewFileOptions } from '@infra/preview-generator';
 import { PreviewFileParams } from '../interface';
 
 export class PreviewFileOptionsMapper {
-	public static fromPreviewFileParams(params: PreviewFileParams): PreviewFileOptions {
-		const { originFilePath, previewFilePath, previewParams, format } = params;
+	public static fromPreviewFileParams(
+		params: PreviewFileParams,
+		originFilePath: string,
+		previewFilePath: string
+	): PreviewFileOptions {
+		const { previewParams, format } = params;
 
 		const payload = {
 			originFilePath,

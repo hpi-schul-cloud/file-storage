@@ -15,9 +15,10 @@ import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConf
 import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
-import { FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
+import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -139,27 +140,31 @@ describe('FilesStorageService upload methods', () => {
 		describe('WHEN file records of parent, file record repo save and get mime type are successfull', () => {
 			const setup = () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams('image/tiff');
-				const getFileRecordsByParentSpy = jest
-					.spyOn(service, 'getFileRecordsByParent')
+				const getFileRecordsByParentAndStorageTypeSpy = jest
+					.spyOn(service, 'getFileRecordsByParentAndStorageType')
 					.mockResolvedValueOnce([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
 
 				fileRecordRepo.save.mockResolvedValue();
 
+				const filePath = [fileRecord.getStorageReference().storageLocationId, fileRecord.id].join('/');
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(filePath);
+
 				return {
 					params,
 					file,
 					userId,
-					getFileRecordsByParentSpy,
+					getFileRecordsByParentAndStorageTypeSpy,
+					filePath,
 				};
 			};
 
-			it('should call getFileRecordsByParent with correct params to resolve file name', async () => {
-				const { params, file, userId, getFileRecordsByParentSpy } = setup();
+			it('should call getFileRecordsByParentAndStorageType with correct params to resolve file name', async () => {
+				const { params, file, userId, getFileRecordsByParentAndStorageTypeSpy } = setup();
 
 				await service.uploadFile(userId, params, file);
 
-				expect(getFileRecordsByParentSpy).toHaveBeenCalledWith(params.parentId);
+				expect(getFileRecordsByParentAndStorageTypeSpy).toHaveBeenCalledWith(params.parentId, file.storageType);
 			});
 
 			it('should call fileRecordRepo.save twice with correct params', async () => {
@@ -180,12 +185,9 @@ describe('FilesStorageService upload methods', () => {
 			});
 
 			it('should call storageClient.create with correct params', async () => {
-				const { params, file, userId } = setup();
+				const { params, file, userId, filePath } = setup();
 
-				const fileRecord = await service.uploadFile(userId, params, file);
-
-				const parentInfo = fileRecord.getParentInfo();
-				const filePath = [parentInfo.storageLocationId, fileRecord.id].join('/');
+				await service.uploadFile(userId, params, file);
 
 				expect(storageClient.create).toHaveBeenCalledWith(
 					filePath,
@@ -259,7 +261,7 @@ describe('FilesStorageService upload methods', () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams();
 				const error = new Error('test');
 
-				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
 
 				fileRecordRepo.save.mockRejectedValueOnce(error);
@@ -280,7 +282,7 @@ describe('FilesStorageService upload methods', () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams();
 				const error = new Error('test');
 
-				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
 				fileRecordRepo.save.mockResolvedValue();
 				storageClient.create.mockRejectedValueOnce(error);
@@ -301,7 +303,7 @@ describe('FilesStorageService upload methods', () => {
 			const setup = () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams();
 
-				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
 				fileRecordRepo.save.mockResolvedValue();
 				jest.replaceProperty(config, 'filesStorageMaxFileSize', 2);
@@ -323,7 +325,7 @@ describe('FilesStorageService upload methods', () => {
 			const setup = () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams();
 
-				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
 				jest.replaceProperty(config, 'filesStorageMaxSecurityCheckFileSize', 2);
 				fileRecordRepo.save.mockResolvedValue();
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
@@ -356,7 +358,7 @@ describe('FilesStorageService upload methods', () => {
 				const { params, file, userId, fileRecord } = createUploadFileParams();
 				const error = new Error('test');
 
-				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce('image/tiff');
 				fileRecordRepo.save.mockResolvedValue();
 
@@ -378,23 +380,23 @@ describe('FilesStorageService upload methods', () => {
 			const setup = () => {
 				const sourceFile = passThroughFileDtoTestFactory().asTiff().build();
 				const fileRecord = fileRecordTestFactory().build(sourceFile);
-				const parentInfo = fileRecord.getParentInfo();
 				const fileDtoWithFailingStream = passThroughFileDtoTestFactory().withForcedStreamError().build(sourceFile);
+				const params = ParentInfoTestFactory.build(fileRecord.getProps());
 
 				antivirusService.scanStream.mockResolvedValueOnce({
 					virus_detected: undefined,
 					virus_signature: undefined,
 					error: undefined,
 				});
-				jest.spyOn(service, 'getFileRecordsByParent').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
 				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(sourceFile.mimeType);
 				fileRecordRepo.save.mockResolvedValue();
 				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithFailingStream);
 
 				return {
-					params: parentInfo,
+					params,
 					file: sourceFile,
-					userId: parentInfo.parentId,
+					userId: params.parentId,
 				};
 			};
 
@@ -422,6 +424,8 @@ describe('FilesStorageService upload methods', () => {
 					virus_signature: undefined,
 					error: undefined,
 				});
+
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(`path/${fileRecord.id}`);
 
 				return {
 					mimeTypeSpy,
@@ -478,9 +482,10 @@ describe('FilesStorageService upload methods', () => {
 					name: fileRecord.getName(),
 					abortSignal: file.abortSignal,
 					fileSize: 8,
+					storageType: StorageType.STANDARD,
 					streamCompletion: expect.any(Promise),
 				};
-				expect(storageClient.create).toHaveBeenCalledWith(fileRecord.createPath(), expectedCalledParams);
+				expect(storageClient.create).toHaveBeenCalledWith(`path/${fileRecord.id}`, expectedCalledParams);
 			});
 
 			it('should return an instance of FileRecord', async () => {

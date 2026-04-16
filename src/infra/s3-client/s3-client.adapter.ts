@@ -3,11 +3,16 @@ import {
 	CopyObjectCommandOutput,
 	CreateBucketCommand,
 	DeleteObjectsCommand,
+	ExpirationStatus,
+	GetBucketLifecycleConfigurationCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
 	HeadObjectCommandOutput,
+	LifecycleRule,
 	ListObjectsV2Command,
 	ListObjectsV2CommandOutput,
+	PutBucketLifecycleConfigurationCommand,
+	PutBucketLifecycleConfigurationCommandInput,
 	PutObjectCommandInput,
 	S3Client,
 	ServiceOutputTypes,
@@ -16,14 +21,13 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
-import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'stream';
-import { CopyFiles, File, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
+import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
-export class S3ClientAdapter {
-	private readonly deletedFolderName = 'trash';
+export class S3ClientAdapter implements OnModuleInit {
 	private readonly S3_MAX_DEFAULT_VALUE_FOR_KEYS = 1000;
 
 	constructor(
@@ -31,9 +35,15 @@ export class S3ClientAdapter {
 		private readonly config: S3Config,
 		private readonly logger: Logger,
 		private readonly errorHandler: DomainErrorHandler,
-		private readonly clientInjectionToken: string
+		private readonly clientInjectionToken: string,
+		private readonly folderLifecycleRules?: FolderLifecycleRule[],
+		private readonly deletedFolderName = 'trash'
 	) {
 		this.logger.setContext(`${S3ClientAdapter.name}:${this.clientInjectionToken}`);
+	}
+
+	public async onModuleInit(): Promise<void> {
+		await this.configureAllFolderLifecycles(this.folderLifecycleRules);
 	}
 
 	// is public but only used internally
@@ -160,6 +170,97 @@ export class S3ClientAdapter {
 			contentRange: data.ContentRange,
 			etag: data.ETag,
 		};
+	}
+
+	private async configureAllFolderLifecycles(rules: FolderLifecycleRule[] | undefined): Promise<void> {
+		if (!rules || rules.length === 0) return;
+
+		try {
+			const existingRules = await this.getExistingLifecycleConfigurationRules();
+			const rulesToCreate = this.filterMissingFolderLifecycleRules(existingRules, rules);
+
+			if (rulesToCreate.length === 0) {
+				this.logLifeCycleConfigurationUpToDate();
+
+				return;
+			}
+
+			const newRules = this.createCleanupRulesForFolders(rulesToCreate);
+
+			const lifecycleConfig: PutBucketLifecycleConfigurationCommandInput = {
+				Bucket: this.config.bucket,
+				LifecycleConfiguration: {
+					Rules: [...existingRules, ...newRules],
+				},
+			};
+			const putCommand = new PutBucketLifecycleConfigurationCommand(lifecycleConfig);
+
+			await this.client.send(putCommand);
+			this.logLifecycleRulesConfigured(rulesToCreate);
+		} catch (err) {
+			await this.handleConfigureFolderLifecycleError(err, rules);
+		}
+	}
+
+	private getLifecycleRulePrefix(rule: LifecycleRule): string | undefined {
+		// Check both modern Filter.Prefix and legacy top-level Prefix field
+		return rule.Filter?.Prefix ?? rule.Prefix;
+	}
+
+	/**
+	 * Filters out lifecycle rules that already exist in the bucket.
+	 *
+	 * Note: This only checks for existence by prefix - it does NOT update existing rules
+	 * if expirationDays or other settings have changed. To modify existing lifecycle rules,
+	 * they must be manually deleted from the S3 bucket first, then the application will
+	 * recreate them with the new settings on next startup.
+	 */
+	private filterMissingFolderLifecycleRules(
+		existingRules: LifecycleRule[] | undefined,
+		rules: FolderLifecycleRule[]
+	): FolderLifecycleRule[] {
+		if (!existingRules) return rules;
+
+		return rules.filter(
+			({ folder }) => !existingRules.some((rule) => this.getLifecycleRulePrefix(rule) === `${folder}/`)
+		);
+	}
+
+	private createCleanupRulesForFolders(rules: FolderLifecycleRule[]): LifecycleRule[] {
+		const newRules = rules.map(({ folder, expirationDays }) => ({
+			ID: `${folder}CleanupRule`,
+			Status: ExpirationStatus.Enabled,
+			Expiration: { Days: expirationDays },
+			Filter: { Prefix: `${folder}/` },
+		}));
+
+		return newRules;
+	}
+
+	private async getExistingLifecycleConfigurationRules(): Promise<LifecycleRule[]> {
+		try {
+			const getCommand = new GetBucketLifecycleConfigurationCommand({ Bucket: this.config.bucket });
+			const existingConfig = await this.client.send(getCommand);
+
+			return existingConfig.Rules ?? [];
+		} catch (err) {
+			// S3 throws NoSuchLifecycleConfiguration when no lifecycle rules exist yet - treat as empty
+			const errorCode = TypeGuard.getValueFromObjectKey(err, 'Code');
+			const errorName = TypeGuard.getValueFromObjectKey(err, 'name');
+			if (errorCode === 'NoSuchLifecycleConfiguration' || errorName === 'NoSuchLifecycleConfiguration') {
+				return [];
+			}
+			throw err;
+		}
+	}
+
+	private async handleConfigureFolderLifecycleError(err: unknown, rules: FolderLifecycleRule[]): Promise<void> {
+		if (TypeGuard.getValueFromObjectKey(err, 'Code') === 'NoSuchBucket') {
+			await this.createBucket();
+			await this.configureAllFolderLifecycles(rules);
+		} else if (TypeGuard.isError(err)) {
+			this.errorHandler.exec(`${err.message} "${this.config.bucket}"`);
+		}
 	}
 
 	private async createBucketInternal(): Promise<void> {
@@ -636,5 +737,25 @@ export class S3ClientAdapter {
 				bucket: this.config.bucket,
 			})
 		);
+	}
+
+	private logLifeCycleConfigurationUpToDate(): void {
+		this.logger.info(
+			new S3ClientActionLoggable('All lifecycle rules already exist, no update needed', {
+				action: 'configureLifecycle',
+				bucket: this.config.bucket,
+			})
+		);
+	}
+
+	private logLifecycleRulesConfigured(rules: FolderLifecycleRule[]): void {
+		for (const { folder, expirationDays } of rules) {
+			this.logger.info(
+				new S3ClientActionLoggable(`S3 Lifecycle for /${folder}/* set to ${expirationDays} days`, {
+					action: 'configureLifecycle',
+					bucket: this.config.bucket,
+				})
+			);
+		}
 	}
 }

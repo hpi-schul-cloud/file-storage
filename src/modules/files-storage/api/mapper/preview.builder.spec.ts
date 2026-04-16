@@ -15,8 +15,6 @@ describe('PreviewBuilder', () => {
 				fileRecord,
 				previewParams,
 				hash: expect.any(String),
-				previewFilePath: expect.any(String),
-				originFilePath: expect.any(String),
 				format: expect.any(String),
 				bytesRange,
 			};

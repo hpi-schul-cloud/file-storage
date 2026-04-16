@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { FilePathFactory } from '../factory';
 import { PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewFileParams, PreviewWidth } from '../interface';
 import { FileResponseFactory } from '../mapper';
@@ -71,6 +72,7 @@ describe('PreviewService', () => {
 
 	afterEach(() => {
 		jest.resetAllMocks();
+		jest.restoreAllMocks();
 	});
 
 	describe('download is called', () => {
@@ -95,15 +97,19 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+
+						const originPath = 'originPath';
+						const previewPath = 'previewPath';
+						jest
+							.spyOn(FilePathFactory, 'createPreview')
+							.mockReturnValueOnce(previewPath)
+							.mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
 							previewParams,
 							hash,
-							originFilePath: originPath,
-							previewFilePath: previewPath,
 							format,
 							bytesRange,
 						};
@@ -112,27 +118,29 @@ describe('PreviewService', () => {
 							fileRecord,
 							previewFileParams,
 							previewFileResponse,
+							originPath,
+							previewPath,
 						};
 					};
 
 					it('calls previewProducer.generate with correct params', async () => {
-						const { fileRecord, previewFileParams } = setup();
+						const { fileRecord, previewFileParams, originPath, previewPath } = setup();
 
 						await previewService.download(fileRecord, previewFileParams);
 
 						expect(previewProducer.generate).toHaveBeenCalledWith({
-							originFilePath: previewFileParams.originFilePath,
-							previewFilePath: previewFileParams.previewFilePath,
+							originFilePath: originPath,
+							previewFilePath: previewPath,
 							previewOptions: { width: previewFileParams.previewParams.width, format: previewFileParams.format },
 						});
 					});
 
 					it('calls S3ClientAdapters get method', async () => {
-						const { fileRecord, previewFileParams } = setup();
+						const { fileRecord, previewFileParams, previewPath } = setup();
 
 						await previewService.download(fileRecord, previewFileParams);
 
-						expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewFileParams.previewFilePath, undefined);
+						expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewPath, undefined);
 						expect(s3ClientAdapter.get).toHaveBeenCalledTimes(1);
 					});
 
@@ -164,15 +172,19 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = 'originPath';
+						const previewPath = 'previewPath';
+						jest
+							.spyOn(FilePathFactory, 'createPreview')
+							.mockReturnValueOnce(previewPath)
+							.mockReturnValueOnce(previewPath);
+
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
 							previewParams,
 							hash,
-							originFilePath: originPath,
-							previewFilePath: previewPath,
 							format,
 							bytesRange,
 						};
@@ -181,19 +193,21 @@ describe('PreviewService', () => {
 							fileRecord,
 							previewFileParams,
 							previewFileResponse,
+							originPath,
+							previewPath,
 						};
 					};
 
 					describe('WHEN error is a NotFoundException', () => {
 						it('calls previewProducer.generate with correct params', async () => {
 							const notFoundException = new NotFoundException();
-							const { fileRecord, previewFileParams } = setup(notFoundException);
+							const { fileRecord, previewFileParams, originPath, previewPath } = setup(notFoundException);
 
 							await previewService.download(fileRecord, previewFileParams);
 
 							expect(previewProducer.generate).toHaveBeenCalledWith({
-								originFilePath: previewFileParams.originFilePath,
-								previewFilePath: previewFileParams.previewFilePath,
+								originFilePath: originPath,
+								previewFilePath: previewPath,
 								previewOptions: { width: previewFileParams.previewParams.width, format: previewFileParams.format },
 							});
 							expect(previewProducer.generate).toHaveBeenCalledTimes(2);
@@ -201,11 +215,11 @@ describe('PreviewService', () => {
 
 						it('calls S3ClientAdapters get method', async () => {
 							const notFoundException = new NotFoundException();
-							const { fileRecord, previewFileParams } = setup(notFoundException);
+							const { fileRecord, previewFileParams, previewPath } = setup(notFoundException);
 
 							await previewService.download(fileRecord, previewFileParams);
 
-							expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewFileParams.previewFilePath, undefined);
+							expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewPath, undefined);
 							expect(s3ClientAdapter.get).toHaveBeenCalledTimes(2);
 						});
 					});
@@ -240,15 +254,11 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
 							previewParams,
 							hash,
-							originFilePath: originPath,
-							previewFilePath: previewPath,
 							format,
 							bytesRange,
 						};
@@ -288,15 +298,15 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = 'originPath';
+						const previewPath = 'previewPath';
+						jest.spyOn(FilePathFactory, 'createPreview').mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
 							previewParams,
 							hash,
-							originFilePath: originPath,
-							previewFilePath: previewPath,
 							format,
 							bytesRange,
 						};
@@ -305,15 +315,16 @@ describe('PreviewService', () => {
 							fileRecord,
 							previewFileParams,
 							previewFileResponse,
+							previewPath,
 						};
 					};
 
 					it('calls S3ClientAdapters get method', async () => {
-						const { fileRecord, previewFileParams } = setup();
+						const { fileRecord, previewFileParams, previewPath } = setup();
 
 						await previewService.download(fileRecord, previewFileParams);
 
-						expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewFileParams.previewFilePath, undefined);
+						expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewPath, undefined);
 						expect(s3ClientAdapter.get).toHaveBeenCalledTimes(1);
 					});
 
@@ -353,15 +364,18 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
+						const originPath = 'originPath';
+						const previewPath = 'previewPath';
+						jest
+							.spyOn(FilePathFactory, 'createPreview')
+							.mockReturnValueOnce(previewPath)
+							.mockReturnValueOnce(previewPath);
+						jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(originPath);
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
 							previewParams,
 							hash,
-							originFilePath: originPath,
-							previewFilePath: previewPath,
 							format,
 							bytesRange,
 						};
@@ -370,19 +384,21 @@ describe('PreviewService', () => {
 							fileRecord,
 							previewFileParams,
 							previewFileResponse,
+							originPath,
+							previewPath,
 						};
 					};
 
 					describe('WHEN error is a NotFoundException', () => {
 						it('calls previewProducer.generate with correct params', async () => {
 							const notFoundException = new NotFoundException();
-							const { fileRecord, previewFileParams } = setup(notFoundException);
+							const { fileRecord, previewFileParams, originPath, previewPath } = setup(notFoundException);
 
 							await previewService.download(fileRecord, previewFileParams);
 
 							expect(previewProducer.generate).toHaveBeenCalledWith({
-								originFilePath: previewFileParams.originFilePath,
-								previewFilePath: previewFileParams.previewFilePath,
+								originFilePath: originPath,
+								previewFilePath: previewPath,
 								previewOptions: { width: previewFileParams.previewParams.width, format: previewFileParams.format },
 							});
 							expect(previewProducer.generate).toHaveBeenCalledTimes(1);
@@ -390,11 +406,11 @@ describe('PreviewService', () => {
 
 						it('calls S3ClientAdapters get method', async () => {
 							const notFoundException = new NotFoundException();
-							const { fileRecord, previewFileParams } = setup(notFoundException);
+							const { fileRecord, previewFileParams, previewPath } = setup(notFoundException);
 
 							await previewService.download(fileRecord, previewFileParams);
 
-							expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewFileParams.previewFilePath, undefined);
+							expect(s3ClientAdapter.get).toHaveBeenCalledWith(previewPath, undefined);
 							expect(s3ClientAdapter.get).toHaveBeenCalledTimes(2);
 						});
 					});
@@ -429,15 +445,11 @@ describe('PreviewService', () => {
 						const previewFileResponse = FileResponseFactory.create(previewFile, name);
 
 						const hash = 'test hash';
-						const previewPath = fileRecord.createPreviewFilePath(hash);
-						const originPath = fileRecord.createPath();
 
 						const previewFileParams: PreviewFileParams = {
 							fileRecord,
 							previewParams,
 							hash,
-							originFilePath: originPath,
-							previewFilePath: previewPath,
 							format,
 							bytesRange,
 						};
@@ -468,15 +480,11 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
 						previewParams,
 						hash,
-						originFilePath: originPath,
-						previewFilePath: previewPath,
 						format,
 						bytesRange,
 					};
@@ -506,15 +514,11 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
 						previewParams,
 						hash,
-						originFilePath: originPath,
-						previewFilePath: previewPath,
 						format,
 						bytesRange,
 					};
@@ -544,15 +548,11 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
 						previewParams,
 						hash,
-						originFilePath: originPath,
-						previewFilePath: previewPath,
 						format,
 						bytesRange,
 					};
@@ -582,15 +582,11 @@ describe('PreviewService', () => {
 					const previewParams = { ...defaultPreviewParams, forceUpdate: true };
 
 					const hash = 'test hash';
-					const previewPath = fileRecord.createPreviewFilePath(hash);
-					const originPath = fileRecord.createPath();
 
 					const previewFileParams: PreviewFileParams = {
 						fileRecord,
 						previewParams,
 						hash,
-						originFilePath: originPath,
-						previewFilePath: previewPath,
 						format,
 						bytesRange,
 					};
@@ -621,7 +617,8 @@ describe('PreviewService', () => {
 					...defaultPreviewParams,
 				};
 				const format = previewParams.outputFormat.split('/')[1];
-				const directoryPath = fileRecord.createPreviewDirectoryPath();
+				const directoryPath = 'directoryPath';
+				jest.spyOn(FilePathFactory, 'createPreviewDirectory').mockReturnValueOnce(directoryPath);
 
 				return {
 					fileRecord,

@@ -2,14 +2,14 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
+import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
-import { FileRecordFactory } from '../factory';
+import { FilePathFactory, FileRecordFactory } from '../factory';
 import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
@@ -83,6 +83,8 @@ describe('FilesStorageService copy methods', () => {
 				const fileResult: CopyFileResult = { id: targetFile.id, sourceId: sourceFile.id, name: targetFile.getName() };
 
 				jest.spyOn(FileRecordFactory, 'copy').mockImplementationOnce(() => targetFile);
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce('sourceOriginPath');
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce('targetOriginPath');
 
 				return {
 					sourceFile,
@@ -102,16 +104,13 @@ describe('FilesStorageService copy methods', () => {
 			});
 
 			it('should call copy with correct params', async () => {
-				const { sourceFile, targetFile, sourceParentInfo, userId } = setup();
+				const { sourceFile, sourceParentInfo, userId } = setup();
 
 				await service.copyFilesToParent(userId, [sourceFile], sourceParentInfo);
 
-				const expectedParams: CopyFiles = {
-					sourcePath: sourceFile.createPath(),
-					targetPath: targetFile.createPath(),
-				};
-
-				expect(storageClient.copy).toHaveBeenCalledWith([expectedParams]);
+				expect(storageClient.copy).toHaveBeenCalledWith([
+					{ sourcePath: 'sourceOriginPath', targetPath: 'targetOriginPath' },
+				]);
 			});
 
 			it('should return file response array', async () => {

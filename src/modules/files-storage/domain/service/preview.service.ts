@@ -4,6 +4,7 @@ import { S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { ErrorType } from '../error';
+import { FilePathFactory } from '../factory';
 import { FileRecord, PreviewStatus } from '../file-record.do';
 import { GetFileResponse, PreviewFileParams } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
@@ -28,7 +29,7 @@ export class PreviewService {
 	}
 
 	public async deletePreviews(fileRecords: FileRecord[]): Promise<void> {
-		const paths = fileRecords.map((fileRecord) => fileRecord.createPreviewDirectoryPath());
+		const paths = fileRecords.map((fileRecord) => FilePathFactory.createPreviewDirectory(fileRecord));
 		const promises = paths.map((path) => this.storageClient.deleteDirectory(path));
 		await Promise.all(promises);
 	}
@@ -67,7 +68,8 @@ export class PreviewService {
 	}
 
 	private async getPreviewFile(params: PreviewFileParams): Promise<GetFileResponse> {
-		const { fileRecord, previewFilePath, bytesRange, previewParams } = params;
+		const { fileRecord, bytesRange, previewParams } = params;
+		const previewFilePath = FilePathFactory.createPreview(fileRecord, params.hash);
 		const name = fileRecord.getPreviewName(previewParams.outputFormat);
 		const file = await this.storageClient.get(previewFilePath, bytesRange);
 
@@ -77,7 +79,9 @@ export class PreviewService {
 	}
 
 	private async generatePreview(params: PreviewFileParams): Promise<void> {
-		const payload = PreviewFileOptionsMapper.fromPreviewFileParams(params);
+		const originFilePath = FilePathFactory.create(params.fileRecord);
+		const previewFilePath = FilePathFactory.createPreview(params.fileRecord, params.hash);
+		const payload = PreviewFileOptionsMapper.fromPreviewFileParams(params, originFilePath, previewFilePath);
 
 		await this.previewProducer.generate(payload);
 	}

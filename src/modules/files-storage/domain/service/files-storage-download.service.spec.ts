@@ -9,6 +9,7 @@ import { ScanStatus } from '../../domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { FilePathFactory } from '../factory';
 import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
@@ -172,17 +173,17 @@ describe('FilesStorageService download methods', () => {
 				storageClient.get.mockResolvedValueOnce(fileResponse);
 				const expectedResponse = FileResponseFactory.create(fileResponse, fileRecord.getName());
 
+				jest.spyOn(FilePathFactory, 'create').mockReturnValueOnce(`originPath/${fileRecord.id}`);
+
 				return { fileRecord, expectedResponse };
 			};
 
 			it('calls get with correct params', async () => {
 				const { fileRecord } = setup();
 
-				const path = fileRecord.createPath();
-
 				await service.downloadFile(fileRecord);
 
-				expect(storageClient.get).toHaveBeenCalledWith(path, undefined);
+				expect(storageClient.get).toHaveBeenCalledWith(`originPath/${fileRecord.id}`, undefined);
 			});
 
 			it('returns correct response', async () => {

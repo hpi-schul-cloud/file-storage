@@ -30,7 +30,7 @@ export class FilesStorageConsumer {
 	public async copyFilesOfParent(
 		@RabbitPayload() payload: CopyFilesOfParentPayload
 	): Promise<RpcMessage<CopyFileResponse[]>> {
-		const [fileRecords] = await this.filesStorageService.getFileRecordsByParent(payload.source.parentId);
+		const [fileRecords] = await this.filesStorageService.getFileRecordsByParentAndStorageType(payload.source.parentId);
 		this.logStartCopyFilesOfParent(fileRecords);
 
 		const copyFileResults = await this.filesStorageService.copyFilesToParent(
@@ -49,7 +49,7 @@ export class FilesStorageConsumer {
 	})
 	@CreateRequestContext()
 	public async getFilesOfParent(@RabbitPayload() payload: EntityId): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
-		const [fileRecords, total] = await this.filesStorageService.getFileRecordsByParent(payload);
+		const [fileRecords, total] = await this.filesStorageService.getFileRecordsByParentAndStorageType(payload);
 		this.logStartGetFilesOfParent(fileRecords);
 
 		const fileRecordListResponse = FileRecordConsumerMapper.mapToFileRecordListResponse(fileRecords, total);
@@ -66,7 +66,7 @@ export class FilesStorageConsumer {
 	public async deleteFilesOfParent(
 		@RabbitPayload() payload: EntityId
 	): Promise<RpcMessage<FileRecordConsumerResponse[]>> {
-		const [fileRecords, total] = await this.filesStorageService.getFileRecordsByParent(payload);
+		const [fileRecords, total] = await this.filesStorageService.getFileRecordsByParentAndStorageType(payload);
 		this.logStartDeleteFilesOfParent(fileRecords);
 
 		await this.previewService.deletePreviews(fileRecords);

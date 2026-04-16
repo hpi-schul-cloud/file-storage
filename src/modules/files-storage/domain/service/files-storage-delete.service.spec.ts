@@ -8,6 +8,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
+import { FilePathFactory } from '../factory';
 import { FileRecord, FileRecordProps } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
 import { StorageLocationDeleteLoggableException } from '../loggable';
@@ -76,6 +77,9 @@ describe('FilesStorageService delete methods', () => {
 				const fileRecords = fileRecordTestFactory().buildList(3);
 
 				fileRecordRepo.save.mockResolvedValueOnce();
+				jest
+					.spyOn(FilePathFactory, 'createMany')
+					.mockReturnValueOnce(fileRecords.map((fileRecord) => `path/${fileRecord.id}`));
 
 				return { fileRecords };
 			};
@@ -112,11 +116,12 @@ describe('FilesStorageService delete methods', () => {
 
 			it('should call storageClient.moveToTrash', async () => {
 				const { fileRecords } = setup();
-				const paths = FileRecord.getPaths(fileRecords);
 
 				await service.deleteFiles(fileRecords);
 
-				expect(storageClient.moveToTrash).toHaveBeenCalledWith(paths);
+				expect(storageClient.moveToTrash).toHaveBeenCalledWith(
+					fileRecords.map((fileRecord) => `path/${fileRecord.id}`)
+				);
 			});
 		});
 

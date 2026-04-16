@@ -2,8 +2,15 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
-import { CollaboraMimeTypes, FileRecord, PreviewOutputMimeTypes, PreviewStatus } from './file-record.do';
-import { FileRecordParentType } from './interface/file-storage-parent-type.enum';
+import {
+	CollaboraMimeTypes,
+	FileRecord,
+	PreviewOutputMimeTypes,
+	PreviewStatus,
+	TEMP_FILE_EXPIRY_SECONDS,
+} from './file-record.do';
+import { FileRecordParentType } from './interface';
+import { StorageType } from './storage-paths.const';
 import { ScanStatus } from './vo';
 
 describe('FileRecord', () => {
@@ -322,36 +329,6 @@ describe('FileRecord', () => {
 		});
 	});
 
-	describe('createPath', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build();
-			const props = fileRecord.getProps();
-			const expectedPath = props.storageLocationId + '/' + fileRecord.id;
-
-			return { fileRecord, expectedPath };
-		};
-
-		it('should create path', () => {
-			const { fileRecord, expectedPath } = setup();
-
-			const path = fileRecord.createPath();
-
-			expect(path).toBe(expectedPath);
-		});
-	});
-
-	describe('FileRecord.getPaths', () => {
-		it('should return paths for all file records', () => {
-			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
-			const path1 = fileRecord1.createPath();
-			const path2 = fileRecord2.createPath();
-
-			const paths = FileRecord.getPaths([fileRecord1, fileRecord2]);
-
-			expect(paths).toEqual([path1, path2]);
-		});
-	});
-
 	describe('getPreviewStatus', () => {
 		it('should return PREVIEW_POSSIBLE if security check is verified and MIME type is valid', () => {
 			const fileRecord = fileRecordTestFactory().withScanStatus(ScanStatus.VERIFIED).build({ mimeType: 'image/png' });
@@ -444,44 +421,7 @@ describe('FileRecord', () => {
 		});
 	});
 
-	describe('createPreviewFilePath', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build({ name: 'file.txt' });
-			const inputHash = 'randomHash';
-			const props = fileRecord.getProps();
-			const expectedPath = ['previews', props.storageLocationId, props.id, inputHash].join('/');
-
-			return { fileRecord, inputHash, expectedPath };
-		};
-
-		it('should create path', () => {
-			const { fileRecord, inputHash, expectedPath } = setup();
-
-			const path = fileRecord.createPreviewFilePath(inputHash);
-
-			expect(path).toBe(expectedPath);
-		});
-	});
-
-	describe('createPreviewDirectoryPath', () => {
-		const setup = () => {
-			const fileRecord = fileRecordTestFactory().build({ name: 'file.txt' });
-			const props = fileRecord.getProps();
-			const expectedPath = ['previews', props.storageLocationId, props.id].join('/');
-
-			return { fileRecord, expectedPath };
-		};
-
-		it('should create path', () => {
-			const { fileRecord, expectedPath } = setup();
-
-			const path = fileRecord.createPreviewDirectoryPath();
-
-			expect(path).toBe(expectedPath);
-		});
-	});
-
-	describe('getUniqueParents', () => {
+	describe('getUniqueParentReferences', () => {
 		describe('WHEN filerRecords has parent duplicates', () => {
 			it('should return a map with unique parentId as key and parentType as value', () => {
 				const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2, {
@@ -491,17 +431,17 @@ describe('FileRecord', () => {
 				const fileRecord3 = fileRecordTestFactory().build({ parentType: FileRecordParentType.School, parentId: 'id2' });
 				const fileRecords = [fileRecord1, fileRecord2, fileRecord3];
 
-				const result = FileRecord.getUniqueParentInfos(fileRecords);
+				const result = FileRecord.getUniqueParentReferences(fileRecords);
 
 				expect(result.length).toBe(2);
-				expect(result[0]).toEqual(fileRecord1.getParentInfo());
-				expect(result[1]).toEqual(fileRecord3.getParentInfo());
+				expect(result[0]).toEqual(fileRecord1.getParentReference());
+				expect(result[1]).toEqual(fileRecord3.getParentReference());
 			});
 		});
 
 		describe('WHEN fileRecords is empty', () => {
 			it('should return an empty map if fileRecords is empty', () => {
-				const result = FileRecord.getUniqueParentInfos([]);
+				const result = FileRecord.getUniqueParentReferences([]);
 
 				expect(result.length).toBe(0);
 			});
@@ -616,6 +556,40 @@ describe('FileRecord', () => {
 			expect(() => fileRecord.markAsUploaded(invalidSize, maxSizeSmallerThanInvalidSize, maxSecurityCheckSize)).toThrow(
 				ErrorType.FILE_TOO_BIG
 			);
+		});
+	});
+
+	describe('getExpiresAt', () => {
+		describe('when storageType is TEMP', () => {
+			it('should return expiration date based on TEMP_FILE_EXPIRY_SECONDS', () => {
+				const createdAt = new Date('2024-01-01T15:30:00.000Z');
+				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP, createdAt });
+
+				const result = fileRecord.getExpiresAt();
+
+				const expected = new Date(createdAt.getTime() + TEMP_FILE_EXPIRY_SECONDS * 1000);
+				expect(result).toEqual(expected);
+			});
+		});
+
+		describe('when storageType is STANDARD', () => {
+			it('should return undefined', () => {
+				const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
+
+				const result = fileRecord.getExpiresAt();
+
+				expect(result).toBeUndefined();
+			});
+		});
+
+		describe('when storageType is undefined', () => {
+			it('should return undefined', () => {
+				const fileRecord = fileRecordTestFactory().build({ storageType: undefined });
+
+				const result = fileRecord.getExpiresAt();
+
+				expect(result).toBeUndefined();
+			});
 		});
 	});
 });

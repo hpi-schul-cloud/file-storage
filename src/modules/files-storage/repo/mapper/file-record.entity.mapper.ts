@@ -1,5 +1,5 @@
 import { EntityManager } from '@mikro-orm/mongodb';
-import { FileRecord, FileRecordFactory, FileRecordSecurityCheck } from '../../domain';
+import { FileRecord, FileRecordFactory, FileRecordProps, FileRecordSecurityCheck, StorageType } from '../../domain';
 import { FileRecordEntity } from '../file-record.entity';
 import { FileRecordSecurityCheckEmbeddable } from '../security-check.embeddable';
 
@@ -10,15 +10,11 @@ export class FileRecordEntityMapper {
 			return fileRecordEntity.domainObject;
 		}
 
-		const { securityCheck: securityCheckEmbeddable, ...fileRecordProps } = fileRecordEntity;
-		// we need to "copy" the "id" property manually, as otherwise the "id" will get lost
-		fileRecordProps.id = fileRecordEntity.id;
-		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
-		// It is very important to hand over "fileRecordProps" CLEAN (meaning no additional properties)!!!
-		const fileRecord = FileRecordFactory.buildFromFileRecordProps(fileRecordProps, securityCheck);
-
-		// attach to identity map
-		fileRecordEntity.domainObject = fileRecord;
+		const { securityCheckEmbeddable, fileRecordProps } = this.extractCleanFileRecordProps(fileRecordEntity);
+		this.reAssignIdToAvoidLost(fileRecordProps, fileRecordEntity);
+		this.runtimeMigration(fileRecordProps);
+		const fileRecord = this.createFileRecord(fileRecordProps, securityCheckEmbeddable);
+		this.attachDoReferenceToEntityMap(fileRecord, fileRecordEntity);
 
 		return fileRecord;
 	}
@@ -33,6 +29,38 @@ export class FileRecordEntityMapper {
 		entity.securityCheck = FileRecordEntityMapper.mapDoToEmbeddable(em, fileRecord);
 
 		return entity;
+	}
+
+	private static extractCleanFileRecordProps(fileRecordEntity: FileRecordEntity): {
+		fileRecordProps: FileRecordProps;
+		securityCheckEmbeddable: FileRecordSecurityCheckEmbeddable;
+	} {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { securityCheck: securityCheckEmbeddable, domainObject, ...fileRecordProps } = fileRecordEntity;
+
+		return { fileRecordProps, securityCheckEmbeddable };
+	}
+
+	private static createFileRecord(
+		runtimeCleanFileRecordProps: FileRecordProps,
+		securityCheckEmbeddable: FileRecordSecurityCheckEmbeddable
+	): FileRecord {
+		const securityCheck = new FileRecordSecurityCheck(securityCheckEmbeddable);
+		const fileRecord = FileRecordFactory.buildFromFileRecordProps(runtimeCleanFileRecordProps, securityCheck);
+
+		return fileRecord;
+	}
+
+	private static reAssignIdToAvoidLost(fileRecordProps: FileRecordProps, fileRecordEntity: FileRecordEntity): void {
+		fileRecordProps.id = fileRecordEntity.id;
+	}
+
+	private static runtimeMigration(fileRecordProps: FileRecordProps): void {
+		fileRecordProps.storageType ??= StorageType.STANDARD;
+	}
+
+	private static attachDoReferenceToEntityMap(fileRecord: FileRecord, fileRecordEntity: FileRecordEntity): void {
+		fileRecordEntity.domainObject = fileRecord;
 	}
 
 	private static mapDoToEmbeddable(em: EntityManager, fileRecord: FileRecord): FileRecordSecurityCheckEmbeddable {

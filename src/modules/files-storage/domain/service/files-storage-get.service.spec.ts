@@ -272,15 +272,15 @@ describe('FilesStorageService get methods', () => {
 			it('should call findBySchoolIdAndParentId with right parameters', async () => {
 				const { parentId } = setup();
 
-				await service.getFileRecordsByParent(parentId);
+				await service.getFileRecordsByParentAndStorageType(parentId);
 
-				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId);
+				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId, undefined, undefined);
 			});
 
 			it('should return the matched fileRecord', async () => {
 				const { parentId, fileRecords } = setup();
 
-				const result = await service.getFileRecordsByParent(parentId);
+				const result = await service.getFileRecordsByParentAndStorageType(parentId);
 
 				expect(result).toEqual([fileRecords, 3]);
 			});
@@ -298,7 +298,7 @@ describe('FilesStorageService get methods', () => {
 			it('should pass the error', async () => {
 				const { parentId } = setup();
 
-				await expect(service.getFileRecordsByParent(parentId)).rejects.toThrow(new Error('bla'));
+				await expect(service.getFileRecordsByParentAndStorageType(parentId)).rejects.toThrow(new Error('bla'));
 			});
 		});
 	});

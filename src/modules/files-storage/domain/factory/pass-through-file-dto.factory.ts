@@ -1,5 +1,6 @@
 import { PassThrough } from 'node:stream';
 import { FileDto, PassThroughFileDto } from '../dto';
+import { StorageType } from '../storage-paths.const';
 import { awaitStreamCompletion } from '../utils';
 
 export class PassThroughFileDtoFactory {
@@ -7,7 +8,8 @@ export class PassThroughFileDtoFactory {
 		sourceFile: FileDto,
 		passThrough: PassThrough,
 		mimeType: string,
-		newFileName?: string
+		newFileName?: string,
+		storageType?: StorageType
 	): PassThroughFileDto {
 		const streamCompletion = awaitStreamCompletion(passThrough, sourceFile.abortSignal);
 		const file = new PassThroughFileDto({
@@ -17,6 +19,7 @@ export class PassThroughFileDtoFactory {
 			abortSignal: sourceFile.abortSignal,
 			streamCompletion,
 			fileSize: 0,
+			storageType: storageType ?? sourceFile.storageType,
 		});
 
 		return file;
