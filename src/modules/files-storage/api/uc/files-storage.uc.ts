@@ -226,7 +226,7 @@ export class FilesStorageUC {
 
 	// restore
 	public async restoreMultipleFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
-		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDelete(params.fileRecordIds);
 		const parentReferences = FileRecord.getUniqueParentReferences(fileRecords);
 
 		await this.checkPermissions(parentReferences, FileStorageAuthorizationContext.create);
