@@ -1,5 +1,5 @@
 import { ConfigurationModule } from '@infra/configuration';
-import { defineConfig, EntityClass } from '@mikro-orm/mongodb';
+import { defineConfig, EntityClass, MongoDriver } from '@mikro-orm/mongodb';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Module } from '@nestjs/common';
 import { DATABASE_CONFIG_TOKEN, DatabaseConfig } from './database.config';
@@ -23,6 +23,7 @@ export class DatabaseModule {
 							debug: config.dbDebug,
 						});
 					},
+					driver: MongoDriver,
 					inject: [DATABASE_CONFIG_TOKEN],
 					imports: [ConfigurationModule.register(DATABASE_CONFIG_TOKEN, DatabaseConfig)],
 				}),
