@@ -359,7 +359,7 @@ export class FilesStorageUC {
 		params: FileRecordParams,
 		pagination: PaginationParams
 	): Promise<FileRecordListResponse> {
-		await this.checkPermission(params, FileStorageAuthorizationContext.read);
+		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteByParent(params.parentId);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);

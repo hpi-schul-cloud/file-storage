@@ -1,11 +1,11 @@
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
-import { INestApplication } from '@nestjs/common';
+import { ForbiddenException, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
 import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
@@ -24,6 +24,7 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let testApiClient: TestApiClient;
+	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -42,10 +43,15 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		testApiClient = new TestApiClient(app, baseRouteName);
+		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
 	});
 
 	afterAll(async () => {
 		await app.close();
+	});
+
+	beforeEach(() => {
+		jest.resetAllMocks();
 	});
 
 	describe('with not authenticated user', () => {
@@ -250,6 +256,16 @@ describe(`${baseRouteName} (api)`, () => {
 
 			expect(response.total).toEqual(0);
 			expect(response.data).toEqual([]);
+		});
+
+		it('should return status 403 when authorization fails', async () => {
+			const { loggedInClient, validId } = setup();
+
+			authorizationClientAdapter.checkPermissionsByReference.mockRejectedValueOnce(new ForbiddenException());
+
+			const response = await loggedInClient.get(`/school/${validId}/schools/${validId}`);
+
+			expect(response.status).toEqual(403);
 		});
 	});
 });
