@@ -105,7 +105,8 @@ describe('FilesStorageService upload methods', () => {
 				file.name,
 				file.mimeType,
 				parentInfo,
-				parentInfo.parentId
+				parentInfo.parentId,
+				StorageType.STANDARD
 			);
 			const expectedFileRecord = fileRecord.getProps();
 			expectedFileRecord.name = FileRecord.resolveFileNameDuplicates(fileRecords, fileRecord.getName());

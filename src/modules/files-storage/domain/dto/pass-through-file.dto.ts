@@ -25,5 +25,5 @@ export class PassThroughFileDto implements FileDto {
 
 	fileSize: number;
 
-	storageType?: StorageType;
+	storageType: StorageType;
 }

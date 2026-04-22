@@ -20,7 +20,7 @@ describe('FileRecordFactory', () => {
 			it('should return a FileRecord instance', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result).toBeDefined();
 			});
@@ -28,7 +28,7 @@ describe('FileRecordFactory', () => {
 			it('should set the name correctly', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().name).toBe(name);
 			});
@@ -36,7 +36,7 @@ describe('FileRecordFactory', () => {
 			it('should set the mimeType correctly', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().mimeType).toBe(mimeType);
 			});
@@ -44,7 +44,7 @@ describe('FileRecordFactory', () => {
 			it('should set the parentType from params', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().parentType).toBe(params.parentType);
 			});
@@ -52,7 +52,7 @@ describe('FileRecordFactory', () => {
 			it('should set the parentId from params', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().parentId).toBe(params.parentId);
 			});
@@ -60,7 +60,7 @@ describe('FileRecordFactory', () => {
 			it('should set the storageLocation from params', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().storageLocation).toBe(params.storageLocation);
 			});
@@ -68,7 +68,7 @@ describe('FileRecordFactory', () => {
 			it('should set the storageLocationId from params', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().storageLocationId).toBe(params.storageLocationId);
 			});
@@ -76,7 +76,7 @@ describe('FileRecordFactory', () => {
 			it('should set creatorId to the provided userId', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().creatorId).toBe(userId);
 			});
@@ -84,7 +84,7 @@ describe('FileRecordFactory', () => {
 			it('should set isUploading to true', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().isUploading).toBe(true);
 			});
@@ -92,7 +92,7 @@ describe('FileRecordFactory', () => {
 			it('should set size to 0', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().size).toBe(0);
 			});
@@ -100,7 +100,7 @@ describe('FileRecordFactory', () => {
 			it('should default storageType to STANDARD when not provided', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().storageType).toBe(StorageType.STANDARD);
 			});
@@ -108,7 +108,7 @@ describe('FileRecordFactory', () => {
 			it('should generate a non-empty id', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().id).toBeDefined();
 				expect(result.getProps().id).not.toBe('');
@@ -167,7 +167,7 @@ describe('FileRecordFactory', () => {
 				const params = ParentInfoTestFactory.build({ parentType });
 				const userId = new ObjectId().toHexString();
 
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result.getProps().parentType).toBe(parentType);
 			});
@@ -186,8 +186,8 @@ describe('FileRecordFactory', () => {
 			it('should generate unique ids for each call', () => {
 				const { name, mimeType, params, userId } = setup();
 
-				const result1 = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
-				const result2 = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId);
+				const result1 = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
+				const result2 = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
 
 				expect(result1.getProps().id).not.toBe(result2.getProps().id);
 			});
@@ -198,8 +198,18 @@ describe('FileRecordFactory', () => {
 		describe('when called with valid props and security check', () => {
 			const setup = () => {
 				const fileRecord = fileRecordTestFactory().build();
-				const { id, size, name, mimeType, parentType, parentId, creatorId, storageLocationId, storageLocation } =
-					fileRecord.getProps();
+				const {
+					id,
+					size,
+					name,
+					mimeType,
+					parentType,
+					parentId,
+					creatorId,
+					storageLocationId,
+					storageLocation,
+					storageType,
+				} = fileRecord.getProps();
 				const securityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
 				const props = {
@@ -212,6 +222,7 @@ describe('FileRecordFactory', () => {
 					creatorId,
 					storageLocationId,
 					storageLocation,
+					storageType,
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				};

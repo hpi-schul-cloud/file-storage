@@ -581,15 +581,5 @@ describe('FileRecord', () => {
 				expect(result).toBeUndefined();
 			});
 		});
-
-		describe('when storageType is undefined', () => {
-			it('should return undefined', () => {
-				const fileRecord = fileRecordTestFactory().build({ storageType: undefined });
-
-				const result = fileRecord.getExpiresAt();
-
-				expect(result).toBeUndefined();
-			});
-		});
 	});
 });
