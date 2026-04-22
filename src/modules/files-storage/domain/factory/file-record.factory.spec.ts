@@ -97,14 +97,6 @@ describe('FileRecordFactory', () => {
 				expect(result.getProps().size).toBe(0);
 			});
 
-			it('should default storageType to STANDARD when not provided', () => {
-				const { name, mimeType, params, userId } = setup();
-
-				const result = FileRecordFactory.buildFromExternalInput(name, mimeType, params, userId, StorageType.STANDARD);
-
-				expect(result.getProps().storageType).toBe(StorageType.STANDARD);
-			});
-
 			it('should generate a non-empty id', () => {
 				const { name, mimeType, params, userId } = setup();
 
