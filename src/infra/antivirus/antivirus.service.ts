@@ -53,7 +53,7 @@ export class AntivirusService {
 					this.options.exchange,
 					this.options.routingKey,
 					{ download_uri: downloadUri, callback_uri: callbackUri },
-					{ persistent: true }
+					{ persistent: true, mandatory: true }
 				);
 			}
 		} catch (err) {

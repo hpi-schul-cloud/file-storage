@@ -56,7 +56,7 @@ describe('AntivirusService', () => {
 						download_uri: `http://localhost/api/v3/file-security/download/${requestToken}`,
 					},
 
-					{ persistent: true },
+					{ persistent: true, mandatory: true },
 				];
 
 				return { requestToken, expectedParams };

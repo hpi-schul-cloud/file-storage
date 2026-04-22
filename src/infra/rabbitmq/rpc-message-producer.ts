@@ -1,4 +1,4 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { AmqpConnection, RequestOptions, RpcTimeoutError } from '@golevelup/nestjs-rabbitmq';
 import { ErrorMapper } from './error.mapper';
 import { RpcTimeoutException } from './loggable';
 import { RpcMessage } from './rpc-message';
@@ -18,9 +18,7 @@ export abstract class RpcMessageProducer {
 
 			return response.message;
 		} catch (error) {
-			// https://github.com/golevelup/nestjs/issues/1083
-			// right now there is no dedicated exception, so we have to check for the string value here
-			if (error instanceof Error && error.message?.includes('Failed to receive response within timeout')) {
+			if (error instanceof RpcTimeoutError) {
 				throw new RpcTimeoutException(error);
 			}
 			throw error;
@@ -28,7 +26,7 @@ export abstract class RpcMessageProducer {
 	}
 
 	// need to be fixed with https://ticketsystem.dbildungscloud.de/browse/BC-2984
-	// mapRpcErrorResponseToDomainError should also removed with this ticket
+	// mapRpcErrorResponseToDomainError should also be removed with this ticket
 	protected checkError<T>(response: RpcMessage<T>): void {
 		const { error } = response;
 		if (error) {
@@ -37,16 +35,7 @@ export abstract class RpcMessageProducer {
 		}
 	}
 
-	protected createRequest(
-		event: string,
-		payload: unknown
-	): {
-		exchange: string;
-		routingKey: string;
-		payload: unknown;
-		timeout: number;
-		expiration?: number;
-	} {
+	protected createRequest(event: string, payload: unknown): RequestOptions {
 		// expiration should be greater than timeout
 		const expiration = this.timeout > 0 ? this.timeout * 1.1 : undefined;
 
@@ -56,6 +45,9 @@ export abstract class RpcMessageProducer {
 			payload,
 			timeout: this.timeout,
 			expiration,
+			publishOptions: {
+				mandatory: true,
+			},
 		};
 	}
 }

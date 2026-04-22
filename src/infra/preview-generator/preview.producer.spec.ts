@@ -73,6 +73,9 @@ describe('PreviewProducer', () => {
 					payload: params,
 					timeout,
 					expiration: timeout * 1.1,
+					publishOptions: {
+						mandatory: true,
+					},
 				};
 
 				return { params, expectedParams, message };
