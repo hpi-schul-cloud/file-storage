@@ -225,6 +225,19 @@ export class FilesStorageUC {
 	}
 
 	// restore
+	public async restoreMultipleFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDelete(params.fileRecordIds);
+		const parentReferences = FileRecord.getUniqueParentReferences(fileRecords);
+
+		await this.checkPermissions(parentReferences, FileStorageAuthorizationContext.create);
+
+		await this.filesStorageService.restoreFiles(fileRecords);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
+
+		return fileRecordListResponse;
+	}
+
 	public async restoreFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
@@ -332,6 +345,23 @@ export class FilesStorageUC {
 		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
+		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
+			fileRecordWithStatus,
+			count,
+			pagination
+		);
+
+		return fileRecordListResponse;
+	}
+
+	public async getDeletedFileRecordsOfParent(
+		params: FileRecordParams,
+		pagination: PaginationParams
+	): Promise<FileRecordListResponse> {
+		await this.checkPermission(params, FileStorageAuthorizationContext.create);
+
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteByParent(params.parentId);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
 			fileRecordWithStatus,
