@@ -17,6 +17,14 @@ export class FilePathFactory {
 		return fileRecords.map((fileRecord) => this.create(fileRecord));
 	}
 
+	public static createTrashPath(fileRecord: FileRecord): string {
+		return [StorageFolders.TRASH, this.create(fileRecord)].join('/');
+	}
+
+	public static createManyTrashPaths(fileRecords: FileRecord[]): string[] {
+		return fileRecords.map((fileRecord) => this.createTrashPath(fileRecord));
+	}
+
 	public static createPreviewDirectory(fileRecord: FileRecord): string {
 		const { storageLocationId } = fileRecord.getStorageReference();
 
