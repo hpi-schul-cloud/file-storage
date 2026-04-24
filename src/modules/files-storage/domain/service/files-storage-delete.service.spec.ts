@@ -248,9 +248,9 @@ describe('FilesStorageService delete methods', () => {
 				const fileRecords = fileRecordTestFactory().buildList(3);
 				FileRecord.markForDelete(fileRecords);
 
-				jest.spyOn(FilePathFactory, 'createManyTrashPaths').mockReturnValueOnce(
-					fileRecords.map((fileRecord) => `trash/path/${fileRecord.id}`)
-				);
+				jest
+					.spyOn(FilePathFactory, 'createManyTrashPaths')
+					.mockReturnValueOnce(fileRecords.map((fileRecord) => `trash/path/${fileRecord.id}`));
 
 				storageClient.delete.mockResolvedValueOnce();
 				fileRecordRepo.delete.mockResolvedValueOnce();
@@ -280,6 +280,36 @@ describe('FilesStorageService delete methods', () => {
 				await service.permanentlyDeleteFiles([]);
 
 				expect(storageClient.delete).not.toHaveBeenCalled();
+				expect(fileRecordRepo.delete).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN storageClient.delete throws an error', () => {
+			const setup = () => {
+				const fileRecords = fileRecordTestFactory().buildList(3);
+				FileRecord.markForDelete(fileRecords);
+				const error = new Error('S3 delete failed');
+
+				jest
+					.spyOn(FilePathFactory, 'createManyTrashPaths')
+					.mockReturnValueOnce(fileRecords.map((fileRecord) => `trash/path/${fileRecord.id}`));
+
+				storageClient.delete.mockRejectedValueOnce(error);
+
+				return { fileRecords, error };
+			};
+
+			it('should throw the error', async () => {
+				const { fileRecords, error } = setup();
+
+				await expect(service.permanentlyDeleteFiles(fileRecords)).rejects.toThrow(error);
+			});
+
+			it('should not call fileRecordRepo.delete', async () => {
+				const { fileRecords } = setup();
+
+				await expect(service.permanentlyDeleteFiles(fileRecords)).rejects.toThrow();
+
 				expect(fileRecordRepo.delete).not.toHaveBeenCalled();
 			});
 		});
