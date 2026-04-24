@@ -1,11 +1,14 @@
-import { MikroORM, ObjectId } from '@mikro-orm/mongodb';
+import { Entity, MikroORM, ObjectId } from '@mikro-orm/mongodb';
 import { setupEntities } from '@testing/database';
-import { UserEntity } from '@testing/entity/user.entity';
+import { BaseEntity } from './base.entity';
+
+@Entity()
+class TestEntity extends BaseEntity {}
 
 describe('BaseEntity', () => {
 	let orm: MikroORM;
 	beforeAll(async () => {
-		orm = await setupEntities([UserEntity]);
+		orm = await setupEntities([TestEntity]);
 	});
 
 	afterAll(async () => {
@@ -14,7 +17,7 @@ describe('BaseEntity', () => {
 
 	describe('when _id property is set to ObjectId', () => {
 		it('should serialize the ObjectId to the id property', () => {
-			const user = new UserEntity();
+			const user = new TestEntity();
 			user._id = new ObjectId();
 			orm.em.persist(user);
 
@@ -24,7 +27,7 @@ describe('BaseEntity', () => {
 
 	describe('when id property is set to serialized ObjectId', () => {
 		it('should wrap the serialized id to the _id property', () => {
-			const user = new UserEntity();
+			const user = new TestEntity();
 			user.id = new ObjectId().toHexString();
 			orm.em.persist(user);
 

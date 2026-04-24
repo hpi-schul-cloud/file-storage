@@ -1,4 +1,5 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import {
 	accessTokenPayloadResponseTestFactory,
@@ -19,7 +20,6 @@ import {
 } from '@modules/files-storage/testing';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
@@ -89,9 +89,9 @@ describe('Wopi Controller (API)', () => {
 
 	describe('getAuthorizedCollaboraDocumentUrl', () => {
 		describe('when editorMode is write', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -112,7 +112,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 200 and valid access url', async () => {
-				const { query, loggedInClient, token, collaboraUrl } = await setup();
+				const { query, loggedInClient, token, collaboraUrl } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -126,9 +126,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when editorMode is VIEW', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -148,7 +148,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 200 and valid access url', async () => {
-				const { query, loggedInClient, token, collaboraUrl } = await setup();
+				const { query, loggedInClient, token, collaboraUrl } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -162,9 +162,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when filerecord is blocked', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
@@ -185,7 +185,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 404', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -194,9 +194,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when filerecord has mimetype not compatible with collabora', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asPdf().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -225,9 +225,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when filerecord has size exceeding the collabora limit', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const size = collaboraMaxFileSizeInBytes + 1;
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().setSize(size).buildWithId();
@@ -257,9 +257,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when WOPI feature is disabled', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
 				wopiConfig.featureColumnBoardCollaboraEnabled = false;
@@ -288,9 +288,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when user is not authorized', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
@@ -316,9 +316,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when Collabora service fails to get discovery URL', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
@@ -344,9 +344,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when fileRecordId is not valid', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId('').build();
 
@@ -354,7 +354,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -363,9 +363,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when editorMode is not valid', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withEditorMode('invalid-mode' as EditorMode)
 					.build();
@@ -374,7 +374,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -383,9 +383,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when userDisplayName is undefined', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withUserDisplayName(undefined as unknown as string)
 					.build();
@@ -394,7 +394,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -403,16 +403,16 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when userDisplayName is more than 100 characters', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
 
 				return { query, loggedInClient };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 

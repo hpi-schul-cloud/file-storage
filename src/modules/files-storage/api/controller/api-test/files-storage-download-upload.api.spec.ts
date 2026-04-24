@@ -1,5 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
@@ -7,7 +8,6 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, ScanStatus, StorageType } from '../../../domain';
@@ -75,15 +75,16 @@ describe('files-storage controller (API)', () => {
 
 	describe('upload action', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+			const jwtPayload = jwtPayloadFactory.build();
+			const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const { userId } = jwtPayload;
 
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
-			return { validId, loggedInClient, user: studentUser };
+			return { validId, loggedInClient, userId };
 		};
 
 		const uploadFile = async (routeName: string, apiClient: TestApiClient) => {
@@ -157,7 +158,7 @@ describe('files-storage controller (API)', () => {
 			});
 
 			it('should return the new created file record', async () => {
-				const { loggedInClient, validId, user } = setup();
+				const { loggedInClient, validId, userId } = setup();
 
 				const result = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				const response = result.body as FileRecordEntity;
@@ -167,7 +168,7 @@ describe('files-storage controller (API)', () => {
 						id: expect.any(String),
 						name: 'test.txt',
 						parentId: validId,
-						creatorId: user.id,
+						creatorId: userId,
 						mimeType: 'text/plain',
 						parentType: 'schools',
 						securityCheckStatus: 'pending',
@@ -200,7 +201,7 @@ describe('files-storage controller (API)', () => {
 				});
 
 				it('should return the new created file record', async () => {
-					const { loggedInClient, validId, user } = setup();
+					const { loggedInClient, validId, userId } = setup();
 
 					const result = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 					const response = result.body as FileRecordEntity;
@@ -210,7 +211,7 @@ describe('files-storage controller (API)', () => {
 							id: expect.any(String),
 							name: 'test.txt',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'text/plain',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
@@ -287,9 +288,8 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -400,9 +400,10 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe(`with new file`, () => {
 				const setup = async (fileName = 'test.txt') => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const jwtPayload = jwtPayloadFactory.build();
+					const { userId } = jwtPayload;
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -427,7 +428,7 @@ describe('files-storage controller (API)', () => {
 						},
 					};
 
-					return { validId, fileId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, userId };
 				};
 
 				it('should return status 201 for successful upload', async () => {
@@ -439,7 +440,7 @@ describe('files-storage controller (API)', () => {
 				});
 
 				it('should return the new created file record', async () => {
-					const { validId, loggedInClient, body, user } = await setup();
+					const { validId, loggedInClient, body, userId } = await setup();
 
 					const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 					const response = result.body as FileRecordEntity;
@@ -449,7 +450,7 @@ describe('files-storage controller (API)', () => {
 							id: expect.any(String),
 							name: 'test (1).txt',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'application/octet-stream',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
@@ -460,7 +461,7 @@ describe('files-storage controller (API)', () => {
 				describe('when the url is encoded', () => {
 					it('should work with fileNames with special characters', async () => {
 						const fileName = encodeURI('we ❤️ bugfixes.doc');
-						const { validId, loggedInClient, body, user } = await setup(fileName);
+						const { validId, loggedInClient, body, userId } = await setup(fileName);
 
 						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 						const response = result.body as FileRecordEntity;
@@ -470,7 +471,7 @@ describe('files-storage controller (API)', () => {
 								id: expect.any(String),
 								name: fileName,
 								parentId: validId,
-								creatorId: user.id,
+								creatorId: userId,
 								mimeType: 'application/octet-stream',
 								parentType: 'schools',
 								securityCheckStatus: 'pending',
@@ -482,7 +483,7 @@ describe('files-storage controller (API)', () => {
 				describe('when the url is unencoded', () => {
 					it('should work with fileNames with special characters', async () => {
 						const fileName = 'we ❤️ bugfixes.doc';
-						const { validId, loggedInClient, body, user } = await setup(fileName);
+						const { validId, loggedInClient, body, userId } = await setup(fileName);
 
 						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 						const response = result.body as FileRecordEntity;
@@ -492,7 +493,7 @@ describe('files-storage controller (API)', () => {
 								id: expect.any(String),
 								name: fileName.replace(/\.doc/, ' (1).doc'),
 								parentId: validId,
-								creatorId: user.id,
+								creatorId: userId,
 								mimeType: 'application/octet-stream',
 								parentType: 'schools',
 								securityCheckStatus: 'pending',
@@ -504,9 +505,9 @@ describe('files-storage controller (API)', () => {
 
 			describe('when the name contains opening bracket', () => {
 				const setup = async (fileName: string) => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const jwtPayload = jwtPayloadFactory.build();
+					const { userId } = jwtPayload;
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -532,11 +533,11 @@ describe('files-storage controller (API)', () => {
 						},
 					};
 
-					return { validId, fileId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, userId };
 				};
 
 				it('should remove opening bracket', async () => {
-					const { validId, loggedInClient, body, user } = await setup('test<script>.txt');
+					const { validId, loggedInClient, body, userId } = await setup('test<script>.txt');
 
 					const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 					const response = result.body as FileRecordEntity;
@@ -546,7 +547,7 @@ describe('files-storage controller (API)', () => {
 							id: expect.any(String),
 							name: 'test',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'application/octet-stream',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
@@ -557,9 +558,9 @@ describe('files-storage controller (API)', () => {
 
 			describe(`with already existing file`, () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -602,9 +603,11 @@ describe('files-storage controller (API)', () => {
 			describe('when parent already has the maximum number of files allowed', () => {
 				let defaultMaxFilesPerParent: number;
 				const setup = async (fileName = 'test.txt') => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const { userId } = jwtPayload;
+
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -634,7 +637,7 @@ describe('files-storage controller (API)', () => {
 
 					config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
-					return { validId, fileId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, userId };
 				};
 
 				afterEach(() => {
@@ -664,9 +667,9 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -720,9 +723,9 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe('when mimetype is not application/pdf', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -776,14 +779,13 @@ describe('files-storage controller (API)', () => {
 
 			describe('when mimetype is application/pdf', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-
-					const validId = new ObjectId().toHexString();
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
+					const validId = new ObjectId().toHexString();
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
 						.attach('file', Buffer.from('abcd'), 'test.txt')
@@ -813,9 +815,9 @@ describe('files-storage controller (API)', () => {
 
 			describe(`when storageType is ${StorageType.TEMP}`, () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -859,9 +861,9 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -910,9 +912,9 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -1013,10 +1015,9 @@ describe('files-storage controller (API)', () => {
 	describe('file-security.download()', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { loggedInClient };
@@ -1033,9 +1034,8 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 

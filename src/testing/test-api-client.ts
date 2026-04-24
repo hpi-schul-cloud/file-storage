@@ -1,9 +1,7 @@
-import { CreateJwtPayload } from '@infra/auth-guard';
+import type { CreateJwtPayload } from '@infra/auth-guard';
 import { INestApplication } from '@nestjs/common';
 import type { Server } from 'node:net';
 import supertest, { Response } from 'supertest';
-import { AccountEntity } from './entity/account.entity';
-import { UserEntity } from './entity/user.entity';
 import { JwtAuthenticationFactory } from './factory/jwt-authentication.factory';
 
 interface AuthenticationResponse {
@@ -108,19 +106,8 @@ export class TestApiClient {
 		return testRequestInstance;
 	}
 
-	public loginByUser(account: AccountEntity, user: UserEntity): this {
-		const jwtParams: CreateJwtPayload = {
-			accountId: account.id,
-			userId: user.id,
-			schoolId: user.school.toHexString(),
-			roles: [],
-			support: false,
-			isExternalUser: false,
-		};
-		const roleId = user.roles[0]?.id.toString();
-		if (roleId) jwtParams.roles.push(roleId);
-
-		const jwt = JwtAuthenticationFactory.createJwt(jwtParams);
+	public loginByUser(jwtPayload: CreateJwtPayload): this {
+		const jwt = JwtAuthenticationFactory.createJwt(jwtPayload);
 
 		return new (this.constructor as new (app: INestApplication, baseRoute: string, authValue: string) => this)(
 			this.app,

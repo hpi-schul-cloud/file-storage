@@ -1,14 +1,9 @@
-import { EntityManager } from '@mikro-orm/mongodb';
 import { Controller, Get, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MongoMemoryDatabaseModule } from '@testing/database';
-import { AccountEntity } from '@testing/entity/account.entity';
-import { RoleEntity } from '@testing/entity/role.entity';
-import { UserEntity } from '@testing/entity/user.entity';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import { AuthGuardModule, AuthGuardOptions } from '../auth-guard.module';
 import { CurrentUserInterface } from '../interface';
+import { jwtPayloadFactory } from '../testing';
 import { CurrentUser, JWT, JwtAuthentication } from './jwt-auth.decorator';
 
 const baseRouteName = '/test-decorator';
@@ -33,22 +28,17 @@ export class TestDecoratorJWTController {
 describe('Decorators', () => {
 	let app: INestApplication;
 	let module: TestingModule;
-	let em: EntityManager;
 	let apiClient: TestApiClient;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
-			imports: [
-				AuthGuardModule.register([AuthGuardOptions.JWT]),
-				MongoMemoryDatabaseModule.forRoot([UserEntity, AccountEntity, RoleEntity]),
-			],
+			imports: [AuthGuardModule.register([AuthGuardOptions.JWT])],
 			controllers: [TestDecoratorCurrentUserController, TestDecoratorJWTController],
 		}).compile();
 
 		app = module.createNestApplication();
 		await app.init();
 
-		em = module.get(EntityManager);
 		apiClient = new TestApiClient(app, baseRouteName);
 	});
 
@@ -67,19 +57,16 @@ describe('Decorators', () => {
 		});
 
 		describe('when user is logged in', () => {
-			const setup = async () => {
-				const { teacherAccount, teacherUser } = UserAndAccountTestFactory.buildTeacher();
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
 
-				await em.persistAndFlush([teacherAccount, teacherUser]);
-				em.clear();
+				const loggedInClient = apiClient.loginByUser(jwtPayload);
 
-				const loggedInClient = apiClient.loginByUser(teacherAccount, teacherUser);
-
-				return { loggedInClient, teacherUser };
+				return { loggedInClient, jwtPayload };
 			};
 
 			it('should return status 200 for successful request.', async () => {
-				const { loggedInClient } = await setup();
+				const { loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/jwt');
 
@@ -87,7 +74,7 @@ describe('Decorators', () => {
 			});
 
 			it('should return jwt token.', async () => {
-				const { loggedInClient } = await setup();
+				const { loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/jwt');
 				// @ts-expect-error Testcase
@@ -105,21 +92,20 @@ describe('Decorators', () => {
 		});
 
 		describe('when user is logged in', () => {
-			const setup = async () => {
-				const { teacherAccount, teacherUser } = UserAndAccountTestFactory.buildTeacher();
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build({ support: false, isExternalUser: false });
 
-				await em.persistAndFlush([teacherAccount, teacherUser]);
-				em.clear();
+				delete jwtPayload.systemId;
 
-				const loggedInClient = apiClient.loginByUser(teacherAccount, teacherUser);
+				const loggedInClient = apiClient.loginByUser(jwtPayload);
 
 				const expectedCurrentUser = {
-					accountId: teacherAccount.id,
+					accountId: jwtPayload.accountId,
 					isExternalUser: false,
-					roles: [...teacherUser.roles.map((role) => role.id)],
-					schoolId: teacherUser.school.toHexString(),
+					roles: [...jwtPayload.roles.map((role) => role)],
+					schoolId: jwtPayload.schoolId,
 					support: false,
-					userId: teacherUser.id,
+					userId: jwtPayload.userId,
 				};
 
 				return { loggedInClient, expectedCurrentUser };

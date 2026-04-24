@@ -1,5 +1,6 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { PreviewProducer } from '@infra/preview-generator';
@@ -11,7 +12,6 @@ import { INestApplication, NotFoundException, StreamableFile } from '@nestjs/com
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
 import { cleanupCollections } from '@testing/database';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { PreviewOutputMimeTypes, PreviewWidth, ScanStatus } from '../../../domain';
@@ -88,9 +88,9 @@ describe('File Controller (API) - preview', () => {
 	};
 
 	const setupApiClient = () => {
-		const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+		const jwtPayload = jwtPayloadFactory.build();
 
-		const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+		const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 		const validId = new ObjectId().toHexString();
 

@@ -1,11 +1,11 @@
 import { createMock } from '@golevelup/ts-jest';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType } from '../../../domain';
@@ -40,9 +40,10 @@ describe(`${baseRouteName} (api)`, () => {
 	});
 
 	const setup = async () => {
-		const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+		const jwtPayload = jwtPayloadFactory.build();
+		const { userId } = jwtPayload;
 
-		const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+		const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 		const validId = new ObjectId().toHexString();
 
@@ -55,14 +56,14 @@ describe(`${baseRouteName} (api)`, () => {
 		const fileRecord = fileRecordEntityFactory.build({
 			...fileParams,
 			name: 'test.txt',
-			creatorId: studentUser.id,
+			creatorId: userId,
 		});
 		fileRecords.push(fileRecord);
 
 		await em.persistAndFlush(fileRecords);
 		em.clear();
 
-		return { user: studentUser, fileRecord, fileRecords, loggedInClient };
+		return { userId, fileRecord, fileRecords, loggedInClient };
 	};
 
 	describe('with not authenticated user', () => {

@@ -1,4 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
@@ -6,7 +7,6 @@ import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus, StorageLocation } from '../../../domain';
@@ -51,9 +51,9 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with bad request data', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+			const jwtPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 			const validId = new ObjectId().toHexString();
 
@@ -105,9 +105,9 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe(`with valid request data`, () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+			const jwtPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const loggedInClient = testApiClient.loginByUser(jwtPayload);
 
 			const validId = new ObjectId().toHexString();
 
