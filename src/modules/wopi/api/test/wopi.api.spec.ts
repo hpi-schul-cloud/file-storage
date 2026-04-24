@@ -1,4 +1,5 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import {
 	accessTokenPayloadResponseTestFactory,
@@ -19,7 +20,6 @@ import {
 } from '@modules/files-storage/testing';
 import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
 import fs from 'node:fs';
@@ -37,7 +37,6 @@ jest.mock('../../../files-storage/domain/utils/detect-mime-type.utils');
 
 describe('Wopi Controller (API)', () => {
 	let app: INestApplication;
-	let testApiClient: TestApiClient;
 	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 	let collaboraService: DeepMocked<CollaboraService>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
@@ -45,6 +44,7 @@ describe('Wopi Controller (API)', () => {
 	let filesStorageConfig: DeepMocked<FileStorageConfig>;
 	let em: EntityManager;
 	const collaboraMaxFileSizeInBytes = 104857600;
+	const baseRoute = '/wopi';
 
 	beforeAll(async () => {
 		const moduleFixture = await Test.createTestingModule({
@@ -74,8 +74,6 @@ describe('Wopi Controller (API)', () => {
 		storageClient = moduleFixture.get(FILES_STORAGE_S3_CONNECTION);
 		wopiConfig = moduleFixture.get(WOPI_CONFIG_TOKEN);
 		filesStorageConfig = moduleFixture.get(FILE_STORAGE_CONFIG_TOKEN);
-
-		testApiClient = new TestApiClient(app, '/wopi');
 	});
 
 	afterAll(async () => {
@@ -89,9 +87,9 @@ describe('Wopi Controller (API)', () => {
 
 	describe('getAuthorizedCollaboraDocumentUrl', () => {
 		describe('when editorMode is write', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -112,7 +110,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 200 and valid access url', async () => {
-				const { query, loggedInClient, token, collaboraUrl } = await setup();
+				const { query, loggedInClient, token, collaboraUrl } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -126,9 +124,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when editorMode is VIEW', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -148,7 +146,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 200 and valid access url', async () => {
-				const { query, loggedInClient, token, collaboraUrl } = await setup();
+				const { query, loggedInClient, token, collaboraUrl } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -162,9 +160,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when filerecord is blocked', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
@@ -185,7 +183,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 404', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -194,9 +192,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when filerecord has mimetype not compatible with collabora', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asPdf().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -216,7 +214,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 404', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -225,9 +223,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when filerecord has size exceeding the collabora limit', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const size = collaboraMaxFileSizeInBytes + 1;
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().setSize(size).buildWithId();
@@ -248,7 +246,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 404', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -257,9 +255,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when WOPI feature is disabled', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
 				wopiConfig.featureColumnBoardCollaboraEnabled = false;
@@ -268,7 +266,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 404 NotFound because route is disabled', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -281,16 +279,17 @@ describe('Wopi Controller (API)', () => {
 			it('should return 401 Unauthorized', async () => {
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
-				const response = await testApiClient.get('/authorized-collabora-document-url').query(query);
-
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get('/authorized-collabora-document-url')
+					.query(query);
 				expect(response.status).toBe(401);
 			});
 		});
 
 		describe('when user is not authorized', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
@@ -307,7 +306,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 403 Forbidden because user is not authorized', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -316,9 +315,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when Collabora service fails to get discovery URL', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
@@ -335,7 +334,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 500 Internal Server Error', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -344,9 +343,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when fileRecordId is not valid', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId('').build();
 
@@ -354,7 +353,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -363,9 +362,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when editorMode is not valid', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withEditorMode('invalid-mode' as EditorMode)
 					.build();
@@ -374,7 +373,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -383,9 +382,9 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when userDisplayName is undefined', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withUserDisplayName(undefined as unknown as string)
 					.build();
@@ -394,7 +393,7 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -403,16 +402,16 @@ describe('Wopi Controller (API)', () => {
 		});
 
 		describe('when userDisplayName is more than 100 characters', () => {
-			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+			const setup = () => {
+				const jwtPayload = jwtPayloadFactory.build();
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRoute, jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
 
 				return { query, loggedInClient };
 			};
 
 			it('should return 400 Bad Request', async () => {
-				const { query, loggedInClient } = await setup();
+				const { query, loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/authorized-collabora-document-url').query(query);
 
@@ -454,7 +453,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 200 and valid file info', async () => {
 				const { fileRecord, query, expectedResult } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				const result = response.body as WopiFileInfoResponse;
 
@@ -484,7 +485,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -510,7 +513,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -537,7 +542,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -554,9 +561,11 @@ describe('Wopi Controller (API)', () => {
 			};
 
 			it('should return 404 Notfound because route is disabled', async () => {
-				const { fileRecord, query } = await setup();
+				const { fileRecord, query } = setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled.');
@@ -581,7 +590,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(401);
 			});
@@ -605,7 +616,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 500 Internal Server Error', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(500);
 			});
@@ -629,7 +642,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404 not found', async () => {
 				const { fileRecord, query } = setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -646,7 +661,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const { query } = setup();
 
-				const response = await testApiClient.get(`/files/invalid-id`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/invalid-id`)
+					.query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -656,7 +673,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const fileRecordId = new ObjectId().toHexString();
 
-				const response = await testApiClient.get(`/files/${fileRecordId}`);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute).get(`/files/${fileRecordId}`);
 
 				expect(response.status).toBe(400);
 			});
@@ -673,7 +690,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const { query, fileRecordId } = setup();
 
-				const response = await testApiClient.get(`/files/${fileRecordId}`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecordId}`)
+					.query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -705,7 +724,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 200 and file contents as stream', async () => {
 				const { fileRecord, query, contentForReadable } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(200);
 				expect(response.body).toBeInstanceOf(Buffer);
@@ -738,7 +759,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -768,7 +791,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -799,7 +824,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -819,7 +846,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 				expect(response.body.message).toBe('WOPI feature is disabled.');
@@ -846,10 +875,12 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
-			it('should return 401 Unauthorizrd', async () => {
+			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(401);
 			});
@@ -877,7 +908,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404 not found', async () => {
 				const { fileRecord, query } = setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(404);
 			});
@@ -906,7 +939,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 500 Internal Server Error', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient.get(`/files/${fileRecord.id}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecord.id}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(500);
 			});
@@ -923,7 +958,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const { query } = setup();
 
-				const response = await testApiClient.get(`/files/invalid-id/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/invalid-id/contents`)
+					.query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -933,7 +970,9 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const fileRecordId = new ObjectId().toHexString();
 
-				const response = await testApiClient.get(`/files/${fileRecordId}/contents`);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute).get(
+					`/files/${fileRecordId}/contents`
+				);
 
 				expect(response.status).toBe(400);
 			});
@@ -944,7 +983,9 @@ describe('Wopi Controller (API)', () => {
 				const fileRecordId = new ObjectId().toHexString();
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken('invalid-token').build();
 
-				const response = await testApiClient.get(`/files/${fileRecordId}/contents`).query(query);
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
+					.get(`/files/${fileRecordId}/contents`)
+					.query(query);
 
 				expect(response.status).toBe(400);
 			});
@@ -977,7 +1018,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 200 and updated file record', async () => {
 				const { fileRecord, query, initialContentLastModifiedAt } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1012,10 +1053,10 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
 
-			it('should return 500 internal error becaus 409 in wopi as other use case', async () => {
+			it('should return 500 internal error because 409 in wopi as other use case', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1046,7 +1087,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404 Notfound because route is disabled', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1077,7 +1118,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1114,7 +1155,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 200 and updated file record', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1144,7 +1185,7 @@ describe('Wopi Controller (API)', () => {
 			it('should pass original error ', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1173,7 +1214,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 404 not found', async () => {
 				const { fileRecord, query } = setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1207,7 +1248,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 500 Internal Server Error', async () => {
 				const { fileRecord, query } = await setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecord.id}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1227,7 +1268,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const { query } = setup();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/invalid-id/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1240,7 +1281,7 @@ describe('Wopi Controller (API)', () => {
 			it('should return 400 Bad Request', async () => {
 				const fileRecordId = new ObjectId().toHexString();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecordId}/contents`)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
 
@@ -1253,7 +1294,7 @@ describe('Wopi Controller (API)', () => {
 				const fileRecordId = new ObjectId().toHexString();
 				const query = wopiAccessTokenParamsTestFactory().withAccessToken('invalid-token').build();
 
-				const response = await testApiClient
+				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
 					.post(`/files/${fileRecordId}/contents`)
 					.query(query)
 					.attach('file', Buffer.from('abcd'), 'test.txt');
@@ -1297,9 +1338,16 @@ describe('Wopi Controller (API)', () => {
 				const { fileRecord, query, initialContentLastModifiedAt, stream } = await setup();
 
 				try {
-					await testApiClient.post(`/files/${fileRecord.id}/contents`).query(query).attach('file', stream, 'test.txt');
-				} catch (error) {
-					expect(error.message).toBe('Aborted');
+					await TestApiClient.createUnauthenticated(app, baseRoute)
+						.post(`/files/${fileRecord.id}/contents`)
+						.query(query)
+						.attach('file', stream, 'test.txt');
+				} catch (error: unknown) {
+					if (error instanceof Error) {
+						expect(error.message).toBe('Aborted');
+					} else {
+						throw error;
+					}
 				}
 
 				const updatedFileRecord = await em.findOne(FileRecordEntity, fileRecord.id);

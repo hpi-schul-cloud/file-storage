@@ -1,11 +1,11 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { ForbiddenException, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus, StorageLocation } from '../../../domain';
@@ -17,7 +17,6 @@ const baseRouteName = '/file';
 describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 	let authorizationClient: DeepMocked<AuthorizationClientAdapter>;
 
 	beforeAll(async () => {
@@ -34,7 +33,6 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 		await app.init();
 		em = module.get(EntityManager);
 		authorizationClient = module.get(AuthorizationClientAdapter);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -44,7 +42,8 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	describe('with not authenticated user', () => {
 		it('should return status 401', async () => {
 			const fileRecordId = new ObjectId().toHexString();
-			const response = await testApiClient.get(`/${fileRecordId}`);
+			const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+			const response = await unauthenticatedClient.get(`/${fileRecordId}`);
 
 			expect(response.status).toEqual(401);
 		});
@@ -52,8 +51,8 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 
 	describe('with bad request data', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const jwtPayload = jwtPayloadFactory.build();
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			return { loggedInClient };
 		};
@@ -75,8 +74,8 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 
 	describe('with valid request data', () => {
 		const setup = async () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const jwtPayload = jwtPayloadFactory.build();
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			const fileRecord = fileRecordEntityFactory.build();
 
@@ -202,16 +201,16 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 
 	describe('authorization', () => {
 		const setup = async () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-			const { teacherUser, teacherAccount } = UserAndAccountTestFactory.buildTeacher();
+			const jwtPayload = jwtPayloadFactory.build();
+			const jwtTeacherPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-			const teacherClient = testApiClient.loginByUser(teacherAccount, teacherUser);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const teacherClient = TestApiClient.createWithJwt(app, baseRouteName, jwtTeacherPayload);
 
 			const fileRecord = fileRecordEntityFactory.build({
 				storageLocation: StorageLocation.SCHOOL,
 				parentType: FileRecordParentType.School,
-				creatorId: studentUser.id,
+				creatorId: jwtPayload.userId,
 			});
 
 			await em.persistAndFlush(fileRecord);

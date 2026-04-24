@@ -11,12 +11,12 @@ export class JwtAuthenticationFactory {
 		const validJwt = jwt.sign(
 			{
 				sub: params.accountId,
-				iss: domain,
-				aud: domain,
 				jti: 'jti',
 				iat: Date.now() / 1000,
 				exp: (Date.now() + 1000000) / 1000,
 				...params,
+				iss: domain,
+				aud: domain,
 			},
 			privateKey.replace(/\\n/g, '\n'),
 			{

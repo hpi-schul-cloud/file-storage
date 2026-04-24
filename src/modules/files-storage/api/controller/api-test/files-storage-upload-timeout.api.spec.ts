@@ -1,5 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
+import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
@@ -10,7 +11,6 @@ import {
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
@@ -23,7 +23,6 @@ const createRndInt = (max: number) => Math.floor(Math.random() * max);
 describe('files-storage controller (API) - Upload Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
-	let testApiClient: TestApiClient;
 	let requestTimeoutConfig: RequestTimeoutConfig;
 
 	const baseRouteName = '/file';
@@ -53,7 +52,6 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 		await app.init();
 		await app.listen(appPort);
 
-		testApiClient = new TestApiClient(app, baseRouteName);
 		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
 	});
 
@@ -69,13 +67,13 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 
 	describe('upload timeout scenarios', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const jwtPayload = jwtPayloadFactory.build();
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
-			return { validId, loggedInClient, user: studentUser };
+			return { validId, loggedInClient };
 		};
 
 		describe('WHEN upload request exceeds client timeout', () => {
