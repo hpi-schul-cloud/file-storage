@@ -91,7 +91,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when editorMode is write', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -128,7 +128,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when editorMode is VIEW', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -164,7 +164,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when filerecord is blocked', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				fileRecord.securityCheck = fileRecordSecurityCheckEmbeddableFactory.build({ status: ScanStatus.BLOCKED });
@@ -196,7 +196,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when filerecord has mimetype not compatible with collabora', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asPdf().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
@@ -227,7 +227,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when filerecord has size exceeding the collabora limit', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const size = collaboraMaxFileSizeInBytes + 1;
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().setSize(size).buildWithId();
@@ -259,7 +259,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when WOPI feature is disabled', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().build();
 
 				wopiConfig.featureColumnBoardCollaboraEnabled = false;
@@ -290,7 +290,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when user is not authorized', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
@@ -318,7 +318,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when Collabora service fails to get discovery URL', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const fileRecord = fileRecordEntityFactory.asOpenDocument().buildWithId();
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId(fileRecord.id).build();
@@ -346,7 +346,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when fileRecordId is not valid', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withFileRecordId('').build();
 
@@ -365,7 +365,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when editorMode is not valid', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withEditorMode('invalid-mode' as EditorMode)
 					.build();
@@ -385,7 +385,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when userDisplayName is undefined', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory()
 					.withUserDisplayName(undefined as unknown as string)
 					.build();
@@ -405,7 +405,7 @@ describe('Wopi Controller (API)', () => {
 		describe('when userDisplayName is more than 100 characters', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 				const query = authorizedCollaboraDocumentUrlParamsTestFactory().withUserDisplayName('a'.repeat(101)).build();
 
 				return { query, loggedInClient };

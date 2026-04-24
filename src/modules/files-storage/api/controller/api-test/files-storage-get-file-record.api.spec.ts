@@ -53,7 +53,7 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	describe('with bad request data', () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginByUser(jwtPayload);
+			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 			return { loggedInClient };
 		};
@@ -76,7 +76,7 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	describe('with valid request data', () => {
 		const setup = async () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginByUser(jwtPayload);
+			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 			const fileRecord = fileRecordEntityFactory.build();
 
@@ -205,8 +205,8 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 			const jwtPayload = jwtPayloadFactory.build();
 			const jwtTeacherPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginByUser(jwtPayload);
-			const teacherClient = testApiClient.loginByUser(jwtTeacherPayload);
+			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const teacherClient = testApiClient.loginUsingJwt(jwtTeacherPayload);
 
 			const fileRecord = fileRecordEntityFactory.build({
 				storageLocation: StorageLocation.SCHOOL,

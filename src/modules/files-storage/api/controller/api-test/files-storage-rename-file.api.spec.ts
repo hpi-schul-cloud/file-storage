@@ -43,7 +43,7 @@ describe(`${baseRouteName} (api)`, () => {
 		const jwtPayload = jwtPayloadFactory.build();
 		const { userId } = jwtPayload;
 
-		const loggedInClient = testApiClient.loginByUser(jwtPayload);
+		const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 		const validId = new ObjectId().toHexString();
 

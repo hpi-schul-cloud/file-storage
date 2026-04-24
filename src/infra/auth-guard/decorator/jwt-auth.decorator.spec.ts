@@ -60,7 +60,7 @@ describe('Decorators', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = apiClient.loginByUser(jwtPayload);
+				const loggedInClient = apiClient.loginUsingJwt(jwtPayload);
 
 				return { loggedInClient, jwtPayload };
 			};
@@ -97,12 +97,12 @@ describe('Decorators', () => {
 
 				delete jwtPayload.systemId;
 
-				const loggedInClient = apiClient.loginByUser(jwtPayload);
+				const loggedInClient = apiClient.loginUsingJwt(jwtPayload);
 
 				const expectedCurrentUser = {
 					accountId: jwtPayload.accountId,
 					isExternalUser: false,
-					roles: [...jwtPayload.roles.map((role) => role)],
+					roles: [...jwtPayload.roles],
 					schoolId: jwtPayload.schoolId,
 					support: false,
 					userId: jwtPayload.userId,

@@ -85,7 +85,7 @@ describe(TestApiClient.name, () => {
 			it('should store formatted jwt', async () => {
 				const { testApiClient, jwtPayload } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 
 				// eslint-disable-next-line @typescript-eslint/dot-notation
 				expect(loggedInClient['authHeader']).toEqual(expect.any(String));
@@ -94,7 +94,7 @@ describe(TestApiClient.name, () => {
 			it('should fork the client', async () => {
 				const { testApiClient, jwtPayload } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 
 				expect(loggedInClient).not.toStrictEqual(testApiClient);
 			});
@@ -113,7 +113,7 @@ describe(TestApiClient.name, () => {
 			it('should pass the bearer token', async () => {
 				const { testApiClient, jwtPayload, id } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 				const result = await loggedInClient.get(id);
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
@@ -133,7 +133,7 @@ describe(TestApiClient.name, () => {
 			it('should pass the bearer token', async () => {
 				const { testApiClient, jwtPayload } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 				const result = await loggedInClient.post();
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
@@ -153,7 +153,7 @@ describe(TestApiClient.name, () => {
 			it('should pass the bearer token', async () => {
 				const { testApiClient, jwtPayload, id } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 				const result = await loggedInClient.delete(id);
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
@@ -173,7 +173,7 @@ describe(TestApiClient.name, () => {
 			it('should pass the bearer token', async () => {
 				const { testApiClient, jwtPayload } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 				const result = await loggedInClient.put();
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
@@ -193,7 +193,7 @@ describe(TestApiClient.name, () => {
 			it('should pass the bearer token', async () => {
 				const { testApiClient, jwtPayload, id } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = await testApiClient.loginUsingJwt(jwtPayload);
 				const result = await loggedInClient.patch(id);
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));

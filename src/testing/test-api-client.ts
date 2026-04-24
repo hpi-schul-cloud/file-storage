@@ -106,7 +106,7 @@ export class TestApiClient {
 		return testRequestInstance;
 	}
 
-	public loginByUser(jwtPayload: CreateJwtPayload): this {
+	public loginUsingJwt(jwtPayload: CreateJwtPayload): this {
 		const jwt = JwtAuthenticationFactory.createJwt(jwtPayload);
 
 		return new (this.constructor as new (app: INestApplication, baseRoute: string, authValue: string) => this)(

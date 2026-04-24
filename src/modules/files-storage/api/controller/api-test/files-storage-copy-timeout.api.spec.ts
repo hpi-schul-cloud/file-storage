@@ -70,7 +70,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 	describe('copy files timeout scenarios', () => {
 		const setup = async () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginByUser(jwtPayload);
+			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 			const validId = new ObjectId().toHexString();
 			const targetParentId = new ObjectId().toHexString();
 

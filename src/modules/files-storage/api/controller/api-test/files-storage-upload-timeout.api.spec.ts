@@ -70,7 +70,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 	describe('upload timeout scenarios', () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginByUser(jwtPayload);
+			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');

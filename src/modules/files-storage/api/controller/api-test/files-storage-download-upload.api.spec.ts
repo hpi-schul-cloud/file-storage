@@ -76,7 +76,7 @@ describe('files-storage controller (API)', () => {
 	describe('upload action', () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginByUser(jwtPayload);
+			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 			const { userId } = jwtPayload;
 
@@ -289,7 +289,7 @@ describe('files-storage controller (API)', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -403,7 +403,7 @@ describe('files-storage controller (API)', () => {
 					const jwtPayload = jwtPayloadFactory.build();
 					const { userId } = jwtPayload;
 
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -507,7 +507,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async (fileName: string) => {
 					const jwtPayload = jwtPayloadFactory.build();
 					const { userId } = jwtPayload;
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -560,7 +560,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -607,7 +607,7 @@ describe('files-storage controller (API)', () => {
 
 					const { userId } = jwtPayload;
 
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -669,7 +669,7 @@ describe('files-storage controller (API)', () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -725,7 +725,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -781,7 +781,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
@@ -817,7 +817,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(jwtPayload);
+					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -863,7 +863,7 @@ describe('files-storage controller (API)', () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -914,7 +914,7 @@ describe('files-storage controller (API)', () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -1017,7 +1017,7 @@ describe('files-storage controller (API)', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { loggedInClient };
@@ -1035,7 +1035,7 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginByUser(jwtPayload);
+				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 

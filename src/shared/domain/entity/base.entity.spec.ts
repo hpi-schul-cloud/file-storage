@@ -17,22 +17,22 @@ describe('BaseEntity', () => {
 
 	describe('when _id property is set to ObjectId', () => {
 		it('should serialize the ObjectId to the id property', () => {
-			const user = new TestEntity();
-			user._id = new ObjectId();
-			orm.em.persist(user);
+			const testEntity = new TestEntity();
+			testEntity._id = new ObjectId();
+			orm.em.persist(testEntity);
 
-			expect(user.id).toEqual(user._id.toHexString());
+			expect(testEntity.id).toEqual(testEntity._id.toHexString());
 		});
 	});
 
 	describe('when id property is set to serialized ObjectId', () => {
 		it('should wrap the serialized id to the _id property', () => {
-			const user = new TestEntity();
-			user.id = new ObjectId().toHexString();
-			orm.em.persist(user);
+			const testEntity = new TestEntity();
+			testEntity.id = new ObjectId().toHexString();
+			orm.em.persist(testEntity);
 
-			expect(user._id).toBeInstanceOf(ObjectId);
-			expect(user._id.toHexString()).toEqual(user.id);
+			expect(testEntity._id).toBeInstanceOf(ObjectId);
+			expect(testEntity._id.toHexString()).toEqual(testEntity.id);
 		});
 	});
 });

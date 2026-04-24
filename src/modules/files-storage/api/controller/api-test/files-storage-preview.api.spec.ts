@@ -90,7 +90,7 @@ describe('File Controller (API) - preview', () => {
 	const setupApiClient = () => {
 		const jwtPayload = jwtPayloadFactory.build();
 
-		const loggedInClient = testApiClient.loginByUser(jwtPayload);
+		const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
 
 		const validId = new ObjectId().toHexString();
 
