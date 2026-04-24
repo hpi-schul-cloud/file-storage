@@ -108,9 +108,11 @@ export class TestApiClient {
 	}
 
 	public static createUnauthenticated(app: INestApplication, baseRoute: string): TestApiClient {
-		const authHeader = '';
+		const authHeader = 'Wrong auth header';
 		const kindOfAuth = 'authorization';
-		return new TestApiClient(app, baseRoute, authHeader, kindOfAuth);
+		const instance = new TestApiClient(app, baseRoute, authHeader, kindOfAuth);
+
+		return instance;
 	}
 
 	public getAuthHeader(): string {

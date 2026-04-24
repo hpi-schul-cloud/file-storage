@@ -875,7 +875,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, fileResponse, contentForReadable };
 			};
 
-			it('should return 401 Unauthorizrd', async () => {
+			it('should return 401 Unauthorized', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await TestApiClient.createUnauthenticated(app, baseRoute)
@@ -1053,7 +1053,7 @@ describe('Wopi Controller (API)', () => {
 				return { fileRecord, query, initialContentLastModifiedAt };
 			};
 
-			it('should return 500 internal error becaus 409 in wopi as other use case', async () => {
+			it('should return 500 internal error because 409 in wopi as other use case', async () => {
 				const { fileRecord, query } = await setup();
 
 				const response = await TestApiClient.createUnauthenticated(app, baseRoute)

@@ -50,7 +50,7 @@ describe(`${baseRouteName} (api)`, () => {
 	});
 
 	describe('restore files of parent', () => {
-		describe('with not authenticated uer', () => {
+		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 				const result = await unauthenticatedClient.post(`/restore/school/123/users/123`);

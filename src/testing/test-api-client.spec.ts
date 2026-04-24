@@ -4,7 +4,7 @@ import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Patch, 
 import { Test } from '@nestjs/testing';
 import { TestApiClient } from './test-api-client';
 
-@Controller('')
+@Controller('/with-jwt')
 class TestController {
 	@Delete(':id')
 	public delete(@Headers('authorization') authorization: string) {
@@ -37,7 +37,7 @@ class TestController {
 	}
 }
 
-@Controller('')
+@Controller('/with-x-api-key')
 class TestXApiKeyController {
 	@Delete(':id')
 	public delete(@Headers('X-API-KEY') authorization: string) {
@@ -56,33 +56,33 @@ class TestXApiKeyController {
 }
 
 describe(TestApiClient.name, () => {
+	let app: INestApplication;
+
+	beforeAll(async () => {
+		const moduleFixture = await Test.createTestingModule({
+			controllers: [TestController, TestXApiKeyController],
+		}).compile();
+
+		app = moduleFixture.createNestApplication();
+
+		await app.init();
+	});
+
+	afterAll(async () => {
+		await app.close();
+	});
+
 	describe('when test request instance exists - jwt auth', () => {
-		let app: INestApplication;
-
-		beforeAll(async () => {
-			const moduleFixture = await Test.createTestingModule({
-				controllers: [TestController],
-			}).compile();
-
-			app = moduleFixture.createNestApplication();
-
-			await app.init();
-		});
-
-		afterAll(async () => {
-			await app.close();
-		});
-
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const testApiClient = TestApiClient.createWithJwt(app, '', jwtPayload);
+			const testApiClient = TestApiClient.createWithJwt(app, '/with-jwt', jwtPayload);
 
 			const id = new ObjectId().toHexString();
 
 			return { testApiClient, jwtPayload, id };
 		};
 
-		describe('login', () => {
+		describe('when client is created with JWT', () => {
 			it('should store formatted jwt', () => {
 				const { testApiClient } = setup();
 
@@ -188,25 +188,9 @@ describe(TestApiClient.name, () => {
 	});
 
 	describe('when test request instance exists - x-api-key auth', () => {
-		let app: INestApplication;
-		const API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
-
-		beforeAll(async () => {
-			const moduleFixture = await Test.createTestingModule({
-				controllers: [TestXApiKeyController],
-			}).compile();
-
-			app = moduleFixture.createNestApplication();
-
-			await app.init();
-		});
-
-		afterAll(async () => {
-			await app.close();
-		});
-
 		const setup = () => {
-			const testApiClient = TestApiClient.createWithApiKey(app, '', API_KEY);
+			const API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
+			const testApiClient = TestApiClient.createWithApiKey(app, '/with-x-api-key', API_KEY);
 			const id = new ObjectId().toHexString();
 
 			return { testApiClient, id };
@@ -242,6 +226,26 @@ describe(TestApiClient.name, () => {
 
 				expect(result.statusCode).toEqual(HttpStatus.OK);
 				expect(result.body).toEqual(expect.objectContaining({ method: 'delete' }));
+			});
+		});
+	});
+
+	describe('when test request instance exists - unauthenticated', () => {
+		const setup = () => {
+			const testApiClient = TestApiClient.createUnauthenticated(app, '/with-jwt');
+			const id = new ObjectId().toHexString();
+
+			return { testApiClient, id };
+		};
+
+		describe('get', () => {
+			it('should resolve requests', async () => {
+				const { testApiClient, id } = setup();
+
+				const result = await testApiClient.get(id);
+
+				expect(result.statusCode).toEqual(HttpStatus.OK);
+				expect(result.body).toEqual(expect.objectContaining({ method: 'get', authorization: 'Wrong auth header' }));
 			});
 		});
 	});
