@@ -17,7 +17,6 @@ const baseRouteName = '/file/rename';
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -32,7 +31,6 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -43,7 +41,7 @@ describe(`${baseRouteName} (api)`, () => {
 		const jwtPayload = jwtPayloadFactory.build();
 		const { userId } = jwtPayload;
 
-		const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+		const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 		const validId = new ObjectId().toHexString();
 
@@ -68,9 +66,9 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with not authenticated user', () => {
 		it('should return status 401', async () => {
-			const loggedInClient = new TestApiClient(app, baseRouteName);
+			const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 
-			const result = await loggedInClient.patch(`invalid_id`, { fileName: 'test_new_name.txt' });
+			const result = await unauthenticatedClient.patch(`invalid_id`, { fileName: 'test_new_name.txt' });
 
 			expect(result.status).toEqual(401);
 		});

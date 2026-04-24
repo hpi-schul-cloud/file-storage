@@ -23,7 +23,6 @@ const createRndInt = (max: number) => Math.floor(Math.random() * max);
 describe('files-storage controller (API) - Upload Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
-	let testApiClient: TestApiClient;
 	let requestTimeoutConfig: RequestTimeoutConfig;
 
 	const baseRouteName = '/file';
@@ -53,7 +52,6 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 		await app.init();
 		await app.listen(appPort);
 
-		testApiClient = new TestApiClient(app, baseRouteName);
 		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
 	});
 
@@ -70,7 +68,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 	describe('upload timeout scenarios', () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');

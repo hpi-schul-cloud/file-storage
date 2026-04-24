@@ -1,42 +1,25 @@
 import type { CreateJwtPayload } from '@infra/auth-guard';
 import { INestApplication } from '@nestjs/common';
 import type { Server } from 'node:net';
-import supertest, { Response } from 'supertest';
+import supertest from 'supertest';
 import { JwtAuthenticationFactory } from './factory/jwt-authentication.factory';
-
-interface AuthenticationResponse {
-	accessToken: string;
-}
 
 const headerConst = {
 	accept: 'accept',
 	json: 'application/json',
 };
 
-const testReqestConst = {
-	prefix: 'Bearer',
-	loginPath: '/authentication/local',
-	accessToken: 'accessToken',
-	errorMessage: 'TestApiClient: Can not cast to local AutenticationResponse:',
-};
-
 /**
  * Note res.cookie is not supported atm, feel free to add this
  */
 export class TestApiClient {
-	private readonly app: INestApplication<Server>;
-
-	private readonly baseRoute: string;
-
-	private readonly authHeader: string;
-
-	private readonly kindOfAuth: string;
-
-	constructor(app: INestApplication, baseRoute: string, authValue?: string, useAsApiKey = false) {
-		this.app = app;
+	private constructor(
+		private readonly app: INestApplication<Server>,
+		private readonly baseRoute: string,
+		private readonly authHeader: string,
+		private readonly kindOfAuth: string
+	) {
 		this.baseRoute = this.checkAndAddPrefix(baseRoute);
-		this.authHeader = useAsApiKey ? `${authValue ?? ''}` : `${testReqestConst.prefix} ${authValue ?? ''}`;
-		this.kindOfAuth = useAsApiKey ? 'X-API-KEY' : 'authorization';
 	}
 
 	public get(subPath?: string): supertest.Test {
@@ -106,14 +89,28 @@ export class TestApiClient {
 		return testRequestInstance;
 	}
 
-	public loginUsingJwt(jwtPayload: CreateJwtPayload): this {
+	public static createWithJwt(app: INestApplication, baseRoute: string, jwtPayload: CreateJwtPayload): TestApiClient {
 		const jwt = JwtAuthenticationFactory.createJwt(jwtPayload);
 
-		return new (this.constructor as new (app: INestApplication, baseRoute: string, authValue: string) => this)(
-			this.app,
-			this.baseRoute,
-			jwt
-		);
+		const authHeader = `Bearer ${jwt}`;
+		const kindOfAuth = 'authorization';
+		const instance = new TestApiClient(app, baseRoute, authHeader, kindOfAuth);
+
+		return instance;
+	}
+
+	public static createWithApiKey(app: INestApplication, baseRoute: string, apiKey: string): TestApiClient {
+		const authHeader = `${apiKey}`;
+		const kindOfAuth = 'X-API-KEY';
+		const instance = new TestApiClient(app, baseRoute, authHeader, kindOfAuth);
+
+		return instance;
+	}
+
+	public static createUnauthenticated(app: INestApplication, baseRoute: string): TestApiClient {
+		const authHeader = '';
+		const kindOfAuth = 'authorization';
+		return new TestApiClient(app, baseRoute, authHeader, kindOfAuth);
 	}
 
 	public getAuthHeader(): string {
@@ -150,26 +147,5 @@ export class TestApiClient {
 		const path = this.cleanupPath(this.baseRoute + routeName);
 
 		return path;
-	}
-
-	private isAuthenticationResponse(body: unknown): body is AuthenticationResponse {
-		const isAuthenticationResponse = typeof body === 'object' && body !== null && testReqestConst.accessToken in body;
-
-		return isAuthenticationResponse;
-	}
-
-	private getJwtFromResponse(response: Response): string {
-		if (response.error) {
-			const error = JSON.stringify(response.error);
-			throw new Error(error);
-		}
-		if (!this.isAuthenticationResponse(response.body)) {
-			const body = JSON.stringify(response.body);
-			throw new Error(`${testReqestConst.errorMessage} ${body}`);
-		}
-		const authenticationResponse = response.body;
-		const jwt = authenticationResponse.accessToken;
-
-		return jwt;
 	}
 }

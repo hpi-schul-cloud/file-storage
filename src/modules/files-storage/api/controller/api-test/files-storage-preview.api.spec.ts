@@ -39,7 +39,6 @@ describe('File Controller (API) - preview', () => {
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let antivirusService: DeepMocked<AntivirusService>;
 	let previewProducer: DeepMocked<PreviewProducer>;
-	let testApiClient: TestApiClient;
 	let uploadPath: string;
 
 	beforeAll(async () => {
@@ -68,7 +67,6 @@ describe('File Controller (API) - preview', () => {
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		antivirusService = module.get(AntivirusService);
 		previewProducer = module.get(PreviewProducer);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -90,7 +88,7 @@ describe('File Controller (API) - preview', () => {
 	const setupApiClient = () => {
 		const jwtPayload = jwtPayloadFactory.build();
 
-		const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+		const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 		const validId = new ObjectId().toHexString();
 
@@ -117,7 +115,8 @@ describe('File Controller (API) - preview', () => {
 	describe('preview', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const response = await testApiClient.get('/preview/123/test.png').query(defaultQueryParameters);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const response = await unauthenticatedClient.get('/preview/123/test.png').query(defaultQueryParameters);
 
 				expect(response.status).toEqual(401);
 			});

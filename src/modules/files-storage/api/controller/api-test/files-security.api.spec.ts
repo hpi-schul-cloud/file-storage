@@ -37,7 +37,7 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
+		testApiClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 	});
 
 	afterAll(async () => {

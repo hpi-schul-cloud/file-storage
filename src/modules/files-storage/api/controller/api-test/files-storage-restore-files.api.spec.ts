@@ -25,7 +25,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -44,7 +43,6 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -54,7 +52,8 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('restore files of parent', () => {
 		describe('with not authenticated uer', () => {
 			it('should return status 401', async () => {
-				const result = await testApiClient.post(`/restore/school/123/users/123`);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const result = await unauthenticatedClient.post(`/restore/school/123/users/123`);
 
 				expect(result.status).toEqual(401);
 			});
@@ -64,7 +63,7 @@ describe(`${baseRouteName} (api)`, () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -121,7 +120,7 @@ describe(`${baseRouteName} (api)`, () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -213,7 +212,7 @@ describe(`${baseRouteName} (api)`, () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				return { loggedInClient };
 			};
@@ -240,7 +239,7 @@ describe(`${baseRouteName} (api)`, () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 

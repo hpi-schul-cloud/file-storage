@@ -17,7 +17,6 @@ const baseRouteName = '/file';
 describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 	let authorizationClient: DeepMocked<AuthorizationClientAdapter>;
 
 	beforeAll(async () => {
@@ -34,7 +33,6 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 		await app.init();
 		em = module.get(EntityManager);
 		authorizationClient = module.get(AuthorizationClientAdapter);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -44,7 +42,8 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	describe('with not authenticated user', () => {
 		it('should return status 401', async () => {
 			const fileRecordId = new ObjectId().toHexString();
-			const response = await testApiClient.get(`/${fileRecordId}`);
+			const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+			const response = await unauthenticatedClient.get(`/${fileRecordId}`);
 
 			expect(response.status).toEqual(401);
 		});
@@ -53,7 +52,7 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	describe('with bad request data', () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			return { loggedInClient };
 		};
@@ -76,7 +75,7 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 	describe('with valid request data', () => {
 		const setup = async () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			const fileRecord = fileRecordEntityFactory.build();
 
@@ -205,8 +204,8 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 			const jwtPayload = jwtPayloadFactory.build();
 			const jwtTeacherPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
-			const teacherClient = testApiClient.loginUsingJwt(jwtTeacherPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const teacherClient = TestApiClient.createWithJwt(app, baseRouteName, jwtTeacherPayload);
 
 			const fileRecord = fileRecordEntityFactory.build({
 				storageLocation: StorageLocation.SCHOOL,

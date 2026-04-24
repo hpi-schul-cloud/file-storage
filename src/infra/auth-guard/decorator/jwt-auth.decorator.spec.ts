@@ -28,7 +28,6 @@ export class TestDecoratorJWTController {
 describe('Decorators', () => {
 	let app: INestApplication;
 	let module: TestingModule;
-	let apiClient: TestApiClient;
 
 	beforeAll(async () => {
 		module = await Test.createTestingModule({
@@ -38,8 +37,6 @@ describe('Decorators', () => {
 
 		app = module.createNestApplication();
 		await app.init();
-
-		apiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -50,7 +47,7 @@ describe('Decorators', () => {
 	describe('JwtAuthentication', () => {
 		describe('when user is not logged in', () => {
 			it('should throw with UnauthorizedException', async () => {
-				const response = await apiClient.get('/jwt');
+				const response = await TestApiClient.createUnauthenticated(app, baseRouteName).get('/jwt');
 
 				expect(response.statusCode).toEqual(401);
 			});
@@ -60,7 +57,7 @@ describe('Decorators', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = apiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				return { loggedInClient, jwtPayload };
 			};
@@ -86,7 +83,7 @@ describe('Decorators', () => {
 	describe('CurrentUser', () => {
 		describe('when user is not logged in', () => {
 			it('should throw with UnauthorizedException', async () => {
-				const response = await apiClient.get('/currentUser');
+				const response = await TestApiClient.createUnauthenticated(app, baseRouteName).get('/currentUser');
 				expect(response.statusCode).toEqual(401);
 			});
 		});
@@ -97,7 +94,7 @@ describe('Decorators', () => {
 
 				delete jwtPayload.systemId;
 
-				const loggedInClient = apiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const expectedCurrentUser = {
 					accountId: jwtPayload.accountId,

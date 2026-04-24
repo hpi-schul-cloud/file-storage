@@ -25,7 +25,6 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 	let requestTimeoutConfig: RequestTimeoutConfig;
 
 	const baseRouteName = '/file';
@@ -52,7 +51,6 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 		app = module.createNestApplication();
 		await app.init();
 
-		testApiClient = new TestApiClient(app, baseRouteName);
 		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
 		em = module.get(EntityManager);
 	});
@@ -70,7 +68,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 	describe('copy files timeout scenarios', () => {
 		const setup = async () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 			const validId = new ObjectId().toHexString();
 			const targetParentId = new ObjectId().toHexString();
 

@@ -31,7 +31,6 @@ describe('files-storage controller (API)', () => {
 	let em: EntityManager;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
-	let testApiClient: TestApiClient;
 	let config: DeepMocked<FileStorageConfig>;
 
 	const baseRouteName = '/file';
@@ -61,7 +60,6 @@ describe('files-storage controller (API)', () => {
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -76,7 +74,7 @@ describe('files-storage controller (API)', () => {
 	describe('upload action', () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			const { userId } = jwtPayload;
 
@@ -100,9 +98,9 @@ describe('files-storage controller (API)', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const { validId } = setup();
-				const loggedInClient = new TestApiClient(app, baseRouteName);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 
-				const result = await uploadFile(`/upload/school/123/users/${validId}`, loggedInClient);
+				const result = await uploadFile(`/upload/school/123/users/${validId}`, unauthenticatedClient);
 
 				expect(result.status).toEqual(401);
 			});
@@ -269,18 +267,19 @@ describe('files-storage controller (API)', () => {
 	describe('upload from url action', () => {
 		describe('with not authenticated user', () => {
 			const setup = () => {
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 				const body = {
 					url: 'http://localhost/test.txt',
 					fileName: 'test.txt',
 				};
 
-				return { body };
+				return { body, unauthenticatedClient };
 			};
 
 			it('should return status 401', async () => {
-				const { body } = setup();
+				const { body, unauthenticatedClient } = setup();
 
-				const response = await testApiClient.post(`/upload-from-url/school/123/users/123`, body);
+				const response = await unauthenticatedClient.post(`/upload-from-url/school/123/users/123`, body);
 
 				expect(response.status).toEqual(401);
 			});
@@ -289,7 +288,7 @@ describe('files-storage controller (API)', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -403,7 +402,7 @@ describe('files-storage controller (API)', () => {
 					const jwtPayload = jwtPayloadFactory.build();
 					const { userId } = jwtPayload;
 
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -507,7 +506,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async (fileName: string) => {
 					const jwtPayload = jwtPayloadFactory.build();
 					const { userId } = jwtPayload;
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -560,7 +559,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -607,7 +606,7 @@ describe('files-storage controller (API)', () => {
 
 					const { userId } = jwtPayload;
 
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -659,7 +658,8 @@ describe('files-storage controller (API)', () => {
 	describe('download action', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const result = await testApiClient.get('/download/123/text.txt');
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const result = await unauthenticatedClient.get('/download/123/text.txt');
 
 				expect(result.status).toEqual(401);
 			});
@@ -669,7 +669,7 @@ describe('files-storage controller (API)', () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -725,7 +725,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -781,7 +781,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
@@ -817,7 +817,7 @@ describe('files-storage controller (API)', () => {
 				const setup = async () => {
 					const jwtPayload = jwtPayloadFactory.build();
 
-					const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 					const validId = new ObjectId().toHexString();
 
@@ -850,7 +850,8 @@ describe('files-storage controller (API)', () => {
 	describe('download multiple files action', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const result = await testApiClient.post('/download-files-as-archive', {
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const result = await unauthenticatedClient.post('/download-files-as-archive', {
 					fileRecordIds: ['123'],
 					archiveName: 'test',
 				});
@@ -863,7 +864,7 @@ describe('files-storage controller (API)', () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -914,7 +915,7 @@ describe('files-storage controller (API)', () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -1017,7 +1018,7 @@ describe('files-storage controller (API)', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { loggedInClient };
@@ -1035,13 +1036,13 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
-				const fileApiClient = new TestApiClient(app, '');
+				const fileApiClient = TestApiClient.createUnauthenticated(app, '');
 
 				const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 				s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);

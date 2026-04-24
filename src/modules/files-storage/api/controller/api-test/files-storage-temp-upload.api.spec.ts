@@ -29,7 +29,6 @@ describe('files-storage temp upload controller (API)', () => {
 	let app: INestApplication;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
-	let testApiClient: TestApiClient;
 	let config: DeepMocked<FileStorageConfig>;
 
 	const baseRouteName = '/file';
@@ -58,7 +57,6 @@ describe('files-storage temp upload controller (API)', () => {
 
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -75,7 +73,7 @@ describe('files-storage temp upload controller (API)', () => {
 			const jwtPayload = jwtPayloadFactory.build();
 			const { userId } = jwtPayload;
 
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			const validId = new ObjectId().toHexString();
 
@@ -97,7 +95,7 @@ describe('files-storage temp upload controller (API)', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const { validId } = setup();
-				const unauthenticatedClient = new TestApiClient(app, baseRouteName);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 
 				const result = await uploadTempFile(`/temp/upload/school/123/users/${validId}`, unauthenticatedClient);
 

@@ -19,7 +19,6 @@ const baseRouteName = '/file/list';
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -34,7 +33,6 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -43,7 +41,8 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with not authenticated user', () => {
 		it('should return status 401', async () => {
-			const response = await testApiClient.get(`/school/123/users/123`);
+			const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+			const response = await unauthenticatedClient.get(`/school/123/users/123`);
 
 			expect(response.status).toEqual(401);
 		});
@@ -53,7 +52,7 @@ describe(`${baseRouteName} (api)`, () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			const validId = new ObjectId().toHexString();
 
@@ -107,7 +106,7 @@ describe(`${baseRouteName} (api)`, () => {
 		const setup = () => {
 			const jwtPayload = jwtPayloadFactory.build();
 
-			const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 			const validId = new ObjectId().toHexString();
 

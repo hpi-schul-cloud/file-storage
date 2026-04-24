@@ -24,7 +24,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -43,7 +42,6 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -53,7 +51,7 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('delete files of storage location', () => {
 		describe('when not authenticated user', () => {
 			it('should return status 401', async () => {
-				const client = new TestApiClient(app, baseRouteName);
+				const client = TestApiClient.createUnauthenticated(app, baseRouteName);
 
 				const result = await client.delete(`admin/file/storage-location/school/123`);
 
@@ -64,7 +62,7 @@ describe(`${baseRouteName} (api)`, () => {
 		describe('when bad request data', () => {
 			const setup = () => {
 				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const validId = new ObjectId().toHexString();
 
@@ -121,7 +119,7 @@ describe(`${baseRouteName} (api)`, () => {
 			const setup = async () => {
 				const jwtPayload = jwtPayloadFactory.build();
 
-				const loggedInClient = testApiClient.loginUsingJwt(jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
 
 				const storageLocationId1 = new ObjectId().toHexString();
 				const fileRecords1 = fileRecordEntityFactory.buildList(3, {
