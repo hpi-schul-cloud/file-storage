@@ -12,6 +12,8 @@ export interface FileRecordRepo {
 
 	findOneByIdMarkedForDelete(id: EntityId): Promise<FileRecord>;
 
+	findMultipleByIdMarkedForDelete(ids: EntityId[], options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
+
 	findByParentId(
 		parentId: EntityId,
 		options?: FindOptions<FileRecord>,
