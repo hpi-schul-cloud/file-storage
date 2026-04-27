@@ -53,14 +53,8 @@ export class FileRecordScope extends Scope<FileRecordEntity> {
 		return this;
 	}
 
-	public byStorageType(storageType?: StorageType): this {
-		if (!storageType || storageType === StorageType.STANDARD) {
-			this.addQuery({
-				$or: [{ storageType: StorageType.STANDARD }, { storageType: { $exists: false } }, { storageType: null }],
-			});
-		} else {
-			this.addQuery({ storageType });
-		}
+	public byStorageType(storageType = StorageType.STANDARD): this {
+		this.addQuery({ storageType });
 
 		return this;
 	}

@@ -16,7 +16,7 @@ class FileDtoTestFactory {
 		data: Readable.from('abc'),
 		mimeType: 'application/octet-stream',
 		abortSignal: new AbortController().signal,
-		storageType: undefined,
+		storageType: StorageType.STANDARD,
 	};
 
 	private static readonly mimeTypeMap = new Map<string, () => Readable>([
@@ -91,8 +91,8 @@ class FileDtoTestFactory {
 			params.name ?? props.name,
 			data as Readable,
 			params.mimeType ?? props.mimeType,
-			abortSignal as AbortSignal,
-			params.storageType ?? StorageType.STANDARD
+			params.storageType ?? props.storageType,
+			abortSignal as AbortSignal
 		);
 
 		return fileDto;

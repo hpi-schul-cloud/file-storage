@@ -32,17 +32,6 @@ describe('FilePathFactory', () => {
 				expect(result).toBe(`${folder}/${storageLocationId}/${fileRecord.id}`);
 			});
 		});
-
-		describe('when storageType is undefined', () => {
-			it('should return path without a folder prefix', () => {
-				const fileRecord = fileRecordTestFactory().build({ storageType: undefined });
-				const { storageLocationId } = fileRecord.getProps();
-
-				const result = FilePathFactory.create(fileRecord);
-
-				expect(result).toBe(`${storageLocationId}/${fileRecord.id}`);
-			});
-		});
 	});
 
 	describe('createMany', () => {

@@ -3,6 +3,7 @@ import { EntityFactory } from '@testing/factory/entity.factory';
 import { randomInt } from 'node:crypto';
 import { FileRecordProps } from '../domain';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
+import { StorageType } from '../domain/storage-paths.const';
 import { FileRecordEntity } from '../repo/file-record.entity';
 import { fileRecordSecurityCheckEmbeddableFactory } from './file-record-security-check.embeddable.factory';
 
@@ -43,6 +44,7 @@ export const fileRecordEntityFactory = FileRecordEntityFactory.define(
 			createdAt: new Date(),
 			updatedAt: new Date(),
 			contentLastModifiedAt: new Date(),
+			storageType: StorageType.STANDARD,
 		};
 
 		return props;

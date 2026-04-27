@@ -14,7 +14,7 @@ export class WopiService {
 	public async updateFileContents(fileRecordId: EntityId, readable: Readable): Promise<FileRecord> {
 		const fileRecord = await this.filesStorageService.getFileRecord(fileRecordId);
 		const { storageType } = fileRecord.getStorageReference();
-		const file = FileDtoFactory.create(fileRecord.getName(), readable, fileRecord.mimeType, undefined, storageType);
+		const file = FileDtoFactory.create(fileRecord.getName(), readable, fileRecord.mimeType, storageType);
 		const updatedFileRecord = await this.filesStorageService.updateFileContents(fileRecord, file);
 
 		return updatedFileRecord;

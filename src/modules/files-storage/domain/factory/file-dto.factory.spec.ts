@@ -25,7 +25,7 @@ describe('FileDtoFactory', () => {
 		it('should return a FileDto with the provided values', () => {
 			const { name, data, mimeType, abortSignal, storageType, expectedFile } = setup();
 
-			const result = FileDtoFactory.create(name, data, mimeType, abortSignal, storageType);
+			const result = FileDtoFactory.create(name, data, mimeType, storageType, abortSignal);
 
 			expect(result).toEqual(expectedFile);
 		});
