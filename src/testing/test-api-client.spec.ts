@@ -1,4 +1,3 @@
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Patch, Post, Put } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -74,12 +73,11 @@ describe(TestApiClient.name, () => {
 
 	describe('when test request instance exists - jwt auth', () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const testApiClient = TestApiClient.createWithJwt(app, '/with-jwt', jwtPayload);
+			const testApiClient = TestApiClient.createWithJwt(app, '/with-jwt');
 
 			const id = new ObjectId().toHexString();
 
-			return { testApiClient, jwtPayload, id };
+			return { testApiClient, id };
 		};
 
 		describe('when client is created with JWT', () => {

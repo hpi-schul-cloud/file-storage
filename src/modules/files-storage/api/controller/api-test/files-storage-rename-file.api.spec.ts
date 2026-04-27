@@ -1,5 +1,4 @@
 import { createMock } from '@golevelup/ts-jest';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
@@ -11,6 +10,7 @@ import NodeClam from 'clamscan';
 import { FileRecordParentType } from '../../../domain';
 import { fileRecordEntityFactory } from '../../../testing';
 import { FileRecordResponse } from '../../dto';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 
 const baseRouteName = '/file/rename';
 
@@ -38,10 +38,10 @@ describe(`${baseRouteName} (api)`, () => {
 	});
 
 	const setup = async () => {
-		const jwtPayload = jwtPayloadFactory.build();
-		const { userId } = jwtPayload;
+		const currentUser = currentUserFactory.build();
+		const { userId } = currentUser;
 
-		const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+		const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 		const validId = new ObjectId().toHexString();
 

@@ -1,9 +1,9 @@
 import { Controller, Get, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import { AuthGuardModule, AuthGuardOptions } from '../auth-guard.module';
 import { CurrentUserInterface } from '../interface';
-import { jwtPayloadFactory } from '../testing';
 import { CurrentUser, JWT, JwtAuthentication } from './jwt-auth.decorator';
 
 const baseRouteName = '/test-decorator';
@@ -55,11 +55,11 @@ describe('Decorators', () => {
 
 		describe('when user is logged in', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
+				const currentUser = currentUserFactory.build();
 
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
-				return { loggedInClient, jwtPayload };
+				return { loggedInClient, currentUser };
 			};
 
 			it('should return status 200 for successful request.', async () => {
@@ -90,26 +90,25 @@ describe('Decorators', () => {
 
 		describe('when user is logged in', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build({ support: false, isExternalUser: false });
+				const currentUser = currentUserFactory.build();
 
-				delete jwtPayload.systemId;
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 				const expectedCurrentUser = {
-					accountId: jwtPayload.accountId,
+					accountId: currentUser.accountId,
 					isExternalUser: false,
-					roles: [...jwtPayload.roles],
-					schoolId: jwtPayload.schoolId,
+					roles: [...currentUser.roles],
+					schoolId: currentUser.schoolId,
 					support: false,
-					userId: jwtPayload.userId,
+					userId: currentUser.userId,
+					systemId: currentUser.systemId,
 				};
 
 				return { loggedInClient, expectedCurrentUser };
 			};
 
 			it('should return status 200 for successful request.', async () => {
-				const { loggedInClient } = await setup();
+				const { loggedInClient } = setup();
 
 				const response = await loggedInClient.get('/currentUser');
 
@@ -117,7 +116,7 @@ describe('Decorators', () => {
 			});
 
 			it('should return currentUser.', async () => {
-				const { loggedInClient, expectedCurrentUser } = await setup();
+				const { loggedInClient, expectedCurrentUser } = setup();
 
 				const response = await loggedInClient.get('/currentUser');
 

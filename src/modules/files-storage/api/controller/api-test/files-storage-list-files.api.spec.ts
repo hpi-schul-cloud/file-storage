@@ -1,5 +1,4 @@
 import { createMock } from '@golevelup/ts-jest';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
@@ -50,9 +49,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with bad request data', () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 			const validId = new ObjectId().toHexString();
 
@@ -104,9 +101,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe(`with valid request data`, () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 			const validId = new ObjectId().toHexString();
 

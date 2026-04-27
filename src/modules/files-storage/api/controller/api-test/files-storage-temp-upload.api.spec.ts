@@ -1,6 +1,5 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
@@ -19,6 +18,7 @@ import {
 } from '../../../files-storage.config';
 import { FileRecordResponse } from '../../dto';
 import { availableParentTypes } from './mocks';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 
 jest.mock('../../../domain/utils/detect-mime-type.utils');
 
@@ -70,10 +70,10 @@ describe('files-storage temp upload controller (API)', () => {
 
 	describe('tempUpload action', () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const { userId } = jwtPayload;
+			const currentUser = currentUserFactory.build();
+			const { userId } = currentUser;
 
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 			const validId = new ObjectId().toHexString();
 

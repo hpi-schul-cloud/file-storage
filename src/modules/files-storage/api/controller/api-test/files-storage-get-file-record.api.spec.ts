@@ -1,11 +1,11 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { ForbiddenException, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus, StorageLocation } from '../../../domain';
@@ -51,8 +51,7 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 
 	describe('with bad request data', () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 			return { loggedInClient };
 		};
@@ -74,8 +73,7 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 
 	describe('with valid request data', () => {
 		const setup = async () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 			const fileRecord = fileRecordEntityFactory.build();
 
@@ -201,16 +199,16 @@ describe(`${baseRouteName}/:fileRecordId (api)`, () => {
 
 	describe('authorization', () => {
 		const setup = async () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const jwtTeacherPayload = jwtPayloadFactory.build();
+			const currentUser = currentUserFactory.build();
+			const currentUserAsTeacher = currentUserFactory.build();
 
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
-			const teacherClient = TestApiClient.createWithJwt(app, baseRouteName, jwtTeacherPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
+			const teacherClient = TestApiClient.createWithJwt(app, baseRouteName, currentUserAsTeacher);
 
 			const fileRecord = fileRecordEntityFactory.build({
 				storageLocation: StorageLocation.SCHOOL,
 				parentType: FileRecordParentType.School,
-				creatorId: jwtPayload.userId,
+				creatorId: currentUser.userId,
 			});
 
 			await em.persistAndFlush(fileRecord);

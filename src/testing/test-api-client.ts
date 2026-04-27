@@ -1,7 +1,7 @@
-import type { CreateJwtPayload } from '@infra/auth-guard';
 import { INestApplication } from '@nestjs/common';
 import type { Server } from 'node:net';
 import supertest from 'supertest';
+import { currentUserFactory, type CurrentUser } from './factory/currentuser.factory';
 import { JwtAuthenticationFactory } from './factory/jwt-authentication.factory';
 
 const headerConst = {
@@ -89,8 +89,9 @@ export class TestApiClient {
 		return testRequestInstance;
 	}
 
-	public static createWithJwt(app: INestApplication, baseRoute: string, jwtPayload: CreateJwtPayload): TestApiClient {
-		const jwt = JwtAuthenticationFactory.createJwt(jwtPayload);
+	public static createWithJwt(app: INestApplication, baseRoute: string, currentUser?: CurrentUser): TestApiClient {
+		const defaultPayload = currentUser ?? currentUserFactory.build();
+		const jwt = JwtAuthenticationFactory.createJwt(defaultPayload);
 
 		const authHeader = `Bearer ${jwt}`;
 		const kindOfAuth = 'authorization';

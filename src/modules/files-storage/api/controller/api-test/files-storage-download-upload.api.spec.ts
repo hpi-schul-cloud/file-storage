@@ -1,6 +1,5 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
@@ -8,6 +7,7 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, ScanStatus, StorageType } from '../../../domain';
@@ -73,10 +73,10 @@ describe('files-storage controller (API)', () => {
 
 	describe('upload action', () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const currentUser = currentUserFactory.build();
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
-			const { userId } = jwtPayload;
+			const { userId } = currentUser;
 
 			const validId = new ObjectId().toHexString();
 
@@ -287,8 +287,7 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -399,10 +398,10 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe(`with new file`, () => {
 				const setup = async (fileName = 'test.txt') => {
-					const jwtPayload = jwtPayloadFactory.build();
-					const { userId } = jwtPayload;
+					const currentUser = currentUserFactory.build();
+					const { userId } = currentUser;
 
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 					const validId = new ObjectId().toHexString();
 
@@ -504,9 +503,9 @@ describe('files-storage controller (API)', () => {
 
 			describe('when the name contains opening bracket', () => {
 				const setup = async (fileName: string) => {
-					const jwtPayload = jwtPayloadFactory.build();
-					const { userId } = jwtPayload;
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const currentUser = currentUserFactory.build();
+					const { userId } = currentUser;
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 					const validId = new ObjectId().toHexString();
 
@@ -557,9 +556,7 @@ describe('files-storage controller (API)', () => {
 
 			describe(`with already existing file`, () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -602,11 +599,11 @@ describe('files-storage controller (API)', () => {
 			describe('when parent already has the maximum number of files allowed', () => {
 				let defaultMaxFilesPerParent: number;
 				const setup = async (fileName = 'test.txt') => {
-					const jwtPayload = jwtPayloadFactory.build();
+					const currentUser = currentUserFactory.build();
 
-					const { userId } = jwtPayload;
+					const { userId } = currentUser;
 
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 					const validId = new ObjectId().toHexString();
 
@@ -667,9 +664,7 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -723,9 +718,7 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe('when mimetype is not application/pdf', () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -779,9 +772,7 @@ describe('files-storage controller (API)', () => {
 
 			describe('when mimetype is application/pdf', () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
@@ -815,9 +806,7 @@ describe('files-storage controller (API)', () => {
 
 			describe(`when storageType is ${StorageType.TEMP}`, () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -862,9 +851,7 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -913,9 +900,7 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -1016,9 +1001,7 @@ describe('files-storage controller (API)', () => {
 	describe('file-security.download()', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { loggedInClient };
@@ -1035,8 +1018,7 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 

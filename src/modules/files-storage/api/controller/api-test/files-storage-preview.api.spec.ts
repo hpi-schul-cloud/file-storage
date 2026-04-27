@@ -1,6 +1,5 @@
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { PreviewProducer } from '@infra/preview-generator';
@@ -86,9 +85,7 @@ describe('File Controller (API) - preview', () => {
 	};
 
 	const setupApiClient = () => {
-		const jwtPayload = jwtPayloadFactory.build();
-
-		const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+		const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 		const validId = new ObjectId().toHexString();
 

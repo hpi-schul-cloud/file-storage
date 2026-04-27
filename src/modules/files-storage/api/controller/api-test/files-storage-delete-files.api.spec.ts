@@ -5,7 +5,6 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { AuthorizationManyReferencesForbiddenLoggableException } from '@infra/authorization-client/error';
 import { ApiValidationError } from '@infra/error';
@@ -73,8 +72,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -144,9 +142,7 @@ describe(`${baseRouteName} (api)`, () => {
 			};
 
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -222,9 +218,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				return { loggedInClient };
 			};
@@ -248,9 +242,7 @@ describe(`${baseRouteName} (api)`, () => {
 		describe(`with valid request data`, () => {
 			describe('WHEN storage client resolves', () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -320,9 +312,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('WHEN storage client rejects', () => {
 			const setup = async () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -374,9 +364,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				return { loggedInClient };
 			};
@@ -400,9 +388,7 @@ describe(`${baseRouteName} (api)`, () => {
 		describe(`with valid request data`, () => {
 			describe(`with single parent`, () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId1 = new ObjectId().toHexString();
 
@@ -498,9 +484,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 			describe(`with two different parents`, () => {
 				const setup = async () => {
-					const jwtPayload = jwtPayloadFactory.build();
-
-					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId1 = new ObjectId().toHexString();
 

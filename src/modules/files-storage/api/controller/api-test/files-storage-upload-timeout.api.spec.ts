@@ -1,6 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
@@ -67,8 +66,7 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 
 	describe('upload timeout scenarios', () => {
 		const setup = () => {
-			const jwtPayload = jwtPayloadFactory.build();
-			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');

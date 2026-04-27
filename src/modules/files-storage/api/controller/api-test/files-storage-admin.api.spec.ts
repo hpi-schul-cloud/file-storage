@@ -1,6 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { jwtPayloadFactory } from '@infra/auth-guard/testing';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
@@ -61,8 +60,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('when bad request data', () => {
 			const setup = () => {
-				const jwtPayload = jwtPayloadFactory.build();
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -117,9 +115,7 @@ describe(`${baseRouteName} (api)`, () => {
 			};
 
 			const setup = async () => {
-				const jwtPayload = jwtPayloadFactory.build();
-
-				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, jwtPayload);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const storageLocationId1 = new ObjectId().toHexString();
 				const fileRecords1 = fileRecordEntityFactory.buildList(3, {
