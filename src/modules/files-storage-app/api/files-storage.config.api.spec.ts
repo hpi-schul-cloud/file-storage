@@ -26,7 +26,7 @@ describe(`files-storage (api)`, () => {
 
 		app = module.createNestApplication();
 		await app.init();
-		testApiClient = new TestApiClient(app, 'file');
+		testApiClient = TestApiClient.createUnauthenticated(app, 'file');
 	});
 
 	describe('config/public', () => {

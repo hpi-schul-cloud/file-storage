@@ -7,7 +7,6 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, FileRecordParentType, StorageLocation } from '../../../domain';
@@ -28,7 +27,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 	let config: FileStorageConfig;
 
 	beforeAll(async () => {
@@ -51,7 +49,6 @@ describe(`${baseRouteName} (api)`, () => {
 		await app.init();
 		em = module.get(EntityManager);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -76,7 +73,8 @@ describe(`${baseRouteName} (api)`, () => {
 			it('should return status 401', async () => {
 				const { copyFilesParams } = setup();
 
-				const result = await testApiClient.post(`/copy/school/123/users/123`, copyFilesParams);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const result = await unauthenticatedClient.post(`/copy/school/123/users/123`, copyFilesParams);
 
 				expect(result.status).toEqual(401);
 			});
@@ -84,9 +82,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 				const targetParentId = new ObjectId().toHexString();
@@ -167,9 +163,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe(`with valid request data`, () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 				const targetParentId = new ObjectId().toHexString();
@@ -214,9 +208,7 @@ describe(`${baseRouteName} (api)`, () => {
 			let defaultMaxFilesPerParent: number;
 
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 				const targetParentId = new ObjectId().toHexString();
@@ -265,6 +257,7 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('copy single file', () => {
 		describe('with not authenticated user', () => {
 			const setup = () => {
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 				const copyFileParams = {
 					target: {
 						storageLocation: StorageLocation.SCHOOL,
@@ -275,13 +268,13 @@ describe(`${baseRouteName} (api)`, () => {
 					fileNamePrefix: 'copy from',
 				};
 
-				return { copyFileParams };
+				return { copyFileParams, unauthenticatedClient };
 			};
 
 			it('should return status 401', async () => {
-				const { copyFileParams } = setup();
+				const { copyFileParams, unauthenticatedClient } = setup();
 
-				const response = await testApiClient.post(`/copy/123`, copyFileParams);
+				const response = await unauthenticatedClient.post(`/copy/123`, copyFileParams);
 
 				expect(response.status).toEqual(401);
 			});
@@ -289,9 +282,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 				const targetParentId = new ObjectId().toHexString();
@@ -336,9 +327,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 				const targetParentId = new ObjectId().toHexString();
@@ -406,9 +395,7 @@ describe(`${baseRouteName} (api)`, () => {
 			let defaultMaxFilesPerParent: number;
 
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 				const targetParentId = new ObjectId().toHexString();

@@ -11,7 +11,6 @@ import { ApiValidationError } from '@infra/error';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { FileRecordEntity } from '@modules/files-storage/repo';
 import { EntityId } from '@shared/domain/types';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus } from '../../../domain';
@@ -28,7 +27,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 
@@ -49,7 +47,6 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
 		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 	});
@@ -65,9 +62,9 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('delete files of parent', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const loggedInClient = new TestApiClient(app, baseRouteName);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 
-				const result = await loggedInClient.delete(`/delete/school/123/users/123`);
+				const result = await unauthenticatedClient.delete(`/delete/school/123/users/123`);
 
 				expect(result.status).toEqual(401);
 			});
@@ -75,9 +72,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -147,9 +142,7 @@ describe(`${baseRouteName} (api)`, () => {
 			};
 
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -216,7 +209,8 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('delete single file', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const response = await testApiClient.delete(`/delete/123`);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const response = await unauthenticatedClient.delete(`/delete/123`);
 
 				expect(response.status).toEqual(401);
 			});
@@ -224,9 +218,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				return { loggedInClient };
 			};
@@ -250,9 +242,7 @@ describe(`${baseRouteName} (api)`, () => {
 		describe(`with valid request data`, () => {
 			describe('WHEN storage client resolves', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -322,9 +312,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('WHEN storage client rejects', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -367,7 +355,8 @@ describe(`${baseRouteName} (api)`, () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const fileRecordIds = { fileRecordIds: ['123'] };
-				const response = await testApiClient.delete(`/delete`, fileRecordIds);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const response = await unauthenticatedClient.delete(`/delete`, fileRecordIds);
 
 				expect(response.status).toEqual(401);
 			});
@@ -375,9 +364,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				return { loggedInClient };
 			};
@@ -401,9 +388,7 @@ describe(`${baseRouteName} (api)`, () => {
 		describe(`with valid request data`, () => {
 			describe(`with single parent`, () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId1 = new ObjectId().toHexString();
 
@@ -499,9 +484,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 			describe(`with two different parents`, () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId1 = new ObjectId().toHexString();
 
