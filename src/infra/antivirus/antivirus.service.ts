@@ -1,7 +1,7 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import NodeClam from 'clamscan';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
 import { AntivirusServiceOptions, ScanResult } from './interfaces';
 
 const API_VERSION_PATH = '/api/v3';

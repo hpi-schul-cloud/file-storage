@@ -20,8 +20,8 @@ import { Counted, EntityId } from '@shared/domain/types';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 import busboy from 'busboy';
 import { Request } from 'express';
+import internal from 'node:stream';
 import { firstValueFrom } from 'rxjs';
-import internal from 'stream';
 import {
 	ErrorType,
 	FileRecord,

@@ -18,7 +18,7 @@ export class JwtAuthenticationFactory {
 				exp: (Date.now() + 1000000) / 1000,
 				...params,
 			},
-			privateKey.replace(/\\n/g, '\n'),
+			privateKey.replaceAll(String.raw`\n`, '\n'),
 			{
 				algorithm: 'RS256',
 			}
