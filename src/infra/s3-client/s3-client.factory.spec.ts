@@ -3,6 +3,7 @@ import { ConfiguredRetryStrategy, RETRY_MODES } from '@aws-sdk/util-retry';
 import { createMock } from '@golevelup/ts-jest';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 import { S3ClientFactory } from './s3-client.factory';
@@ -50,6 +51,7 @@ describe(S3ClientFactory.name, () => {
 				tls: true,
 				retryMode: RETRY_MODES.STANDARD,
 				retryStrategy: expect.any(ConfiguredRetryStrategy),
+				requestHandler: expect.any(NodeHttpHandler),
 			});
 		});
 
