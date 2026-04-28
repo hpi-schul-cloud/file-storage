@@ -199,7 +199,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public isMarkedForDelete(): boolean {
-		return this.props.deletedSince !== null;
+		return this.props.deletedSince != null;
 	}
 
 	public markForDelete(): void {
