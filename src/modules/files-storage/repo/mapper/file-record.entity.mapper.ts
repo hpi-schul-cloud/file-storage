@@ -1,5 +1,5 @@
 import { EntityManager } from '@mikro-orm/mongodb';
-import { FileRecord, FileRecordFactory, FileRecordProps, FileRecordSecurityCheck, StorageType } from '../../domain';
+import { FileRecord, FileRecordFactory, FileRecordProps, FileRecordSecurityCheck } from '../../domain';
 import { FileRecordEntity } from '../file-record.entity';
 import { FileRecordSecurityCheckEmbeddable } from '../security-check.embeddable';
 
@@ -12,7 +12,7 @@ export class FileRecordEntityMapper {
 
 		const { securityCheckEmbeddable, fileRecordProps } = this.extractCleanFileRecordProps(fileRecordEntity);
 		this.reAssignIdToAvoidLost(fileRecordProps, fileRecordEntity);
-		this.runtimeMigration(fileRecordProps);
+
 		const fileRecord = this.createFileRecord(fileRecordProps, securityCheckEmbeddable);
 		this.attachDoReferenceToEntityMap(fileRecord, fileRecordEntity);
 
@@ -53,10 +53,6 @@ export class FileRecordEntityMapper {
 
 	private static reAssignIdToAvoidLost(fileRecordProps: FileRecordProps, fileRecordEntity: FileRecordEntity): void {
 		fileRecordProps.id = fileRecordEntity.id;
-	}
-
-	private static runtimeMigration(fileRecordProps: FileRecordProps): void {
-		fileRecordProps.storageType ??= StorageType.STANDARD;
 	}
 
 	private static attachDoReferenceToEntityMap(fileRecord: FileRecord, fileRecordEntity: FileRecordEntity): void {

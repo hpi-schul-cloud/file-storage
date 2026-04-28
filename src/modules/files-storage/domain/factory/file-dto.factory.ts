@@ -7,8 +7,8 @@ export class FileDtoFactory {
 		name: string,
 		stream: Readable,
 		mimeType: string,
-		abortSignal?: AbortSignal,
-		storageType?: StorageType
+		storageType: StorageType,
+		abortSignal?: AbortSignal
 	): FileDto {
 		const file = new FileDto({
 			name,

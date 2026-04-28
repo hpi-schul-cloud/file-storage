@@ -82,6 +82,6 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	@Property({ persist: false })
 	domainObject: FileRecord | undefined;
 
-	@Enum({ items: () => StorageType, nullable: true })
-	storageType?: StorageType;
+	@Enum({ items: () => StorageType, nullable: false })
+	storageType!: StorageType;
 }

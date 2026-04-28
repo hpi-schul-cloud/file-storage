@@ -19,5 +19,5 @@ export class FileDto implements File {
 
 	abortSignal?: AbortSignal;
 
-	storageType?: StorageType;
+	storageType: StorageType;
 }

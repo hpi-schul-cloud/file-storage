@@ -17,6 +17,7 @@ describe('PassThroughFileDtoFactory', () => {
 				name,
 				data,
 				mimeType,
+				storageType,
 			});
 
 			const expectedFile = new PassThroughFileDto({

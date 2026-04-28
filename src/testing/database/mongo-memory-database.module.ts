@@ -1,5 +1,5 @@
 import { findOneOrFailHandler } from '@infra/database/database.not-found.error';
-import { defineConfig, EntityClass, EntityManager } from '@mikro-orm/mongodb';
+import { defineConfig, EntityClass, EntityManager, MongoDriver } from '@mikro-orm/mongodb';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Module, OnModuleDestroy } from '@nestjs/common';
 
@@ -23,9 +23,10 @@ export class MongoMemoryDatabaseModule implements OnModuleDestroy {
 							allowGlobalContext: true,
 							clientUrl,
 							entities,
-							debug: true,
+							debug: false,
 						});
 					},
+					driver: MongoDriver,
 				}),
 			],
 		};

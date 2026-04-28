@@ -71,7 +71,7 @@ export interface FileRecordProps extends AuthorizableObject {
 	createdAt: Date;
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
-	storageType?: StorageType;
+	storageType: StorageType;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -277,8 +277,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public getStorageReference(): StorageReference {
-		const { storageLocationId, storageLocation, storageType: storageTypeProps } = this.props;
-		const storageType = storageTypeProps ?? StorageType.STANDARD;
+		const { storageLocationId, storageLocation, storageType } = this.props;
 
 		return { storageLocationId, storageLocation, storageType };
 	}

@@ -48,19 +48,6 @@ describe('FileRecordRepo', () => {
 			expect(result.id).toEqual(fileRecord.id);
 		});
 
-		describe('when entity has no storageType stored in DB', () => {
-			it('should map to storageType STANDARD', async () => {
-				const entity = fileRecordEntityFactory.build({ storageType: undefined });
-
-				await em.persistAndFlush(entity);
-				em.clear();
-
-				const result = await repo.findOneById(entity.id);
-
-				expect(result.getProps().storageType).toBe(StorageType.STANDARD);
-			});
-		});
-
 		describe('when entity has storageType TEMP stored in DB', () => {
 			it('should map to storageType TEMP', async () => {
 				const entity = fileRecordEntityFactory.build({ storageType: StorageType.TEMP });
