@@ -10,7 +10,6 @@ import {
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, StorageLocation } from '../../../domain';
@@ -25,7 +24,6 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 	let module: TestingModule;
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 	let requestTimeoutConfig: RequestTimeoutConfig;
 
 	const baseRouteName = '/file';
@@ -52,7 +50,6 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 		app = module.createNestApplication();
 		await app.init();
 
-		testApiClient = new TestApiClient(app, baseRouteName);
 		requestTimeoutConfig = module.get(FILES_STORAGE_APP_REQUEST_TIMEOUT_CONFIG_TOKEN);
 		em = module.get(EntityManager);
 	});
@@ -69,8 +66,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 
 	describe('copy files timeout scenarios', () => {
 		const setup = async () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 			const validId = new ObjectId().toHexString();
 			const targetParentId = new ObjectId().toHexString();
 
@@ -96,7 +92,7 @@ describe('files-storage controller (API) - Copy Timeout Tests', () => {
 				},
 			};
 
-			return { validId, targetParentId, copyFilesParams, loggedInClient, user: studentUser };
+			return { validId, targetParentId, copyFilesParams, loggedInClient };
 		};
 
 		describe('WHEN copy request exceeds server timeout', () => {

@@ -57,7 +57,7 @@ describe('TimeoutInterceptor', () => {
 		app = moduleFixture.createNestApplication();
 		await app.init();
 
-		testApiClient = new TestApiClient(app, '');
+		testApiClient = TestApiClient.createUnauthenticated(app, '');
 	});
 
 	afterEach(async () => {

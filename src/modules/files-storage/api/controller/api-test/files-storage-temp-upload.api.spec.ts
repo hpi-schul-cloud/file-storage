@@ -7,7 +7,6 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { TEMP_FILE_EXPIRY_SECONDS } from '../../../domain';
@@ -19,6 +18,7 @@ import {
 } from '../../../files-storage.config';
 import { FileRecordResponse } from '../../dto';
 import { availableParentTypes } from './mocks';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 
 jest.mock('../../../domain/utils/detect-mime-type.utils');
 
@@ -29,7 +29,6 @@ describe('files-storage temp upload controller (API)', () => {
 	let app: INestApplication;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
-	let testApiClient: TestApiClient;
 	let config: DeepMocked<FileStorageConfig>;
 
 	const baseRouteName = '/file';
@@ -58,7 +57,6 @@ describe('files-storage temp upload controller (API)', () => {
 
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -72,15 +70,17 @@ describe('files-storage temp upload controller (API)', () => {
 
 	describe('tempUpload action', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+			const currentUser = currentUserFactory.build();
+			const { userId } = currentUser;
 
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+			jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
-			return { validId, loggedInClient, user: studentUser };
+			return { validId, loggedInClient, userId };
 		};
 
 		const uploadTempFile = async (routeName: string, apiClient: TestApiClient) => {
@@ -96,7 +96,7 @@ describe('files-storage temp upload controller (API)', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const { validId } = setup();
-				const unauthenticatedClient = new TestApiClient(app, baseRouteName);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 
 				const result = await uploadTempFile(`/temp/upload/school/123/users/${validId}`, unauthenticatedClient);
 
@@ -161,7 +161,7 @@ describe('files-storage temp upload controller (API)', () => {
 			});
 
 			it('should return the new created file record', async () => {
-				const { loggedInClient, validId, user } = setup();
+				const { loggedInClient, validId, userId } = setup();
 
 				const result = await uploadTempFile(`/temp/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				const response = result.body as FileRecordResponse;
@@ -171,7 +171,7 @@ describe('files-storage temp upload controller (API)', () => {
 						id: expect.any(String),
 						name: 'test.txt',
 						parentId: validId,
-						creatorId: user.id,
+						creatorId: userId,
 						mimeType: 'text/plain',
 						parentType: 'schools',
 						securityCheckStatus: 'pending',
@@ -205,7 +205,7 @@ describe('files-storage temp upload controller (API)', () => {
 				});
 
 				it('should return the new created file record', async () => {
-					const { loggedInClient, validId, user } = setup();
+					const { loggedInClient, validId, userId } = setup();
 
 					const result = await loggedInClient
 						.post(`/temp/upload/school/${validId}/schools/${validId}`)
@@ -219,7 +219,7 @@ describe('files-storage temp upload controller (API)', () => {
 							id: expect.any(String),
 							name: 'empty.txt',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'text/plain',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
