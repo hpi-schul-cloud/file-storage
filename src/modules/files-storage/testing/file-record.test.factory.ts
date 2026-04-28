@@ -10,6 +10,7 @@ import {
 	ParentInfo,
 	ScanStatus,
 	StorageLocation,
+	StorageType,
 } from '../domain';
 
 class FileRecordTestFactory {
@@ -30,6 +31,7 @@ class FileRecordTestFactory {
 		createdAt: new Date(Date.now() - 1000),
 		updatedAt: new Date(Date.now() - 1000),
 		contentLastModifiedAt: new Date(Date.now() - 500),
+		storageType: StorageType.STANDARD,
 	};
 
 	private securityCheck = FileRecordSecurityCheck.createWithDefaultProps();

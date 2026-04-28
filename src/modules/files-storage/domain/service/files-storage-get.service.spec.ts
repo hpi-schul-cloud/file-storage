@@ -260,6 +260,56 @@ describe('FilesStorageService get methods', () => {
 		});
 	});
 
+	describe('getFileRecordsMarkedForDelete is called', () => {
+		describe('WHEN valid marked files exist', () => {
+			const setup = () => {
+				const { fileRecord: fileRecord1 } = buildFileRecord();
+				const { fileRecord: fileRecord2 } = buildFileRecord();
+				fileRecord1.markForDelete();
+				fileRecord2.markForDelete();
+				const fileRecords = [fileRecord1, fileRecord2];
+				fileRecordRepo.findMultipleByIdMarkedForDelete.mockResolvedValueOnce([fileRecords, 2]);
+
+				const fileRecordIds = [fileRecord1.id, fileRecord2.id];
+
+				return { fileRecordIds, fileRecords };
+			};
+
+			it('should call findMultipleByIdMarkedForDelete', async () => {
+				const { fileRecordIds } = setup();
+
+				await service.getFileRecordsMarkedForDelete(fileRecordIds);
+
+				expect(fileRecordRepo.findMultipleByIdMarkedForDelete).toHaveBeenCalledWith(fileRecordIds);
+			});
+
+			it('should return the matched fileRecords', async () => {
+				const { fileRecordIds, fileRecords } = setup();
+
+				const [result, total] = await service.getFileRecordsMarkedForDelete(fileRecordIds);
+
+				expect(result).toEqual(fileRecords);
+				expect(total).toEqual(2);
+			});
+		});
+
+		describe('WHEN repository throws an error', () => {
+			const setup = () => {
+				fileRecordRepo.findMultipleByIdMarkedForDelete.mockRejectedValueOnce(new Error('bla'));
+
+				const fileRecordId = new ObjectId().toHexString();
+
+				return { fileRecordId };
+			};
+
+			it('should pass the error', async () => {
+				const { fileRecordId } = setup();
+
+				await expect(service.getFileRecordsMarkedForDelete([fileRecordId])).rejects.toThrow(new Error('bla'));
+			});
+		});
+	});
+
 	describe('getFileRecordsByParent()', () => {
 		describe('WHEN valid files exist', () => {
 			const setup = () => {

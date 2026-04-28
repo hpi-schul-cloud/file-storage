@@ -82,6 +82,12 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
+	public async getFileRecordsMarkedForDelete(fileRecordIds: EntityId[]): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findMultipleByIdMarkedForDelete(fileRecordIds);
+
+		return countedFileRecords;
+	}
+
 	public async getFileRecordsByParentAndStorageType(
 		parentId: EntityId,
 		storageType?: StorageType

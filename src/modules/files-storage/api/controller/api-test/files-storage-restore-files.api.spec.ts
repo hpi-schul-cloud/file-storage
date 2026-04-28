@@ -1,6 +1,7 @@
-import { createMock } from '@golevelup/ts-jest';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
+import { AuthorizationManyReferencesForbiddenLoggableException } from '@infra/authorization-client/error';
 import { ApiValidationError } from '@infra/error';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
@@ -24,6 +25,7 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
+	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -42,6 +44,7 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
+		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
 	});
 
 	afterAll(async () => {
@@ -227,8 +230,6 @@ describe(`${baseRouteName} (api)`, () => {
 		});
 
 		describe(`with valid request data`, () => {
-			let fileRecordId: string;
-
 			const setup = async () => {
 				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
@@ -242,15 +243,15 @@ describe(`${baseRouteName} (api)`, () => {
 						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20')
 				).body as FileRecordResponse;
 
-				fileRecordId = result.id;
+				const fileRecordId = result.id;
 
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
 
-				return { loggedInClient };
+				return { loggedInClient, fileRecordId };
 			};
 
 			it('should return status 200 for successful request', async () => {
-				const { loggedInClient } = await setup();
+				const { loggedInClient, fileRecordId } = await setup();
 
 				await loggedInClient.delete(`/delete/${fileRecordId}`);
 
@@ -260,7 +261,7 @@ describe(`${baseRouteName} (api)`, () => {
 			});
 
 			it('should return right type of data', async () => {
-				const { loggedInClient } = await setup();
+				const { loggedInClient, fileRecordId } = await setup();
 
 				await loggedInClient.delete(`/delete/${fileRecordId}`);
 
@@ -287,7 +288,7 @@ describe(`${baseRouteName} (api)`, () => {
 			});
 
 			it('should return elements of requested scope', async () => {
-				const { loggedInClient } = await setup();
+				const { loggedInClient, fileRecordId } = await setup();
 				const otherFileRecords = fileRecordEntityFactory.buildList(3, {
 					parentType: FileRecordParentType.School,
 				});
@@ -301,6 +302,206 @@ describe(`${baseRouteName} (api)`, () => {
 				const response = result.body as FileRecordResponse;
 
 				expect(response.id).toEqual(fileRecordId);
+			});
+		});
+	});
+
+	describe('restore multiple files', () => {
+		beforeEach(() => {
+			jest.resetAllMocks();
+		});
+
+		describe('with not authenticated user', () => {
+			it('should return status 401', async () => {
+				const validId = new ObjectId().toHexString();
+				const result = await TestApiClient.createUnauthenticated(app, baseRouteName).post(`/restore`, {
+					fileRecordIds: [validId],
+				});
+
+				expect(result.status).toEqual(401);
+			});
+		});
+
+		describe('with bad request data', () => {
+			const setup = () => {
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
+
+				return { loggedInClient };
+			};
+
+			it('should return status 400 for invalid fileRecordId in array', async () => {
+				const { loggedInClient } = setup();
+
+				const result = await loggedInClient.post(`/restore`, { fileRecordIds: ['123'] });
+				const { validationErrors } = result.body as ApiValidationError;
+
+				expect(validationErrors).toEqual([
+					{
+						errors: ['each value in fileRecordIds must be a mongodb id'],
+						field: ['fileRecordIds'],
+					},
+				]);
+				expect(result.status).toEqual(400);
+			});
+		});
+
+		describe('with valid request data', () => {
+			const uploadFile = async (
+				loggedInClient: TestApiClient,
+				schoolId: string,
+				parentId: string,
+				fileName: string
+			) => {
+				const response = await loggedInClient
+					.post(`/upload/school/${schoolId}/schools/${parentId}`)
+					.attach('file', Buffer.from('abcd'), fileName)
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+
+				return response.body as FileRecordResponse;
+			};
+
+			describe('with a single parent', () => {
+				const setup = async () => {
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
+
+					const validId = new ObjectId().toHexString();
+
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+
+					const file1 = await uploadFile(loggedInClient, validId, validId, 'test1.txt');
+					const file2 = await uploadFile(loggedInClient, validId, validId, 'test2.txt');
+
+					await loggedInClient.delete(`/delete/school/${validId}/schools/${validId}`);
+
+					const fileRecordIds = { fileRecordIds: [file1.id, file2.id] };
+
+					return { loggedInClient, fileRecordIds, file1, file2 };
+				};
+
+				it('should return status 201 for successful request', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					const response = await loggedInClient.post(`/restore`, fileRecordIds);
+
+					expect(response.status).toEqual(201);
+				});
+
+				it('should return right type of data', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					const result = await loggedInClient.post(`/restore`, fileRecordIds);
+					const response = result.body as FileRecordListResponse;
+
+					expect(response).toStrictEqual({
+						data: [
+							{
+								creatorId: expect.any(String),
+								id: expect.any(String),
+								name: expect.any(String),
+								url: expect.any(String),
+								parentId: expect.any(String),
+								createdAt: expect.any(String),
+								updatedAt: expect.any(String),
+								parentType: FileRecordParentType.School,
+								mimeType: 'text/plain',
+								securityCheckStatus: 'pending',
+								size: expect.any(Number),
+								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
+								exceedsCollaboraEditableFileSize: false,
+								contentLastModifiedAt: expect.any(String),
+							},
+							{
+								creatorId: expect.any(String),
+								id: expect.any(String),
+								name: expect.any(String),
+								url: expect.any(String),
+								parentId: expect.any(String),
+								createdAt: expect.any(String),
+								updatedAt: expect.any(String),
+								parentType: FileRecordParentType.School,
+								mimeType: 'text/plain',
+								securityCheckStatus: 'pending',
+								size: expect.any(Number),
+								previewStatus: PreviewStatus.PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE,
+								isCollaboraEditable: true,
+								exceedsCollaboraEditableFileSize: false,
+								contentLastModifiedAt: expect.any(String),
+							},
+						],
+						total: 2,
+					});
+				});
+
+				it('should only restore the specified files', async () => {
+					const { loggedInClient, fileRecordIds, file1, file2 } = await setup();
+
+					const result = await loggedInClient.post(`/restore`, fileRecordIds);
+					const response = result.body as FileRecordListResponse;
+
+					const ids: EntityId[] = response.data.map((o: FileRecordResponse) => o.id);
+
+					expect(response.total).toEqual(2);
+					expect(ids.sort()).toEqual([file1.id, file2.id].sort());
+				});
+
+				it('should call checkPermissionsByManyReferences only once for files with the same parent', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+					jest.clearAllMocks();
+
+					await loggedInClient.post(`/restore`, fileRecordIds);
+
+					expect(authorizationClientAdapter.checkPermissionsByManyReferences).toHaveBeenCalledTimes(1);
+				});
+			});
+
+			describe('with two different parents', () => {
+				const setup = async () => {
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
+
+					const validId1 = new ObjectId().toHexString();
+					const validId2 = new ObjectId().toHexString();
+
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+
+					const file1 = await uploadFile(loggedInClient, validId1, validId1, 'test1.txt');
+					const file2 = await uploadFile(loggedInClient, validId2, validId2, 'test2.txt');
+
+					await loggedInClient.delete(`/delete/${file1.id}`);
+					await loggedInClient.delete(`/delete/${file2.id}`);
+
+					const fileRecordIds = { fileRecordIds: [file1.id, file2.id] };
+
+					return { loggedInClient, fileRecordIds };
+				};
+
+				it('should return status 201 and restore all specified files', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					const result = await loggedInClient.post(`/restore`, fileRecordIds);
+					const response = result.body as FileRecordListResponse;
+
+					expect(result.status).toEqual(201);
+					expect(response.total).toEqual(2);
+				});
+
+				it('should return error status when authorization fails', async () => {
+					const { loggedInClient, fileRecordIds } = await setup();
+
+					authorizationClientAdapter.checkPermissionsByManyReferences.mockRejectedValueOnce(
+						new AuthorizationManyReferencesForbiddenLoggableException([])
+					);
+
+					const response = await loggedInClient.post(`/restore`, fileRecordIds);
+
+					expect(response.body).toEqual({
+						code: 403,
+						message: 'Forbidden',
+						title: 'Authorization Many References Forbidden',
+						type: 'AUTHORIZATION_MANY_REFERENCES_FORBIDDEN',
+					});
+				});
 			});
 		});
 	});

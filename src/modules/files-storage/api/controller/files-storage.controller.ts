@@ -267,6 +267,20 @@ export class FilesStorageController {
 		return response;
 	}
 
+	@ApiOperation({ summary: 'Get a list of deleted file meta data by parent entityId.' })
+	@ApiResponse({ status: 200, type: FileRecordListResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@Get('/list-deleted/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async listDeleted(
+		@Param() params: FileRecordParams,
+		@Query() pagination: PaginationParams
+	): Promise<FileRecordListResponse> {
+		const response = await this.filesStorageUC.getDeletedFileRecordsOfParent(params, pagination);
+
+		return response;
+	}
+
 	@ApiOperation({ summary: 'Rename a single file.' })
 	@ApiResponse({ status: 200, type: FileRecordResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
@@ -348,6 +362,17 @@ export class FilesStorageController {
 	@Post('/restore/:fileRecordId')
 	public async restoreFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
 		const response = await this.filesStorageUC.restoreFile(params);
+
+		return response;
+	}
+
+	@ApiOperation({ summary: 'Restore several files that are marked for deletion.' })
+	@ApiResponse({ status: 201, type: FileRecordListResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@Post('/restore')
+	public async restoreFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
+		const response = await this.filesStorageUC.restoreMultipleFiles(params);
 
 		return response;
 	}

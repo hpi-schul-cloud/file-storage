@@ -17,7 +17,7 @@ export class FileRecordFactory {
 		mimeType: string,
 		params: ParentInfo,
 		userId: string,
-		storageType?: StorageType
+		storageType: StorageType
 	): FileRecord {
 		const defaultSecurityCheck = FileRecordSecurityCheck.createWithDefaultProps();
 
@@ -34,7 +34,7 @@ export class FileRecordFactory {
 			isUploading: true,
 			createdAt: new Date(),
 			updatedAt: new Date(),
-			storageType: storageType ?? StorageType.STANDARD,
+			storageType,
 		};
 
 		const fileRecord = FileRecordFactory.build(props, defaultSecurityCheck);
