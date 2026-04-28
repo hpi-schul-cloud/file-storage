@@ -315,16 +315,17 @@ describe('FilesStorageService get methods', () => {
 			const setup = () => {
 				const { parentId, fileRecords } = buildFileRecordsWithParams();
 				fileRecordRepo.findByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				const options = { pagination: { limit: 10, offset: 0 } };
 
-				return { parentId, fileRecords };
+				return { parentId, fileRecords, options };
 			};
 
 			it('should call findBySchoolIdAndParentId with right parameters', async () => {
-				const { parentId } = setup();
+				const { parentId, options } = setup();
 
-				await service.getFileRecordsByParentAndStorageType(parentId);
+				await service.getFileRecordsByParentAndStorageType(parentId, undefined, options);
 
-				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId, undefined, undefined);
+				expect(fileRecordRepo.findByParentId).toHaveBeenNthCalledWith(1, parentId, options, undefined);
 			});
 
 			it('should return the matched fileRecord', async () => {
@@ -359,16 +360,17 @@ describe('FilesStorageService get methods', () => {
 				const { parentId, fileRecords } = buildFileRecordsWithParams();
 				fileRecords.forEach((record) => record.markForDelete());
 				fileRecordRepo.findMarkedForDeleteByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
+				const pagination = { limit: 10, offset: 0 };
 
-				return { parentId, fileRecords };
+				return { parentId, fileRecords, pagination };
 			};
 
 			it('should call findByParentId with right parameters', async () => {
-				const { parentId } = setup();
+				const { parentId, pagination } = setup();
 
-				await service.getFileRecordsMarkedForDeleteByParent(parentId);
+				await service.getFileRecordsMarkedForDeleteByParent(parentId, { pagination });
 
-				expect(fileRecordRepo.findMarkedForDeleteByParentId).toHaveBeenNthCalledWith(1, parentId);
+				expect(fileRecordRepo.findMarkedForDeleteByParentId).toHaveBeenNthCalledWith(1, parentId, { pagination });
 			});
 
 			it('should return the matched fileRecord', async () => {
