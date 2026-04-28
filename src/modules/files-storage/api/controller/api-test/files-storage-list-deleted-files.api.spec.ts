@@ -176,6 +176,42 @@ describe(`${baseRouteName} (api)`, () => {
 			expect(response.skip).toEqual(100);
 		});
 
+		it('should apply limit to returned data', async () => {
+			const { loggedInClient, fileApiClient, validId } = setup();
+
+			const file1 = await uploadFile(fileApiClient, validId, validId, 'limit-test1.txt');
+			const file2 = await uploadFile(fileApiClient, validId, validId, 'limit-test2.txt');
+			const file3 = await uploadFile(fileApiClient, validId, validId, 'limit-test3.txt');
+
+			await fileApiClient.delete(`/delete/${file1.id}`);
+			await fileApiClient.delete(`/delete/${file2.id}`);
+			await fileApiClient.delete(`/delete/${file3.id}`);
+
+			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ limit: 2 });
+			const response = result.body as FileRecordListResponse;
+
+			expect(response.total).toEqual(3);
+			expect(response.data.length).toEqual(2);
+		});
+
+		it('should apply skip to returned data', async () => {
+			const { loggedInClient, fileApiClient, validId } = setup();
+
+			const file1 = await uploadFile(fileApiClient, validId, validId, 'skip-test1.txt');
+			const file2 = await uploadFile(fileApiClient, validId, validId, 'skip-test2.txt');
+			const file3 = await uploadFile(fileApiClient, validId, validId, 'skip-test3.txt');
+
+			await fileApiClient.delete(`/delete/${file1.id}`);
+			await fileApiClient.delete(`/delete/${file2.id}`);
+			await fileApiClient.delete(`/delete/${file3.id}`);
+
+			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ skip: 2 });
+			const response = result.body as FileRecordListResponse;
+
+			expect(response.total).toEqual(3);
+			expect(response.data.length).toEqual(1);
+		});
+
 		it('should only return deleted files', async () => {
 			const { loggedInClient, fileApiClient, validId } = setup();
 

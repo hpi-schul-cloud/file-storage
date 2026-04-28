@@ -146,6 +146,44 @@ describe(`${baseRouteName} (api)`, () => {
 			expect(response.skip).toEqual(100);
 		});
 
+		it('should apply limit to returned data', async () => {
+			const { loggedInClient, validId } = setup();
+			const fileRecords = fileRecordEntityFactory.buildList(3, {
+				storageLocation: StorageLocation.SCHOOL,
+				storageLocationId: validId,
+				parentId: validId,
+				parentType: FileRecordParentType.School,
+			});
+
+			await em.persist(fileRecords).flush();
+			em.clear();
+
+			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ limit: 2 });
+			const response = result.body as FileRecordListResponse;
+
+			expect(response.total).toEqual(3);
+			expect(response.data.length).toEqual(2);
+		});
+
+		it('should apply skip to returned data', async () => {
+			const { loggedInClient, validId } = setup();
+			const fileRecords = fileRecordEntityFactory.buildList(3, {
+				storageLocation: StorageLocation.SCHOOL,
+				storageLocationId: validId,
+				parentId: validId,
+				parentType: FileRecordParentType.School,
+			});
+
+			await em.persist(fileRecords).flush();
+			em.clear();
+
+			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ skip: 2 });
+			const response = result.body as FileRecordListResponse;
+
+			expect(response.total).toEqual(3);
+			expect(response.data.length).toEqual(1);
+		});
+
 		it('should return right type of data', async () => {
 			const { loggedInClient, validId } = setup();
 			const fileRecords = fileRecordEntityFactory.buildList(1, {
