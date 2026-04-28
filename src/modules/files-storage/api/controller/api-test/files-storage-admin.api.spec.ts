@@ -7,7 +7,6 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
@@ -24,7 +23,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
 	let em: EntityManager;
-	let testApiClient: TestApiClient;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -43,7 +41,6 @@ describe(`${baseRouteName} (api)`, () => {
 		app = module.createNestApplication();
 		await app.init();
 		em = module.get(EntityManager);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -53,7 +50,7 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('delete files of storage location', () => {
 		describe('when not authenticated user', () => {
 			it('should return status 401', async () => {
-				const client = new TestApiClient(app, baseRouteName);
+				const client = TestApiClient.createUnauthenticated(app, baseRouteName);
 
 				const result = await client.delete(`admin/file/storage-location/school/123`);
 
@@ -63,9 +60,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('when bad request data', () => {
 			const setup = () => {
-				const { superheroUser, superheroAccount } = UserAndAccountTestFactory.buildSuperhero();
-
-				const loggedInClient = testApiClient.loginByUser(superheroAccount, superheroUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -120,9 +115,7 @@ describe(`${baseRouteName} (api)`, () => {
 			};
 
 			const setup = async () => {
-				const { superheroUser, superheroAccount } = UserAndAccountTestFactory.buildSuperhero();
-
-				const loggedInClient = testApiClient.loginByUser(superheroAccount, superheroUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const storageLocationId1 = new ObjectId().toHexString();
 				const fileRecords1 = fileRecordEntityFactory.buildList(3, {

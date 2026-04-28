@@ -1,10 +1,9 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Controller, Delete, Get, Headers, HttpStatus, INestApplication, Patch, Post, Put } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from './factory/user-and-account.test.factory';
 import { TestApiClient } from './test-api-client';
 
-@Controller('')
+@Controller('/with-jwt')
 class TestController {
 	@Delete(':id')
 	public delete(@Headers('authorization') authorization: string) {
@@ -37,7 +36,7 @@ class TestController {
 	}
 }
 
-@Controller('')
+@Controller('/with-x-api-key')
 class TestXApiKeyController {
 	@Delete(':id')
 	public delete(@Headers('X-API-KEY') authorization: string) {
@@ -56,47 +55,37 @@ class TestXApiKeyController {
 }
 
 describe(TestApiClient.name, () => {
+	let app: INestApplication;
+
+	beforeAll(async () => {
+		const moduleFixture = await Test.createTestingModule({
+			controllers: [TestController, TestXApiKeyController],
+		}).compile();
+
+		app = moduleFixture.createNestApplication();
+
+		await app.init();
+	});
+
+	afterAll(async () => {
+		await app.close();
+	});
+
 	describe('when test request instance exists - jwt auth', () => {
-		let app: INestApplication;
-
-		beforeAll(async () => {
-			const moduleFixture = await Test.createTestingModule({
-				controllers: [TestController],
-			}).compile();
-
-			app = moduleFixture.createNestApplication();
-
-			await app.init();
-		});
-
-		afterAll(async () => {
-			await app.close();
-		});
-
 		const setup = () => {
-			const testApiClient = new TestApiClient(app, '');
-			const { studentAccount, studentUser } = UserAndAccountTestFactory.buildStudent();
+			const testApiClient = TestApiClient.createWithJwt(app, '/with-jwt');
+
 			const id = new ObjectId().toHexString();
 
-			return { testApiClient, studentAccount, studentUser, id };
+			return { testApiClient, id };
 		};
 
-		describe('login', () => {
-			it('should store formatted jwt', async () => {
-				const { testApiClient, studentAccount, studentUser } = setup();
-
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
+		describe('when client is created with JWT', () => {
+			it('should store formatted jwt', () => {
+				const { testApiClient } = setup();
 
 				// eslint-disable-next-line @typescript-eslint/dot-notation
-				expect(loggedInClient['authHeader']).toEqual(expect.any(String));
-			});
-
-			it('should fork the client', async () => {
-				const { testApiClient, studentAccount, studentUser } = setup();
-
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-
-				expect(loggedInClient).not.toStrictEqual(testApiClient);
+				expect(testApiClient['authHeader']).toEqual(expect.any(String));
 			});
 		});
 
@@ -111,10 +100,9 @@ describe(TestApiClient.name, () => {
 			});
 
 			it('should pass the bearer token', async () => {
-				const { testApiClient, studentAccount, studentUser, id } = setup();
+				const { testApiClient, id } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const result = await loggedInClient.get(id);
+				const result = await testApiClient.get(id);
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
 			});
@@ -131,10 +119,9 @@ describe(TestApiClient.name, () => {
 			});
 
 			it('should pass the bearer token', async () => {
-				const { testApiClient, studentAccount, studentUser } = setup();
+				const { testApiClient } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const result = await loggedInClient.post();
+				const result = await testApiClient.post();
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
 			});
@@ -151,10 +138,9 @@ describe(TestApiClient.name, () => {
 			});
 
 			it('should pass the bearer token', async () => {
-				const { testApiClient, studentAccount, studentUser, id } = setup();
+				const { testApiClient, id } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const result = await loggedInClient.delete(id);
+				const result = await testApiClient.delete(id);
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
 			});
@@ -171,10 +157,9 @@ describe(TestApiClient.name, () => {
 			});
 
 			it('should pass the bearer token', async () => {
-				const { testApiClient, studentAccount, studentUser } = setup();
+				const { testApiClient } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const result = await loggedInClient.put();
+				const result = await testApiClient.put();
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
 			});
@@ -191,10 +176,9 @@ describe(TestApiClient.name, () => {
 			});
 
 			it('should pass the bearer token', async () => {
-				const { testApiClient, studentAccount, studentUser, id } = setup();
+				const { testApiClient, id } = setup();
 
-				const loggedInClient = await testApiClient.loginByUser(studentAccount, studentUser);
-				const result = await loggedInClient.patch(id);
+				const result = await testApiClient.patch(id);
 
 				expect(result.body).toEqual(expect.objectContaining({ authorization: expect.any(String) }));
 			});
@@ -202,25 +186,9 @@ describe(TestApiClient.name, () => {
 	});
 
 	describe('when test request instance exists - x-api-key auth', () => {
-		let app: INestApplication;
-		const API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
-
-		beforeAll(async () => {
-			const moduleFixture = await Test.createTestingModule({
-				controllers: [TestXApiKeyController],
-			}).compile();
-
-			app = moduleFixture.createNestApplication();
-
-			await app.init();
-		});
-
-		afterAll(async () => {
-			await app.close();
-		});
-
 		const setup = () => {
-			const testApiClient = new TestApiClient(app, '', API_KEY, true);
+			const API_KEY = '7ccd4e11-c6f6-48b0-81eb-cccf7922e7a4';
+			const testApiClient = TestApiClient.createWithApiKey(app, '/with-x-api-key', API_KEY);
 			const id = new ObjectId().toHexString();
 
 			return { testApiClient, id };
@@ -256,6 +224,26 @@ describe(TestApiClient.name, () => {
 
 				expect(result.statusCode).toEqual(HttpStatus.OK);
 				expect(result.body).toEqual(expect.objectContaining({ method: 'delete' }));
+			});
+		});
+	});
+
+	describe('when test request instance exists - unauthenticated', () => {
+		const setup = () => {
+			const testApiClient = TestApiClient.createUnauthenticated(app, '/with-jwt');
+			const id = new ObjectId().toHexString();
+
+			return { testApiClient, id };
+		};
+
+		describe('get', () => {
+			it('should resolve requests', async () => {
+				const { testApiClient, id } = setup();
+
+				const result = await testApiClient.get(id);
+
+				expect(result.statusCode).toEqual(HttpStatus.OK);
+				expect(result.body).toEqual(expect.objectContaining({ method: 'get', authorization: 'Wrong auth header' }));
 			});
 		});
 	});

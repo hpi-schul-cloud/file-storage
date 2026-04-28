@@ -1,5 +1,5 @@
-import { currentUserFactory } from '@infra/auth-guard/testing/currentuser.factory';
 import { ObjectId } from '@mikro-orm/mongodb';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { CreateJwtPayload } from '../interface';
 import { JwtPayloadFactory } from './jwt.factory';
 
