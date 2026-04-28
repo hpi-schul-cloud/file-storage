@@ -32,11 +32,11 @@ export class FileStorageConfig extends FileStoragePublicApiConfig {
 	@IsBoolean()
 	@StringToBoolean()
 	@ConfigProperty('FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS')
-	filesStorageUseStreamToAntivirus = false;
+	filesStorageUseStreamToAntivirus = true;
 
 	@IsUrl({ require_tld: false })
 	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
-	endpoint = 'http://localhost:9000/';
+	endpoint!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_REGION')
@@ -44,15 +44,15 @@ export class FileStorageConfig extends FileStoragePublicApiConfig {
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_BUCKET')
-	bucket = 'schulcloud';
+	bucket!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_ACCESS_KEY_ID')
-	accessKeyId = 'miniouser';
+	accessKeyId!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
-	secretAccessKey = 'miniouser';
+	secretAccessKey!: string;
 
 	/**
 	 * @deprecated is config from wopi module, but we need it here until we refactor isCollaboraEditable logic
