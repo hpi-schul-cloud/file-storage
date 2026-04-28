@@ -78,6 +78,7 @@ describe('files-storage temp upload controller (API)', () => {
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+			jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
 			return { validId, loggedInClient, userId };
 		};

@@ -1,6 +1,6 @@
 import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 export const AntivirusExchange = 'antivirus';
 export const ANTIVIRUS_CONFIG_TOKEN = 'ANTIVIRUS_CONFIG_TOKEN';
@@ -13,6 +13,7 @@ export class AntivirusConfig {
 	@ConfigProperty('ENABLE_FILE_SECURITY_CHECK')
 	enableFileSecurityCheck = false;
 	// base url for the file storage service
+	@ValidateIf((o: AntivirusConfig) => o.enableFileSecurityCheck)
 	@IsString()
 	@ConfigProperty('FILE_STORAGE_SERVICE_URL')
 	fileStorageServiceUrl!: string;
