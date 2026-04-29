@@ -11,6 +11,7 @@ import {
 	NotAcceptableException,
 	NotFoundException,
 } from '@nestjs/common';
+import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import type { Archiver } from 'archiver';
 import { PassThrough } from 'node:stream';
@@ -90,15 +91,19 @@ export class FilesStorageService {
 
 	public async getFileRecordsByParentAndStorageType(
 		parentId: EntityId,
-		storageType?: StorageType
+		storageType?: StorageType,
+		options?: FindOptions<FileRecord>
 	): Promise<Counted<FileRecord[]>> {
-		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId, undefined, storageType);
+		const countedFileRecords = await this.fileRecordRepo.findByParentId(parentId, options, storageType);
 
 		return countedFileRecords;
 	}
 
-	public async getFileRecordsMarkedForDeleteByParent(parentId: EntityId): Promise<Counted<FileRecord[]>> {
-		const countedFileRecords = await this.fileRecordRepo.findMarkedForDeleteByParentId(parentId);
+	public async getFileRecordsMarkedForDeleteByParent(
+		parentId: EntityId,
+		options?: FindOptions<FileRecord>
+	): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findMarkedForDeleteByParentId(parentId, options);
 
 		return countedFileRecords;
 	}
