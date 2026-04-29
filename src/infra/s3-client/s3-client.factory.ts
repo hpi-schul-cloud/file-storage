@@ -3,7 +3,7 @@ import { ConfiguredRetryStrategy, RETRY_MODES } from '@aws-sdk/util-retry';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
-import { Agent } from 'https';
+import { Agent } from 'node:https';
 import { FolderLifecycleRule, S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 
