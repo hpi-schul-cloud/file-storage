@@ -344,7 +344,11 @@ export class FilesStorageUC {
 	): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(
+			params.parentId,
+			undefined,
+			{ pagination }
+		);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
 			fileRecordWithStatus,
@@ -361,7 +365,9 @@ export class FilesStorageUC {
 	): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.create);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteByParent(params.parentId);
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDeleteByParent(params.parentId, {
+			pagination,
+		});
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
 		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
 			fileRecordWithStatus,
