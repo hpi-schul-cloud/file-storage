@@ -7,7 +7,6 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import { PreviewStatus } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
@@ -20,7 +19,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
-	let testApiClient: TestApiClient;
 	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 	let storageClient: DeepMocked<S3ClientAdapter>;
 
@@ -36,7 +34,6 @@ describe(`${baseRouteName} (api)`, () => {
 
 		app = module.createNestApplication();
 		await app.init();
-		testApiClient = new TestApiClient(app, baseRouteName);
 		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
 		storageClient = module.get(FILES_STORAGE_S3_CONNECTION);
 	});
@@ -52,6 +49,7 @@ describe(`${baseRouteName} (api)`, () => {
 	describe('purge files', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
+				const testApiClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 				const fileRecordIds = { fileRecordIds: [new ObjectId().toHexString()] };
 
 				const result = await testApiClient.delete(`/purge`, fileRecordIds);
@@ -62,8 +60,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				return { loggedInClient };
 			};
@@ -103,8 +100,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 			describe('with single parent', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 					const validId = new ObjectId().toHexString();
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
@@ -188,8 +184,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 			describe('with two different parents', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId1 = new ObjectId().toHexString();
 					const validId2 = new ObjectId().toHexString();
@@ -266,8 +261,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 			describe('when authorization fails', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 					const validId = new ObjectId().toHexString();
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
@@ -301,8 +295,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 			describe('when storage client rejects', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 					const validId = new ObjectId().toHexString();
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
