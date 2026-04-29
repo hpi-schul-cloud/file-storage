@@ -22,7 +22,7 @@ export class S3ClientFactory {
 			(attempt: number) => attempt * backoffDelayTimeMs
 		);
 
-		const httpsAgent = new Agent({ maxSockets });
+		const httpsAgent = new Agent({ maxSockets, keepAlive: true, keepAliveMsecs: 10_000 });
 		const requestHandler = new NodeHttpHandler({ httpsAgent });
 
 		const s3Client = new S3Client({
