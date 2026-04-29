@@ -22,7 +22,7 @@ describe('Metrics Api Test', () => {
 
 	describe('getMetrics', () => {
 		const setup = () => {
-			const testApiClient = new TestApiClient(app, baseRoute);
+			const testApiClient = TestApiClient.createUnauthenticated(app, baseRoute);
 
 			return { testApiClient };
 		};

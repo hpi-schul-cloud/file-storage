@@ -15,14 +15,14 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
-	coreIncomingRequestTimeoutMs!: number;
+	coreIncomingRequestTimeoutMs = 8000;
 }
 
 @Configuration()
 export class FilesPreviewAppConfig {
 	@IsUrl({ require_tld: false })
 	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
-	endpoint = 'http://localhost:9000/';
+	endpoint!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_REGION')
@@ -30,13 +30,13 @@ export class FilesPreviewAppConfig {
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_BUCKET')
-	bucket = 'schulcloud';
+	bucket!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_ACCESS_KEY_ID')
-	accessKeyId = 'miniouser';
+	accessKeyId!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
-	secretAccessKey = 'miniouser';
+	secretAccessKey!: string;
 }

@@ -8,7 +8,6 @@ import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files
 import { ForbiddenException, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityId } from '@shared/domain/types';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus } from '../../../domain';
@@ -23,7 +22,6 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 describe(`${baseRouteName} (api)`, () => {
 	let app: INestApplication;
-	let testApiClient: TestApiClient;
 	let authorizationClientAdapter: DeepMocked<AuthorizationClientAdapter>;
 
 	beforeAll(async () => {
@@ -42,7 +40,6 @@ describe(`${baseRouteName} (api)`, () => {
 
 		app = module.createNestApplication();
 		await app.init();
-		testApiClient = new TestApiClient(app, baseRouteName);
 		authorizationClientAdapter = module.get(AuthorizationClientAdapter);
 	});
 
@@ -56,7 +53,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with not authenticated user', () => {
 		it('should return status 401', async () => {
-			const response = await testApiClient.get(`/school/123/users/123`);
+			const response = await TestApiClient.createUnauthenticated(app, baseRouteName).get(`/school/123/users/123`);
 
 			expect(response.status).toEqual(401);
 		});
@@ -64,9 +61,7 @@ describe(`${baseRouteName} (api)`, () => {
 
 	describe('with bad request data', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 			const validId = new ObjectId().toHexString();
 
@@ -131,11 +126,9 @@ describe(`${baseRouteName} (api)`, () => {
 		};
 
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 			// separate client for upload/delete operations (base: /file)
-			const fileApiClient = new TestApiClient(app, '/file').loginByUser(studentAccount, studentUser);
+			const fileApiClient = TestApiClient.createWithJwt(app, '/file');
 
 			const validId = new ObjectId().toHexString();
 

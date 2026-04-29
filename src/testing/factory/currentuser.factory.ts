@@ -1,23 +1,23 @@
+import { CurrentUserInterface } from '@infra/auth-guard/interface';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { BaseFactory } from '@testing/factory/base.factory';
-import { CurrentUserInterface } from '../interface';
 
-class CurrentUser implements CurrentUserInterface {
-	userId: string;
+export class CurrentUser implements CurrentUserInterface {
+	public userId: string;
 
-	roles: string[];
+	public roles: string[];
 
-	schoolId: string;
+	public schoolId: string;
 
-	accountId: string;
+	public accountId: string;
 
-	systemId: string;
+	public systemId: string;
 
-	isExternalUser: boolean;
+	public isExternalUser: boolean;
 
-	support: boolean;
+	public support: boolean;
 
-	supportUserId?: string;
+	public supportUserId?: string;
 
 	constructor(data: CurrentUserInterface) {
 		this.userId = data.userId;

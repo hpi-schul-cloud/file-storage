@@ -7,7 +7,7 @@ import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserAndAccountTestFactory } from '@testing/factory/user-and-account.test.factory';
+import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { ErrorType, ScanStatus, StorageType } from '../../../domain';
@@ -31,7 +31,6 @@ describe('files-storage controller (API)', () => {
 	let em: EntityManager;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
-	let testApiClient: TestApiClient;
 	let config: DeepMocked<FileStorageConfig>;
 
 	const baseRouteName = '/file';
@@ -61,7 +60,6 @@ describe('files-storage controller (API)', () => {
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
-		testApiClient = new TestApiClient(app, baseRouteName);
 	});
 
 	afterAll(async () => {
@@ -75,15 +73,17 @@ describe('files-storage controller (API)', () => {
 
 	describe('upload action', () => {
 		const setup = () => {
-			const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+			const currentUser = currentUserFactory.build();
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
-			const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+			const { userId } = currentUser;
 
 			const validId = new ObjectId().toHexString();
 
 			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('text/plain');
+			jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
-			return { validId, loggedInClient, user: studentUser };
+			return { validId, loggedInClient, userId };
 		};
 
 		const uploadFile = async (routeName: string, apiClient: TestApiClient) => {
@@ -99,9 +99,9 @@ describe('files-storage controller (API)', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const { validId } = setup();
-				const loggedInClient = new TestApiClient(app, baseRouteName);
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 
-				const result = await uploadFile(`/upload/school/123/users/${validId}`, loggedInClient);
+				const result = await uploadFile(`/upload/school/123/users/${validId}`, unauthenticatedClient);
 
 				expect(result.status).toEqual(401);
 			});
@@ -157,7 +157,7 @@ describe('files-storage controller (API)', () => {
 			});
 
 			it('should return the new created file record', async () => {
-				const { loggedInClient, validId, user } = setup();
+				const { loggedInClient, validId, userId } = setup();
 
 				const result = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				const response = result.body as FileRecordEntity;
@@ -167,7 +167,7 @@ describe('files-storage controller (API)', () => {
 						id: expect.any(String),
 						name: 'test.txt',
 						parentId: validId,
-						creatorId: user.id,
+						creatorId: userId,
 						mimeType: 'text/plain',
 						parentType: 'schools',
 						securityCheckStatus: 'pending',
@@ -200,7 +200,7 @@ describe('files-storage controller (API)', () => {
 				});
 
 				it('should return the new created file record', async () => {
-					const { loggedInClient, validId, user } = setup();
+					const { loggedInClient, validId, userId } = setup();
 
 					const result = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 					const response = result.body as FileRecordEntity;
@@ -210,7 +210,7 @@ describe('files-storage controller (API)', () => {
 							id: expect.any(String),
 							name: 'test.txt',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'text/plain',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
@@ -268,18 +268,19 @@ describe('files-storage controller (API)', () => {
 	describe('upload from url action', () => {
 		describe('with not authenticated user', () => {
 			const setup = () => {
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
 				const body = {
 					url: 'http://localhost/test.txt',
 					fileName: 'test.txt',
 				};
 
-				return { body };
+				return { body, unauthenticatedClient };
 			};
 
 			it('should return status 401', async () => {
-				const { body } = setup();
+				const { body, unauthenticatedClient } = setup();
 
-				const response = await testApiClient.post(`/upload-from-url/school/123/users/123`, body);
+				const response = await unauthenticatedClient.post(`/upload-from-url/school/123/users/123`, body);
 
 				expect(response.status).toEqual(401);
 			});
@@ -287,9 +288,7 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -400,9 +399,10 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe(`with new file`, () => {
 				const setup = async (fileName = 'test.txt') => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const currentUser = currentUserFactory.build();
+					const { userId } = currentUser;
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 					const validId = new ObjectId().toHexString();
 
@@ -427,7 +427,7 @@ describe('files-storage controller (API)', () => {
 						},
 					};
 
-					return { validId, fileId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, userId };
 				};
 
 				it('should return status 201 for successful upload', async () => {
@@ -439,7 +439,7 @@ describe('files-storage controller (API)', () => {
 				});
 
 				it('should return the new created file record', async () => {
-					const { validId, loggedInClient, body, user } = await setup();
+					const { validId, loggedInClient, body, userId } = await setup();
 
 					const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 					const response = result.body as FileRecordEntity;
@@ -449,7 +449,7 @@ describe('files-storage controller (API)', () => {
 							id: expect.any(String),
 							name: 'test (1).txt',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'application/octet-stream',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
@@ -460,7 +460,7 @@ describe('files-storage controller (API)', () => {
 				describe('when the url is encoded', () => {
 					it('should work with fileNames with special characters', async () => {
 						const fileName = encodeURI('we ❤️ bugfixes.doc');
-						const { validId, loggedInClient, body, user } = await setup(fileName);
+						const { validId, loggedInClient, body, userId } = await setup(fileName);
 
 						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 						const response = result.body as FileRecordEntity;
@@ -470,7 +470,7 @@ describe('files-storage controller (API)', () => {
 								id: expect.any(String),
 								name: fileName,
 								parentId: validId,
-								creatorId: user.id,
+								creatorId: userId,
 								mimeType: 'application/octet-stream',
 								parentType: 'schools',
 								securityCheckStatus: 'pending',
@@ -482,7 +482,7 @@ describe('files-storage controller (API)', () => {
 				describe('when the url is unencoded', () => {
 					it('should work with fileNames with special characters', async () => {
 						const fileName = 'we ❤️ bugfixes.doc';
-						const { validId, loggedInClient, body, user } = await setup(fileName);
+						const { validId, loggedInClient, body, userId } = await setup(fileName);
 
 						const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 						const response = result.body as FileRecordEntity;
@@ -492,7 +492,7 @@ describe('files-storage controller (API)', () => {
 								id: expect.any(String),
 								name: fileName.replace(/\.doc/, ' (1).doc'),
 								parentId: validId,
-								creatorId: user.id,
+								creatorId: userId,
 								mimeType: 'application/octet-stream',
 								parentType: 'schools',
 								securityCheckStatus: 'pending',
@@ -504,9 +504,9 @@ describe('files-storage controller (API)', () => {
 
 			describe('when the name contains opening bracket', () => {
 				const setup = async (fileName: string) => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const currentUser = currentUserFactory.build();
+					const { userId } = currentUser;
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 					const validId = new ObjectId().toHexString();
 
@@ -532,11 +532,11 @@ describe('files-storage controller (API)', () => {
 						},
 					};
 
-					return { validId, fileId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, userId };
 				};
 
 				it('should remove opening bracket', async () => {
-					const { validId, loggedInClient, body, user } = await setup('test<script>.txt');
+					const { validId, loggedInClient, body, userId } = await setup('test<script>.txt');
 
 					const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
 					const response = result.body as FileRecordEntity;
@@ -546,7 +546,7 @@ describe('files-storage controller (API)', () => {
 							id: expect.any(String),
 							name: 'test',
 							parentId: validId,
-							creatorId: user.id,
+							creatorId: userId,
 							mimeType: 'application/octet-stream',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
@@ -557,9 +557,7 @@ describe('files-storage controller (API)', () => {
 
 			describe(`with already existing file`, () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -602,9 +600,11 @@ describe('files-storage controller (API)', () => {
 			describe('when parent already has the maximum number of files allowed', () => {
 				let defaultMaxFilesPerParent: number;
 				const setup = async (fileName = 'test.txt') => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
+					const currentUser = currentUserFactory.build();
 
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const { userId } = currentUser;
+
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 
 					const validId = new ObjectId().toHexString();
 
@@ -634,7 +634,7 @@ describe('files-storage controller (API)', () => {
 
 					config.filesStorageMaxFilesPerParent = maxFilesPerParent;
 
-					return { validId, fileId, loggedInClient, body, user: studentUser };
+					return { validId, fileId, loggedInClient, body, userId };
 				};
 
 				afterEach(() => {
@@ -656,7 +656,8 @@ describe('files-storage controller (API)', () => {
 	describe('download action', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const result = await testApiClient.get('/download/123/text.txt');
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const result = await unauthenticatedClient.get('/download/123/text.txt');
 
 				expect(result.status).toEqual(401);
 			});
@@ -664,9 +665,7 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -720,9 +719,7 @@ describe('files-storage controller (API)', () => {
 		describe(`with valid request data`, () => {
 			describe('when mimetype is not application/pdf', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -776,14 +773,11 @@ describe('files-storage controller (API)', () => {
 
 			describe('when mimetype is application/pdf', () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-
-					const validId = new ObjectId().toHexString();
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
+					const validId = new ObjectId().toHexString();
 					const result = await loggedInClient
 						.post(`/upload/school/${validId}/schools/${validId}`)
 						.attach('file', Buffer.from('abcd'), 'test.txt')
@@ -813,9 +807,7 @@ describe('files-storage controller (API)', () => {
 
 			describe(`when storageType is ${StorageType.TEMP}`, () => {
 				const setup = async () => {
-					const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-					const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 					const validId = new ObjectId().toHexString();
 
@@ -848,7 +840,8 @@ describe('files-storage controller (API)', () => {
 	describe('download multiple files action', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
-				const result = await testApiClient.post('/download-files-as-archive', {
+				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
+				const result = await unauthenticatedClient.post('/download-files-as-archive', {
 					fileRecordIds: ['123'],
 					archiveName: 'test',
 				});
@@ -859,9 +852,7 @@ describe('files-storage controller (API)', () => {
 
 		describe('with bad request data', () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -910,9 +901,7 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
@@ -1013,10 +1002,7 @@ describe('files-storage controller (API)', () => {
 	describe('file-security.download()', () => {
 		describe('with bad request data', () => {
 			const setup = () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
-
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
 				return { loggedInClient };
@@ -1033,15 +1019,13 @@ describe('files-storage controller (API)', () => {
 
 		describe(`with valid request data`, () => {
 			const setup = async () => {
-				const { studentUser, studentAccount } = UserAndAccountTestFactory.buildStudent();
-
-				const loggedInClient = testApiClient.loginByUser(studentAccount, studentUser);
+				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 
 				const validId = new ObjectId().toHexString();
 
 				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
 
-				const fileApiClient = new TestApiClient(app, '');
+				const fileApiClient = TestApiClient.createUnauthenticated(app, '');
 
 				const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 				s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
