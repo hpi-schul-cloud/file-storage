@@ -315,7 +315,7 @@ describe('FilesStorageService get methods', () => {
 			const setup = () => {
 				const { parentId, fileRecords } = buildFileRecordsWithParams();
 				fileRecordRepo.findByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
-				const options = { pagination: { limit: 10, offset: 0 } };
+				const options = { pagination: { limit: 10, skip: 0 } };
 
 				return { parentId, fileRecords, options };
 			};
@@ -360,7 +360,7 @@ describe('FilesStorageService get methods', () => {
 				const { parentId, fileRecords } = buildFileRecordsWithParams();
 				fileRecords.forEach((record) => record.markForDelete());
 				fileRecordRepo.findMarkedForDeleteByParentId.mockResolvedValueOnce([fileRecords, fileRecords.length]);
-				const pagination = { limit: 10, offset: 0 };
+				const pagination = { limit: 10, skip: 0 };
 
 				return { parentId, fileRecords, pagination };
 			};
