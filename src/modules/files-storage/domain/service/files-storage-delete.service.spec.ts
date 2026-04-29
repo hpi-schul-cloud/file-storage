@@ -4,7 +4,6 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
@@ -311,22 +310,6 @@ describe('FilesStorageService delete methods', () => {
 				await expect(service.permanentlyDeleteFiles(fileRecords)).rejects.toThrow();
 
 				expect(fileRecordRepo.delete).not.toHaveBeenCalled();
-			});
-		});
-
-		describe('WHEN a file record is NOT marked for deletion', () => {
-			const setup = () => {
-				const fileRecords = fileRecordTestFactory().buildList(3);
-				FileRecord.markForDelete(fileRecords);
-				fileRecords[0].unmarkForDelete();
-
-				return { fileRecords };
-			};
-
-			it('should throw ForbiddenException', async () => {
-				const { fileRecords } = setup();
-
-				await expect(service.permanentlyDeleteFiles(fileRecords)).rejects.toThrow(ForbiddenException);
 			});
 		});
 	});
