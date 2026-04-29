@@ -7,10 +7,6 @@ import { Agent } from 'node:https';
 import { FolderLifecycleRule, S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 
-const MAXIMUM_ATTEMPTS = 3;
-const BACKOFF_DELAY_TIME_MS = 5000;
-const MAX_SOCKETS = 50;
-
 export class S3ClientFactory {
 	public static build(
 		config: S3Config,
@@ -20,13 +16,13 @@ export class S3ClientFactory {
 		folderLifecycleRules?: FolderLifecycleRule[],
 		deletedFolderName?: string
 	): S3ClientAdapter {
-		const { region, accessKeyId, secretAccessKey, endpoint } = config;
+		const { region, accessKeyId, secretAccessKey, endpoint, maximumAttempts, backoffDelayTimeMs, maxSockets } = config;
 		const retryStrategy = new ConfiguredRetryStrategy(
-			MAXIMUM_ATTEMPTS,
-			(attempt: number) => attempt * BACKOFF_DELAY_TIME_MS
+			maximumAttempts,
+			(attempt: number) => attempt * backoffDelayTimeMs
 		);
 
-		const httpsAgent = new Agent({ maxSockets: MAX_SOCKETS });
+		const httpsAgent = new Agent({ maxSockets });
 		const requestHandler = new NodeHttpHandler({ httpsAgent });
 
 		const s3Client = new S3Client({

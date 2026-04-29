@@ -6,6 +6,9 @@ export interface S3Config {
 	bucket: string;
 	accessKeyId: string;
 	secretAccessKey: string;
+	maximumAttempts: number;
+	backoffDelayTimeMs: number;
+	maxSockets: number;
 }
 
 export interface S3ClientModuleOptions {
