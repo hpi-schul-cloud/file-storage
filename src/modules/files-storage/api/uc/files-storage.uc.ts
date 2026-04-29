@@ -220,7 +220,7 @@ export class FilesStorageUC {
 	}
 
 	private async deletePreviewsAndFiles(fileRecords: FileRecord[]): Promise<void> {
-		await this.previewService.deletePreviews(fileRecords);
+		// await this.previewService.deletePreviews(fileRecords);
 		await this.filesStorageService.deleteFiles(fileRecords);
 	}
 
