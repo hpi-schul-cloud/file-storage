@@ -44,6 +44,39 @@ describe('FilePathFactory', () => {
 		});
 	});
 
+	describe('createTrashPath', () => {
+		it('should prefix the standard path with the trash folder name', () => {
+			const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.STANDARD });
+			const expectedPath = `${StorageFolders.TRASH}/${FilePathFactory.create(fileRecord)}`;
+
+			const result = FilePathFactory.createTrashPath(fileRecord);
+
+			expect(result).toBe(expectedPath);
+		});
+
+		it('should prefix the temp path with the trash folder name', () => {
+			const fileRecord = fileRecordTestFactory().build({ storageType: StorageType.TEMP });
+			const expectedPath = `${StorageFolders.TRASH}/${FilePathFactory.create(fileRecord)}`;
+
+			const result = FilePathFactory.createTrashPath(fileRecord);
+
+			expect(result).toBe(expectedPath);
+		});
+	});
+
+	describe('createManyTrashPaths', () => {
+		it('should return trash paths for all file records', () => {
+			const [fileRecord1, fileRecord2] = fileRecordTestFactory().buildList(2);
+
+			const paths = FilePathFactory.createManyTrashPaths([fileRecord1, fileRecord2]);
+
+			expect(paths).toEqual([
+				FilePathFactory.createTrashPath(fileRecord1),
+				FilePathFactory.createTrashPath(fileRecord2),
+			]);
+		});
+	});
+
 	describe('createPreviewDirectory', () => {
 		it('should build preview directory path from file record', () => {
 			const fileRecord = fileRecordTestFactory().build();

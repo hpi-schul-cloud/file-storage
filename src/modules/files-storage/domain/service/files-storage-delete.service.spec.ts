@@ -240,4 +240,77 @@ describe('FilesStorageService delete methods', () => {
 			});
 		});
 	});
+
+	describe('permanentlyDeleteFiles', () => {
+		describe('WHEN all file records are marked for deletion', () => {
+			const setup = () => {
+				const fileRecords = fileRecordTestFactory().buildList(3);
+				FileRecord.markForDelete(fileRecords);
+
+				jest
+					.spyOn(FilePathFactory, 'createManyTrashPaths')
+					.mockReturnValueOnce(fileRecords.map((fileRecord) => `trash/path/${fileRecord.id}`));
+
+				storageClient.delete.mockResolvedValueOnce();
+				fileRecordRepo.delete.mockResolvedValueOnce();
+
+				return { fileRecords };
+			};
+
+			it('should call storageClient.delete with trash paths', async () => {
+				const { fileRecords } = setup();
+
+				await service.permanentlyDeleteFiles(fileRecords);
+
+				expect(storageClient.delete).toHaveBeenCalledWith(fileRecords.map((fr) => `trash/path/${fr.id}`));
+			});
+
+			it('should call fileRecordRepo.delete with the file records', async () => {
+				const { fileRecords } = setup();
+
+				await service.permanentlyDeleteFiles(fileRecords);
+
+				expect(fileRecordRepo.delete).toHaveBeenCalledWith(fileRecords);
+			});
+		});
+
+		describe('WHEN an empty array is provided', () => {
+			it('should return without calling storageClient or repo', async () => {
+				await service.permanentlyDeleteFiles([]);
+
+				expect(storageClient.delete).not.toHaveBeenCalled();
+				expect(fileRecordRepo.delete).not.toHaveBeenCalled();
+			});
+		});
+
+		describe('WHEN storageClient.delete throws an error', () => {
+			const setup = () => {
+				const fileRecords = fileRecordTestFactory().buildList(3);
+				FileRecord.markForDelete(fileRecords);
+				const error = new Error('S3 delete failed');
+
+				jest
+					.spyOn(FilePathFactory, 'createManyTrashPaths')
+					.mockReturnValueOnce(fileRecords.map((fileRecord) => `trash/path/${fileRecord.id}`));
+
+				storageClient.delete.mockRejectedValueOnce(error);
+
+				return { fileRecords, error };
+			};
+
+			it('should throw the error', async () => {
+				const { fileRecords, error } = setup();
+
+				await expect(service.permanentlyDeleteFiles(fileRecords)).rejects.toThrow(error);
+			});
+
+			it('should not call fileRecordRepo.delete', async () => {
+				const { fileRecords } = setup();
+
+				await expect(service.permanentlyDeleteFiles(fileRecords)).rejects.toThrow();
+
+				expect(fileRecordRepo.delete).not.toHaveBeenCalled();
+			});
+		});
+	});
 });

@@ -224,6 +224,22 @@ export class FilesStorageUC {
 		await this.filesStorageService.deleteFiles(fileRecords);
 	}
 
+	public async permanentlyDeleteFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
+		const [fileRecordsMarkedForDelete, count] = await this.filesStorageService.getFileRecordsMarkedForDelete(
+			params.fileRecordIds
+		);
+		const parentReferences = FileRecord.getUniqueParentReferences(fileRecordsMarkedForDelete);
+
+		await this.checkDeletePermission(parentReferences);
+
+		await this.previewService.deletePreviews(fileRecordsMarkedForDelete);
+		await this.filesStorageService.permanentlyDeleteFiles(fileRecordsMarkedForDelete);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecordsMarkedForDelete);
+		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
+
+		return fileRecordListResponse;
+	}
+
 	// restore
 	public async restoreMultipleFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsMarkedForDelete(params.fileRecordIds);

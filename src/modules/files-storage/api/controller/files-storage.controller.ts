@@ -344,6 +344,22 @@ export class FilesStorageController {
 		return response;
 	}
 
+	@ApiOperation({
+		summary:
+			'Permanently delete files that are already marked for deletion (in trash). Files must be soft-deleted before calling this endpoint.',
+	})
+	@ApiResponse({ status: 200, type: FileRecordListResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@Delete('/purge')
+	@UseInterceptors(RequestLoggingInterceptor)
+	public async purgeFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
+		const response = await this.filesStorageUC.permanentlyDeleteFiles(params);
+
+		return response;
+	}
+
 	@ApiOperation({ summary: 'Restore all files of a parent entityId that are marked for deletion.' })
 	@ApiResponse({ status: 201, type: FileRecordListResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })

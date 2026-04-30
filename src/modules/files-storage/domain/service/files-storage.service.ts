@@ -461,6 +461,14 @@ export class FilesStorageService {
 		}
 	}
 
+	public async permanentlyDeleteFiles(fileRecords: FileRecord[]): Promise<void> {
+		if (fileRecords.length === 0) return;
+
+		const trashPaths = FilePathFactory.createManyTrashPaths(fileRecords);
+		await this.storageClient.delete(trashPaths);
+		await this.fileRecordRepo.delete(fileRecords);
+	}
+
 	public async restoreFiles(fileRecords: FileRecord[]): Promise<void> {
 		this.logRestore(fileRecords);
 		if (fileRecords.length === 0) return;

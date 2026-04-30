@@ -250,6 +250,38 @@ describe('FileRecord', () => {
 		});
 	});
 
+	describe('isMarkedForDelete', () => {
+		describe('WHEN file is marked for deletion', () => {
+			const setup = () => {
+				const fileRecord = fileRecordTestFactory().build();
+				fileRecord.markForDelete();
+
+				return { fileRecord };
+			};
+
+			it('should return true', () => {
+				const { fileRecord } = setup();
+
+				expect(fileRecord.isMarkedForDelete()).toBe(true);
+			});
+		});
+
+		describe('WHEN file is not marked for deletion', () => {
+			const setup = () => {
+				const fileRecord = fileRecordTestFactory().build();
+				fileRecord.unmarkForDelete();
+
+				return { fileRecord };
+			};
+
+			it('should return false', () => {
+				const { fileRecord } = setup();
+
+				expect(fileRecord.isMarkedForDelete()).toBe(false);
+			});
+		});
+	});
+
 	describe('FileRecord.resolveFileNameDuplicates', () => {
 		const setup = () => {
 			const creatorId = new ObjectId().toHexString();
