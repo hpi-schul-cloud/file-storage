@@ -116,7 +116,7 @@ describe(`${baseRouteName} (api)`, () => {
 			expect(response.status).toEqual(200);
 		});
 
-		it('should return a paginated result as default', async () => {
+		it('should return a result', async () => {
 			const { loggedInClient, validId } = setup();
 
 			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`);
@@ -124,13 +124,11 @@ describe(`${baseRouteName} (api)`, () => {
 
 			expect(response).toEqual({
 				total: 0,
-				limit: 10,
-				skip: 0,
 				data: [],
 			});
 		});
 
-		it('should pass the pagination qurey params', async () => {
+		it('should pass the pagination query params', async () => {
 			const { loggedInClient, validId } = setup();
 
 			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ limit: 100, skip: 100 });
@@ -138,6 +136,44 @@ describe(`${baseRouteName} (api)`, () => {
 
 			expect(response.limit).toEqual(100);
 			expect(response.skip).toEqual(100);
+		});
+
+		it('should apply limit to returned data', async () => {
+			const { loggedInClient, validId } = setup();
+			const fileRecords = fileRecordEntityFactory.buildList(3, {
+				storageLocation: StorageLocation.SCHOOL,
+				storageLocationId: validId,
+				parentId: validId,
+				parentType: FileRecordParentType.School,
+			});
+
+			await em.persist(fileRecords).flush();
+			em.clear();
+
+			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ limit: 2 });
+			const response = result.body as FileRecordListResponse;
+
+			expect(response.total).toEqual(3);
+			expect(response.data.length).toEqual(2);
+		});
+
+		it('should apply skip to returned data', async () => {
+			const { loggedInClient, validId } = setup();
+			const fileRecords = fileRecordEntityFactory.buildList(3, {
+				storageLocation: StorageLocation.SCHOOL,
+				storageLocationId: validId,
+				parentId: validId,
+				parentType: FileRecordParentType.School,
+			});
+
+			await em.persist(fileRecords).flush();
+			em.clear();
+
+			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ skip: 2 });
+			const response = result.body as FileRecordListResponse;
+
+			expect(response.total).toEqual(3);
+			expect(response.data.length).toEqual(1);
 		});
 
 		it('should return right type of data', async () => {

@@ -26,6 +26,12 @@ export class TestS3ClientConfigOne implements S3Config {
 	@ConfigProperty()
 	@IsString()
 	secretAccessKey = 'test-secret-access-key-one';
+
+	maximumAttempts = 3;
+
+	backoffDelayTimeMs = 500;
+
+	maxSockets = 50;
 }
 
 export const TEST_S3_CLIENT_TWO_INJECTION_TOKEN = 'TEST_S3_CLIENT_TWO_INJECTION_TOKEN';
@@ -52,4 +58,10 @@ export class TestS3ClientConfigTwo implements S3Config {
 	@ConfigProperty()
 	@IsString()
 	secretAccessKey = 'test-secret-access-key-two';
+
+	maximumAttempts = 3;
+
+	backoffDelayTimeMs = 500;
+
+	maxSockets = 50;
 }
