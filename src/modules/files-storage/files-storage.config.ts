@@ -1,6 +1,6 @@
 import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
-import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
 
@@ -53,6 +53,24 @@ export class FileStorageConfig extends FileStoragePublicApiConfig {
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
 	secretAccessKey!: string;
+
+	@IsOptional()
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_S3_MAXIMUM_ATTEMPTS')
+	maximumAttempts = 3;
+
+	@IsOptional()
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_S3_BACKOFF_DELAY_TIME_MS')
+	backoffDelayTimeMs = 5000;
+
+	@IsOptional()
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_S3_MAX_SOCKETS')
+	maxSockets = 50;
 
 	/**
 	 * @deprecated is config from wopi module, but we need it here until we refactor isCollaboraEditable logic
