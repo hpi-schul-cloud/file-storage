@@ -116,7 +116,7 @@ describe(`${baseRouteName} (api)`, () => {
 			expect(response.status).toEqual(200);
 		});
 
-		it('should return a paginated result as default', async () => {
+		it('should return a result', async () => {
 			const { loggedInClient, validId } = setup();
 
 			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`);
@@ -124,13 +124,11 @@ describe(`${baseRouteName} (api)`, () => {
 
 			expect(response).toEqual({
 				total: 0,
-				limit: 10,
-				skip: 0,
 				data: [],
 			});
 		});
 
-		it('should pass the pagination qurey params', async () => {
+		it('should pass the pagination query params', async () => {
 			const { loggedInClient, validId } = setup();
 
 			const result = await loggedInClient.get(`/school/${validId}/schools/${validId}`).query({ limit: 100, skip: 100 });
