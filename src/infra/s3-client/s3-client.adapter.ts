@@ -23,7 +23,7 @@ import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
 import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
-import { PassThrough, Readable } from 'stream';
+import { PassThrough, Readable } from 'node:stream';
 import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 

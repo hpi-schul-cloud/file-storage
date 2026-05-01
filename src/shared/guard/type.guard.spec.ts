@@ -10,7 +10,7 @@ describe('TypeGuard', () => {
 	describe('isError', () => {
 		describe('when passing type of value is an Error', () => {
 			it('should return true', () => {
-				expect(TypeGuard.isError(new Error())).toBe(true);
+				expect(TypeGuard.isError(new Error('Test'))).toBe(true);
 			});
 		});
 

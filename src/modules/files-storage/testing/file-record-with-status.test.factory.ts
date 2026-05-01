@@ -2,14 +2,19 @@ import { FileRecordWithStatus } from '../domain/interface/file-record-status.int
 import { fileRecordStatusTestFactory } from './file-record-status.test.factory';
 import { fileRecordTestFactory } from './file-record.test.factory';
 
+type FileRecordFactory = ReturnType<typeof fileRecordTestFactory>;
+type FileRecordStatusFactory = ReturnType<typeof fileRecordStatusTestFactory>;
+type FileRecordBuildOverrides = Partial<Parameters<FileRecordFactory['build']>[0]>;
+type FileRecordStatusBuildResult = Partial<ReturnType<FileRecordStatusFactory['build']>>;
+
 export class FileRecordWithStatusTestFactory {
-	private fileRecordFactory = fileRecordTestFactory();
-	private fileRecordStatusFactory = fileRecordStatusTestFactory();
+	private readonly fileRecordFactory = fileRecordTestFactory();
+	private readonly fileRecordStatusFactory = fileRecordStatusTestFactory();
 
 	public build(
 		overrides?: Partial<{
-			fileRecord: Partial<Parameters<typeof this.fileRecordFactory.build>[0]>;
-			status: Partial<ReturnType<typeof this.fileRecordStatusFactory.build>>;
+			fileRecord: FileRecordBuildOverrides;
+			status: FileRecordStatusBuildResult;
 		}>
 	): FileRecordWithStatus {
 		const fileRecord = this.fileRecordFactory.build(overrides?.fileRecord);
@@ -21,8 +26,8 @@ export class FileRecordWithStatusTestFactory {
 	public buildList(
 		count: number,
 		overrides?: Partial<{
-			fileRecord: Partial<Parameters<typeof this.fileRecordFactory.build>[0]>;
-			status: Partial<ReturnType<typeof this.fileRecordStatusFactory.build>>;
+			fileRecord: FileRecordBuildOverrides;
+			status: FileRecordStatusBuildResult;
 		}>
 	): FileRecordWithStatus[] {
 		const list: FileRecordWithStatus[] = [];

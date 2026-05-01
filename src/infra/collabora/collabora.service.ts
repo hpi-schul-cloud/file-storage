@@ -94,7 +94,7 @@ export class CollaboraService {
 
 	private checkUrlIsDefined(url: string | null): string {
 		if (!TypeGuard.isString(url)) {
-			throw new Error('The requested mime type is not handled');
+			throw new TypeError('The requested mime type is not handled');
 		}
 
 		return url;
