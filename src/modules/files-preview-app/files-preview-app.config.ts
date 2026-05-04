@@ -1,7 +1,7 @@
 import { ConfigProperty, Configuration } from '@infra/configuration';
 import { TimeoutInterceptorConfig } from '@infra/core/interceptor';
 import { StringToNumber } from '@shared/transformer';
-import { IsNumber, IsString, IsUrl } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export const FILES_PREVIEW_APP_CONFIG_TOKEN = 'FILES_PREVIEW_APP_CONFIG_TOKEN';
 export const FILES_PREVIEW_APP_REQUEST_TIMEOUT_CONFIG_TOKEN = 'FILES_PREVIEW_APP_REQUEST_TIMEOUT_CONFIG_TOKEN';
@@ -15,14 +15,14 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
-	coreIncomingRequestTimeoutMs!: number;
+	coreIncomingRequestTimeoutMs = 8000;
 }
 
 @Configuration()
 export class FilesPreviewAppConfig {
 	@IsUrl({ require_tld: false })
 	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
-	endpoint = 'http://localhost:9000/';
+	endpoint!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_REGION')
@@ -30,13 +30,31 @@ export class FilesPreviewAppConfig {
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_BUCKET')
-	bucket = 'schulcloud';
+	bucket!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_ACCESS_KEY_ID')
-	accessKeyId = 'miniouser';
+	accessKeyId!: string;
 
 	@IsString()
 	@ConfigProperty('FILES_STORAGE_S3_SECRET_ACCESS_KEY')
-	secretAccessKey = 'miniouser';
+	secretAccessKey!: string;
+
+	@IsOptional()
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_S3_MAXIMUM_ATTEMPTS')
+	maximumAttempts = 3;
+
+	@IsOptional()
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_S3_BACKOFF_DELAY_TIME_MS')
+	backoffDelayTimeMs = 5000;
+
+	@IsOptional()
+	@IsNumber()
+	@StringToNumber()
+	@ConfigProperty('FILES_STORAGE_S3_MAX_SOCKETS')
+	maxSockets = 50;
 }

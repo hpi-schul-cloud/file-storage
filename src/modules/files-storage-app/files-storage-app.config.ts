@@ -15,10 +15,10 @@ export class RequestTimeoutConfig implements TimeoutInterceptorConfig {
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('CORE_INCOMING_REQUEST_TIMEOUT_MS')
-	coreIncomingRequestTimeoutMs!: number;
+	coreIncomingRequestTimeoutMs = 8000;
 
 	@IsNumber()
 	@StringToNumber()
 	@ConfigProperty('INCOMING_REQUEST_TIMEOUT_COPY_API_MS')
-	[INCOMING_REQUEST_TIMEOUT_COPY_API_KEY]!: number;
+	[INCOMING_REQUEST_TIMEOUT_COPY_API_KEY] = 600000;
 }
