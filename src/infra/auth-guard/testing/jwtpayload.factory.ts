@@ -64,7 +64,7 @@ export const jwtPayloadFactory = JwtPayloadFactory.define(JwtPayloadImpl, ({ seq
 		jti: `jit-${sequence}`,
 		aud: `aud-${sequence}`,
 		iss: `iss-${sequence}`,
-		iat: Math.floor(new Date().getTime() / 1000),
-		exp: Math.floor(new Date().getTime() / 1000) + 3600,
+		iat: Math.floor(Date.now() / 1000),
+		exp: Math.floor(Date.now() / 1000) + 3600,
 	};
 });

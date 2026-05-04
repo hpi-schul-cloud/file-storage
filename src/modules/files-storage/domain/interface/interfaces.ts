@@ -1,5 +1,5 @@
 import { EntityId } from '@shared/domain/types';
-import { Readable } from 'stream';
+import type { Readable } from 'node:stream';
 import { FileRecord, PreviewOutputMimeTypes } from '../file-record.do';
 import { PreviewWidth } from './preview-width.enum';
 import { StorageLocation } from './storage-location.enum';

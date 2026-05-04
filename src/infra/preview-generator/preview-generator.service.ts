@@ -1,7 +1,7 @@
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { PassThrough } from 'stream';
+import { PassThrough } from 'node:stream';
 import { ImageMagickAdapter } from './image-magick.adapter';
 import { PreviewFileOptions, PreviewInputMimeTypes, PreviewOptions, PreviewResponseMessage } from './interface';
 import { PreviewActionsLoggable } from './loggable/preview-actions.loggable';
@@ -112,7 +112,7 @@ export class PreviewGeneratorService {
 				stderr.on('end', () => {
 					let errorMessage = '';
 					Buffer.concat(errorChunks).forEach((chunk) => {
-						errorMessage += String.fromCharCode(chunk);
+						errorMessage += String.fromCodePoint(chunk);
 					});
 
 					reject(new UnprocessableEntityException(errorMessage));

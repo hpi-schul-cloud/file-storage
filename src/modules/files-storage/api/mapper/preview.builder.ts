@@ -1,5 +1,5 @@
 import { EntityId } from '@shared/domain/types';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { FileRecord, PreviewFileParams } from '../../domain';
 import { PreviewParams } from '../dto';
 

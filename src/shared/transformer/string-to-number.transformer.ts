@@ -9,6 +9,6 @@ export function StringToNumber(): PropertyDecorator {
 	return Transform((params: TransformFnParams) => {
 		const str = params.obj[params.key] as string;
 
-		return parseInt(str);
+		return Number.parseInt(str);
 	});
 }
