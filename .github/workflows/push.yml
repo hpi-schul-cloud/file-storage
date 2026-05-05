@@ -65,6 +65,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          target: file-service
           platforms: linux/amd64
           push: true
           pull: true
@@ -96,10 +97,9 @@ jobs:
         env:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
-          build-args: |
-            BASE_IMAGE=ghcr.io/${{ github.repository }}:${{ needs.branch_meta.outputs.sha }}
           context: .
-          file: ./Dockerfile.filepreview
+          file: ./Dockerfile
+          target: preview-service
           platforms: linux/amd64
           push: true
           pull: true
