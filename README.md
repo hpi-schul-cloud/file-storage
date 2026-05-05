@@ -37,7 +37,6 @@ Configuration is managed via the `.env` file. Key variables include:
 | WOPI_URL                                  | Base URL of the WOPI endpoints          |
 | WOPI_POST_MESSAGE_ORIGIN                  | Origin of POST messages to Collabora    |
 
-
 ## Getting Started
 
 ### Prerequisites
@@ -66,7 +65,6 @@ Configuration is managed via the `.env` file. Key variables include:
    ```
 
 3. **Configure environment:**
-
    - Copy `.env.default` to `.env` and adjust values as needed.
 
 4. **Start the service:**
@@ -80,11 +78,10 @@ Configuration is managed via the `.env` file. Key variables include:
 npm run test
 ```
 
-### Collabora installation
+### Collabora Installation
 
 For more information about local Collabora setup, please check
 https://documentation.dbildungscloud.dev/docs/services/collabora/Local%20setup
-
 
 ## Project Structure
 
