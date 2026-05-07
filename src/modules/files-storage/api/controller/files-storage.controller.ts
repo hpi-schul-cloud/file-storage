@@ -310,9 +310,9 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@Delete('/delete/:storageLocation/:storageLocationId/:parentType/:parentId')
+	@Delete('/delete/:parentType/:parentId')
 	@UseInterceptors(RequestLoggingInterceptor)
-	public async deleteByParent(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
+	public async deleteByParent(@Param() params: ParentParams): Promise<FileRecordListResponse> {
 		const response = await this.filesStorageUC.deleteFilesOfParent(params);
 
 		return response;

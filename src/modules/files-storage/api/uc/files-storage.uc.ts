@@ -180,7 +180,7 @@ export class FilesStorageUC {
 	}
 
 	// delete
-	public async deleteFilesOfParent(params: FileRecordParams): Promise<FileRecordListResponse> {
+	public async deleteFilesOfParent(params: ParentParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
 		const parentReference = params;
 
