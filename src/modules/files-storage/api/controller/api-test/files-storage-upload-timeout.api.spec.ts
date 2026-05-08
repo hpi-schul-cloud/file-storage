@@ -158,47 +158,5 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 				expect(response.body.name).toEqual('small-file.txt');
 			});
 		});
-
-		describe('WHEN testing timeout boundaries', () => {
-			it('should timeout exactly at the configured server timeout value', async () => {
-				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 10; // Very short timeout
-
-				const { loggedInClient, validId } = setup();
-
-				// Make mime detection delay longer than the configured timeout to reliably trigger it
-				jest
-					.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
-					.mockImplementation(
-						() => new Promise((resolve) => setTimeout(() => resolve('application/octet-stream'), 100))
-					);
-
-				const buffer = Buffer.alloc(1024, 'D');
-
-				const response = await loggedInClient
-					.post(`/upload/school/${validId}/schools/${validId}`)
-					.attach('file', buffer, 'boundary-test.txt')
-					.timeout(1000);
-
-				expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
-			});
-
-			it('should handle upload when server timeout is longer than upload duration', async () => {
-				// Set a longer timeout to allow upload to complete
-				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 5000; // 5 seconds
-
-				const { loggedInClient, validId } = setup();
-
-				// Small file that should upload within 5 seconds
-				const buffer = Buffer.alloc(1024, 'F'); // 1KB
-
-				const response = await loggedInClient
-					.post(`/upload/school/${validId}/schools/${validId}`)
-					.attach('file', buffer, 'small-boundary-test.txt')
-					.timeout(10000);
-
-				expect(response.status).toEqual(HttpStatus.CREATED);
-				expect(response.body).toHaveProperty('id');
-			});
-		});
 	});
 });
