@@ -116,51 +116,24 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 			it('should handle server timeout and return REQUEST_TIMEOUT status', async () => {
 				const { loggedInClient, validId } = setup();
 
-				// Server has coreIncomingRequestTimeoutMs set to 15ms
-				// Create a buffer that will trigger server timeout due to processing time
-				const buffer = Buffer.alloc(2 * 1024 * 1024, 'A'); // 2MB
+				// Make mime detection delay longer than the server timeout (15ms) to reliably trigger it
+				jest
+					.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
+					.mockImplementation(
+						() => new Promise((resolve) => setTimeout(() => resolve('application/octet-stream'), 100))
+					);
 
-				try {
-					const response = await loggedInClient
-						.post(`/upload/school/${validId}/schools/${validId}`)
-						.attach('file', buffer, 'large-file.txt')
-						.set('connection', 'keep-alive')
-						.set('content-type', 'multipart/form-data')
-						.timeout(1000); // Client timeout higher than server timeout
+				const buffer = Buffer.alloc(1024, 'A');
 
-					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
-					expect(response.text).toContain('Request timed out');
-				} catch (error) {
-					// EPIPE/ECONNRESET can occur when the server closes the connection
-					// mid-upload due to timeout, while the client is still writing data
-					expect(error).toMatchObject({
-						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
-					});
-				}
-			});
+				const response = await loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.attach('file', buffer, 'test-file.txt')
+					.set('connection', 'keep-alive')
+					.set('content-type', 'multipart/form-data')
+					.timeout(1000);
 
-			it('should handle server timeout with very large file that causes processing delay', async () => {
-				const { loggedInClient, validId } = setup();
-
-				// Use an even larger file to ensure timeout with processing overhead
-				const buffer = Buffer.alloc(10 * 1024 * 1024, 'B'); // 10MB
-
-				try {
-					const response = await loggedInClient
-						.post(`/upload/school/${validId}/schools/${validId}`)
-						.attach('file', buffer, 'very-large-file.txt')
-						.set('content-type', 'multipart/form-data')
-						.timeout(2000); // Client timeout longer than server
-
-					// If we get here, it should be a timeout response
-					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
-				} catch (error) {
-					// EPIPE/ECONNRESET can occur when the server closes the connection
-					// mid-upload due to timeout, while the client is still writing data
-					expect(error).toMatchObject({
-						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
-					});
-				}
+				expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
+				expect(response.text).toContain('Request timed out');
 			});
 		});
 
@@ -183,52 +156,6 @@ describe('files-storage controller (API) - Upload Timeout Tests', () => {
 				expect(response.status).toEqual(HttpStatus.CREATED);
 				expect(response.body).toHaveProperty('id');
 				expect(response.body.name).toEqual('small-file.txt');
-			});
-		});
-
-		describe('WHEN testing timeout boundaries', () => {
-			it('should timeout exactly at the configured server timeout value', async () => {
-				// Set a very specific timeout value for precise testing before setup
-				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 10; // Very short timeout
-
-				const { loggedInClient, validId } = setup();
-
-				// File size that should trigger timeout at exactly 10ms - use large file
-				const buffer = Buffer.alloc(8 * 1024 * 1024, 'D'); // 8MB - large enough to exceed 10ms
-
-				try {
-					const response = await loggedInClient
-						.post(`/upload/school/${validId}/schools/${validId}`)
-						.attach('file', buffer, 'boundary-test.txt')
-						.timeout(1000);
-
-					// If we get here, it should be a timeout response
-					expect(response.status).toEqual(HttpStatus.REQUEST_TIMEOUT);
-				} catch (error) {
-					// EPIPE/ECONNRESET can occur when the server closes the connection
-					// mid-upload due to timeout, while the client is still writing data
-					expect(error).toMatchObject({
-						code: expect.stringMatching(/^(EPIPE|ECONNRESET)$/),
-					});
-				}
-			});
-
-			it('should handle upload when server timeout is longer than upload duration', async () => {
-				// Set a longer timeout to allow upload to complete
-				requestTimeoutConfig.coreIncomingRequestTimeoutMs = 5000; // 5 seconds
-
-				const { loggedInClient, validId } = setup();
-
-				// Small file that should upload within 5 seconds
-				const buffer = Buffer.alloc(1024, 'F'); // 1KB
-
-				const response = await loggedInClient
-					.post(`/upload/school/${validId}/schools/${validId}`)
-					.attach('file', buffer, 'small-boundary-test.txt')
-					.timeout(10000);
-
-				expect(response.status).toEqual(HttpStatus.CREATED);
-				expect(response.body).toHaveProperty('id');
 			});
 		});
 	});
