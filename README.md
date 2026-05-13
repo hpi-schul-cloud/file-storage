@@ -62,7 +62,7 @@ Configuration is managed via the `.env` file. Key variables include:
 2. **Install dependencies:**
 
    ```sh
-   npm ci
+   npm ci --ignore-scripts
    ```
 
 3. **Configure environment:**
