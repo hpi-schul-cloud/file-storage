@@ -31,7 +31,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci --ignore-scripts --prefer-offline --no-audit
       - name: Start UP MinIO
         uses: infleet/minio-action@d7e8e8b87654846dc56cc2352f3395f3064b2d79 # v0.0.2
         with:
@@ -82,6 +82,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci --ignore-scripts --prefer-offline --no-audit
       - name: lint
         run: npm run lint
