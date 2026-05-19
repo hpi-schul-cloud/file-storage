@@ -564,10 +564,10 @@ describe(S3ClientAdapter.name, () => {
 		};
 
 		describe('WHEN paths[] is empty', () => {
-			it('should return void', async () => {
+			it('should return empty BatchOperationResult', async () => {
 				const res = await service.moveToTrash([]);
 
-				expect(res).toEqual(undefined);
+				expect(res).toEqual({ succeeded: [], failed: [] });
 			});
 		});
 
@@ -597,12 +597,94 @@ describe(S3ClientAdapter.name, () => {
 			});
 		});
 
+		describe('WHEN delete has partial failures', () => {
+			const setupPartial = () => {
+				const path1 = 'test/file-a.txt';
+				const path2 = 'test/file-b.txt';
+
+				const code = 'AccessDenied';
+				const message = 'Access denied';
+
+				// Copy for path1 succeeds
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+				// Copy for path2 succeeds
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+				// Delete: path1 fails
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({
+					Errors: [{ Key: path1, Code: code, Message: message }],
+				});
+
+				return { path1, path2, code, message };
+			};
+
+			it('should return result reflecting the inner deleteFiles result', async () => {
+				const { path1, path2, code, message } = setupPartial();
+
+				const result = await service.moveToTrash([path1, path2]);
+
+				expect(result.succeeded).toEqual([path2]);
+				expect(result.failed).toEqual([{ path: path1, code, message }]);
+			});
+		});
+
+		describe('WHEN copy has partial failures', () => {
+			const setupPartial = () => {
+				const path1 = 'test/file-a.txt';
+				const path2 = 'test/file-b.txt';
+
+				// Copy for path1 fails
+				// @ts-expect-error should run into error
+				client.send.mockRejectedValueOnce(new Error('Copy failed'));
+				// Copy for path2 succeeds
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+				// Delete only [path2] (the successfully copied path)
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+
+				return { path1, path2 };
+			};
+
+			it('should not call deleteFiles for the failed-copy path', async () => {
+				const { path1, path2 } = setupPartial();
+
+				const result = await service.moveToTrash([path1, path2]);
+
+				expect(result.succeeded).toEqual([path2]);
+				expect(result.failed).toMatchObject([{ path: path1, message: 'Copy failed' }]);
+			});
+
+			it('should not call DeleteObjectsCommand with the failed-copy path', async () => {
+				const { path1, path2 } = setupPartial();
+				const { bucket } = createParameter();
+
+				await service.moveToTrash([path1, path2]);
+
+				expect(client.send).toHaveBeenCalledWith(
+					expect.objectContaining({
+						input: { Bucket: bucket, Delete: { Objects: [{ Key: path2 }] } },
+					})
+				);
+				expect(client.send).not.toHaveBeenCalledWith(
+					expect.objectContaining({
+						input: { Bucket: bucket, Delete: { Objects: expect.arrayContaining([{ Key: path1 }]) } },
+					})
+				);
+			});
+		});
+
 		describe('WHEN client throws error', () => {
 			it('should throw an InternalServerErrorException on error', async () => {
 				const { pathToFile } = setup();
 
+				// Copy succeeds so deleteFiles is called, then delete throws
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
 				// @ts-expect-error should run into error
-				client.send.mockRejectedValue(new S3ServiceException({ name: 'Test error' }));
+				client.send.mockRejectedValueOnce(new S3ServiceException({ name: 'Test error' }));
 
 				await expect(service.moveToTrash([pathToFile])).rejects.toThrow(InternalServerErrorException);
 			});
@@ -804,6 +886,56 @@ describe(S3ClientAdapter.name, () => {
 					await expect(service.moveDirectoryToTrash(pathToFile)).rejects.toThrow(expectedError);
 				});
 			});
+
+			describe('when paginated results have partial failures', () => {
+				const setup = () => {
+					const { directory } = createParameter();
+					const path1 = `${directory}/file-a.txt`;
+					const path2 = `${directory}/file-b.txt`;
+
+					// First page: path1
+					const page1Response = createListObjectsV2CommandOutput.build({
+						Contents: [{ Key: path1 }],
+						IsTruncated: true,
+						NextContinuationToken: 'page2',
+					});
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce(page1Response);
+					// Copy page 1 succeeds
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
+					// Delete page 1: path1 succeeds
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
+
+					// Second page: path2
+					const page2Response = createListObjectsV2CommandOutput.build({
+						Contents: [{ Key: path2 }],
+						IsTruncated: false,
+					});
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce(page2Response);
+					// Copy page 2 succeeds
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({});
+					// Delete page 2: path2 fails
+					// @ts-expect-error ignore parameter type of mock function
+					client.send.mockResolvedValueOnce({
+						Errors: [{ Key: path2, Code: 'AccessDenied', Message: 'Access denied' }],
+					});
+
+					return { directory, path1, path2 };
+				};
+
+				it('should aggregate succeeded and failed arrays across all pages', async () => {
+					const { directory, path1, path2 } = setup();
+
+					const result = await service.moveDirectoryToTrash(directory);
+
+					expect(result.succeeded).toEqual([path1]);
+					expect(result.failed).toEqual([{ path: path2, code: 'AccessDenied', message: 'Access denied' }]);
+				});
+			});
 		});
 	});
 
@@ -815,10 +947,10 @@ describe(S3ClientAdapter.name, () => {
 		};
 
 		describe('WHEN paths[] is empty', () => {
-			it('should return void', async () => {
+			it('should return empty BatchOperationResult', async () => {
 				const res = await service.delete([]);
 
-				expect(res).toEqual(undefined);
+				expect(res).toEqual({ succeeded: [], failed: [] });
 			});
 		});
 
@@ -833,6 +965,43 @@ describe(S3ClientAdapter.name, () => {
 						input: { Bucket: bucket, Delete: { Objects: [{ Key: 'test/text.txt' }] } },
 					})
 				);
+			});
+		});
+
+		describe('WHEN response has no errors', () => {
+			it('should return all paths as succeeded with empty failed array', async () => {
+				const { pathToFile } = setup();
+
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+
+				const result = await service.delete([pathToFile]);
+
+				expect(result).toEqual({ succeeded: [pathToFile], failed: [] });
+			});
+		});
+
+		describe('WHEN response has partial errors', () => {
+			const setupPartial = () => {
+				const { bucket } = createParameter();
+				const path1 = 'test/file-a.txt';
+				const path2 = 'test/file-b.txt';
+
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({
+					Errors: [{ Key: path1, Code: 'AccessDenied', Message: 'Access denied' }],
+				});
+
+				return { path1, path2, bucket };
+			};
+
+			it('should put errored keys into failed and the rest into succeeded', async () => {
+				const { path1, path2 } = setupPartial();
+
+				const result = await service.delete([path1, path2]);
+
+				expect(result.succeeded).toEqual([path2]);
+				expect(result.failed).toEqual([{ path: path1, code: 'AccessDenied', message: 'Access denied' }]);
 			});
 		});
 
@@ -1077,6 +1246,50 @@ describe(S3ClientAdapter.name, () => {
 				await expect(service.deleteDirectory(pathToFile)).rejects.toThrow(expectedError);
 			});
 		});
+
+		describe('when paginated results have partial failures', () => {
+			const setup = () => {
+				const { directory } = createParameter();
+				const path1 = `${directory}/file-a.txt`;
+				const path2 = `${directory}/file-b.txt`;
+
+				// First page: path1
+				const page1Response = createListObjectsV2CommandOutput.build({
+					Contents: [{ Key: path1 }],
+					IsTruncated: true,
+					NextContinuationToken: 'page2',
+				});
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce(page1Response);
+				// Delete page 1: path1 succeeds
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+
+				// Second page: path2
+				const page2Response = createListObjectsV2CommandOutput.build({
+					Contents: [{ Key: path2 }],
+					IsTruncated: false,
+				});
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce(page2Response);
+				// Delete page 2: path2 fails
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({
+					Errors: [{ Key: path2, Code: 'AccessDenied', Message: 'Access denied' }],
+				});
+
+				return { directory, path1, path2 };
+			};
+
+			it('should aggregate succeeded and failed arrays across all pages', async () => {
+				const { directory, path1, path2 } = setup();
+
+				const result = await service.deleteDirectory(directory);
+
+				expect(result.succeeded).toEqual([path1]);
+				expect(result.failed).toEqual([{ path: path2, code: 'AccessDenied', message: 'Access denied' }]);
+			});
+		});
 	});
 
 	describe('restore', () => {
@@ -1117,10 +1330,76 @@ describe(S3ClientAdapter.name, () => {
 		it('should throw an InternalServerErrorException by error', async () => {
 			const { pathToFile } = setup();
 
+			// Copy succeeds so deleteFiles is called, then delete throws
+			// @ts-expect-error ignore parameter type of mock function
+			client.send.mockResolvedValueOnce({});
 			// @ts-expect-error should run into error
-			client.send.mockRejectedValue(new Error('Test error'));
+			client.send.mockRejectedValueOnce(new Error('Test error'));
 
 			await expect(service.restore([pathToFile])).rejects.toThrow(InternalServerErrorException);
+		});
+
+		describe('WHEN delete has partial failures', () => {
+			const setupPartial = () => {
+				const { pathToFile } = createParameter();
+				const trashPath = `trash/${pathToFile}`;
+
+				// Copy from trash to original succeeds
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+				// Delete trash copy fails
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({
+					Errors: [{ Key: trashPath, Code: 'NoSuchKey', Message: 'Not found' }],
+				});
+
+				return { trashPath };
+			};
+
+			it('should return result reflecting the inner deleteFiles result', async () => {
+				const { pathToFile } = createParameter();
+				const { trashPath } = setupPartial();
+
+				const result = await service.restore([pathToFile]);
+
+				expect(result.succeeded).toEqual([]);
+				expect(result.failed).toEqual([{ path: trashPath, code: 'NoSuchKey', message: 'Not found' }]);
+			});
+		});
+
+		describe('WHEN copy has partial failures', () => {
+			const setupPartial = () => {
+				const { pathToFile } = createParameter();
+				const trashPath = `trash/${pathToFile}`;
+
+				// Copy from trash to original fails
+				// @ts-expect-error should run into error
+				client.send.mockRejectedValueOnce(new Error('Copy failed'));
+				// deleteFiles is called with [] (empty succeeded list) → returns early, no send
+
+				return { trashPath };
+			};
+
+			it('should not call DeleteObjectsCommand when copy fails', async () => {
+				const { pathToFile } = createParameter();
+				setupPartial();
+
+				await service.restore([pathToFile]);
+
+				expect(client.send).not.toHaveBeenCalledWith(
+					expect.objectContaining({ input: expect.objectContaining({ Delete: expect.anything() }) })
+				);
+			});
+
+			it('should surface copy failure in the result', async () => {
+				const { pathToFile } = createParameter();
+				const { trashPath } = setupPartial();
+
+				const result = await service.restore([pathToFile]);
+
+				expect(result.succeeded).toEqual([]);
+				expect(result.failed).toMatchObject([{ path: trashPath, message: 'Copy failed' }]);
+			});
 		});
 	});
 
@@ -1153,10 +1432,34 @@ describe(S3ClientAdapter.name, () => {
 					})
 				);
 			});
+
+			it('should return sourcePath in succeeded with empty failed array', async () => {
+				const { pathsToCopy } = setup();
+
+				const result = await service.copy(pathsToCopy);
+
+				expect(result).toEqual({ succeeded: [pathsToCopy[0].sourcePath], failed: [] });
+			});
+		});
+
+		describe('when client send rejects with S3 error code', () => {
+			it('should extract code into failed entry', async () => {
+				const { pathsToCopy } = setup();
+				const error = Object.assign(new Error('Key not found'), { Code: 'NoSuchKey' });
+
+				// @ts-expect-error should run into error
+				client.send.mockRejectedValueOnce(error);
+
+				const result = await service.copy(pathsToCopy);
+
+				expect(result.failed).toEqual([
+					{ path: pathsToCopy[0].sourcePath, code: 'NoSuchKey', message: 'Key not found' },
+				]);
+			});
 		});
 
 		describe('when client send rejects with error', () => {
-			it('should return empty array', async () => {
+			it('should return failed BatchOperationResult entry', async () => {
 				const { pathsToCopy } = setup();
 
 				// @ts-expect-error should run into error
@@ -1164,10 +1467,15 @@ describe(S3ClientAdapter.name, () => {
 
 				const result = await service.copy(pathsToCopy);
 
-				expect(result).toEqual([]);
+				expect(result.succeeded).toEqual([]);
+				expect(result.failed).toHaveLength(1);
+				expect(result.failed[0]).toMatchObject({
+					path: pathsToCopy[0].sourcePath,
+					message: 'Test error',
+				});
 			});
 
-			it('should call errorHandler.exec when promises are rejected', async () => {
+			it('should not call errorHandler.exec when promises are rejected', async () => {
 				const { pathsToCopy } = setup();
 
 				// @ts-expect-error should run into error
@@ -1175,11 +1483,7 @@ describe(S3ClientAdapter.name, () => {
 
 				await service.copy(pathsToCopy);
 
-				expect(errorHandler.exec).toHaveBeenCalledWith(
-					expect.objectContaining({
-						message: 'S3ClientAdapter:copy:settledPromises',
-					})
-				);
+				expect(errorHandler.exec).not.toHaveBeenCalled();
 			});
 		});
 	});

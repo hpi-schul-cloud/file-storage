@@ -1,6 +1,5 @@
 import {
 	CopyObjectCommand,
-	CopyObjectCommandOutput,
 	CreateBucketCommand,
 	DeleteObjectsCommand,
 	ExpirationStatus,
@@ -24,7 +23,17 @@ import { Logger } from '@infra/logger';
 import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'node:stream';
-import { CopyFiles, File, FolderLifecycleRule, GetFile, ListFiles, ObjectKeysRecursive, S3Config } from './interface';
+import {
+	BatchOperationResult,
+	BatchOperationResultFailure,
+	CopyFiles,
+	File,
+	FolderLifecycleRule,
+	GetFile,
+	ListFiles,
+	ObjectKeysRecursive,
+	S3Config,
+} from './interface';
 import { S3ClientActionLoggable } from './loggable';
 
 export class S3ClientAdapter implements OnModuleInit {
@@ -75,17 +84,17 @@ export class S3ClientAdapter implements OnModuleInit {
 		}
 	}
 
-	public async moveToTrash(paths: string[]): Promise<void> {
+	public async moveToTrash(paths: string[]): Promise<BatchOperationResult> {
 		try {
-			await this.moveFilesToTrash(paths);
+			return await this.moveFilesToTrash(paths);
 		} catch (err: unknown) {
 			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
 		}
 	}
 
-	public async moveDirectoryToTrash(path: string, nextMarker?: string): Promise<void> {
+	public async moveDirectoryToTrash(path: string, nextMarker?: string): Promise<BatchOperationResult> {
 		try {
-			await this.moveDirectoryToTrashInternal(path, nextMarker);
+			return await this.moveDirectoryToTrashInternal(path, nextMarker);
 		} catch (err) {
 			throw new InternalServerErrorException(
 				'S3ClientAdapter:moveDirectoryToTrash',
@@ -94,25 +103,21 @@ export class S3ClientAdapter implements OnModuleInit {
 		}
 	}
 
-	public async restore(paths: string[]): Promise<CopyObjectCommandOutput[]> {
+	public async restore(paths: string[]): Promise<BatchOperationResult> {
 		try {
-			const result = await this.restoreFiles(paths);
-
-			return result;
+			return await this.restoreFiles(paths);
 		} catch (err) {
 			throw new InternalServerErrorException('S3ClientAdapter:restore', ErrorUtils.createHttpExceptionOptions(err));
 		}
 	}
 
-	public async copy(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
-		const result = await this.copyFiles(paths);
-
-		return result;
+	public copy(paths: CopyFiles[]): Promise<BatchOperationResult> {
+		return this.copyFiles(paths);
 	}
 
-	public async delete(paths: string[]): Promise<void> {
+	public async delete(paths: string[]): Promise<BatchOperationResult> {
 		try {
-			await this.deleteFiles(paths);
+			return await this.deleteFiles(paths);
 		} catch (err) {
 			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
 		}
@@ -138,9 +143,9 @@ export class S3ClientAdapter implements OnModuleInit {
 		}
 	}
 
-	public async deleteDirectory(path: string, nextMarker?: string): Promise<void> {
+	public async deleteDirectory(path: string, nextMarker?: string): Promise<BatchOperationResult> {
 		try {
-			await this.deleteDirectoryInternal(path, nextMarker);
+			return await this.deleteDirectoryInternal(path, nextMarker);
 		} catch (err) {
 			throw new InternalServerErrorException(
 				'S3ClientAdapter:deleteDirectory',
@@ -292,51 +297,61 @@ export class S3ClientAdapter implements OnModuleInit {
 		return commandOutput;
 	}
 
-	private async moveFilesToTrash(paths: string[]): Promise<void> {
-		if (paths.length === 0) return;
+	private async moveFilesToTrash(paths: string[]): Promise<BatchOperationResult> {
+		if (paths.length === 0) return { succeeded: [], failed: [] };
 
 		const copyPaths = paths.map((path) => {
 			return { sourcePath: path, targetPath: `${this.deletedFolderName}/${path}` };
 		});
 
-		await this.copyFiles(copyPaths);
+		const copyResult = await this.copyFiles(copyPaths);
 
-		// try catch with rollback is not needed,
-		// because the second copyRequest try override existing files in trash folder
-		await this.deleteFiles(paths);
+		const deleteResult = await this.deleteFiles(copyResult.succeeded);
+
+		return {
+			succeeded: deleteResult.succeeded,
+			failed: [...copyResult.failed, ...deleteResult.failed],
+		};
 	}
 
-	private async moveDirectoryToTrashInternal(path: string, nextMarker?: string): Promise<void> {
+	private async moveDirectoryToTrashInternal(path: string, nextMarker?: string): Promise<BatchOperationResult> {
 		this.logMoveDirectoryToTrash(path);
 
 		const data = await this.listObjects(path, nextMarker);
 		const filteredPathObjects = this.filterValidPathKeys(data);
 
-		await this.moveFilesToTrash(filteredPathObjects);
+		const result = await this.moveFilesToTrash(filteredPathObjects);
 
 		if (data.IsTruncated && data.NextContinuationToken) {
-			await this.moveDirectoryToTrashInternal(path, data.NextContinuationToken);
+			const nextResult = await this.moveDirectoryToTrashInternal(path, data.NextContinuationToken);
+
+			return {
+				succeeded: [...result.succeeded, ...nextResult.succeeded],
+				failed: [...result.failed, ...nextResult.failed],
+			};
 		}
+
+		return result;
 	}
 
-	private async restoreFiles(paths: string[]): Promise<CopyObjectCommandOutput[]> {
+	private async restoreFiles(paths: string[]): Promise<BatchOperationResult> {
 		this.logRestoreFiles(paths);
 
 		const copyPaths = paths.map((path) => {
 			return { sourcePath: `${this.deletedFolderName}/${path}`, targetPath: path };
 		});
 
-		const result = await this.copyFiles(copyPaths);
+		const copyResult = await this.copyFiles(copyPaths);
 
-		// try catch with rollback is not needed,
-		// because the second copyRequest try override existing files in trash folder
-		const deleteObjects = copyPaths.map((p) => p.sourcePath);
-		await this.deleteFiles(deleteObjects);
+		const deleteResult = await this.deleteFiles(copyResult.succeeded);
 
-		return result;
+		return {
+			succeeded: deleteResult.succeeded,
+			failed: [...copyResult.failed, ...deleteResult.failed],
+		};
 	}
 
-	private async copyFiles(paths: CopyFiles[]): Promise<CopyObjectCommandOutput[]> {
+	private async copyFiles(paths: CopyFiles[]): Promise<BatchOperationResult> {
 		this.logCopyFiles();
 
 		const copyRequests = paths.map(async (path) => {
@@ -346,21 +361,35 @@ export class S3ClientAdapter implements OnModuleInit {
 				Key: `${path.targetPath}`,
 			});
 
-			const data = await this.client.send(req);
-
-			return data;
+			await this.client.send(req);
 		});
 
 		const settledPromises = await Promise.allSettled(copyRequests);
-		const result = this.handleSettledPromises(settledPromises, 'S3ClientAdapter:copy:settledPromises');
+		const succeeded: string[] = [];
+		const failed: BatchOperationResultFailure[] = [];
 
-		return result;
+		settledPromises.forEach((settled, index) => {
+			const path = paths[index];
+			if (settled.status === 'fulfilled') {
+				succeeded.push(path.sourcePath);
+			} else {
+				const err: unknown = settled.reason;
+				const codeRaw = TypeGuard.getValueFromObjectKey(err, 'Code');
+				failed.push({
+					path: path.sourcePath,
+					code: typeof codeRaw === 'string' ? codeRaw : undefined,
+					message: TypeGuard.isError(err) ? err.message : undefined,
+				});
+			}
+		});
+
+		return { succeeded, failed };
 	}
 
-	private async deleteFiles(paths: string[]): Promise<void> {
+	private async deleteFiles(paths: string[]): Promise<BatchOperationResult> {
 		this.logDeleteFiles(paths);
 
-		if (paths.length === 0) return;
+		if (paths.length === 0) return { succeeded: [], failed: [] };
 
 		const pathObjects = paths.map((p) => {
 			return { Key: p };
@@ -370,7 +399,17 @@ export class S3ClientAdapter implements OnModuleInit {
 			Delete: { Objects: pathObjects },
 		});
 
-		await this.client.send(req);
+		const response = await this.client.send(req);
+
+		const failed: BatchOperationResultFailure[] = (response.Errors ?? []).map((e) => ({
+			path: e.Key ?? '',
+			code: e.Code,
+			message: e.Message,
+		}));
+		const failedPaths = new Set(failed.map((f) => f.path));
+		const succeeded = paths.filter((p) => !failedPaths.has(p));
+
+		return { succeeded, failed };
 	}
 
 	private async listFiles(params: ListFiles): Promise<ObjectKeysRecursive> {
@@ -394,17 +433,24 @@ export class S3ClientAdapter implements OnModuleInit {
 		return headResponse;
 	}
 
-	private async deleteDirectoryInternal(path: string, nextMarker?: string): Promise<void> {
+	private async deleteDirectoryInternal(path: string, nextMarker?: string): Promise<BatchOperationResult> {
 		this.logDeleteDirectory(path);
 
 		const data = await this.listObjects(path, nextMarker);
 		const filteredPathObjects = this.filterValidPathKeys(data);
 
-		await this.deleteFiles(filteredPathObjects);
+		const result = await this.deleteFiles(filteredPathObjects);
 
 		if (data.IsTruncated && data.NextContinuationToken) {
-			await this.deleteDirectoryInternal(path, data.NextContinuationToken);
+			const nextResult = await this.deleteDirectoryInternal(path, data.NextContinuationToken);
+
+			return {
+				succeeded: [...result.succeeded, ...nextResult.succeeded],
+				failed: [...result.failed, ...nextResult.failed],
+			};
 		}
+
+		return result;
 	}
 
 	private handleSettledPromises<T>(settled: PromiseSettledResult<T>[], errorMessage: string): T[] {
