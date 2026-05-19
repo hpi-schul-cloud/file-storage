@@ -6,6 +6,7 @@ import { ErrorUtils } from '@infra/error/utils';
 import { Logger } from '@infra/logger';
 import { HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PassThrough, Readable } from 'node:stream';
+import { BatchOperationResultFactory } from './batch-operation-result.factory';
 import { File, FolderLifecycleRule, S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 import { createListObjectsV2CommandOutput } from './testing';
@@ -567,7 +568,7 @@ describe(S3ClientAdapter.name, () => {
 			it('should return empty BatchOperationResult', async () => {
 				const res = await service.moveToTrash([]);
 
-				expect(res).toEqual({ succeeded: [], failed: [] });
+				expect(res).toEqual(BatchOperationResultFactory.empty());
 			});
 		});
 
@@ -950,7 +951,7 @@ describe(S3ClientAdapter.name, () => {
 			it('should return empty BatchOperationResult', async () => {
 				const res = await service.delete([]);
 
-				expect(res).toEqual({ succeeded: [], failed: [] });
+				expect(res).toEqual(BatchOperationResultFactory.empty());
 			});
 		});
 

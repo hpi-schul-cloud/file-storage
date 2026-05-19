@@ -23,6 +23,7 @@ import { Logger } from '@infra/logger';
 import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'node:stream';
+import { BatchOperationResultFactory } from './batch-operation-result.factory';
 import {
 	BatchOperationResult,
 	BatchOperationResultFailure,
@@ -298,7 +299,7 @@ export class S3ClientAdapter implements OnModuleInit {
 	}
 
 	private async moveFilesToTrash(paths: string[]): Promise<BatchOperationResult> {
-		if (paths.length === 0) return { succeeded: [], failed: [] };
+		if (paths.length === 0) return BatchOperationResultFactory.empty();
 
 		const copyPaths = paths.map((path) => {
 			return { sourcePath: path, targetPath: `${this.deletedFolderName}/${path}` };
@@ -325,10 +326,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		if (data.IsTruncated && data.NextContinuationToken) {
 			const nextResult = await this.moveDirectoryToTrashInternal(path, data.NextContinuationToken);
 
-			return {
-				succeeded: [...result.succeeded, ...nextResult.succeeded],
-				failed: [...result.failed, ...nextResult.failed],
-			};
+			return BatchOperationResultFactory.merge(result, nextResult);
 		}
 
 		return result;
@@ -389,7 +387,7 @@ export class S3ClientAdapter implements OnModuleInit {
 	private async deleteFiles(paths: string[]): Promise<BatchOperationResult> {
 		this.logDeleteFiles(paths);
 
-		if (paths.length === 0) return { succeeded: [], failed: [] };
+		if (paths.length === 0) return BatchOperationResultFactory.empty();
 
 		const pathObjects = paths.map((p) => {
 			return { Key: p };
@@ -444,10 +442,7 @@ export class S3ClientAdapter implements OnModuleInit {
 		if (data.IsTruncated && data.NextContinuationToken) {
 			const nextResult = await this.deleteDirectoryInternal(path, data.NextContinuationToken);
 
-			return {
-				succeeded: [...result.succeeded, ...nextResult.succeeded],
-				failed: [...result.failed, ...nextResult.failed],
-			};
+			return BatchOperationResultFactory.merge(result, nextResult);
 		}
 
 		return result;
