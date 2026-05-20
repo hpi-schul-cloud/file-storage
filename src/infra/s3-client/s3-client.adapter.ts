@@ -122,10 +122,14 @@ export class S3ClientAdapter implements OnModuleInit {
 	}
 
 	public async copy(paths: CopyFiles[]): Promise<BatchOperationResult> {
-		const result = await this.copyFiles(paths);
-		this.logBatchFailures(result, 'S3ClientAdapter:copy');
+		try {
+			const result = await this.copyFiles(paths);
+			this.logBatchFailures(result, 'S3ClientAdapter:copy');
 
-		return result;
+			return result;
+		} catch (err) {
+			throw new InternalServerErrorException('S3ClientAdapter:copy', ErrorUtils.createHttpExceptionOptions(err));
+		}
 	}
 
 	public async delete(paths: string[]): Promise<BatchOperationResult> {
