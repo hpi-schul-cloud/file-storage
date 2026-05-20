@@ -9,7 +9,7 @@ import { PassThrough, Readable } from 'node:stream';
 import { BatchOperationResultFactory } from './batch-operation-result.factory';
 import { File, FolderLifecycleRule, S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
-import { createListObjectsV2CommandOutput } from './testing';
+import { createListObjectsV2CommandOutput, createS3Error } from './testing';
 
 const createParameter = () => {
 	const bucket = 'test-bucket';
@@ -603,9 +603,6 @@ describe(S3ClientAdapter.name, () => {
 				const path1 = 'test/file-a.txt';
 				const path2 = 'test/file-b.txt';
 
-				const code = 'AccessDenied';
-				const message = 'Access denied';
-
 				// Copy for path1 succeeds
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({});
@@ -615,19 +612,19 @@ describe(S3ClientAdapter.name, () => {
 				// Delete: path1 fails
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({
-					Errors: [{ Key: path1, Code: code, Message: message }],
+					Errors: [createS3Error.build({ Key: path1 })],
 				});
 
-				return { path1, path2, code, message };
+				return { path1, path2 };
 			};
 
 			it('should return result reflecting the inner deleteFiles result', async () => {
-				const { path1, path2, code, message } = setupPartial();
+				const { path1, path2 } = setupPartial();
 
 				const result = await service.moveToTrash([path1, path2]);
 
 				expect(result.succeeded).toEqual([path2]);
-				expect(result.failed).toEqual([{ path: path1, code, message }]);
+				expect(result.failed).toEqual([{ path: path1, code: 'AccessDenied', message: 'Access denied' }]);
 			});
 		});
 
@@ -922,7 +919,7 @@ describe(S3ClientAdapter.name, () => {
 					// Delete page 2: path2 fails
 					// @ts-expect-error ignore parameter type of mock function
 					client.send.mockResolvedValueOnce({
-						Errors: [{ Key: path2, Code: 'AccessDenied', Message: 'Access denied' }],
+						Errors: [createS3Error.build({ Key: path2 })],
 					});
 
 					return { directory, path1, path2 };
@@ -990,7 +987,7 @@ describe(S3ClientAdapter.name, () => {
 
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({
-					Errors: [{ Key: path1, Code: 'AccessDenied', Message: 'Access denied' }],
+					Errors: [createS3Error.build({ Key: path1 })],
 				});
 
 				return { path1, path2, bucket };
@@ -1276,7 +1273,7 @@ describe(S3ClientAdapter.name, () => {
 				// Delete page 2: path2 fails
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({
-					Errors: [{ Key: path2, Code: 'AccessDenied', Message: 'Access denied' }],
+					Errors: [createS3Error.build({ Key: path2 })],
 				});
 
 				return { directory, path1, path2 };
@@ -1351,7 +1348,7 @@ describe(S3ClientAdapter.name, () => {
 				// Delete trash copy fails
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({
-					Errors: [{ Key: trashPath, Code: 'NoSuchKey', Message: 'Not found' }],
+					Errors: [createS3Error.build({ Key: trashPath })],
 				});
 
 				return { trashPath };
@@ -1364,7 +1361,7 @@ describe(S3ClientAdapter.name, () => {
 				const result = await service.restore([pathToFile]);
 
 				expect(result.succeeded).toEqual([]);
-				expect(result.failed).toEqual([{ path: trashPath, code: 'NoSuchKey', message: 'Not found' }]);
+				expect(result.failed).toEqual([{ path: trashPath, code: 'AccessDenied', message: 'Access denied' }]);
 			});
 		});
 
