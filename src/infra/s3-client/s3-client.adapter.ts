@@ -307,9 +307,11 @@ export class S3ClientAdapter implements OnModuleInit {
 
 		const copyResult = await this.copyFiles(copyPaths);
 		const deleteResult = await this.deleteFiles(copyResult.succeeded);
-		const result = BatchOperationResultFactory.merge(copyResult, deleteResult);
 
-		return result;
+		return {
+			succeeded: deleteResult.succeeded,
+			failed: [...copyResult.failed, ...deleteResult.failed],
+		};
 	}
 
 	private async moveDirectoryToTrashInternal(path: string, nextMarker?: string): Promise<BatchOperationResult> {
@@ -338,9 +340,11 @@ export class S3ClientAdapter implements OnModuleInit {
 
 		const copyResult = await this.copyFiles(copyPaths);
 		const deleteResult = await this.deleteFiles(copyResult.succeeded);
-		const result = BatchOperationResultFactory.merge(copyResult, deleteResult);
 
-		return result;
+		return {
+			succeeded: deleteResult.succeeded,
+			failed: [...copyResult.failed, ...deleteResult.failed],
+		};
 	}
 
 	private async copyFiles(paths: CopyFiles[]): Promise<BatchOperationResult> {
