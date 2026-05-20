@@ -431,13 +431,12 @@ export class S3ClientAdapter implements OnModuleInit {
 		const response = await this.client.send(req);
 
 		const failedErrors = response.Errors ?? [];
-		const failedPaths = new Set(failedErrors.map((e) => e.Key ?? ''));
 		const failed = failedErrors.map((e) => ({
-			path: e.Key ?? '',
+			path: e.Key ?? 'UNKNOWN_PATH',
 			code: e.Code,
 			message: e.Message,
 		}));
-		const succeeded = paths.filter((p) => !failedPaths.has(p));
+		const succeeded = (response.Deleted ?? []).map((d) => d.Key ?? 'UNKNOWN_PATH');
 
 		return { succeeded, failed };
 	}

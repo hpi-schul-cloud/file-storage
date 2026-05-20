@@ -609,10 +609,11 @@ describe(S3ClientAdapter.name, () => {
 				// Copy for path2 succeeds
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({});
-				// Delete: path1 fails
+				// Delete: path1 fails, path2 succeeds
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({
 					Errors: [createS3Error.build({ Key: path1 })],
+					Deleted: [{ Key: path2 }],
 				});
 
 				return { path1, path2 };
@@ -651,7 +652,7 @@ describe(S3ClientAdapter.name, () => {
 				client.send.mockResolvedValueOnce({});
 				// Delete only [path2] (the successfully copied path)
 				// @ts-expect-error ignore parameter type of mock function
-				client.send.mockResolvedValueOnce({});
+				client.send.mockResolvedValueOnce({ Deleted: [{ Key: path2 }] });
 
 				return { path1, path2 };
 			};
@@ -924,7 +925,7 @@ describe(S3ClientAdapter.name, () => {
 					client.send.mockResolvedValueOnce({});
 					// Delete page 1: path1 succeeds
 					// @ts-expect-error ignore parameter type of mock function
-					client.send.mockResolvedValueOnce({});
+					client.send.mockResolvedValueOnce({ Deleted: [{ Key: path1 }] });
 
 					// Second page: path2
 					const page2Response = createListObjectsV2CommandOutput.build({
@@ -1001,7 +1002,7 @@ describe(S3ClientAdapter.name, () => {
 				const { pathToFile } = setup();
 
 				// @ts-expect-error ignore parameter type of mock function
-				client.send.mockResolvedValueOnce({});
+				client.send.mockResolvedValueOnce({ Deleted: [{ Key: pathToFile }] });
 
 				const result = await service.delete([pathToFile]);
 
@@ -1012,7 +1013,7 @@ describe(S3ClientAdapter.name, () => {
 				const { pathToFile } = setup();
 
 				// @ts-expect-error ignore parameter type of mock function
-				client.send.mockResolvedValueOnce({});
+				client.send.mockResolvedValueOnce({ Deleted: [{ Key: pathToFile }] });
 
 				await service.delete([pathToFile]);
 
@@ -1029,6 +1030,7 @@ describe(S3ClientAdapter.name, () => {
 				// @ts-expect-error ignore parameter type of mock function
 				client.send.mockResolvedValueOnce({
 					Errors: [createS3Error.build({ Key: path1 })],
+					Deleted: [{ Key: path2 }],
 				});
 
 				return { path1, path2, bucket };
@@ -1310,7 +1312,7 @@ describe(S3ClientAdapter.name, () => {
 				client.send.mockResolvedValueOnce(page1Response);
 				// Delete page 1: path1 succeeds
 				// @ts-expect-error ignore parameter type of mock function
-				client.send.mockResolvedValueOnce({});
+				client.send.mockResolvedValueOnce({ Deleted: [{ Key: path1 }] });
 
 				// Second page: path2
 				const page2Response = createListObjectsV2CommandOutput.build({
