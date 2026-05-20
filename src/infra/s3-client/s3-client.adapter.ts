@@ -352,36 +352,51 @@ export class S3ClientAdapter implements OnModuleInit {
 	private async copyFiles(paths: CopyFiles[]): Promise<BatchOperationResult> {
 		this.logCopyFiles();
 
-		const copyRequests = paths.map(async (path) => {
-			const req = new CopyObjectCommand({
-				Bucket: this.config.bucket,
-				CopySource: `${this.config.bucket}/${path.sourcePath}`,
-				Key: `${path.targetPath}`,
-			});
+		const copyPromises = paths.map((path) => this.copySingleFile(path));
+		const settled = await Promise.allSettled(copyPromises);
+		const result = this.mapPromisesToBatchOperationResult(settled, paths);
 
-			await this.client.send(req);
-		});
+		return result;
+	}
 
-		const settledPromises = await Promise.allSettled(copyRequests);
-		const succeeded: string[] = [];
-		const failed: BatchOperationResultFailure[] = [];
+	private mapPromisesToBatchOperationResult(
+		promises: PromiseSettledResult<void>[],
+		paths: CopyFiles[]
+	): BatchOperationResult {
+		const result = promises.reduce((result, outcome, index) => {
+			const { sourcePath } = paths[index];
 
-		settledPromises.forEach((settled, index) => {
-			const path = paths[index];
-			if (settled.status === 'fulfilled') {
-				succeeded.push(path.sourcePath);
+			if (outcome.status === 'fulfilled') {
+				result.succeeded.push(sourcePath);
 			} else {
-				const err: unknown = settled.reason;
-				const codeRaw = TypeGuard.getValueFromObjectKey(err, 'Code');
-				failed.push({
-					path: path.sourcePath,
-					code: typeof codeRaw === 'string' ? codeRaw : undefined,
-					message: TypeGuard.isError(err) ? err.message : undefined,
-				});
+				const copyFailure = this.buildCopyFailure(sourcePath, outcome.reason);
+				result.failed.push(copyFailure);
 			}
+
+			return result;
+		}, BatchOperationResultFactory.empty());
+
+		return result;
+	}
+
+	private async copySingleFile(path: CopyFiles): Promise<void> {
+		const req = new CopyObjectCommand({
+			Bucket: this.config.bucket,
+			CopySource: `${this.config.bucket}/${path.sourcePath}`,
+			Key: path.targetPath,
 		});
 
-		return { succeeded, failed };
+		await this.client.send(req);
+	}
+
+	private buildCopyFailure(sourcePath: string, err: unknown): BatchOperationResultFailure {
+		const codeRaw = TypeGuard.getValueFromObjectKey(err, 'Code');
+
+		return {
+			path: sourcePath,
+			code: TypeGuard.isString(codeRaw) ? codeRaw : undefined,
+			message: TypeGuard.isError(err) ? err.message : undefined,
+		};
 	}
 
 	private async deleteFiles(paths: string[]): Promise<BatchOperationResult> {
