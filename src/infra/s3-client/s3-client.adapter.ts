@@ -306,13 +306,10 @@ export class S3ClientAdapter implements OnModuleInit {
 		});
 
 		const copyResult = await this.copyFiles(copyPaths);
-
 		const deleteResult = await this.deleteFiles(copyResult.succeeded);
+		const result = BatchOperationResultFactory.merge(copyResult, deleteResult);
 
-		return {
-			succeeded: deleteResult.succeeded,
-			failed: [...copyResult.failed, ...deleteResult.failed],
-		};
+		return result;
 	}
 
 	private async moveDirectoryToTrashInternal(path: string, nextMarker?: string): Promise<BatchOperationResult> {
@@ -340,13 +337,10 @@ export class S3ClientAdapter implements OnModuleInit {
 		});
 
 		const copyResult = await this.copyFiles(copyPaths);
-
 		const deleteResult = await this.deleteFiles(copyResult.succeeded);
+		const result = BatchOperationResultFactory.merge(copyResult, deleteResult);
 
-		return {
-			succeeded: deleteResult.succeeded,
-			failed: [...copyResult.failed, ...deleteResult.failed],
-		};
+		return result;
 	}
 
 	private async copyFiles(paths: CopyFiles[]): Promise<BatchOperationResult> {
@@ -414,12 +408,13 @@ export class S3ClientAdapter implements OnModuleInit {
 
 		const response = await this.client.send(req);
 
-		const failed: BatchOperationResultFailure[] = (response.Errors ?? []).map((e) => ({
+		const failedErrors = response.Errors ?? [];
+		const failedPaths = new Set(failedErrors.map((e) => e.Key ?? ''));
+		const failed = failedErrors.map((e) => ({
 			path: e.Key ?? '',
 			code: e.Code,
 			message: e.Message,
 		}));
-		const failedPaths = new Set(failed.map((f) => f.path));
 		const succeeded = paths.filter((p) => !failedPaths.has(p));
 
 		return { succeeded, failed };
