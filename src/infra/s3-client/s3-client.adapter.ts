@@ -92,7 +92,7 @@ export class S3ClientAdapter implements OnModuleInit {
 
 			return result;
 		} catch (err: unknown) {
-			throw new InternalServerErrorException('S3ClientAdapter:delete', ErrorUtils.createHttpExceptionOptions(err));
+			throw new InternalServerErrorException('S3ClientAdapter:moveToTrash', ErrorUtils.createHttpExceptionOptions(err));
 		}
 	}
 
