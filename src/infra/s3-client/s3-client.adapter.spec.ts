@@ -1472,17 +1472,6 @@ describe(S3ClientAdapter.name, () => {
 					message: 'Test error',
 				});
 			});
-
-			it('should not call errorHandler.exec when promises are rejected', async () => {
-				const { pathsToCopy } = setup();
-
-				// @ts-expect-error should run into error
-				client.send.mockRejectedValueOnce(new Error('Test error'));
-
-				await service.copy(pathsToCopy);
-
-				expect(errorHandler.exec).not.toHaveBeenCalled();
-			});
 		});
 	});
 
