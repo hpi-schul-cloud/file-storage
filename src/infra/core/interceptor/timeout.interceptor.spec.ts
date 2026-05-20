@@ -1,10 +1,11 @@
 import { createMock } from '@golevelup/ts-jest';
-import { Controller, Get, HttpStatus, INestApplication } from '@nestjs/common';
+import { CallHandler, Controller, ExecutionContext, Get, HttpStatus, INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { RequestTimeout } from '@shared/decorator';
 import { TestApiClient } from '@testing/test-api-client';
+import { of } from 'rxjs';
 import { TimeoutInterceptor } from './timeout.interceptor';
 
 const delay = (ms: number) =>
@@ -129,6 +130,22 @@ describe('TimeoutInterceptor', () => {
 			const response = await testApiClient.get('overriden');
 
 			expect(response.status).toEqual(HttpStatus.INTERNAL_SERVER_ERROR);
+		});
+	});
+
+	describe('when context type is not http', () => {
+		it('should call next.handle() without applying timeout', (done) => {
+			const interceptor = new TimeoutInterceptor(createMockConfig);
+
+			const mockContext = createMock<ExecutionContext>({ getType: () => 'rpc' });
+			const expectedResult = { message: 'MyMessage' };
+			const mockCallHandler = createMock<CallHandler>({ handle: () => of(expectedResult) });
+
+			interceptor.intercept(mockContext, mockCallHandler).subscribe((result) => {
+				expect(result).toEqual(expectedResult);
+				expect(mockContext.switchToHttp).not.toHaveBeenCalled();
+				done();
+			});
 		});
 	});
 });
