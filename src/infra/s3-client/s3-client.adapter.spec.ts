@@ -1562,6 +1562,18 @@ describe(S3ClientAdapter.name, () => {
 				expect(errorHandler.exec).toHaveBeenCalledWith(expect.objectContaining({ message: 'S3ClientAdapter:copy' }));
 			});
 		});
+
+		describe('when copyFiles throws unexpectedly', () => {
+			it('should throw InternalServerErrorException', async () => {
+				const { pathsToCopy } = setup();
+				const error = new Error('Unexpected error');
+
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				jest.spyOn(service as any, 'copyFiles').mockRejectedValueOnce(error);
+
+				await expect(service.copy(pathsToCopy)).rejects.toThrow(InternalServerErrorException);
+			});
+		});
 	});
 
 	describe('head', () => {
