@@ -626,6 +626,16 @@ describe(S3ClientAdapter.name, () => {
 				expect(result.succeeded).toEqual([path2]);
 				expect(result.failed).toEqual([{ path: path1, code: 'AccessDenied', message: 'Access denied' }]);
 			});
+
+			it('should call errorHandler.exec with the partial failures', async () => {
+				const { path1, path2 } = setupPartial();
+
+				await service.moveToTrash([path1, path2]);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(
+					expect.objectContaining({ message: 'S3ClientAdapter:moveToTrash' })
+				);
+			});
 		});
 
 		describe('WHEN copy has partial failures', () => {
@@ -670,6 +680,16 @@ describe(S3ClientAdapter.name, () => {
 					expect.objectContaining({
 						input: { Bucket: bucket, Delete: { Objects: expect.arrayContaining([{ Key: path1 }]) } },
 					})
+				);
+			});
+
+			it('should call errorHandler.exec with the copy failures', async () => {
+				const { path1, path2 } = setupPartial();
+
+				await service.moveToTrash([path1, path2]);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(
+					expect.objectContaining({ message: 'S3ClientAdapter:moveToTrash' })
 				);
 			});
 		});
@@ -933,6 +953,16 @@ describe(S3ClientAdapter.name, () => {
 					expect(result.succeeded).toEqual([path1]);
 					expect(result.failed).toEqual([{ path: path2, code: 'AccessDenied', message: 'Access denied' }]);
 				});
+
+				it('should call errorHandler.exec with the partial failures', async () => {
+					const { directory } = setup();
+
+					await service.moveDirectoryToTrash(directory);
+
+					expect(errorHandler.exec).toHaveBeenCalledWith(
+						expect.objectContaining({ message: 'S3ClientAdapter:moveDirectoryToTrash' })
+					);
+				});
 			});
 		});
 	});
@@ -977,6 +1007,17 @@ describe(S3ClientAdapter.name, () => {
 
 				expect(result).toEqual({ succeeded: [pathToFile], failed: [] });
 			});
+
+			it('should not call errorHandler.exec when all paths succeed', async () => {
+				const { pathToFile } = setup();
+
+				// @ts-expect-error ignore parameter type of mock function
+				client.send.mockResolvedValueOnce({});
+
+				await service.delete([pathToFile]);
+
+				expect(errorHandler.exec).not.toHaveBeenCalled();
+			});
 		});
 
 		describe('WHEN response has partial errors', () => {
@@ -1000,6 +1041,14 @@ describe(S3ClientAdapter.name, () => {
 
 				expect(result.succeeded).toEqual([path2]);
 				expect(result.failed).toEqual([{ path: path1, code: 'AccessDenied', message: 'Access denied' }]);
+			});
+
+			it('should call errorHandler.exec with the partial failures', async () => {
+				const { path1, path2 } = setupPartial();
+
+				await service.delete([path1, path2]);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(expect.objectContaining({ message: 'S3ClientAdapter:delete' }));
 			});
 		});
 
@@ -1287,6 +1336,16 @@ describe(S3ClientAdapter.name, () => {
 				expect(result.succeeded).toEqual([path1]);
 				expect(result.failed).toEqual([{ path: path2, code: 'AccessDenied', message: 'Access denied' }]);
 			});
+
+			it('should call errorHandler.exec with the partial failures', async () => {
+				const { directory } = setup();
+
+				await service.deleteDirectory(directory);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(
+					expect.objectContaining({ message: 'S3ClientAdapter:deleteDirectory' })
+				);
+			});
 		});
 	});
 
@@ -1363,6 +1422,15 @@ describe(S3ClientAdapter.name, () => {
 				expect(result.succeeded).toEqual([]);
 				expect(result.failed).toEqual([{ path: trashPath, code: 'AccessDenied', message: 'Access denied' }]);
 			});
+
+			it('should call errorHandler.exec with the partial failures', async () => {
+				const { pathToFile } = createParameter();
+				setupPartial();
+
+				await service.restore([pathToFile]);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(expect.objectContaining({ message: 'S3ClientAdapter:restore' }));
+			});
 		});
 
 		describe('WHEN copy has partial failures', () => {
@@ -1438,6 +1506,14 @@ describe(S3ClientAdapter.name, () => {
 
 				expect(result).toEqual({ succeeded: [pathsToCopy[0].sourcePath], failed: [] });
 			});
+
+			it('should not call errorHandler.exec when all copies succeed', async () => {
+				const { pathsToCopy } = setup();
+
+				await service.copy(pathsToCopy);
+
+				expect(errorHandler.exec).not.toHaveBeenCalled();
+			});
 		});
 
 		describe('when client send rejects with S3 error code', () => {
@@ -1471,6 +1547,17 @@ describe(S3ClientAdapter.name, () => {
 					path: pathsToCopy[0].sourcePath,
 					message: 'Test error',
 				});
+			});
+
+			it('should call errorHandler.exec with the copy failures', async () => {
+				const { pathsToCopy } = setup();
+
+				// @ts-expect-error should run into error
+				client.send.mockRejectedValueOnce(new Error('Test error'));
+
+				await service.copy(pathsToCopy);
+
+				expect(errorHandler.exec).toHaveBeenCalledWith(expect.objectContaining({ message: 'S3ClientAdapter:copy' }));
 			});
 		});
 	});
