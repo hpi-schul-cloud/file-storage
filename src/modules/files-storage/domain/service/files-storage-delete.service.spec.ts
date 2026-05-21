@@ -2,7 +2,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { BatchOperationResultFactory, S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, TestingModule } from '@nestjs/testing';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
@@ -169,9 +169,10 @@ describe('FilesStorageService delete methods', () => {
 				const storageLocation = StorageLocation.SCHOOL;
 				const storageLocationId = new ObjectId().toHexString();
 				const params = { storageLocation, storageLocationId };
+				const moveResult = BatchOperationResultFactory.empty();
 
 				fileRecordRepo.markForDeleteByStorageLocation.mockResolvedValueOnce(1);
-				storageClient.moveDirectoryToTrash.mockResolvedValueOnce();
+				storageClient.moveDirectoryToTrash.mockResolvedValueOnce(moveResult);
 
 				return { storageLocation, storageLocationId, params };
 			};
@@ -251,7 +252,8 @@ describe('FilesStorageService delete methods', () => {
 					.spyOn(FilePathFactory, 'createManyTrashPaths')
 					.mockReturnValueOnce(fileRecords.map((fileRecord) => `trash/path/${fileRecord.id}`));
 
-				storageClient.delete.mockResolvedValueOnce();
+				const deleteResult = BatchOperationResultFactory.empty();
+				storageClient.delete.mockResolvedValueOnce(deleteResult);
 				fileRecordRepo.delete.mockResolvedValueOnce();
 
 				return { fileRecords };
