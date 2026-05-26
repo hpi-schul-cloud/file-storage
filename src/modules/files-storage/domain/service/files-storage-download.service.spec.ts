@@ -3,7 +3,7 @@ import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { GetFile, S3ClientAdapter } from '@infra/s3-client';
-import { NotAcceptableException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScanStatus } from '../../domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
@@ -138,7 +138,28 @@ describe('FilesStorageService download methods', () => {
 			it('throws error', async () => {
 				const { fileRecord, fileName } = setup();
 
-				const error = new NotAcceptableException(ErrorType.FILE_IS_BLOCKED);
+				const error = new NotFoundException(ErrorType.FILE_NOT_FOUND);
+
+				await expect(service.download(fileRecord, fileName)).rejects.toThrow(error);
+				expect(service.downloadFile).toHaveBeenCalledTimes(0);
+			});
+		});
+
+		describe('WHEN file is uploading', () => {
+			const setup = () => {
+				const fileRecord = fileRecordTestFactory().build();
+				fileRecord.markAsUploading();
+				const fileName = fileRecord.getName();
+
+				spy = jest.spyOn(service, 'downloadFile');
+
+				return { fileRecord, fileName };
+			};
+
+			it('throws not found and does not call downloadFile', async () => {
+				const { fileRecord, fileName } = setup();
+
+				const error = new NotFoundException(ErrorType.FILE_NOT_FOUND);
 
 				await expect(service.download(fileRecord, fileName)).rejects.toThrow(error);
 				expect(service.downloadFile).toHaveBeenCalledTimes(0);
