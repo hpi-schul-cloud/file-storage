@@ -43,7 +43,7 @@ spec:
               kubernetes.io/metadata.name: {{ RABBITMQ_NAMESPACE | default(NAMESPACE) }}
           podSelector:
             matchLabels:
-              app: {{ RABBITMQ_APP_LABEL | default("rabbitmq") }}
+              app.kubernetes.io/component: rabbitmq
       ports:
         - port: {{ RABBITMQ_PORT | default(5672) }}
           protocol: TCP
