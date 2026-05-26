@@ -56,7 +56,8 @@ spec:
       ports:
         - port: 4444
           protocol: TCP
-    # Externer Dienst
+
+    # Externe Dienste (S3, MongoDB SaaS wie Atlas, etc.)
     - to:
         - ipBlock:
             cidr: {{ FILE_STORAGE_EXTERNAL_EGRESS_CIDR | default("0.0.0.0/0") }}
@@ -68,4 +69,6 @@ spec:
         - port: 80
           protocol: TCP
         - port: 443
+          protocol: TCP
+        - port: {{ MONGODB_PORT | default(27017) }}
           protocol: TCP
