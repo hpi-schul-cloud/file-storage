@@ -57,6 +57,15 @@ spec:
         - port: 4444
           protocol: TCP
 
+    # collabora
+    - to:
+        - podSelector:
+            matchLabels:
+              app: collabora-office
+      ports:
+        - port: 9980
+          protocol: TCP
+
     # MongoDB SaaS (DB_URL) – eigene Regel ohne except, da private IPs möglich (VPC-Peering)
     - to:
         - ipBlock:
