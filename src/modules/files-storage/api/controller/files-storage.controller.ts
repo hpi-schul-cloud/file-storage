@@ -31,6 +31,7 @@ import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
 import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '../../files-storage.config';
 import {
+	AddOfficeDocumentToParentParams,
 	ArchiveFileParams,
 	CopyFileListResponse,
 	CopyFileParams,
@@ -71,6 +72,23 @@ export class FilesStorageController {
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<FileRecordResponse> {
 		const response = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...body, ...params });
+
+		return response;
+	}
+
+	@ApiOperation({ summary: 'Upload office document from filesystem' })
+	@ApiResponse({ status: 201, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 400, type: BadRequestException })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@Post('/add-office-document/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async addOfficeDocumentToParent(
+		@Body() body: AddOfficeDocumentToParentParams,
+		@Param() params: FileRecordParams,
+		@CurrentUser() currentUser: ICurrentUser
+	): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.addOfficeDocumentToParent(currentUser.userId, { ...body, ...params });
 
 		return response;
 	}
