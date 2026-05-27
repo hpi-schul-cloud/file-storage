@@ -57,21 +57,20 @@ spec:
         - port: 4444
           protocol: TCP
 
-    # nuxt-client
-    - to:
-        - podSelector:
-            matchLabels:
-              app: nuxtclient
-      ports:
-        - port: 4000
-          protocol: TCP
-
     # MongoDB SaaS (DB_URL) – eigene Regel ohne except, da private IPs möglich (VPC-Peering)
     - to:
         - ipBlock:
-            cidr: {{ MONGODB_EGRESS_CIDR | default("0.0.0.0/0") }}
+            cidr: 0.0.0.0/0
       ports:
-        - port: {{ MONGODB_PORT | default(27017) }}
+        - port: 27017
+          protocol: TCP
+
+    # nuxt-client
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 4000
           protocol: TCP
 
     # Externe Dienste (S3, etc.)
