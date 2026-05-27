@@ -2,6 +2,7 @@ export * from './file-record-status.interface';
 export * from './file-record.repo.interface';
 export * from './file-storage-parent-type.enum';
 export * from './interfaces';
+export * from './office-document-type.enum';
 export * from './parent-info.interface';
 export * from './preview-width.enum';
 export * from './storage-location.enum';

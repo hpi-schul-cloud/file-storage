@@ -11,6 +11,7 @@ import { SanitizeHtml, StringToBoolean, StringToObject } from '@shared/transform
 import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
 	FileRecordParentType,
+	OfficeDocumentType,
 	ParentInfo,
 	PreviewInfo,
 	PreviewOutputMimeTypes,
@@ -63,6 +64,18 @@ export class FileUrlParams {
 	@ApiPropertyOptional()
 	@Allow()
 	headers?: Record<string, string>;
+}
+
+export class AddOfficeDocumentToParentParams {
+	@ApiProperty()
+	@IsString()
+	@IsNotEmpty()
+	@SanitizeHtml()
+	fileName!: string;
+
+	@ApiProperty({ enum: OfficeDocumentType, enumName: 'OfficeDocumentType' })
+	@IsEnum(OfficeDocumentType)
+	officeDocumentType!: OfficeDocumentType;
 }
 
 export class FileParams {

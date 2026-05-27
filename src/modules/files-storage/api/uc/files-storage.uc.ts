@@ -35,6 +35,7 @@ import {
 } from '../../domain';
 import { UploadAbortLoggable } from '../../loggable';
 import {
+	AddOfficeDocumentToParentParams,
 	ArchiveFileParams,
 	CopyFileResponse,
 	DownloadFileParams,
@@ -99,6 +100,28 @@ export class FilesStorageUC {
 		const abortSignal = undefined;
 		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response, StorageType.STANDARD, abortSignal);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
+
+		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
+
+		return fileRecordResponse;
+	}
+
+	public async addOfficeDocumentToParent(
+		userId: EntityId,
+		params: FileRecordParams & AddOfficeDocumentToParentParams
+	): Promise<FileRecordResponse> {
+		await Promise.all([
+			this.checkPermission(params, FileStorageAuthorizationContext.create),
+			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
+		]);
+
+		const fileRecord = await this.filesStorageService.uploadOfficeDocumentToParent(
+			userId,
+			params,
+			params.fileName,
+			params.officeDocumentType
+		);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
