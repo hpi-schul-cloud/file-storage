@@ -4,14 +4,12 @@ metadata:
   name: file-storage-network-policy
   namespace: {{ NAMESPACE }}
 spec:
-  # Gilt für file-storage und amqp-file-storage Pods
   podSelector:
     matchLabels:
       app.kubernetes.io/component: file-storage
   policyTypes:
     - Egress
   egress:
-    # DNS-Auflösung muss immer erlaubt bleiben
     - ports:
         - port: 53
           protocol: UDP
@@ -66,7 +64,7 @@ spec:
         - port: 4444
           protocol: TCP
 
-    # collabora service
+    # collabora service (COLLABORA_ONLINE_URL)
     - to:
         - namespaceSelector:
             matchLabels:
@@ -78,7 +76,7 @@ spec:
         - port: 9980
           protocol: TCP
 
-    # MongoDB SaaS
+    # MongoDB SaaS (DB_URI)
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
