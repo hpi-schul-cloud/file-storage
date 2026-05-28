@@ -52,7 +52,7 @@ spec:
         - port: 5672
           protocol: TCP
 
-    # file-storage-svc selbst (FILE_STORAGE_SERVICE_URL – Rückruf vom Antivirus)
+    # file-storage-svc (FILE_STORAGE_SERVICE_URL)
     - to:
         - namespaceSelector:
             matchLabels:
