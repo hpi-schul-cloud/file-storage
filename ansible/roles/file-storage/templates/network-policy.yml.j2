@@ -84,10 +84,11 @@ spec:
         - port: 27017
           protocol: TCP
 
-    # filter for ingress traffic because file-storage needs to send the response back to the client directly, without going through the ingress controller again. Otherwise, the user will not be notified that an upload is in progress until the whole file is uploaded and processed by file-storage, which can lead to a bad user experience.
+    # Allow requests to the ingress controller
     - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-controller
       ports:
         - port: 443
           protocol: TCP
