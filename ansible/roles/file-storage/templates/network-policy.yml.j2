@@ -20,53 +20,65 @@ spec:
 
     # Authorization API (AUTHORIZATION_API_URL)
     - to:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              app: api
+              kubernetes.io/metadata.name: {{ NAMESPACE }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api
       ports:
-        - port: {{ API_SERVICE_PORT | default(3030) }}
+        - port: 3030
           protocol: TCP
 
     # ClamAV Antivirus (ANTIVIRUS_SERVICE_HOSTNAME / ANTIVIRUS_SERVICE_PORT)
     - to:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              app: clamav
+              kubernetes.io/metadata.name: {{ NAMESPACE }}  
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: clamav
       ports:
-        - port: {{ ANTIVIRUS_SERVICE_PORT | default(3310) }}
+        - port: 3310
           protocol: TCP
 
     # RabbitMQ (RABBITMQ_URI)
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ RABBITMQ_NAMESPACE | default(NAMESPACE) }}
+              kubernetes.io/metadata.name: {{ NAMESPACE }}
           podSelector:
             matchLabels:
               app.kubernetes.io/component: rabbitmq
       ports:
-        - port: {{ RABBITMQ_PORT | default(5672) }}
+        - port: 5672
           protocol: TCP
 
     # file-storage-svc selbst (FILE_STORAGE_SERVICE_URL – Rückruf vom Antivirus)
     - to:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              app: file-storage
+              kubernetes.io/metadata.name: {{ NAMESPACE }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: file-storage
       ports:
         - port: 4444
           protocol: TCP
 
-    # collabora
+    # collabora service
     - to:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              app: collabora-office
+              kubernetes.io/metadata.name: {{ NAMESPACE }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: collabora-office
       ports:
         - port: 9980
           protocol: TCP
 
-    # MongoDB SaaS (DB_URL) – eigene Regel ohne except, da private IPs möglich (VPC-Peering)
+    # MongoDB SaaS
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -74,7 +86,7 @@ spec:
         - port: 27017
           protocol: TCP
 
-    # nuxt-client
+    # filter for ingress traffic because file-storage needs to send the response back to the client directly, without going through the ingress controller again. Otherwise, the user will not be notified that an upload is in progress until the whole file is uploaded and processed by file-storage, which can lead to a bad user experience.
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -82,7 +94,7 @@ spec:
         - port: 443
           protocol: TCP
 
-    # Externe Dienste (S3, etc.)
+    # Block all other local egress traffic, but allow all outgoing traffic to the outside world
     - to:
         - ipBlock:
             cidr: {{ FILE_STORAGE_EXTERNAL_EGRESS_CIDR | default("0.0.0.0/0") }}
