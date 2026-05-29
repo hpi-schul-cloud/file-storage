@@ -38,6 +38,8 @@ export class FilesStorageConsumer {
 			fileRecords,
 			payload.target
 		);
+        // wait 60 seconds
+        await new Promise((resolve) => setTimeout(resolve, 61000));
 
 		return { message: copyFileResults };
 	}
