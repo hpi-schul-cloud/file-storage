@@ -35,7 +35,7 @@
 		"generate-client:authorization-api": "openapi-generator-cli generate -c ./openapitools.json --generator-key authorization-api"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.1025.0",
+		"@aws-sdk/client-s3": "^3.1047.0",
 		"@aws-sdk/lib-storage": "^3.1025.0",
 		"@aws-sdk/util-retry": "^3.374.0",
 		"@smithy/node-http-handler": "^4.6.0",
