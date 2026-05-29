@@ -195,6 +195,25 @@ describe('FilesStorageService copy methods', () => {
 			});
 		});
 
+		describe('WHEN source file is uploading', () => {
+			const setup = () => {
+				const sourceParentInfo = ParentInfoTestFactory.build();
+				const fileRecord = fileRecordTestFactory().withParentInfo(sourceParentInfo).build();
+				fileRecord.markAsUploading();
+
+				return { fileRecord, userId: sourceParentInfo.parentId, sourceParentInfo };
+			};
+
+			it('should return failed file record (=without new id)', async () => {
+				const { fileRecord, sourceParentInfo, userId } = setup();
+
+				const result = await service.copyFilesToParent(userId, [fileRecord], sourceParentInfo);
+				const expected = { sourceId: fileRecord.id, name: fileRecord.getName() };
+
+				expect(result[0]).toEqual(expected);
+			});
+		});
+
 		describe('WHEN source file is marked for delete', () => {
 			const setup = () => {
 				const userId = new ObjectId().toHexString();
