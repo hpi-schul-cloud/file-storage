@@ -18,6 +18,10 @@ export class TimeoutInterceptor implements NestInterceptor {
 	constructor(private readonly config: TimeoutInterceptorConfig) {}
 
 	public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+		if (context.getType() !== 'http') {
+			return next.handle();
+		}
+
 		const reflector = new Reflector();
 		const requestTimeoutEnvironmentName =
 			reflector.get<string>('requestTimeoutEnvironmentName', context.getHandler()) ??
