@@ -56,3 +56,16 @@ export interface ObjectKeysRecursive {
 	nextMarker: string | undefined;
 	files: string[];
 }
+
+type Path = string;
+
+export interface BatchOperationResultFailure {
+	path: Path;
+	code?: string;
+	message?: string;
+}
+
+export interface BatchOperationResult {
+	succeeded: Path[];
+	failed: BatchOperationResultFailure[];
+}
