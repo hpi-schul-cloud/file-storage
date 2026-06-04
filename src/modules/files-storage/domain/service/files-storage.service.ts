@@ -8,7 +8,6 @@ import {
 	Inject,
 	Injectable,
 	InternalServerErrorException,
-	NotAcceptableException,
 	NotFoundException,
 } from '@nestjs/common';
 import { FindOptions } from '@shared/domain/interface';
@@ -329,12 +328,15 @@ export class FilesStorageService {
 		}
 	}
 
-	private checkScanStatus(fileRecord: FileRecord): void | NotAcceptableException {
-		if (fileRecord.isBlocked()) {
-			this.logger.warning(
-				new FileStorageActionsLoggable(`file is blocked`, { action: 'checkScanStatus', sourcePayload: fileRecord })
+	private checkDownloadable(fileRecord: FileRecord): void | NotFoundException {
+		if (!fileRecord.isDownloadable()) {
+			this.logger.debug(
+				new FileStorageActionsLoggable(`file is not downloadable`, {
+					action: 'checkDownloadable',
+					sourcePayload: fileRecord,
+				})
 			);
-			throw new NotAcceptableException(ErrorType.FILE_IS_BLOCKED);
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
 		}
 	}
 
@@ -348,7 +350,7 @@ export class FilesStorageService {
 
 	public async download(fileRecord: FileRecord, fileName: string, bytesRange?: string): Promise<GetFileResponse> {
 		this.checkFileName(fileRecord, fileName);
-		this.checkScanStatus(fileRecord);
+		this.checkDownloadable(fileRecord);
 
 		const fileResponse = await this.downloadFile(fileRecord, bytesRange);
 
@@ -517,7 +519,7 @@ export class FilesStorageService {
 
 		const promises: Promise<CopyFileResult>[] = sourceFileRecords.map(async (sourceFile) => {
 			try {
-				this.checkScanStatus(sourceFile);
+				this.checkDownloadable(sourceFile);
 
 				const targetFile = await this.copyFileRecord(sourceFile, targetParentInfo, userId);
 				const copyFileResult = await this.copyFilesWithRollbackOnError(sourceFile, targetFile);

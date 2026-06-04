@@ -102,6 +102,15 @@
     tags:
       - prometheus
 
+  - name: Filestorage network policy
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: network-policy.yml.j2
+    when: WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
+    tags:
+      - network-policy
+
   - name: Filestorage ingress
     kubernetes.core.k8s:
       kubeconfig: ~/.kube/config

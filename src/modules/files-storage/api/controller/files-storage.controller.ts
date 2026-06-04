@@ -174,8 +174,9 @@ export class FilesStorageController {
 		if (etag === fileResponse.etag) {
 			response.status(HttpStatus.NOT_MODIFIED);
 
+			const encodedFileName = encodeURIComponent(fileResponse.name);
 			response.set({
-				'Content-Disposition': `attachment; filename="${fileResponse.name}"`,
+				'Content-Disposition': `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`,
 			});
 
 			return undefined;
