@@ -52,7 +52,7 @@
 		"@smithy/node-http-handler": "^4.6.0",
 		"@xmldom/xmldom": "^0.9.9",
 		"archiver": "^7.0.1",
-		"axios": "^1.14.0",
+		"axios": "^1.17.0",
 		"busboy": "^1.6.0",
 		"clamscan": "^2.4.0",
 		"class-transformer": "^0.5.1",
