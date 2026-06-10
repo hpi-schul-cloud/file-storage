@@ -6,6 +6,9 @@ jest.mock('child_process', () => ({
 	spawn: jest.fn(),
 }));
 
+const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin';
+const spawnOptions = { env: { PATH: SAFE_PATH } };
+
 describe('ImageMagickAdapter', () => {
 	let mockSpawn: jest.Mock;
 	let mockProcess: {
@@ -40,6 +43,8 @@ describe('ImageMagickAdapter', () => {
 		inputStream = Readable.from(['test data']);
 		setupMockProcess();
 		mockSpawn.mockReturnValue(mockProcess);
+		// Reset to default binary path before each test
+		ImageMagickAdapter.setBinaryPath('magick');
 	});
 
 	describe('constructor', () => {
@@ -66,7 +71,7 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-[5]', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-[5]', 'webp:-'], spawnOptions);
 		});
 	});
 
@@ -85,7 +90,7 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-coalesce', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-coalesce', 'webp:-'], spawnOptions);
 		});
 	});
 
@@ -104,7 +109,7 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', '100x200', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', '100x200', 'webp:-'], spawnOptions);
 		});
 
 		it('should add resize with width only', () => {
@@ -113,7 +118,7 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', '100', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', '100', 'webp:-'], spawnOptions);
 		});
 
 		it('should add resize with height only', () => {
@@ -122,7 +127,7 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', 'x200', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', 'x200', 'webp:-'], spawnOptions);
 		});
 
 		it('should add resize with options', () => {
@@ -131,7 +136,7 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', '100>', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', '-resize', '100>', 'webp:-'], spawnOptions);
 		});
 
 		it('should not add resize when width and height are undefined', () => {
@@ -140,17 +145,32 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', 'webp:-'], spawnOptions);
 		});
 	});
 
 	describe('stream', () => {
-		it('should spawn magick process with correct arguments', () => {
+		it('should spawn magick process with correct arguments and restricted PATH', () => {
 			const adapter = new ImageMagickAdapter(inputStream);
 
 			adapter.stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-', 'webp:-'], spawnOptions);
+		});
+
+		it('should use custom binary path when configured', () => {
+			ImageMagickAdapter.setBinaryPath('/usr/bin/magick');
+			const adapter = new ImageMagickAdapter(inputStream);
+
+			adapter.stream('webp', jest.fn());
+
+			expect(mockSpawn).toHaveBeenCalledWith('/usr/bin/magick', ['convert', '-', 'webp:-'], spawnOptions);
+		});
+
+		it('should return current binary path via getBinaryPath', () => {
+			ImageMagickAdapter.setBinaryPath('/custom/path/magick');
+
+			expect(ImageMagickAdapter.getBinaryPath()).toBe('/custom/path/magick');
 		});
 
 		it('should pipe input stream to process stdin', () => {
@@ -253,7 +273,11 @@ describe('ImageMagickAdapter', () => {
 
 			adapter.selectFrame(0).coalesce().resize(100, undefined, '>').stream('webp', jest.fn());
 
-			expect(mockSpawn).toHaveBeenCalledWith('magick', ['convert', '-[0]', '-coalesce', '-resize', '100>', 'webp:-']);
+			expect(mockSpawn).toHaveBeenCalledWith(
+				'magick',
+				['convert', '-[0]', '-coalesce', '-resize', '100>', 'webp:-'],
+				spawnOptions
+			);
 		});
 	});
 });

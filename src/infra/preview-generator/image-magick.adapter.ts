@@ -2,7 +2,37 @@ import { UnprocessableEntityException } from '@nestjs/common';
 import { spawn } from 'node:child_process';
 import { Readable } from 'node:stream';
 
+/**
+ * Restricted PATH containing only standard system directories.
+ * This prevents PATH injection attacks by ensuring only trusted
+ * system binaries can be executed.
+ */
+const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin';
+
 export class ImageMagickAdapter {
+	/**
+	 * Optional absolute path to the magick binary.
+	 * If set, this path will be used directly instead of relying on PATH resolution.
+	 * Can be configured at application startup via ImageMagickAdapter.setBinaryPath().
+	 */
+	private static binaryPath: string = 'magick';
+
+	/**
+	 * Sets the absolute path to the ImageMagick binary.
+	 * Use this at application startup to hardcode the binary location.
+	 * @param path - Absolute path to the magick binary (e.g., '/usr/bin/magick')
+	 */
+	public static setBinaryPath(path: string): void {
+		ImageMagickAdapter.binaryPath = path;
+	}
+
+	/**
+	 * Returns the currently configured binary path.
+	 */
+	public static getBinaryPath(): string {
+		return ImageMagickAdapter.binaryPath;
+	}
+
 	private readonly args: string[] = [];
 	private readonly inputStream: Readable;
 	private frameSelector?: string;
@@ -50,7 +80,9 @@ export class ImageMagickAdapter {
 		const output = `${format}:-`;
 		const commandArgs = ['convert', input, ...this.args, output];
 
-		const magickProcess = spawn('magick', commandArgs);
+		const magickProcess = spawn(ImageMagickAdapter.binaryPath, commandArgs, {
+			env: { PATH: SAFE_PATH },
+		});
 
 		let callbackCalled = false;
 		const callOnce = (err: Error | null, stdout?: Readable, stderr?: Readable): void => {
