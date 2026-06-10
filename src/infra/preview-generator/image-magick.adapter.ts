@@ -15,7 +15,7 @@ export class ImageMagickAdapter {
 	 * If set, this path will be used directly instead of relying on PATH resolution.
 	 * Can be configured at application startup via ImageMagickAdapter.setBinaryPath().
 	 */
-	private static binaryPath: string = 'magick';
+	private static binaryPath = 'magick';
 
 	/**
 	 * Sets the absolute path to the ImageMagick binary.
