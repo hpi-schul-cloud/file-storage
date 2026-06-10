@@ -11,7 +11,7 @@ COPY src ./src
 RUN npm run build
 RUN npm prune --production
 
-FROM registry.opencode.de/oci-community/images/zendis/nodejs:24-minimal AS file-service
+FROM gcr.io/distroless/nodejs24-debian13:nonroot AS file-service
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ USER nonroot
 
 EXPOSE 3345 3349 9090
 
-CMD ["node", "dist/apps/files-storage.app.js"]
+CMD ["dist/apps/files-storage.app.js"]
 
 FROM docker.io/node:24-alpine AS preview-service
 

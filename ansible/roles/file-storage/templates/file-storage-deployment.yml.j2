@@ -53,6 +53,7 @@ spec:
       - name: file-storage
         image: {{ FILE_STORAGE_IMAGE }}:{{ FILE_STORAGE_IMAGE_TAG }}
         imagePullPolicy: IfNotPresent
+        command: ['/nodejs/bin/node', 'dist/apps/files-storage.app.js']
         ports:
         - containerPort: 4444
           name: file-storage
