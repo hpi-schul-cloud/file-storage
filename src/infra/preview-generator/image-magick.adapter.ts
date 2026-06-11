@@ -2,14 +2,6 @@ import { UnprocessableEntityException } from '@nestjs/common';
 import { spawn } from 'node:child_process';
 import { Readable } from 'node:stream';
 
-/**
- * Restricted PATH containing only standard system directories.
- * This prevents PATH injection attacks by ensuring only trusted
- * system binaries can be executed.
- */
-const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin';
-const spawnOptions = { env: { PATH: SAFE_PATH } };
-
 export class ImageMagickAdapter {
 	private readonly args: string[] = [];
 	private readonly inputStream: Readable;
@@ -58,7 +50,7 @@ export class ImageMagickAdapter {
 		const output = `${format}:-`;
 		const commandArgs = ['convert', input, ...this.args, output];
 
-		const magickProcess = spawn('magick', commandArgs, spawnOptions);
+		const magickProcess = spawn('magick', commandArgs, { env: { PATH: '/usr/local/bin:/usr/bin:/bin' } });
 
 		let callbackCalled = false;
 		const callOnce = (err: Error | null, stdout?: Readable, stderr?: Readable): void => {
