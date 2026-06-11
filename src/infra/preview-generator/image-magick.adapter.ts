@@ -8,31 +8,9 @@ import { Readable } from 'node:stream';
  * system binaries can be executed.
  */
 const SAFE_PATH = '/usr/local/bin:/usr/bin:/bin';
+const spawnOptions = { env: { PATH: SAFE_PATH } };
 
 export class ImageMagickAdapter {
-	/**
-	 * Optional absolute path to the magick binary.
-	 * If set, this path will be used directly instead of relying on PATH resolution.
-	 * Can be configured at application startup via ImageMagickAdapter.setBinaryPath().
-	 */
-	private static binaryPath = 'magick';
-
-	/**
-	 * Sets the absolute path to the ImageMagick binary.
-	 * Use this at application startup to hardcode the binary location.
-	 * @param path - Absolute path to the magick binary (e.g., '/usr/bin/magick')
-	 */
-	public static setBinaryPath(path: string): void {
-		ImageMagickAdapter.binaryPath = path;
-	}
-
-	/**
-	 * Returns the currently configured binary path.
-	 */
-	public static getBinaryPath(): string {
-		return ImageMagickAdapter.binaryPath;
-	}
-
 	private readonly args: string[] = [];
 	private readonly inputStream: Readable;
 	private frameSelector?: string;
@@ -80,9 +58,7 @@ export class ImageMagickAdapter {
 		const output = `${format}:-`;
 		const commandArgs = ['convert', input, ...this.args, output];
 
-		const magickProcess = spawn(ImageMagickAdapter.binaryPath, commandArgs, {
-			env: { PATH: SAFE_PATH },
-		});
+		const magickProcess = spawn('magick', commandArgs, spawnOptions);
 
 		let callbackCalled = false;
 		const callOnce = (err: Error | null, stdout?: Readable, stderr?: Readable): void => {
