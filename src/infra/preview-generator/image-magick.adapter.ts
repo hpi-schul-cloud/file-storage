@@ -50,7 +50,7 @@ export class ImageMagickAdapter {
 		const output = `${format}:-`;
 		const commandArgs = ['convert', input, ...this.args, output];
 
-		const magickProcess = spawn('magick', commandArgs);
+		const magickProcess = spawn('magick', commandArgs, { env: { PATH: '/usr/local/bin:/usr/bin:/bin' } });
 
 		let callbackCalled = false;
 		const callOnce = (err: Error | null, stdout?: Readable, stderr?: Readable): void => {

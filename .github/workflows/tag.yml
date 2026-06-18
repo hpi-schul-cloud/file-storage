@@ -45,6 +45,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          target: file-service
           platforms: linux/amd64
           push: true
           pull: true
@@ -61,15 +62,14 @@ jobs:
             type=semver,pattern={{major}}.{{minor}},prefix=file-preview-,onlatest=false
           labels: |
             org.opencontainers.image.title=schulcloud-file-storage
-      - name: Build and push ${{ github.repository }} (file-storage)
+      - name: Build and push ${{ github.repository }} (file-preview)
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         env:
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
-          build-args: |
-            BASE_IMAGE=quay.io/schulcloudverbund/file-storage:${{ github.ref_name }}
           context: .
-          file: ./Dockerfile.filepreview
+          file: ./Dockerfile
+          target: preview-service
           platforms: linux/amd64
           push: true
           pull: true
