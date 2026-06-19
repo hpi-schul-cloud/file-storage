@@ -1,7 +1,8 @@
 import { ConfigurationModule } from '@infra/configuration';
 import { DynamicModule, Module } from '@nestjs/common';
 import axios from 'axios';
-import { Agent } from 'node:https';
+import { Agent as HttpAgent } from 'node:http';
+import { Agent as HttpsAgent } from 'node:https';
 import { AuthorizationApi, Configuration, ConfigurationParameters } from './authorization-api-client';
 import { AuthorizationClientAdapter } from './authorization-client.adapter';
 import { AUTHORIZATION_CONFIG_TOKEN, AuthorizationConfig } from './authorization.config';
@@ -20,8 +21,11 @@ export class AuthorizationClientModule {
 				useFactory: (config: AuthorizationConfig): AuthorizationApi => {
 					const configuration = new Configuration({ basePath: config.authorizationApiUrl });
 
-					const httpsAgent = new Agent({ keepAlive: true, maxSockets: config.maxSockets, keepAliveMsecs: 10_000 });
-					const axiosInstance = axios.create({ httpsAgent });
+					const agentOptions = { keepAlive: true, maxSockets: config.maxSockets, keepAliveMsecs: 10_000 };
+					const isHttps = config.authorizationApiUrl.startsWith('https://');
+					const axiosInstance = isHttps
+						? axios.create({ httpsAgent: new HttpsAgent(agentOptions) })
+						: axios.create({ httpAgent: new HttpAgent(agentOptions) });
 
 					return new AuthorizationApi(configuration, config.authorizationApiUrl, axiosInstance);
 				},
