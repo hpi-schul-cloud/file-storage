@@ -20,7 +20,7 @@ export class AuthorizationClientModule {
 				useFactory: (config: AuthorizationConfig): AuthorizationApi => {
 					const configuration = new Configuration({ basePath: config.authorizationApiUrl });
 
-					const httpAgent = new Agent({ keepAlive: true, maxSockets: 20, keepAliveMsecs: 4000 });
+					const httpAgent = new Agent({ keepAlive: true, maxSockets: config.maxSockets, keepAliveMsecs: 10_000 });
 					const axiosInstance = axios.create({ httpAgent });
 
 					return new AuthorizationApi(configuration, config.authorizationApiUrl, axiosInstance);
