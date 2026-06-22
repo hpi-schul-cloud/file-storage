@@ -1,6 +1,8 @@
 import { AmqpConnectionManager, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { ConfigurationModule } from '@infra/configuration';
+import { LoggerModule } from '@infra/logger';
 import { DynamicModule, Global, Module, OnModuleDestroy } from '@nestjs/common';
+import { AmqpConnectionGuard } from './amqp-connection.guard';
 import { RABBITMQ_CONFIG_TOKEN, RabbitMqConfig } from './rabbitmq.config';
 
 /**
@@ -32,7 +34,9 @@ export class RabbitMQWrapperModule {
 					inject: [RABBITMQ_CONFIG_TOKEN],
 					imports: [ConfigurationModule.register(RABBITMQ_CONFIG_TOKEN, RabbitMqConfig)],
 				}),
+				LoggerModule,
 			],
+			providers: [AmqpConnectionGuard],
 			exports: [RabbitMQModule],
 		};
 	}
@@ -53,7 +57,9 @@ export class RabbitMQWrapperModule {
 			inject: [RABBITMQ_CONFIG_TOKEN],
 			imports: [ConfigurationModule.register(RABBITMQ_CONFIG_TOKEN, RabbitMqConfig)],
 		}),
+		LoggerModule,
 	],
+	providers: [AmqpConnectionGuard],
 	exports: [RabbitMQModule],
 })
 export class RabbitMQWrapperTestModule implements OnModuleDestroy {

@@ -336,6 +336,25 @@ describe('File Controller (API) - preview', () => {
 
 							expect(response.status).toEqual(304);
 						});
+
+						it('should set Content-Disposition header with encoded filename on 304 response', async () => {
+							const { loggedInClient, uploadedFile } = await setup();
+							const query = {
+								...defaultQueryParameters,
+								forceUpdate: false,
+							};
+							const etag = 'testTag';
+
+							const response = await loggedInClient
+								.get(`/preview/${uploadedFile.id}/${uploadedFile.name}`)
+								.query(query)
+								.set('If-None-Match', etag);
+							const headers = response.headers as Record<string, string>;
+
+							expect(response.status).toEqual(304);
+							expect(headers['content-disposition']).toContain('attachment');
+							expect(headers['content-disposition']).toContain("filename*=UTF-8''");
+						});
 					});
 				});
 
@@ -467,6 +486,52 @@ describe('File Controller (API) - preview', () => {
 						expect(response2.body.message).toEqual(ErrorType.PREVIEW_NOT_POSSIBLE);
 						// Verify S3 client was never called for either request
 						expect(s3ClientAdapter.get).not.toHaveBeenCalled();
+					});
+				});
+
+				describe('WHEN filename contains non-ASCII characters', () => {
+					const setup = async () => {
+						const loggedInClient = setupApiClient();
+						const uploadResponse = await loggedInClient
+							.post(uploadPath)
+							.attach('file', Buffer.from('abcd'), 'Prüfung.png')
+							.set('connection', 'keep-alive')
+							.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20')
+							.query({});
+						const uploadedFile = uploadResponse.body as FileRecordResponse;
+						await setScanStatus(uploadedFile.id, ScanStatus.VERIFIED);
+
+						const previewFile = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
+						s3ClientAdapter.get.mockResolvedValueOnce(previewFile);
+
+						return { loggedInClient, uploadedFile };
+					};
+
+					it('should return status 200 without throwing ERR_INVALID_CHAR', async () => {
+						const { loggedInClient, uploadedFile } = await setup();
+
+						const response = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${encodeURIComponent(uploadedFile.name)}`)
+							.query(defaultQueryParameters);
+
+						expect(response.status).toEqual(200);
+					});
+
+					it('should set Content-Disposition header with percent-encoded filename on 304 response', async () => {
+						const { loggedInClient, uploadedFile } = await setup();
+						const etag = 'testTag';
+
+						const response = await loggedInClient
+							.get(`/preview/${uploadedFile.id}/${encodeURIComponent(uploadedFile.name)}`)
+							.query({ ...defaultQueryParameters, forceUpdate: false })
+							.set('If-None-Match', etag);
+						const headers = response.headers as Record<string, string>;
+
+						const previewName = uploadedFile.name.replace(/\.[^.]+$/, '.webp');
+						const encodedPreviewName = encodeURIComponent(previewName);
+
+						expect(response.status).toEqual(304);
+						expect(headers['content-disposition']).toContain(`filename*=UTF-8''${encodedPreviewName}`);
 					});
 				});
 			});
