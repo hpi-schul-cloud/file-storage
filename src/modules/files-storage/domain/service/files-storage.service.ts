@@ -195,26 +195,12 @@ export class FilesStorageService {
 		targetFileName: string,
 		officeDocumentType: OfficeDocumentType
 	): Promise<FileDto> {
-		const directoryName = this.getOfficeDocumentDirectoryName(officeDocumentType);
 		const sourceFileName = this.getOfficeDocumentSourceFileName(officeDocumentType);
-		const sourceFilePath = await this.resolveOfficeDocumentPath(directoryName, sourceFileName);
+		const sourceFilePath = this.resolveOfficeDocumentPath(sourceFileName);
 		const sourceBuffer = await fs.readFile(sourceFilePath);
 		const sourceStream = Readable.from(sourceBuffer);
 
 		return FileDtoFactory.create(targetFileName, sourceStream, officeDocumentType, StorageType.STANDARD);
-	}
-
-	private getOfficeDocumentDirectoryName(officeDocumentType: OfficeDocumentType): string {
-		switch (officeDocumentType) {
-			case OfficeDocumentType.DOCX:
-				return 'docx';
-			case OfficeDocumentType.XLSX:
-				return 'xlsx';
-			case OfficeDocumentType.PPTX:
-				return 'pptx';
-			default:
-				throw new Error(`Unsupported office document type: ${officeDocumentType}`);
-		}
 	}
 
 	private getOfficeDocumentSourceFileName(officeDocumentType: OfficeDocumentType): string {
@@ -230,26 +216,8 @@ export class FilesStorageService {
 		}
 	}
 
-	private async resolveOfficeDocumentPath(directoryName: string, sourceFileName: string): Promise<string> {
-		const candidates = [
-			path.resolve(__dirname, '../../assets/office-documents', directoryName, sourceFileName),
-			path.resolve(process.cwd(), 'dist/modules/files-storage/assets/office-documents', directoryName, sourceFileName),
-			path.resolve(process.cwd(), 'src/modules/files-storage/assets/office-documents', directoryName, sourceFileName),
-		];
-
-		for (const candidate of candidates) {
-			try {
-				await fs.access(candidate);
-
-				return candidate;
-			} catch {
-				continue;
-			}
-		}
-
-		throw new NotFoundException(ErrorType.FILE_NOT_FOUND, {
-			cause: new Error(`Office document source file not found. Tried: ${candidates.join(', ')}`),
-		});
+	private resolveOfficeDocumentPath(sourceFileName: string): string {
+		return path.resolve(__dirname, '../../assets/office-documents', sourceFileName);
 	}
 
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {

@@ -10,6 +10,7 @@ import {
 	InternalServerErrorException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { promises as fs } from 'node:fs';
 import { PassThrough, Readable } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
@@ -17,7 +18,7 @@ import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { FILE_RECORD_REPO, FileRecordRepo, OfficeDocumentType } from '../interface';
 import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
@@ -827,6 +828,80 @@ describe('FilesStorageService upload methods', () => {
 				const resultPromise = service.updateFileContents(fileRecord, file);
 
 				await expect(resultPromise).rejects.toThrow(InternalServerErrorException);
+			});
+		});
+	});
+
+	describe('uploadOfficeDocumentToParent is called', () => {
+		describe('WHEN uploadFile is successful', () => {
+			const setup = () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const targetFileName = 'test-document';
+				const fileRecord = fileRecordTestFactory().build();
+
+				jest.spyOn(fs, 'readFile').mockResolvedValueOnce(Buffer.from('mock-content'));
+				const uploadFileSpy = jest.spyOn(service, 'uploadFile').mockResolvedValueOnce(fileRecord);
+
+				return { parentInfo, userId, targetFileName, fileRecord, uploadFileSpy };
+			};
+
+			it.each([
+				[OfficeDocumentType.DOCX, 'DOCX'],
+				[OfficeDocumentType.XLSX, 'XLSX'],
+				[OfficeDocumentType.PPTX, 'PPTX'],
+			])('should call uploadFile with correct mime type for %s', async (officeDocumentType) => {
+				const { parentInfo, userId, targetFileName, uploadFileSpy } = setup();
+
+				await service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, officeDocumentType);
+
+				expect(uploadFileSpy).toHaveBeenCalledWith(
+					userId,
+					parentInfo,
+					expect.objectContaining({ mimeType: officeDocumentType, name: targetFileName })
+				);
+			});
+
+			it('should return the FileRecord returned by uploadFile', async () => {
+				const { parentInfo, userId, targetFileName, fileRecord } = setup();
+
+				const result = await service.uploadOfficeDocumentToParent(
+					userId,
+					parentInfo,
+					targetFileName,
+					OfficeDocumentType.DOCX
+				);
+
+				expect(result).toBe(fileRecord);
+			});
+		});
+
+		describe('WHEN fs.readFile throws an error', () => {
+			it('should propagate the error', async () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const error = new Error('File not found');
+
+				jest.spyOn(fs, 'readFile').mockRejectedValueOnce(error);
+
+				await expect(
+					service.uploadOfficeDocumentToParent(userId, parentInfo, 'test.docx', OfficeDocumentType.DOCX)
+				).rejects.toThrow(error);
+			});
+		});
+
+		describe('WHEN uploadFile throws an error', () => {
+			it('should propagate the error', async () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const error = new Error('Upload failed');
+
+				jest.spyOn(fs, 'readFile').mockResolvedValueOnce(Buffer.from('mock-content'));
+				jest.spyOn(service, 'uploadFile').mockRejectedValueOnce(error);
+
+				await expect(
+					service.uploadOfficeDocumentToParent(userId, parentInfo, 'test.docx', OfficeDocumentType.DOCX)
+				).rejects.toThrow(error);
 			});
 		});
 	});
