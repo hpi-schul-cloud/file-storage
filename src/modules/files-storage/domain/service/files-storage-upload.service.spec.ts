@@ -876,6 +876,26 @@ describe('FilesStorageService upload methods', () => {
 			});
 		});
 
+		describe('WHEN officeDocumentType is invalid', () => {
+			const setup = () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const targetFileName = 'test-document';
+				const invalidOfficeDocumentType = 'INVALID_TYPE' as OfficeDocumentType;
+				const error = new Error(`Unsupported office document type: ${invalidOfficeDocumentType}`);
+
+				return { parentInfo, userId, targetFileName, invalidOfficeDocumentType, error };
+			};
+
+			it('should throw BadRequestException', async () => {
+				const { parentInfo, userId, targetFileName, invalidOfficeDocumentType, error } = setup();
+
+				await expect(
+					service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, invalidOfficeDocumentType)
+				).rejects.toThrow(error);
+			});
+		});
+
 		describe('WHEN fs.readFile throws an error', () => {
 			it('should propagate the error', async () => {
 				const parentInfo = ParentInfoTestFactory.build();
