@@ -846,21 +846,20 @@ describe('FilesStorageService upload methods', () => {
 				return { parentInfo, userId, targetFileName, fileRecord, uploadFileSpy };
 			};
 
-			it.each([
-				[OfficeDocumentType.DOCX, 'DOCX'],
-				[OfficeDocumentType.XLSX, 'XLSX'],
-				[OfficeDocumentType.PPTX, 'PPTX'],
-			])('should call uploadFile with correct mime type for %s', async (officeDocumentType) => {
-				const { parentInfo, userId, targetFileName, uploadFileSpy } = setup();
+			it.each([OfficeDocumentType.DOCX, OfficeDocumentType.XLSX, OfficeDocumentType.PPTX])(
+				'should call uploadFile with correct mime type for %s',
+				async (officeDocumentType) => {
+					const { parentInfo, userId, targetFileName, uploadFileSpy } = setup();
 
-				await service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, officeDocumentType);
+					await service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, officeDocumentType);
 
-				expect(uploadFileSpy).toHaveBeenCalledWith(
-					userId,
-					parentInfo,
-					expect.objectContaining({ mimeType: officeDocumentType, name: targetFileName })
-				);
-			});
+					expect(uploadFileSpy).toHaveBeenCalledWith(
+						userId,
+						parentInfo,
+						expect.objectContaining({ mimeType: officeDocumentType, name: targetFileName })
+					);
+				}
+			);
 
 			it('should return the FileRecord returned by uploadFile', async () => {
 				const { parentInfo, userId, targetFileName, fileRecord } = setup();
