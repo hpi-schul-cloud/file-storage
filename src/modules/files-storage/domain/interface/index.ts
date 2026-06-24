@@ -1,4 +1,4 @@
-export * from './available-documenta.enum';
+export * from './document-type.enum';
 export * from './file-record-status.interface';
 export * from './file-record.repo.interface';
 export * from './file-storage-parent-type.enum';
