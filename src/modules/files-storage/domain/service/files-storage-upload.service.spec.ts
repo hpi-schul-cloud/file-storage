@@ -886,7 +886,7 @@ describe('FilesStorageService upload methods', () => {
 				return { parentInfo, userId, targetFileName, invalidOfficeDocumentType, error };
 			};
 
-			it('should throw BadRequestException', async () => {
+			it('should throw an error', async () => {
 				const { parentInfo, userId, targetFileName, invalidOfficeDocumentType, error } = setup();
 
 				await expect(
