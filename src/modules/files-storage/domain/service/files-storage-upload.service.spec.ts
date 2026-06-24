@@ -22,7 +22,7 @@ import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FILE_RECORD_REPO, FileRecordRepo, OfficeDocumentType } from '../interface';
+import { DocumentType, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import * as documentReaderUtils from '../utils/document-reader.utils';
@@ -838,60 +838,60 @@ describe('FilesStorageService upload methods', () => {
 		});
 	});
 
-	describe('uploadOfficeDocumentToParent is called', () => {
+	describe('uploadDocumentToParent is called', () => {
 		describe('WHEN uploadFile is successful', () => {
-			const setup = (officeDocumentType: OfficeDocumentType) => {
+			const setup = (documentType: DocumentType) => {
 				const parentInfo = ParentInfoTestFactory.build();
 				const userId = parentInfo.parentId;
 				const targetFileName = 'test-document';
 				const fileRecord = fileRecordTestFactory().build();
-				const fileDto = fileDtoTestFactory().build({ mimeType: officeDocumentType, name: targetFileName });
+				const fileDto = fileDtoTestFactory().build({ mimeType: documentType, name: targetFileName });
 
-				jest.spyOn(documentReaderUtils, 'readOfficeDocumentSource').mockResolvedValueOnce(fileDto);
+				jest.spyOn(documentReaderUtils, 'readDocumentSource').mockResolvedValueOnce(fileDto);
 				const uploadFileSpy = jest.spyOn(service, 'uploadFile').mockResolvedValueOnce(fileRecord);
 
 				return { parentInfo, userId, targetFileName, fileRecord, uploadFileSpy };
 			};
 
-			it.each([OfficeDocumentType.DOCX, OfficeDocumentType.XLSX, OfficeDocumentType.PPTX])(
+			it.each([DocumentType.DOCX, DocumentType.XLSX, DocumentType.PPTX])(
 				'should call uploadFile with correct mime type for %s',
-				async (officeDocumentType) => {
-					const { parentInfo, userId, targetFileName, uploadFileSpy } = setup(officeDocumentType);
+				async (documentType) => {
+					const { parentInfo, userId, targetFileName, uploadFileSpy } = setup(documentType);
 
-					await service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, officeDocumentType);
+					await service.uploadDocumentToParent(userId, parentInfo, targetFileName, documentType);
 
 					expect(uploadFileSpy).toHaveBeenCalledWith(
 						userId,
 						parentInfo,
-						expect.objectContaining({ mimeType: officeDocumentType, name: targetFileName })
+						expect.objectContaining({ mimeType: documentType, name: targetFileName })
 					);
 				}
 			);
 
 			it('should return the FileRecord returned by uploadFile', async () => {
-				const { parentInfo, userId, targetFileName, fileRecord } = setup(OfficeDocumentType.DOCX);
+				const { parentInfo, userId, targetFileName, fileRecord } = setup(DocumentType.DOCX);
 
-				const result = await service.uploadOfficeDocumentToParent(
+				const result = await service.uploadDocumentToParent(
 					userId,
 					parentInfo,
 					targetFileName,
-					OfficeDocumentType.DOCX
+					DocumentType.DOCX
 				);
 
 				expect(result).toBe(fileRecord);
 			});
 		});
 
-		describe('WHEN readOfficeDocumentSource throws an error', () => {
+		describe('WHEN readDocumentSource throws an error', () => {
 			it('should propagate the error', async () => {
 				const parentInfo = ParentInfoTestFactory.build();
 				const userId = parentInfo.parentId;
-				const error = new Error('Failed to read office document source');
+				const error = new Error('Failed to read document source');
 
-				jest.spyOn(documentReaderUtils, 'readOfficeDocumentSource').mockRejectedValueOnce(error);
+				jest.spyOn(documentReaderUtils, 'readDocumentSource').mockRejectedValueOnce(error);
 
 				await expect(
-					service.uploadOfficeDocumentToParent(userId, parentInfo, 'test.docx', OfficeDocumentType.DOCX)
+					service.uploadDocumentToParent(userId, parentInfo, 'test.docx', DocumentType.DOCX)
 				).rejects.toThrow(error);
 			});
 		});
@@ -903,11 +903,11 @@ describe('FilesStorageService upload methods', () => {
 				const error = new Error('Upload failed');
 				const fileDto = fileDtoTestFactory().build();
 
-				jest.spyOn(documentReaderUtils, 'readOfficeDocumentSource').mockResolvedValueOnce(fileDto);
+				jest.spyOn(documentReaderUtils, 'readDocumentSource').mockResolvedValueOnce(fileDto);
 				jest.spyOn(service, 'uploadFile').mockRejectedValueOnce(error);
 
 				await expect(
-					service.uploadOfficeDocumentToParent(userId, parentInfo, 'test.docx', OfficeDocumentType.DOCX)
+					service.uploadDocumentToParent(userId, parentInfo, 'test.docx', DocumentType.DOCX)
 				).rejects.toThrow(error);
 			});
 		});

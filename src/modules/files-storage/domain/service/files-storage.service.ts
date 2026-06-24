@@ -27,10 +27,10 @@ import {
 import { FileRecord } from '../file-record.do';
 import {
 	CopyFileResult,
+	DocumentType,
 	FILE_RECORD_REPO,
 	FileRecordRepo,
 	GetFileResponse,
-	OfficeDocumentType,
 	ParentInfo,
 	StorageLocationParams,
 } from '../interface';
@@ -42,7 +42,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { StorageType } from '../storage-paths.const';
-import { detectMimeTypeByStream, duplicateStream, readOfficeDocumentSource } from '../utils';
+import { detectMimeTypeByStream, duplicateStream, readDocumentSource } from '../utils';
 import { ParentStatistic } from '../vo';
 
 @Injectable()
@@ -177,13 +177,13 @@ export class FilesStorageService {
 		return fileRecord;
 	}
 
-	public async uploadOfficeDocumentToParent(
+	public async uploadDocumentToParent(
 		userId: EntityId,
 		parentInfo: ParentInfo,
 		targetFileName: string,
-		officeDocumentType: OfficeDocumentType
+		documentType: DocumentType
 	): Promise<FileRecord> {
-		const sourceFile = await readOfficeDocumentSource(targetFileName, officeDocumentType);
+		const sourceFile = await readDocumentSource(targetFileName, documentType);
 
 		return this.uploadFile(userId, parentInfo, sourceFile);
 	}

@@ -31,7 +31,7 @@ import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
 import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '../../files-storage.config';
 import {
-	AddOfficeDocumentToParentParams,
+	AddDocumentToParentParams,
 	ArchiveFileParams,
 	CopyFileListResponse,
 	CopyFileParams,
@@ -76,19 +76,19 @@ export class FilesStorageController {
 		return response;
 	}
 
-	@ApiOperation({ summary: 'Upload office document from filesystem' })
+	@ApiOperation({ summary: 'Add document to parent' })
 	@ApiResponse({ status: 201, type: FileRecordResponse })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
-	@Post('/add-office-document/:storageLocation/:storageLocationId/:parentType/:parentId')
-	public async addOfficeDocumentToParent(
-		@Body() body: AddOfficeDocumentToParentParams,
+	@Post('/add-document-to-parent/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async addDocumentToParent(
+		@Body() body: AddDocumentToParentParams,
 		@Param() params: FileRecordParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.addOfficeDocumentToParent(currentUser.userId, { ...body, ...params });
+		const response = await this.filesStorageUC.addDocumentToParent(currentUser.userId, { ...body, ...params });
 
 		return response;
 	}

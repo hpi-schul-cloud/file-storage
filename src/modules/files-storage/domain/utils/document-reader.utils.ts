@@ -3,34 +3,31 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { FileDto } from '../dto';
 import { FileDtoFactory } from '../factory';
-import { OfficeDocumentType } from '../interface';
+import { DocumentType } from '../interface';
 import { StorageType } from '../storage-paths.const';
 
-export const readOfficeDocumentSource = async (
-	targetFileName: string,
-	officeDocumentType: OfficeDocumentType
-): Promise<FileDto> => {
-	const sourceFileName = getOfficeDocumentSourceFileName(officeDocumentType);
-	const sourceFilePath = resolveOfficeDocumentPath(sourceFileName);
+export const readDocumentSource = async (targetFileName: string, documentType: DocumentType): Promise<FileDto> => {
+	const sourceFileName = getDocumentSourceFileName(documentType);
+	const sourceFilePath = resolveDocumentPath(sourceFileName);
 	const sourceBuffer = await fs.readFile(sourceFilePath);
 	const sourceStream = Readable.from(sourceBuffer);
 
-	return FileDtoFactory.create(targetFileName, sourceStream, officeDocumentType, StorageType.STANDARD);
+	return FileDtoFactory.create(targetFileName, sourceStream, documentType, StorageType.STANDARD);
 };
 
-const getOfficeDocumentSourceFileName = (officeDocumentType: OfficeDocumentType): string => {
-	switch (officeDocumentType) {
-		case OfficeDocumentType.DOCX:
+const getDocumentSourceFileName = (documentType: DocumentType): string => {
+	switch (documentType) {
+		case DocumentType.DOCX:
 			return 'doc.docx';
-		case OfficeDocumentType.XLSX:
+		case DocumentType.XLSX:
 			return 'spreadsheet.xlsx';
-		case OfficeDocumentType.PPTX:
+		case DocumentType.PPTX:
 			return 'presentation.pptx';
 		default:
-			throw new Error(`Unsupported office document type: ${officeDocumentType}`);
+			throw new Error(`Unsupported document type: ${documentType}`);
 	}
 };
 
-const resolveOfficeDocumentPath = (sourceFileName: string): string => {
-	return path.resolve(__dirname, '../../assets/office-documents', sourceFileName);
+const resolveDocumentPath = (sourceFileName: string): string => {
+	return path.resolve(__dirname, '../../assets/documents', sourceFileName);
 };

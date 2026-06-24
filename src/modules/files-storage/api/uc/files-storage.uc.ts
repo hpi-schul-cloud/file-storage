@@ -35,7 +35,7 @@ import {
 } from '../../domain';
 import { UploadAbortLoggable } from '../../loggable';
 import {
-	AddOfficeDocumentToParentParams,
+	AddDocumentToParentParams,
 	ArchiveFileParams,
 	CopyFileResponse,
 	DownloadFileParams,
@@ -107,20 +107,20 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	public async addOfficeDocumentToParent(
+	public async addDocumentToParent(
 		userId: EntityId,
-		params: FileRecordParams & AddOfficeDocumentToParentParams
+		params: FileRecordParams & AddDocumentToParentParams
 	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 
-		const fileRecord = await this.filesStorageService.uploadOfficeDocumentToParent(
+		const fileRecord = await this.filesStorageService.uploadDocumentToParent(
 			userId,
 			params,
 			params.fileName,
-			params.officeDocumentType
+			params.documentType
 		);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);

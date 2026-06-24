@@ -10,7 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
-import { OfficeDocumentType } from '../../../domain';
+import { DocumentType } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import {
 	FILE_STORAGE_CONFIG_TOKEN,
@@ -24,7 +24,7 @@ jest.mock('../../../domain/utils/detect-mime-type.utils');
 
 const baseRouteName = '/file';
 
-describe(`${baseRouteName}/add-office-document (api)`, () => {
+describe(`${baseRouteName}/add-document-to-parent (api)`, () => {
 	let module: TestingModule;
 	let app: INestApplication;
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
@@ -62,15 +62,15 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 		jest.resetAllMocks();
 	});
 
-	describe('add office document action', () => {
+	describe('add document to parent', () => {
 		describe('with not authenticated user', () => {
 			it('should return status 401', async () => {
 				const validId = new ObjectId().toHexString();
 				const unauthenticatedClient = TestApiClient.createUnauthenticated(app, baseRouteName);
-				const body = { fileName: 'document.docx', officeDocumentType: OfficeDocumentType.DOCX };
+				const body = { fileName: 'document.docx', documentType: DocumentType.DOCX };
 
 				const response = await unauthenticatedClient.post(
-					`/add-office-document/school/${validId}/schools/${validId}`,
+					`/add-document-to-parent/school/${validId}/schools/${validId}`,
 					body
 				);
 
@@ -82,7 +82,7 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			const setup = () => {
 				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 				const validId = new ObjectId().toHexString();
-				const body = { fileName: 'document.docx', officeDocumentType: OfficeDocumentType.DOCX };
+				const body = { fileName: 'document.docx', documentType: DocumentType.DOCX };
 
 				return { loggedInClient, validId, body };
 			};
@@ -90,7 +90,10 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			it('should return status 400 for invalid storageLocationId', async () => {
 				const { loggedInClient, validId, body } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/invalid-id/schools/${validId}`, body);
+				const response = await loggedInClient.post(
+					`/add-document-to-parent/school/invalid-id/schools/${validId}`,
+					body
+				);
 				const { validationErrors } = response.body as ApiValidationError;
 
 				expect(validationErrors).toEqual([
@@ -105,7 +108,10 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			it('should return status 400 for invalid parentId', async () => {
 				const { loggedInClient, validId, body } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/invalid-id`, body);
+				const response = await loggedInClient.post(
+					`/add-document-to-parent/school/${validId}/schools/invalid-id`,
+					body
+				);
 				const { validationErrors } = response.body as ApiValidationError;
 
 				expect(validationErrors).toEqual([
@@ -120,7 +126,10 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			it('should return status 400 for invalid parentType', async () => {
 				const { loggedInClient, validId, body } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/cookies/${validId}`, body);
+				const response = await loggedInClient.post(
+					`/add-document-to-parent/school/${validId}/cookies/${validId}`,
+					body
+				);
 				const { validationErrors } = response.body as ApiValidationError;
 
 				expect(validationErrors).toEqual([
@@ -132,10 +141,10 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 				expect(response.status).toEqual(400);
 			});
 
-			it('should return status 400 for missing fileName and officeDocumentType', async () => {
+			it('should return status 400 for missing fileName and documentType', async () => {
 				const { loggedInClient, validId } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, {});
+				const response = await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, {});
 				const { validationErrors } = response.body as ApiValidationError;
 
 				expect(validationErrors).toEqual(
@@ -145,20 +154,20 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 							field: ['fileName'],
 						},
 						{
-							errors: expect.arrayContaining([expect.stringContaining('officeDocumentType must be one of')]),
-							field: ['officeDocumentType'],
+							errors: expect.arrayContaining([expect.stringContaining('documentType must be one of')]),
+							field: ['documentType'],
 						},
 					])
 				);
 				expect(response.status).toEqual(400);
 			});
 
-			it('should return status 400 for invalid officeDocumentType', async () => {
+			it('should return status 400 for invalid documentType', async () => {
 				const { loggedInClient, validId } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, {
+				const response = await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, {
 					fileName: 'document.docx',
-					officeDocumentType: 'invalid/type',
+					documentType: 'invalid/type',
 				});
 
 				expect(response.status).toEqual(400);
@@ -167,9 +176,9 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			it('should return status 400 for empty fileName because of sanitization', async () => {
 				const { loggedInClient, validId } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, {
+				const response = await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, {
 					fileName: '<script>',
-					officeDocumentType: OfficeDocumentType.DOCX,
+					documentType: DocumentType.DOCX,
 				});
 				const { validationErrors } = response.body as ApiValidationError;
 
@@ -184,32 +193,38 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 		});
 
 		describe('with valid request data', () => {
-			const setup = (officeDocumentType = OfficeDocumentType.DOCX, fileName = 'document.docx') => {
+			const setup = (documentType = DocumentType.DOCX, fileName = 'document.docx') => {
 				const currentUser = currentUserFactory.build();
 				const { userId } = currentUser;
 				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue(officeDocumentType);
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue(documentType);
 				jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 
-				const body = { fileName, officeDocumentType };
+				const body = { fileName, documentType };
 
-				return { loggedInClient, validId, userId, body, officeDocumentType };
+				return { loggedInClient, validId, userId, body, documentType };
 			};
 
 			it('should return status 201 for successful creation', async () => {
 				const { loggedInClient, validId, body } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, body);
+				const response = await loggedInClient.post(
+					`/add-document-to-parent/school/${validId}/schools/${validId}`,
+					body
+				);
 
 				expect(response.status).toEqual(201);
 			});
 
 			it('should return the new created file record', async () => {
-				const { loggedInClient, validId, userId, body, officeDocumentType } = setup();
+				const { loggedInClient, validId, userId, body, documentType } = setup();
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, body);
+				const response = await loggedInClient.post(
+					`/add-document-to-parent/school/${validId}/schools/${validId}`,
+					body
+				);
 				const result = response.body as FileRecordEntity;
 
 				expect(result).toStrictEqual(
@@ -218,7 +233,7 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 						name: 'document.docx',
 						parentId: validId,
 						creatorId: userId,
-						mimeType: officeDocumentType,
+						mimeType: documentType,
 						parentType: 'schools',
 						securityCheckStatus: 'pending',
 						size: expect.any(Number),
@@ -227,13 +242,16 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			});
 
 			it.each([
-				[OfficeDocumentType.DOCX, 'document.docx'],
-				[OfficeDocumentType.XLSX, 'spreadsheet.xlsx'],
-				[OfficeDocumentType.PPTX, 'presentation.pptx'],
-			])('should return status 201 for %s', async (officeDocumentType, fileName) => {
-				const { loggedInClient, validId, body } = setup(officeDocumentType, fileName);
+				[DocumentType.DOCX, 'document.docx'],
+				[DocumentType.XLSX, 'spreadsheet.xlsx'],
+				[DocumentType.PPTX, 'presentation.pptx'],
+			])('should return status 201 for %s', async (documentType, fileName) => {
+				const { loggedInClient, validId, body } = setup(documentType, fileName);
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, body);
+				const response = await loggedInClient.post(
+					`/add-document-to-parent/school/${validId}/schools/${validId}`,
+					body
+				);
 
 				expect(response.status).toEqual(201);
 			});
@@ -241,10 +259,10 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 			it('should set iterator number to file name if file already exists', async () => {
 				const { loggedInClient, validId, body } = setup();
 
-				await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, body);
-				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue(OfficeDocumentType.DOCX);
+				await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, body);
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue(DocumentType.DOCX);
 
-				const result = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, body);
+				const result = await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, body);
 
 				expect((result.body as FileRecordEntity).name).toEqual('document (1).docx');
 			});
@@ -255,13 +273,13 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 				const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue(OfficeDocumentType.DOCX);
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue(DocumentType.DOCX);
 				jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
 				s3ClientAdapter.create.mockRejectedValueOnce(new Error('S3 error'));
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, {
+				const response = await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, {
 					fileName: 'document.docx',
-					officeDocumentType: OfficeDocumentType.DOCX,
+					documentType: DocumentType.DOCX,
 				});
 
 				expect(response.status).toEqual(500);
@@ -282,9 +300,9 @@ describe(`${baseRouteName}/add-office-document (api)`, () => {
 				defaultMaxFilesPerParent = config.filesStorageMaxFilesPerParent;
 				config.filesStorageMaxFilesPerParent = 0;
 
-				const response = await loggedInClient.post(`/add-office-document/school/${validId}/schools/${validId}`, {
+				const response = await loggedInClient.post(`/add-document-to-parent/school/${validId}/schools/${validId}`, {
 					fileName: 'document.docx',
-					officeDocumentType: OfficeDocumentType.DOCX,
+					documentType: DocumentType.DOCX,
 				});
 
 				expect(response.status).toEqual(403);
