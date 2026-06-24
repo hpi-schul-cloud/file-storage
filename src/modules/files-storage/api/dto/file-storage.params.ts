@@ -73,7 +73,7 @@ export class AddDocumentToParentParams {
 	@SanitizeHtml()
 	fileName!: string;
 
-	@ApiProperty({ enum: DocumentType, enumName: 'AvailableDocuments' })
+	@ApiProperty({ enum: DocumentType, enumName: 'DocumentType' })
 	@IsEnum(DocumentType)
 	documentType!: DocumentType;
 }
