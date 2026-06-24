@@ -10,10 +10,14 @@ import {
 	InternalServerErrorException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { promises as fs } from 'node:fs';
 import { PassThrough, Readable } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
+import {
+	fileDtoTestFactory,
+	fileRecordTestFactory,
+	ParentInfoTestFactory,
+	passThroughFileDtoTestFactory,
+} from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
@@ -21,10 +25,12 @@ import { FileRecord } from '../file-record.do';
 import { FILE_RECORD_REPO, FileRecordRepo, OfficeDocumentType } from '../interface';
 import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
+import * as documentReaderUtils from '../utils/document-reader.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 jest.mock('../utils/detect-mime-type.utils');
+jest.mock('../utils/document-reader.utils');
 
 describe('FilesStorageService upload methods', () => {
 	let module: TestingModule;
@@ -834,13 +840,14 @@ describe('FilesStorageService upload methods', () => {
 
 	describe('uploadOfficeDocumentToParent is called', () => {
 		describe('WHEN uploadFile is successful', () => {
-			const setup = () => {
+			const setup = (officeDocumentType: OfficeDocumentType) => {
 				const parentInfo = ParentInfoTestFactory.build();
 				const userId = parentInfo.parentId;
 				const targetFileName = 'test-document';
 				const fileRecord = fileRecordTestFactory().build();
+				const fileDto = fileDtoTestFactory().build({ mimeType: officeDocumentType, name: targetFileName });
 
-				jest.spyOn(fs, 'readFile').mockResolvedValueOnce(Buffer.from('mock-content'));
+				jest.spyOn(documentReaderUtils, 'readOfficeDocumentSource').mockResolvedValueOnce(fileDto);
 				const uploadFileSpy = jest.spyOn(service, 'uploadFile').mockResolvedValueOnce(fileRecord);
 
 				return { parentInfo, userId, targetFileName, fileRecord, uploadFileSpy };
@@ -849,7 +856,7 @@ describe('FilesStorageService upload methods', () => {
 			it.each([OfficeDocumentType.DOCX, OfficeDocumentType.XLSX, OfficeDocumentType.PPTX])(
 				'should call uploadFile with correct mime type for %s',
 				async (officeDocumentType) => {
-					const { parentInfo, userId, targetFileName, uploadFileSpy } = setup();
+					const { parentInfo, userId, targetFileName, uploadFileSpy } = setup(officeDocumentType);
 
 					await service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, officeDocumentType);
 
@@ -862,7 +869,7 @@ describe('FilesStorageService upload methods', () => {
 			);
 
 			it('should return the FileRecord returned by uploadFile', async () => {
-				const { parentInfo, userId, targetFileName, fileRecord } = setup();
+				const { parentInfo, userId, targetFileName, fileRecord } = setup(OfficeDocumentType.DOCX);
 
 				const result = await service.uploadOfficeDocumentToParent(
 					userId,
@@ -875,33 +882,13 @@ describe('FilesStorageService upload methods', () => {
 			});
 		});
 
-		describe('WHEN officeDocumentType is invalid', () => {
-			const setup = () => {
-				const parentInfo = ParentInfoTestFactory.build();
-				const userId = parentInfo.parentId;
-				const targetFileName = 'test-document';
-				const invalidOfficeDocumentType = 'INVALID_TYPE' as OfficeDocumentType;
-				const error = new Error(`Unsupported office document type: ${invalidOfficeDocumentType}`);
-
-				return { parentInfo, userId, targetFileName, invalidOfficeDocumentType, error };
-			};
-
-			it('should throw an error', async () => {
-				const { parentInfo, userId, targetFileName, invalidOfficeDocumentType, error } = setup();
-
-				await expect(
-					service.uploadOfficeDocumentToParent(userId, parentInfo, targetFileName, invalidOfficeDocumentType)
-				).rejects.toThrow(error);
-			});
-		});
-
-		describe('WHEN fs.readFile throws an error', () => {
+		describe('WHEN readOfficeDocumentSource throws an error', () => {
 			it('should propagate the error', async () => {
 				const parentInfo = ParentInfoTestFactory.build();
 				const userId = parentInfo.parentId;
-				const error = new Error('File not found');
+				const error = new Error('Failed to read office document source');
 
-				jest.spyOn(fs, 'readFile').mockRejectedValueOnce(error);
+				jest.spyOn(documentReaderUtils, 'readOfficeDocumentSource').mockRejectedValueOnce(error);
 
 				await expect(
 					service.uploadOfficeDocumentToParent(userId, parentInfo, 'test.docx', OfficeDocumentType.DOCX)
@@ -914,8 +901,9 @@ describe('FilesStorageService upload methods', () => {
 				const parentInfo = ParentInfoTestFactory.build();
 				const userId = parentInfo.parentId;
 				const error = new Error('Upload failed');
+				const fileDto = fileDtoTestFactory().build();
 
-				jest.spyOn(fs, 'readFile').mockResolvedValueOnce(Buffer.from('mock-content'));
+				jest.spyOn(documentReaderUtils, 'readOfficeDocumentSource').mockResolvedValueOnce(fileDto);
 				jest.spyOn(service, 'uploadFile').mockRejectedValueOnce(error);
 
 				await expect(

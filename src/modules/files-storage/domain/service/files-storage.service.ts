@@ -13,15 +13,12 @@ import {
 import { FindOptions } from '@shared/domain/interface';
 import { Counted, EntityId } from '@shared/domain/types';
 import type { Archiver } from 'archiver';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
-import { PassThrough, Readable } from 'node:stream';
+import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import {
 	ArchiveFactory,
-	FileDtoFactory,
 	FilePathFactory,
 	FileRecordFactory,
 	PassThroughFileDtoFactory,
@@ -45,7 +42,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { StorageType } from '../storage-paths.const';
-import { detectMimeTypeByStream, duplicateStream } from '../utils';
+import { detectMimeTypeByStream, duplicateStream, readOfficeDocumentSource } from '../utils';
 import { ParentStatistic } from '../vo';
 
 @Injectable()
@@ -186,38 +183,9 @@ export class FilesStorageService {
 		targetFileName: string,
 		officeDocumentType: OfficeDocumentType
 	): Promise<FileRecord> {
-		const sourceFile = await this.readOfficeDocumentSource(targetFileName, officeDocumentType);
+		const sourceFile = await readOfficeDocumentSource(targetFileName, officeDocumentType);
 
 		return this.uploadFile(userId, parentInfo, sourceFile);
-	}
-
-	private async readOfficeDocumentSource(
-		targetFileName: string,
-		officeDocumentType: OfficeDocumentType
-	): Promise<FileDto> {
-		const sourceFileName = this.getOfficeDocumentSourceFileName(officeDocumentType);
-		const sourceFilePath = this.resolveOfficeDocumentPath(sourceFileName);
-		const sourceBuffer = await fs.readFile(sourceFilePath);
-		const sourceStream = Readable.from(sourceBuffer);
-
-		return FileDtoFactory.create(targetFileName, sourceStream, officeDocumentType, StorageType.STANDARD);
-	}
-
-	private getOfficeDocumentSourceFileName(officeDocumentType: OfficeDocumentType): string {
-		switch (officeDocumentType) {
-			case OfficeDocumentType.DOCX:
-				return 'doc.docx';
-			case OfficeDocumentType.XLSX:
-				return 'spreadsheet.xlsx';
-			case OfficeDocumentType.PPTX:
-				return 'presentation.pptx';
-			default:
-				throw new Error(`Unsupported office document type: ${officeDocumentType}`);
-		}
-	}
-
-	private resolveOfficeDocumentPath(sourceFileName: string): string {
-		return path.resolve(__dirname, '../../assets/office-documents', sourceFileName);
 	}
 
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {
