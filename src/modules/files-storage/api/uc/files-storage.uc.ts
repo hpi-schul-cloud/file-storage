@@ -100,7 +100,7 @@ export class FilesStorageUC {
 		const abortSignal = undefined;
 		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response, StorageType.STANDARD, abortSignal);
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
-		this.checkMimeTypeAndRollbackIfNotAllowed(fileRecord);
+		await this.checkMimeTypeAndRollbackIfNotAllowed(fileRecord);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
@@ -108,10 +108,10 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	private checkMimeTypeAndRollbackIfNotAllowed(fileRecord: FileRecord): void {
+	private async checkMimeTypeAndRollbackIfNotAllowed(fileRecord: FileRecord): Promise<void> {
 		if (fileRecord.hasMediaMimeType()) return;
 
-		this.filesStorageService.permanentlyDeleteFiles([fileRecord]);
+		await this.filesStorageService.permanentlyDeleteFiles([fileRecord]);
 		throw new UnprocessableEntityException(ErrorType.MIME_TYPE_MISMATCH);
 	}
 
