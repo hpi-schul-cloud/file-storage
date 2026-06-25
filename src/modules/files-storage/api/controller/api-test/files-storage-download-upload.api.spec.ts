@@ -292,7 +292,7 @@ describe('files-storage controller (API)', () => {
 
 				const validId = new ObjectId().toHexString();
 
-				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+				jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('image/png');
 
 				const body = {
 					url: 'http://localhost/test.txt',
@@ -406,7 +406,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('image/png');
 
 					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
@@ -450,7 +450,7 @@ describe('files-storage controller (API)', () => {
 							name: 'test (1).txt',
 							parentId: validId,
 							creatorId: userId,
-							mimeType: 'application/octet-stream',
+							mimeType: 'image/png',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
 						})
@@ -471,7 +471,7 @@ describe('files-storage controller (API)', () => {
 								name: fileName,
 								parentId: validId,
 								creatorId: userId,
-								mimeType: 'application/octet-stream',
+								mimeType: 'image/png',
 								parentType: 'schools',
 								securityCheckStatus: 'pending',
 							})
@@ -493,7 +493,7 @@ describe('files-storage controller (API)', () => {
 								name: fileName.replace(/\.doc/, ' (1).doc'),
 								parentId: validId,
 								creatorId: userId,
-								mimeType: 'application/octet-stream',
+								mimeType: 'image/png',
 								parentType: 'schools',
 								securityCheckStatus: 'pending',
 							})
@@ -510,7 +510,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('image/png');
 
 					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
@@ -547,7 +547,7 @@ describe('files-storage controller (API)', () => {
 							name: 'test',
 							parentId: validId,
 							creatorId: userId,
-							mimeType: 'application/octet-stream',
+							mimeType: 'image/png',
 							parentType: 'schools',
 							securityCheckStatus: 'pending',
 						})
@@ -561,7 +561,7 @@ describe('files-storage controller (API)', () => {
 
 					const validId = new ObjectId().toHexString();
 
-					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('application/octet-stream');
+					jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('image/png');
 
 					const expectedResponse1 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
 					const expectedResponse2 = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
@@ -648,6 +648,54 @@ describe('files-storage controller (API)', () => {
 
 					expect(response.status).toEqual(403);
 					expect(response.body.message).toEqual(ErrorType.FILE_LIMIT_PER_PARENT_EXCEEDED);
+				});
+			});
+
+			describe('when the url points to a file with a non-media mime type', () => {
+				const setup = async () => {
+					const currentUser = currentUserFactory.build();
+					const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName, currentUser);
+					const validId = new ObjectId().toHexString();
+
+					jest
+						.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream')
+						.mockResolvedValueOnce('image/png')
+						.mockResolvedValueOnce('application/pdf');
+
+					const expectedResponse = GetFileTestFactory.build({ contentRange: 'bytes 0-3/4' });
+					s3ClientAdapter.get.mockResolvedValueOnce(expectedResponse);
+
+					const result = await loggedInClient
+						.post(`/upload/school/${validId}/schools/${validId}`)
+						.attach('file', Buffer.from('abcd'), 'test.txt')
+						.set('connection', 'keep-alive')
+						.set('content-type', 'multipart/form-data; boundary=----WebKitFormBoundaryiBMuOC0HyZ3YnA20');
+					const response = result.body as FileRecordEntity;
+					const fileId = response.id;
+
+					const body = {
+						url: `http://localhost:${appPort}/file/download/${fileId}/test.txt`,
+						fileName: 'test.txt',
+						headers: { authorization: loggedInClient.getAuthHeader() },
+					};
+
+					return { validId, loggedInClient, body };
+				};
+
+				it('should return status 422', async () => {
+					const { validId, loggedInClient, body } = await setup();
+
+					const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+					expect(result.status).toEqual(422);
+				});
+
+				it('should return MIME_TYPE_MISMATCH error message', async () => {
+					const { validId, loggedInClient, body } = await setup();
+
+					const result = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+					expect(result.body.message).toEqual(ErrorType.MIME_TYPE_MISMATCH);
 				});
 			});
 		});

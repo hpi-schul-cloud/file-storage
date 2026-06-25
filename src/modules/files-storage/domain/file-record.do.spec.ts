@@ -502,6 +502,38 @@ describe('FileRecord', () => {
 		});
 	});
 
+	describe('hasMediaMimeType', () => {
+		it('should return true for image mime types', () => {
+			const fileRecord = fileRecordTestFactory().build({ mimeType: 'image/png' });
+
+			expect(fileRecord.hasMediaMimeType()).toBe(true);
+		});
+
+		it('should return true for video mime types', () => {
+			const fileRecord = fileRecordTestFactory().build({ mimeType: 'video/mp4' });
+
+			expect(fileRecord.hasMediaMimeType()).toBe(true);
+		});
+
+		it('should return true for audio mime types', () => {
+			const fileRecord = fileRecordTestFactory().build({ mimeType: 'audio/mpeg' });
+
+			expect(fileRecord.hasMediaMimeType()).toBe(true);
+		});
+
+		it('should return false for non-media mime types', () => {
+			const fileRecord = fileRecordTestFactory().build({ mimeType: 'application/pdf' });
+
+			expect(fileRecord.hasMediaMimeType()).toBe(false);
+		});
+
+		it('should return false for text mime types', () => {
+			const fileRecord = fileRecordTestFactory().build({ mimeType: 'text/plain' });
+
+			expect(fileRecord.hasMediaMimeType()).toBe(false);
+		});
+	});
+
 	describe('markPreviewGenerationFailed', () => {
 		it('should set previewGenerationFailed to true', () => {
 			const fileRecord = fileRecordTestFactory().build({

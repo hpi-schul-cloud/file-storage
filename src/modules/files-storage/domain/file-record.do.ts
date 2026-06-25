@@ -246,6 +246,15 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		this.props.previewGenerationFailed = true;
 	}
 
+	public hasMediaMimeType(): boolean {
+		const hasMediaMimeType =
+			this.props.mimeType.startsWith('image/') ||
+			this.props.mimeType.startsWith('video/') ||
+			this.props.mimeType.startsWith('audio/');
+
+		return hasMediaMimeType;
+	}
+
 	public exceedsCollaboraEditableFileSize(collaboraMaxFileSizeInBytes: number): boolean {
 		const exceedsFileSize = this.props.size > collaboraMaxFileSizeInBytes;
 
