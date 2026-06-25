@@ -11,7 +11,6 @@ import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import {
-	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
@@ -34,7 +33,6 @@ import {
 	StorageLocation,
 	StorageType,
 } from '../../domain';
-import { detectMimeTypeByStream, duplicateStream } from '../../domain/utils';
 import { UploadAbortLoggable } from '../../loggable';
 import {
 	AddDocumentToParentParams,
@@ -542,27 +540,10 @@ export class FilesStorageUC {
 				this.domainErrorHandler.exec(error);
 			});
 
-			const [mimeTypeStream, storageStream] = duplicateStream(response.data, 2);
-			const fileTypeResult = await detectMimeTypeByStream(mimeTypeStream, 'NOT_ALLOWED_MIMETYPE', this.logger);
-
-			if (!fileTypeResult || !FilesStorageUC.isAllowedMediaType(fileTypeResult)) {
-				storageStream.destroy();
-				response.data.destroy();
-				throw new BadRequestException(ErrorType.MIME_TYPE_MISMATCH);
-			}
-
-			response.data = storageStream;
-
 			return response;
 		} catch (error) {
-			if (error instanceof BadRequestException) throw error;
-
-			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND, { cause: error });
 		}
-	}
-
-	private static isAllowedMediaType(mimeType: string): boolean {
-		return mimeType.startsWith('image/') || mimeType.startsWith('video/') || mimeType.startsWith('audio/');
 	}
 
 	private ensureEncodedUrl(url: string): string {
