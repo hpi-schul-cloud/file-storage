@@ -27,6 +27,7 @@ import {
 import { FileRecord } from '../file-record.do';
 import {
 	CopyFileResult,
+	DocumentType,
 	FILE_RECORD_REPO,
 	FileRecordRepo,
 	GetFileResponse,
@@ -41,7 +42,7 @@ import {
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { StorageType } from '../storage-paths.const';
-import { detectMimeTypeByStream, duplicateStream } from '../utils';
+import { detectMimeTypeByStream, duplicateStream, readDocumentSource } from '../utils';
 import { ParentStatistic } from '../vo';
 
 @Injectable()
@@ -174,6 +175,17 @@ export class FilesStorageService {
 		await this.storeAndScanFile(fileRecord, file);
 
 		return fileRecord;
+	}
+
+	public async uploadDocumentToParent(
+		userId: EntityId,
+		parentInfo: ParentInfo,
+		targetFileName: string,
+		documentType: DocumentType
+	): Promise<FileRecord> {
+		const sourceFile = await readDocumentSource(targetFileName, documentType);
+
+		return this.uploadFile(userId, parentInfo, sourceFile);
 	}
 
 	private async createPassThroughFileDto(sourceFile: FileDto, newFileName?: string): Promise<PassThroughFileDto> {

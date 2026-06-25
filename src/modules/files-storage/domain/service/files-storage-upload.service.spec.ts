@@ -12,18 +12,25 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { fileRecordTestFactory, ParentInfoTestFactory, passThroughFileDtoTestFactory } from '../../testing';
+import {
+	fileDtoTestFactory,
+	fileRecordTestFactory,
+	ParentInfoTestFactory,
+	passThroughFileDtoTestFactory,
+} from '../../testing';
 import { FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { DocumentType, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
 import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
+import * as documentReaderUtils from '../utils/document-reader.utils';
 import { FileRecordSecurityCheck, ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 jest.mock('../utils/detect-mime-type.utils');
+jest.mock('../utils/document-reader.utils');
 
 describe('FilesStorageService upload methods', () => {
 	let module: TestingModule;
@@ -827,6 +834,81 @@ describe('FilesStorageService upload methods', () => {
 				const resultPromise = service.updateFileContents(fileRecord, file);
 
 				await expect(resultPromise).rejects.toThrow(InternalServerErrorException);
+			});
+		});
+	});
+
+	describe('uploadDocumentToParent is called', () => {
+		describe('WHEN uploadFile is successful', () => {
+			const setup = (documentType: DocumentType) => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const targetFileName = 'test-document';
+				const fileRecord = fileRecordTestFactory().build();
+				const fileDto = fileDtoTestFactory().build({ mimeType: documentType, name: targetFileName });
+
+				jest.spyOn(documentReaderUtils, 'readDocumentSource').mockResolvedValueOnce(fileDto);
+				const uploadFileSpy = jest.spyOn(service, 'uploadFile').mockResolvedValueOnce(fileRecord);
+
+				return { parentInfo, userId, targetFileName, fileRecord, uploadFileSpy };
+			};
+
+			it.each([DocumentType.DOCX, DocumentType.XLSX, DocumentType.PPTX])(
+				'should call uploadFile with correct mime type for %s',
+				async (documentType) => {
+					const { parentInfo, userId, targetFileName, uploadFileSpy } = setup(documentType);
+
+					await service.uploadDocumentToParent(userId, parentInfo, targetFileName, documentType);
+
+					expect(uploadFileSpy).toHaveBeenCalledWith(
+						userId,
+						parentInfo,
+						expect.objectContaining({ mimeType: documentType, name: targetFileName })
+					);
+				}
+			);
+
+			it('should return the FileRecord returned by uploadFile', async () => {
+				const { parentInfo, userId, targetFileName, fileRecord } = setup(DocumentType.DOCX);
+
+				const result = await service.uploadDocumentToParent(
+					userId,
+					parentInfo,
+					targetFileName,
+					DocumentType.DOCX
+				);
+
+				expect(result).toBe(fileRecord);
+			});
+		});
+
+		describe('WHEN readDocumentSource throws an error', () => {
+			it('should propagate the error', async () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const error = new Error('Failed to read document source');
+
+				jest.spyOn(documentReaderUtils, 'readDocumentSource').mockRejectedValueOnce(error);
+
+				await expect(
+					service.uploadDocumentToParent(userId, parentInfo, 'test.docx', DocumentType.DOCX)
+				).rejects.toThrow(error);
+			});
+		});
+
+		describe('WHEN uploadFile throws an error', () => {
+			it('should propagate the error', async () => {
+				const parentInfo = ParentInfoTestFactory.build();
+				const userId = parentInfo.parentId;
+				const error = new Error('Upload failed');
+				const fileDto = fileDtoTestFactory().build();
+
+				jest.spyOn(documentReaderUtils, 'readDocumentSource').mockResolvedValueOnce(fileDto);
+				jest.spyOn(service, 'uploadFile').mockRejectedValueOnce(error);
+
+				await expect(
+					service.uploadDocumentToParent(userId, parentInfo, 'test.docx', DocumentType.DOCX)
+				).rejects.toThrow(error);
 			});
 		});
 	});

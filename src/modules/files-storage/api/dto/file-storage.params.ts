@@ -10,6 +10,7 @@ import { EntityId } from '@shared/domain/types';
 import { SanitizeHtml, StringToBoolean, StringToObject } from '@shared/transformer';
 import { Allow, IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
+	DocumentType,
 	FileRecordParentType,
 	ParentInfo,
 	PreviewInfo,
@@ -63,6 +64,18 @@ export class FileUrlParams {
 	@ApiPropertyOptional()
 	@Allow()
 	headers?: Record<string, string>;
+}
+
+export class AddDocumentToParentParams {
+	@ApiProperty()
+	@IsString()
+	@IsNotEmpty()
+	@SanitizeHtml()
+	fileName!: string;
+
+	@ApiProperty({ enum: DocumentType, enumName: 'DocumentType' })
+	@IsEnum(DocumentType)
+	documentType!: DocumentType;
 }
 
 export class FileParams {
