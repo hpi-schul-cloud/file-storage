@@ -19,6 +19,8 @@ class JwtPayloadImpl implements JwtPayload {
 
 	isExternalUser: boolean;
 
+	isServiceAccount: boolean;
+
 	aud: string;
 
 	exp: number;
@@ -39,6 +41,7 @@ class JwtPayloadImpl implements JwtPayload {
 		this.systemId = data.systemId ?? '';
 		this.support = data.support || false;
 		this.isExternalUser = data.isExternalUser;
+		this.isServiceAccount = data.isServiceAccount || false;
 		this.supportUserId = data.supportUserId;
 		this.aud = data.aud;
 		this.exp = data.exp;
@@ -60,6 +63,7 @@ export const jwtPayloadFactory = JwtPayloadFactory.define(JwtPayloadImpl, ({ seq
 		systemId: new ObjectId().toHexString(),
 		support: true,
 		isExternalUser: true,
+		isServiceAccount: false,
 		sub: `sub-${sequence}`,
 		jti: `jit-${sequence}`,
 		aud: `aud-${sequence}`,
