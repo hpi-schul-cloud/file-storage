@@ -15,6 +15,8 @@ export class CurrentUser implements CurrentUserInterface {
 
 	public isExternalUser: boolean;
 
+	public isServiceAccount: boolean;
+
 	public support: boolean;
 
 	public supportUserId?: string;
@@ -26,6 +28,7 @@ export class CurrentUser implements CurrentUserInterface {
 		this.accountId = data.accountId;
 		this.systemId = data.systemId ?? '';
 		this.isExternalUser = data.isExternalUser;
+		this.isServiceAccount = data.isServiceAccount;
 		this.support = false;
 		this.supportUserId = data.supportUserId;
 	}
@@ -59,6 +62,7 @@ export const currentUserFactory = CurrentUserFactory.define(CurrentUser, () => {
 		accountId: new ObjectId().toHexString(),
 		systemId: new ObjectId().toHexString(),
 		isExternalUser: false,
+		isServiceAccount: false,
 		support: false,
 		supportUserId: undefined,
 	};

@@ -32,6 +32,7 @@ export class CurrentUserBuilder {
 			roles: this.requiredProps.roles,
 			support: false,
 			isExternalUser: false,
+			isServiceAccount: false,
 			systemId: undefined,
 			externalIdToken: undefined,
 		};
@@ -70,6 +71,14 @@ export class CurrentUserBuilder {
 	public asExternalUserWithToken(externalIdToken: string): this {
 		this.props.externalIdToken = externalIdToken;
 		this.props.isExternalUser = true;
+
+		return this;
+	}
+
+	public asServiceAccount(isServiceAccount?: boolean): this {
+		if (isServiceAccount === true) {
+			this.props.isServiceAccount = isServiceAccount;
+		}
 
 		return this;
 	}

@@ -32,6 +32,7 @@ describe('CurrentUserBuilder', () => {
 				roles: requiredProps.roles,
 				support: false,
 				isExternalUser: false,
+				isServiceAccount: false,
 				systemId: undefined,
 				externalIdToken: undefined,
 			});
@@ -50,6 +51,7 @@ describe('CurrentUserBuilder', () => {
 					roles: requiredProps.roles,
 					support: true,
 					isExternalUser: false,
+					isServiceAccount: false,
 					systemId: undefined,
 					externalIdToken: undefined,
 				});
@@ -69,6 +71,7 @@ describe('CurrentUserBuilder', () => {
 					roles: requiredProps.roles,
 					support: false,
 					isExternalUser: true,
+					isServiceAccount: false,
 					systemId: undefined,
 					externalIdToken: undefined,
 				});
@@ -89,6 +92,7 @@ describe('CurrentUserBuilder', () => {
 					roles: requiredProps.roles,
 					support: false,
 					isExternalUser: false,
+					isServiceAccount: false,
 					systemId,
 					externalIdToken: undefined,
 				});
@@ -109,8 +113,65 @@ describe('CurrentUserBuilder', () => {
 					roles: requiredProps.roles,
 					support: false,
 					isExternalUser: true,
+					isServiceAccount: false,
 					systemId: undefined,
 					externalIdToken,
+				});
+			});
+		});
+
+		describe('when asServiceAccount is executed', () => {
+			it('should set isServiceAccount to true when called with true', () => {
+				const { requiredProps } = setup();
+
+				const currentUser = new CurrentUserBuilder(requiredProps).asServiceAccount(true).build();
+
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
+					userId: requiredProps.userId,
+					schoolId: requiredProps.schoolId,
+					accountId: requiredProps.accountId,
+					roles: requiredProps.roles,
+					support: false,
+					isExternalUser: false,
+					isServiceAccount: true,
+					systemId: undefined,
+					externalIdToken: undefined,
+				});
+			});
+
+			it('should not set isServiceAccount when called with false', () => {
+				const { requiredProps } = setup();
+
+				const currentUser = new CurrentUserBuilder(requiredProps).asServiceAccount(false).build();
+
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
+					userId: requiredProps.userId,
+					schoolId: requiredProps.schoolId,
+					accountId: requiredProps.accountId,
+					roles: requiredProps.roles,
+					support: false,
+					isExternalUser: false,
+					isServiceAccount: false,
+					systemId: undefined,
+					externalIdToken: undefined,
+				});
+			});
+
+			it('should not set isServiceAccount when called with undefined', () => {
+				const { requiredProps } = setup();
+
+				const currentUser = new CurrentUserBuilder(requiredProps).asServiceAccount(undefined).build();
+
+				expect(currentUser).toMatchObject<CurrentUserInterface>({
+					userId: requiredProps.userId,
+					schoolId: requiredProps.schoolId,
+					accountId: requiredProps.accountId,
+					roles: requiredProps.roles,
+					support: false,
+					isExternalUser: false,
+					isServiceAccount: false,
+					systemId: undefined,
+					externalIdToken: undefined,
 				});
 			});
 		});

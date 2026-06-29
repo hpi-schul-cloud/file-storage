@@ -18,6 +18,7 @@ describe('JwtPayloadFactory', () => {
 				userId: currentUser.userId,
 				support: false,
 				isExternalUser: false,
+				isServiceAccount: false,
 			});
 		});
 	});
@@ -38,6 +39,7 @@ describe('JwtPayloadFactory', () => {
 				support: true,
 				supportUserId,
 				isExternalUser: false,
+				isServiceAccount: false,
 			});
 		});
 	});

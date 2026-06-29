@@ -7,6 +7,7 @@ export interface CreateJwtPayload {
 	support: boolean;
 	supportUserId?: string;
 	isExternalUser: boolean;
+	isServiceAccount: boolean;
 }
 
 export interface JwtPayload extends CreateJwtPayload {
