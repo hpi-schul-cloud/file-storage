@@ -16,6 +16,7 @@ export class JwtPayloadFactory {
 			support: false,
 			supportUserId: undefined,
 			isExternalUser: currentUser.isExternalUser,
+			isServiceAccount: currentUser.isServiceAccount,
 		};
 
 		const createJwtPayload = JwtPayloadFactory.build(data);
@@ -33,6 +34,7 @@ export class JwtPayloadFactory {
 			support: true,
 			supportUserId,
 			isExternalUser: currentUser.isExternalUser,
+			isServiceAccount: currentUser.isServiceAccount,
 		};
 
 		const createJwtPayload = JwtPayloadFactory.build(data);

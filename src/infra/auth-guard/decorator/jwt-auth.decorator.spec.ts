@@ -97,6 +97,7 @@ describe('Decorators', () => {
 				const expectedCurrentUser = {
 					accountId: currentUser.accountId,
 					isExternalUser: false,
+					isServiceAccount: false,
 					roles: [...currentUser.roles],
 					schoolId: currentUser.schoolId,
 					support: false,
