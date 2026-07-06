@@ -22,7 +22,7 @@ export const resolveMimeType = (fallbackMimeType: string, fileTypeResult?: FileT
 	return mimeType;
 };
 
-export const filterDetectedMimeType = (mimeType?: string): string | undefined => {
+const filterDetectedMimeType = (mimeType?: string): string | undefined => {
 	const excludedMimeTypes = ['application/x-cfb'];
 
 	if (!mimeType || excludedMimeTypes.includes(mimeType)) return;

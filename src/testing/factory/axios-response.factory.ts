@@ -1,7 +1,7 @@
 import { AxiosHeaderValue, AxiosHeaders, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { BaseFactory } from './base.factory';
 
-export type AxiosHeadersKeyValue = Record<string, AxiosHeaderValue>;
+type AxiosHeadersKeyValue = Record<string, AxiosHeaderValue>;
 interface AxiosResponseProps<T> {
 	data: T;
 	status: number;

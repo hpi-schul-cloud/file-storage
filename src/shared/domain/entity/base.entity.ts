@@ -11,11 +11,6 @@ export abstract class BaseEntity implements AuthorizableObject {
 	id!: string;
 }
 
-/**
- * Describes the properties available for entities when used as @IdentifiedReference
- */
-export type BaseEntityReference = 'id' | '_id';
-
 @Entity({ abstract: true })
 export abstract class BaseEntityWithTimestamps<Optional = never> extends BaseEntity {
 	[OptionalProps]?: Optional | 'createdAt' | 'updatedAt';
@@ -26,6 +21,3 @@ export abstract class BaseEntityWithTimestamps<Optional = never> extends BaseEnt
 	@Property({ type: Date, onUpdate: () => new Date() })
 	updatedAt = new Date();
 }
-
-// These fields are explicitly ignored when updating an entity. See base.do.repo.ts.
-export const baseEntityProperties = ['id', '_id', 'updatedAt', 'createdAt'];

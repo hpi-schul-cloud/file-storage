@@ -13,6 +13,4 @@ export async function detectFileTypeFromStream(file: Readable): Promise<FileType
 	return fileType;
 }
 
-export type { AnyWebReadableByteStreamWithFileType, FileTypeResult } from 'file-type';
-
-export default { detectFileTypeFromStream };
+export type { FileTypeResult } from 'file-type';

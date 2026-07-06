@@ -871,12 +871,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should return the FileRecord returned by uploadFile', async () => {
 				const { parentInfo, userId, targetFileName, fileRecord } = setup(DocumentType.DOCX);
 
-				const result = await service.uploadDocumentToParent(
-					userId,
-					parentInfo,
-					targetFileName,
-					DocumentType.DOCX
-				);
+				const result = await service.uploadDocumentToParent(userId, parentInfo, targetFileName, DocumentType.DOCX);
 
 				expect(result).toBe(fileRecord);
 			});

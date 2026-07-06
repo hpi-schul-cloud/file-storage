@@ -1,0 +1,14 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"entry": [
+		"src/apps/*.ts!",
+		"scripts/**/*.{js,ts}!"
+	],
+	"project": ["**/*.{js,ts}!"],
+	"ignore": [
+		"src/infra/authorization-client/authorization-api-client/**/*",
+		"src/infra/preview-generator/interface/preview-input-mime-types.enum.ts"
+	],
+	"ignoreBinaries": ["magick"],
+	"ignoreDependencies": ["eslint-config-prettier", "eslint-plugin-prettier"]
+}

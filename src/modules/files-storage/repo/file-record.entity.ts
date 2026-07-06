@@ -1,5 +1,5 @@
 import { Embedded, Entity, Enum, Index, Property } from '@mikro-orm/mongodb';
-import { BaseEntityWithTimestamps } from '@shared/domain/entity/base.entity';
+import { BaseEntityWithTimestamps } from '@shared/domain/entity';
 import { EntityId } from '@shared/domain/types';
 import { ObjectIdType } from '@shared/repo/types/object-id.type';
 import { FileRecord, FileRecordProps, FolderExpirationDays, StorageType } from '../domain';
