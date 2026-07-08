@@ -32,8 +32,7 @@
 		"test:cov": "jest --coverage",
 		"test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
 		"pregenerate-client:authorization-api": "rimraf ./src/infra/authorization-client/authorization-api-client",
-		"generate-client:authorization-api": "openapi-generator-cli generate -c ./openapitools.json --generator-key authorization-api",
-		"knip": "knip"
+		"generate-client:authorization-api": "openapi-generator-cli generate -c ./openapitools.json --generator-key authorization-api"
 	},
 	"overrides": {
 		"multer": "2.2.0",
@@ -110,7 +109,6 @@
 		"fishery": "^2.4.0",
 		"globals": "^17.7.0",
 		"jest": "^30.4.2",
-		"knip": "^6.24.0",
 		"mock-fs": "^5.5.0",
 		"mongodb-memory-server-global": "^11.2.0",
 		"prettier": "^3.8.4",
