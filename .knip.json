@@ -5,10 +5,6 @@
 		"scripts/**/*.{js,ts}!"
 	],
 	"project": ["**/*.{js,ts}!"],
-	"ignore": [
-		"src/infra/authorization-client/authorization-api-client/**/*",
-		"src/infra/preview-generator/interface/preview-input-mime-types.enum.ts"
-	],
-	"ignoreBinaries": ["magick"],
+	"ignore": ["src/infra/**/*"],
 	"ignoreDependencies": ["eslint-config-prettier", "eslint-plugin-prettier"]
 }

@@ -1,8 +1,12 @@
 import { ConfigurationModule } from '@infra/configuration';
 import { DynamicModule, Module } from '@nestjs/common';
-import { AuthorizationApi, Configuration } from './authorization-api-client';
+import { AuthorizationApi, Configuration, ConfigurationParameters } from './authorization-api-client';
 import { AuthorizationClientAdapter } from './authorization-client.adapter';
 import { AUTHORIZATION_CONFIG_TOKEN, AuthorizationConfig } from './authorization.config';
+
+export interface AuthorizationClientConfig extends ConfigurationParameters {
+	basePath: string;
+}
 
 @Module({})
 export class AuthorizationClientModule {
