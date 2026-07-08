@@ -237,7 +237,7 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	public async deleteMultipleFilesOfParent(params: MultiFileParams): Promise<FileRecordListResponse> {
+	public async deleteMultipleFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
 		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 		const parentReferences = FileRecord.getUniqueParentReferences(fileRecords);
 

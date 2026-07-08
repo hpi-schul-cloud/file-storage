@@ -358,7 +358,7 @@ export class FilesStorageController {
 	@Delete('/delete')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.deleteMultipleFilesOfParent(params);
+		const response = await this.filesStorageUC.deleteMultipleFiles(params);
 
 		return response;
 	}
