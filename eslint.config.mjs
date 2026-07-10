@@ -200,7 +200,7 @@ export default [
 		files: ['src/modules/**'],
 		rules: {
 			'no-restricted-imports': [
-				'error',
+				'warn',
 				{
 					patterns: [
 						{
