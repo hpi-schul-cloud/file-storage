@@ -90,10 +90,6 @@ export default [
 					allowSingleExtends: true,
 				},
 			],
-			'@typescript-eslint/consistent-type-imports': [
-				'error',
-				{ prefer: 'type-imports', fixStyle: 'inline-type-imports' },
-			],
 			'check-file/filename-naming-convention': [
 				'error',
 				{ '**/*.ts': 'KEBAB_CASE' },
