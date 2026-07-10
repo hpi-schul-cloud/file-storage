@@ -2,8 +2,9 @@ import { RpcError, RpcMessage } from '@infra/rabbitmq';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, InternalServerErrorException } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiValidationError, BusinessError, DomainErrorHandler } from '../domain';
-import { ApiValidationErrorResponse, ErrorResponse } from '../dto';
+import { ErrorResponse } from '../dto';
 import { ErrorUtils } from '../utils';
+import { ApiValidationErrorResponseFactory } from '../factory';
 
 // We are receiving rmq instead of rpc and rmq is missing in context type.
 // @nestjs/common export type ContextType = 'http' | 'ws' | 'rpc';
@@ -67,7 +68,7 @@ export class GlobalErrorFilter<E extends RpcError> implements ExceptionFilter<E>
 		let response: ErrorResponse;
 
 		if (error instanceof ApiValidationError) {
-			response = new ApiValidationErrorResponse(error);
+			response = ApiValidationErrorResponseFactory.fromApiValidationError(error);
 		} else {
 			response = error.getResponse();
 		}
