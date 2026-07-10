@@ -200,7 +200,7 @@ export default [
 				{
 					patterns: [
 						{
-							group: ['@modules/*/*', '!@modules/*/testing'],
+							group: ['@modules/*/**', '!@modules/*/testing', '!@modules/*/testing/**'],
 							message: 'Do not deep import from a module. Import from the module index instead.',
 						},
 					],
