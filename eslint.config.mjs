@@ -152,7 +152,7 @@ export default [
 		},
 	},
 	{
-		files: ['**/*.dto.ts', '**/*.params.ts', '**/*.response.ts'],
+		files: ['**/*.dto.ts', '**/*.params.ts', '**/*.response.ts', '**/*.query.ts', '**/*.body.ts'],
 		rules: {
 			'@typescript-eslint/explicit-member-accessibility': [
 				'error',
