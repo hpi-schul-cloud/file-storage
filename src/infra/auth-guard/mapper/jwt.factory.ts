@@ -1,5 +1,5 @@
-import { EntityId } from '@shared/domain/types';
-import { CreateJwtPayload, CurrentUserInterface } from '../interface';
+import { type EntityId } from '@shared/domain/types';
+import { type CreateJwtPayload, type CurrentUserInterface } from '../interface';
 
 export class JwtPayloadFactory {
 	private static build(data: CreateJwtPayload): CreateJwtPayload {

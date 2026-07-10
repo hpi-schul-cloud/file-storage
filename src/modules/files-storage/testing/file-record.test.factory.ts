@@ -1,13 +1,13 @@
 import { ObjectId } from '@mikro-orm/mongodb';
-import { DeepPartial } from 'fishery';
+import { type DeepPartial } from 'fishery';
 import { randomUUID } from 'node:crypto';
 import {
-	FileRecord,
+	type FileRecord,
 	FileRecordFactory,
 	FileRecordParentType,
-	FileRecordProps,
+	type FileRecordProps,
 	FileRecordSecurityCheck,
-	ParentInfo,
+	type ParentInfo,
 	ScanStatus,
 	StorageLocation,
 	StorageType,

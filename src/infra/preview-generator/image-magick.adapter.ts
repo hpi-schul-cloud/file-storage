@@ -1,6 +1,6 @@
 import { UnprocessableEntityException } from '@nestjs/common';
 import { spawn } from 'node:child_process';
-import { Readable } from 'node:stream';
+import { type Readable } from 'node:stream';
 
 export class ImageMagickAdapter {
 	private readonly args: string[] = [];

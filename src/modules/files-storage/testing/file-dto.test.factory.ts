@@ -1,6 +1,6 @@
-import { DeepPartial } from 'fishery';
+import { type DeepPartial } from 'fishery';
 import { Readable } from 'node:stream';
-import { FileDto, FileDtoFactory, StorageType } from '../domain';
+import { type FileDto, FileDtoFactory, StorageType } from '../domain';
 import {
 	aacReadable,
 	octetStreamReadable,

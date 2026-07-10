@@ -1,7 +1,7 @@
-import { ErrorLogMessage } from '@infra/logger';
-import { Loggable } from '@infra/logger/interfaces';
+import { type ErrorLogMessage } from '@infra/logger';
+import { type Loggable } from '@infra/logger/interfaces';
 import { ForbiddenException } from '@nestjs/common';
-import { AuthorizationBodyParams } from '../authorization-api-client';
+import { type AuthorizationBodyParams } from '../authorization-api-client';
 
 export class AuthorizationForbiddenLoggableException extends ForbiddenException implements Loggable {
 	constructor(private readonly params: AuthorizationBodyParams) {

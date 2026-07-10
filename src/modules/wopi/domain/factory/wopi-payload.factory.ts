@@ -1,4 +1,4 @@
-import { EntityId } from '@shared/domain/types';
+import { type EntityId } from '@shared/domain/types';
 import { WopiPayload } from '../vo';
 
 export class WopiPayloadFactory {

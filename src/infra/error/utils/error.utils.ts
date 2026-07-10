@@ -1,4 +1,4 @@
-import { HttpException, HttpExceptionOptions } from '@nestjs/common';
+import { HttpException, type HttpExceptionOptions } from '@nestjs/common';
 import { BusinessError } from '../domain';
 
 export class ErrorUtils {

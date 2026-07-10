@@ -1,5 +1,5 @@
-import { Loggable, LogMessage } from '@infra/logger';
-import { FileRecord } from '../file-record.do';
+import { type Loggable, type LogMessage } from '@infra/logger';
+import { type FileRecord } from '../file-record.do';
 
 export class CreateArchiveLoggable implements Loggable {
 	constructor(

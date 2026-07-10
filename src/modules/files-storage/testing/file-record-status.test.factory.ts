@@ -1,4 +1,4 @@
-import { FileRecordStatus, PreviewStatus, ScanStatus } from '../domain';
+import { type FileRecordStatus, PreviewStatus, ScanStatus } from '../domain';
 
 export class FileRecordStatusTestFactory {
 	private scanStatus: ScanStatus = ScanStatus.VERIFIED;

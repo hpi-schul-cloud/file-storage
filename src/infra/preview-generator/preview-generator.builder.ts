@@ -1,6 +1,6 @@
-import { File } from '@infra/s3-client';
+import { type File } from '@infra/s3-client';
 import type { PassThrough } from 'node:stream';
-import { PreviewOptions } from './interface';
+import { type PreviewOptions } from './interface';
 
 export class PreviewGeneratorBuilder {
 	public static buildFile(preview: PassThrough, previewOptions: PreviewOptions): File {

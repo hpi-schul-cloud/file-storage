@@ -1,15 +1,15 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
-import { ApiValidationError } from '@infra/error';
+import { type ApiValidationError } from '@infra/error';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
-import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { type INestApplication } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType } from '../../../domain';
 import { fileRecordEntityFactory } from '../../../testing';
-import { FileRecordResponse } from '../../dto';
+import { type FileRecordResponse } from '../../dto';
 import { currentUserFactory } from '@testing/factory/currentuser.factory';
 
 const baseRouteName = '/file/rename';

@@ -1,8 +1,8 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Test, TestingModule } from '@nestjs/testing';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger as WinstonLogger } from 'winston';
-import { ErrorLogMessage, Loggable, LogMessage, ValidationErrorLogMessage } from './interfaces';
+import { type Logger as WinstonLogger } from 'winston';
+import { type ErrorLogMessage, type Loggable, type LogMessage, type ValidationErrorLogMessage } from './interfaces';
 import { Logger } from './logger';
 
 class SampleLoggable implements Loggable {

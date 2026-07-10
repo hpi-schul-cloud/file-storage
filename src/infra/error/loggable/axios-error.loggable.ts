@@ -1,6 +1,6 @@
-import { ErrorLogMessage, Loggable, LogMessage, ValidationErrorLogMessage } from '@infra/logger';
+import { type ErrorLogMessage, type Loggable, type LogMessage, type ValidationErrorLogMessage } from '@infra/logger';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { AxiosError } from 'axios';
+import { type AxiosError } from 'axios';
 
 export class AxiosErrorLoggable extends HttpException implements Loggable {
 	constructor(

@@ -1,4 +1,4 @@
-import { PassThrough, Readable } from 'node:stream';
+import { PassThrough, type Readable } from 'node:stream';
 
 export const DEFAULT_CHUNK_SIZE = 64 * 1024; // = 64KB, because busboy send typical chunks with 8-64KB. Default is 16KB and will increase cpu load with many small writes.
 

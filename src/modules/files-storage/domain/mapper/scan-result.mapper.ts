@@ -1,4 +1,4 @@
-import { ScanResult } from '@infra/antivirus';
+import { type ScanResult } from '@infra/antivirus';
 import { ScanResultDto } from '../dto';
 import { ScanStatus } from '../vo';
 

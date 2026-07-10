@@ -1,7 +1,7 @@
-import { Logger } from '@infra/logger';
+import { type Logger } from '@infra/logger';
 import archiver from 'archiver';
-import { FileRecord } from '../file-record.do';
-import { GetFileResponse } from '../interface';
+import { type FileRecord } from '../file-record.do';
+import { type GetFileResponse } from '../interface';
 import { CreateArchiveLoggable } from '../loggable';
 
 export class ArchiveFactory {

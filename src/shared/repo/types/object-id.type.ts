@@ -1,5 +1,5 @@
-import { MongoPlatform, ObjectId, Platform, Type } from '@mikro-orm/mongodb';
-import { EntityId } from '@shared/domain/types';
+import { MongoPlatform, ObjectId, type Platform, Type } from '@mikro-orm/mongodb';
+import { type EntityId } from '@shared/domain/types';
 
 export class ObjectIdType extends Type<EntityId, ObjectId> {
 	public convertToDatabaseValue(value: EntityId, platform: Platform): ObjectId {

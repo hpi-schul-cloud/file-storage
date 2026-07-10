@@ -1,13 +1,13 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
 import { MikroORM, ObjectId } from '@mikro-orm/mongodb';
-import { Test, TestingModule } from '@nestjs/testing';
-import { EntityId } from '@shared/domain/types';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { type EntityId } from '@shared/domain/types';
 import { setupEntities } from '@testing/database';
 import { FileRecordParentType, FilesStorageService, PreviewService, StorageLocation } from '../../domain';
 import { ENTITIES } from '../../files-storage.entity.imports';
 import { fileRecordTestFactory, fileRecordWithStatusTestFactory } from '../../testing';
-import { CopyFilesOfParentPayload } from '../dto';
+import { type CopyFilesOfParentPayload } from '../dto';
 import { FileRecordConsumerResponse } from './dto';
 import { FilesStorageConsumer } from './files-storage.consumer';
 

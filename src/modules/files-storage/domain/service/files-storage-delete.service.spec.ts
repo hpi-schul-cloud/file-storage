@@ -1,18 +1,22 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { BatchOperationResultFactory, S3ClientAdapter } from '@infra/s3-client';
+import { BatchOperationResultFactory, type S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
-import { Test, TestingModule } from '@nestjs/testing';
-import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { Test, type TestingModule } from '@nestjs/testing';
+import {
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	type FileStorageConfig,
+} from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
-import { FileRecord, FileRecordProps } from '../file-record.do';
-import { FILE_RECORD_REPO, FileRecordRepo, StorageLocation } from '../interface';
+import { FileRecord, type FileRecordProps } from '../file-record.do';
+import { FILE_RECORD_REPO, type FileRecordRepo, StorageLocation } from '../interface';
 import { StorageLocationDeleteLoggableException } from '../loggable';
-import { FileRecordSecurityCheckProps } from '../vo';
+import { type FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 describe('FilesStorageService delete methods', () => {

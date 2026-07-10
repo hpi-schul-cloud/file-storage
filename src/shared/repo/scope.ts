@@ -1,4 +1,4 @@
-import { FilterQuery } from '@mikro-orm/mongodb';
+import { type FilterQuery } from '@mikro-orm/mongodb';
 import { EmptyResultQuery } from './query';
 
 type EmptyResultQueryType = typeof EmptyResultQuery;

@@ -1,5 +1,5 @@
-import { ErrorLogMessage } from '@infra/logger';
-import { Loggable } from '@infra/logger/interfaces';
+import { type ErrorLogMessage } from '@infra/logger';
+import { type Loggable } from '@infra/logger/interfaces';
 import { ForbiddenException } from '@nestjs/common';
 
 export class ResolveTokenErrorLoggableException extends ForbiddenException implements Loggable {

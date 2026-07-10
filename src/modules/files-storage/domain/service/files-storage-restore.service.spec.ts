@@ -1,15 +1,19 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { S3ClientAdapter } from '@infra/s3-client';
-import { Test, TestingModule } from '@nestjs/testing';
-import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { type S3ClientAdapter } from '@infra/s3-client';
+import { Test, type TestingModule } from '@nestjs/testing';
+import {
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	type FileStorageConfig,
+} from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { FilePathFactory, FileRecordFactory } from '../factory';
-import { FileRecord, FileRecordProps } from '../file-record.do';
-import { FILE_RECORD_REPO, FileRecordRepo } from '../interface';
-import { FileRecordSecurityCheck, FileRecordSecurityCheckProps } from '../vo';
+import { FileRecord, type FileRecordProps } from '../file-record.do';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
+import { FileRecordSecurityCheck, type FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecordsWithParams = () => {

@@ -1,4 +1,4 @@
-import { AuthorizedCollaboraDocumentUrl } from '../../domain';
+import { type AuthorizedCollaboraDocumentUrl } from '../../domain';
 import { AuthorizedCollaboraDocumentUrlResponse } from '../dto';
 
 export class AuthorizedCollaboraDocumentUrlResponseFactory {

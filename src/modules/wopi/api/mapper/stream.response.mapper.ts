@@ -1,5 +1,5 @@
 import { StreamableFile } from '@nestjs/common';
-import { Readable } from 'node:stream';
+import { type Readable } from 'node:stream';
 
 export class StreamableFileMapper {
 	public static fromResponse(fileResponse: {

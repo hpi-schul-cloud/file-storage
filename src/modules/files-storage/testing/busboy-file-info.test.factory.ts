@@ -1,4 +1,4 @@
-import { FileInfo } from 'busboy';
+import { type FileInfo } from 'busboy';
 
 let count = 0;
 

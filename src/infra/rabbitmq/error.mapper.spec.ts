@@ -1,4 +1,4 @@
-import { RpcError } from '@infra/rabbitmq';
+import { type RpcError } from '@infra/rabbitmq';
 import {
 	BadRequestException,
 	ConflictException,

@@ -1,5 +1,5 @@
 import { generateNanoId } from '@infra/authorization-client/testing';
-import { WopiAccessTokenParams } from '../api/dto';
+import { type WopiAccessTokenParams } from '../api/dto';
 
 class WopiAccessTokenParamsTestFactory {
 	private readonly props: WopiAccessTokenParams = {

@@ -1,7 +1,7 @@
-import { Logger } from '@infra/logger';
-import { PassThrough } from 'node:stream';
+import { type Logger } from '@infra/logger';
+import { type PassThrough } from 'node:stream';
 import { FileTypeErrorLoggable } from './file-type-error.loggable';
-import { FileTypeResult, detectFileTypeFromStream } from './file-type-stream.import';
+import { type FileTypeResult, detectFileTypeFromStream } from './file-type-stream.import';
 
 const isFileTypePackageSupported = (mimeType: string): boolean => {
 	const unsupportedMimeTypes = [

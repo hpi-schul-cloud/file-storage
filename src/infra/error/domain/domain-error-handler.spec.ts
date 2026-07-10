@@ -1,8 +1,14 @@
 // eslint-disable-next-line max-classes-per-file
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { ErrorLogger, ErrorLogMessage, Loggable, LogMessage, ValidationErrorLogMessage } from '@infra/logger';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
+import {
+	ErrorLogger,
+	type ErrorLogMessage,
+	type Loggable,
+	type LogMessage,
+	type ValidationErrorLogMessage,
+} from '@infra/logger';
 import { BadRequestException, HttpException, HttpStatus, InternalServerErrorException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { AxiosError } from 'axios';
 import util from 'util';
 import { AxiosErrorLoggable, ErrorLoggable } from '../loggable';

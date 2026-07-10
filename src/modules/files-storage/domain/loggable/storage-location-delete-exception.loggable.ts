@@ -1,7 +1,7 @@
-import { ErrorLogMessage, Loggable } from '@infra/logger';
+import { type ErrorLogMessage, type Loggable } from '@infra/logger';
 import { InternalServerErrorException } from '@nestjs/common';
 import { ErrorType } from '../error';
-import { StorageLocationParams } from '../interface';
+import { type StorageLocationParams } from '../interface';
 
 export class StorageLocationDeleteLoggableException extends InternalServerErrorException implements Loggable {
 	constructor(

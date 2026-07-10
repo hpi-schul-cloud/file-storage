@@ -1,6 +1,6 @@
 import { createMock } from '@golevelup/ts-jest';
 import { PassThrough } from 'node:stream';
-import { Logger } from 'winston';
+import { type Logger } from 'winston';
 import { octetStreamReadable, svgReadable, textReadable } from '../../testing/buffer-with-types';
 import * as FileTypeStream from './file-type-stream.import';
 const { detectMimeTypeByStream, resolveMimeType } = require('./detect-mime-type.utils');

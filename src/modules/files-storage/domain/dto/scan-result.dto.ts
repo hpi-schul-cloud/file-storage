@@ -1,4 +1,4 @@
-import { ScanStatus } from '../vo';
+import { type ScanStatus } from '../vo';
 
 export class ScanResultDto {
 	status: ScanStatus;

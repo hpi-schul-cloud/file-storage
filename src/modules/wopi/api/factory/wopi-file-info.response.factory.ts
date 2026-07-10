@@ -1,6 +1,6 @@
-import { FileRecord } from '@modules/files-storage/domain';
+import { type FileRecord } from '@modules/files-storage/domain';
 import { WopiFileInfoResponse } from '../dto';
-import { WopiUser } from './wopi-user.factory';
+import { type WopiUser } from './wopi-user.factory';
 
 export class WopiFileInfoResponseFactory {
 	public static build(props: WopiFileInfoResponse): WopiFileInfoResponse {

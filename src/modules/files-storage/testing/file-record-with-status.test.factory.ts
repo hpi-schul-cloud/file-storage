@@ -1,4 +1,4 @@
-import { FileRecordWithStatus } from '../domain/interface/file-record-status.interface';
+import { type FileRecordWithStatus } from '../domain/interface/file-record-status.interface';
 import { fileRecordStatusTestFactory } from './file-record-status.test.factory';
 import { fileRecordTestFactory } from './file-record.test.factory';
 

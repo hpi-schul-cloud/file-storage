@@ -1,5 +1,5 @@
 import { ErrorUtils } from '@infra/error/utils';
-import { RpcError } from '@infra/rabbitmq';
+import { type RpcError } from '@infra/rabbitmq';
 import {
 	BadRequestException,
 	ForbiddenException,

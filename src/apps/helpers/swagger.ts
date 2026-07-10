@@ -1,5 +1,5 @@
-import { INestApplication } from '@nestjs/common';
-import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
+import { type INestApplication } from '@nestjs/common';
+import { DocumentBuilder, type SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
 
 const config = new DocumentBuilder()
 	.addServer('/api/v3/') // add default path as server to have correct urls ald let 'try out' work

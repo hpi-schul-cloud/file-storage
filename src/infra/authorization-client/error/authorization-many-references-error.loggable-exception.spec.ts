@@ -1,7 +1,7 @@
 import {
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParamsAction,
-	AuthorizationManyReferencesBodyParams,
+	type AuthorizationManyReferencesBodyParams,
 } from '../authorization-api-client';
 import { AuthorizationErrorLoggableException } from './authorization-error.loggable-exception';
 import { AuthorizationManyReferencesErrorLoggableException } from './authorization-many-references-error.loggable-exception';

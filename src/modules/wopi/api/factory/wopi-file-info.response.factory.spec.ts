@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
-import { WopiFileInfoResponse } from '../dto';
+import { type WopiFileInfoResponse } from '../dto';
 import { WopiFileInfoResponseFactory } from './wopi-file-info.response.factory';
 
 const wopiPostMessageOrigin = 'http://localhost:4000';

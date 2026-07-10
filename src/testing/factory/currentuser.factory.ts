@@ -1,4 +1,4 @@
-import { CurrentUserInterface } from '@infra/auth-guard/interface';
+import { type CurrentUserInterface } from '@infra/auth-guard/interface';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { BaseFactory } from '@testing/factory/base.factory';
 

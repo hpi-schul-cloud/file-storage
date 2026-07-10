@@ -1,7 +1,7 @@
-import { AxiosResponse } from 'axios';
-import { FileInfo as BusboyFileInfo } from 'busboy';
-import { Readable } from 'node:stream';
-import { FileDto, FileDtoFactory, StorageType } from '../../domain';
+import { type AxiosResponse } from 'axios';
+import { type FileInfo as BusboyFileInfo } from 'busboy';
+import { type Readable } from 'node:stream';
+import { type FileDto, FileDtoFactory, type StorageType } from '../../domain';
 
 export class FileDtoMapper {
 	public static mapFromAxiosResponse(

@@ -1,12 +1,12 @@
 import {
 	applyDecorators,
 	createParamDecorator,
-	ExecutionContext,
+	type ExecutionContext,
 	UnauthorizedException,
 	UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Request } from 'express';
+import { type Request } from 'express';
 import { JwtAuthGuard } from '../guard';
 import { isCurrentUser } from '../mapper';
 import { JwtExtractor } from '../utils/jwt';

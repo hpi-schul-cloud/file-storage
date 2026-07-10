@@ -1,5 +1,5 @@
 import { inspect } from 'node:util';
-import { Loggable, LogMessageWithContext } from './interfaces';
+import { type Loggable, type LogMessageWithContext } from './interfaces';
 
 export class LoggingUtils {
 	public static createMessageWithContext(loggable: Loggable, context?: string | undefined): LogMessageWithContext {
