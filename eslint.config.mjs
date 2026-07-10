@@ -5,7 +5,6 @@ import tsParser from '@typescript-eslint/parser';
 import checkFile from 'eslint-plugin-check-file';
 import jest from 'eslint-plugin-jest';
 import noOnlyTests from 'eslint-plugin-no-only-tests';
-import promisePlugin from 'eslint-plugin-promise';
 import globals from 'globals';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +28,6 @@ export default [
 			'check-file': checkFile,
 			jest,
 			'no-only-tests': noOnlyTests,
-			promise: promisePlugin,
 		},
 
 		languageOptions: {
@@ -49,7 +47,6 @@ export default [
 		},
 
 		rules: {
-			...promisePlugin.configs['flat/recommended'].rules,
 			'newline-before-return': 'error',
 			'require-await': 'error',
 			'no-return-assign': 'error',
