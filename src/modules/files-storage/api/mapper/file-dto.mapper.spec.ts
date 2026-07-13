@@ -1,5 +1,5 @@
 import { createMock } from '@golevelup/ts-jest';
-import { AxiosResponse } from 'axios';
+import { type AxiosResponse } from 'axios';
 import { Readable } from 'node:stream';
 import { FileDto, StorageType } from '../../domain';
 import { busboyFileInfoTestFactory } from '../../testing';

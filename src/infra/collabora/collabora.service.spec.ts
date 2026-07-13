@@ -1,12 +1,12 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { HttpService } from '@nestjs/axios';
 import { InternalServerErrorException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { axiosResponseFactory } from '@testing/factory/axios-response.factory';
 import { AxiosError } from 'axios';
 import { of, throwError } from 'rxjs';
-import { COLLABORA_CONFIG_TOKEN, CollaboraConfig } from './collabora.config';
+import { COLLABORA_CONFIG_TOKEN, type CollaboraConfig } from './collabora.config';
 import { CollaboraService } from './collabora.service';
 
 describe('CollaboraService', () => {

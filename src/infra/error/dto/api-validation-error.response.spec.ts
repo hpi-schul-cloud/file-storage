@@ -1,6 +1,6 @@
-import { HttpStatus, ValidationError } from '@nestjs/common';
-import { ApiValidationError } from '../domain/api-validation.error';
-import { ApiValidationErrorResponse } from './api-validation-error.response';
+import { HttpStatus, type ValidationError } from '@nestjs/common';
+import { ApiValidationError } from '../domain';
+import { ApiValidationErrorResponseFactory } from '../factory';
 
 describe('ApiValidationErrorResponse', () => {
 	describe('when creating an api validation error response', () => {
@@ -44,7 +44,7 @@ describe('ApiValidationErrorResponse', () => {
 			];
 			const error = new ApiValidationError(validationErrors);
 
-			const errorDto = new ApiValidationErrorResponse(error);
+			const errorDto = ApiValidationErrorResponseFactory.fromApiValidationError(error);
 
 			expect(errorDto).toEqual({
 				type: 'API_VALIDATION_ERROR',

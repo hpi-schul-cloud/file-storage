@@ -1,12 +1,12 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
-import { ApiValidationError } from '@infra/error';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { type ApiValidationError } from '@infra/error';
+import { type S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
-import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { HttpStatus, type INestApplication } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, StorageLocation } from '../../../domain';

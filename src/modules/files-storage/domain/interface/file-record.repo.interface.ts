@@ -1,9 +1,9 @@
-import { FindOptions } from '@shared/domain/interface';
-import { Counted, EntityId } from '@shared/domain/types';
-import { FileRecord } from '../file-record.do';
-import { StorageType } from '../storage-paths.const';
-import { ParentStatistic } from '../vo';
-import { StorageLocation } from './storage-location.enum';
+import { type FindOptions } from '@shared/domain/interface';
+import { type Counted, type EntityId } from '@shared/domain/types';
+import { type FileRecord } from '../file-record.do';
+import { type StorageType } from '../storage-paths.const';
+import { type ParentStatistic } from '../vo';
+import { type StorageLocation } from './storage-location.enum';
 
 export interface FileRecordRepo {
 	findOneById(id: EntityId): Promise<FileRecord>;

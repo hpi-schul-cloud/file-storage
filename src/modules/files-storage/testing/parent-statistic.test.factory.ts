@@ -1,5 +1,5 @@
-import { DeepPartial } from 'fishery';
-import { ParentStatistic, ParentStatisticFactory, ParentStatisticProps } from '../domain';
+import { type DeepPartial } from 'fishery';
+import { type ParentStatistic, ParentStatisticFactory, type ParentStatisticProps } from '../domain';
 
 class ParentStatisticTestFactory {
 	private sequence = Math.floor(Math.random() * 1000);

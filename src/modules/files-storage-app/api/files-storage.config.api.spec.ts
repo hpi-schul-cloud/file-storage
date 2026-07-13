@@ -1,9 +1,9 @@
 import { createMock } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { type S3ClientAdapter } from '@infra/s3-client';
 import { FILES_STORAGE_S3_CONNECTION } from '@modules/files-storage';
-import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { HttpStatus, type INestApplication } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FilesStorageTestModule } from '../testing';

@@ -6,34 +6,34 @@ import {
 	GetBucketLifecycleConfigurationCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
-	HeadObjectCommandOutput,
-	LifecycleRule,
+	type HeadObjectCommandOutput,
+	type LifecycleRule,
 	ListObjectsV2Command,
-	ListObjectsV2CommandOutput,
+	type ListObjectsV2CommandOutput,
 	PutBucketLifecycleConfigurationCommand,
-	PutBucketLifecycleConfigurationCommandInput,
-	PutObjectCommandInput,
-	S3Client,
-	ServiceOutputTypes,
+	type PutBucketLifecycleConfigurationCommandInput,
+	type PutObjectCommandInput,
+	type S3Client,
+	type ServiceOutputTypes,
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { DomainErrorHandler } from '@infra/error';
+import { type DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
-import { Logger } from '@infra/logger';
-import { InternalServerErrorException, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { type Logger } from '@infra/logger';
+import { InternalServerErrorException, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'node:stream';
 import { BatchOperationResultFactory } from './batch-operation-result.factory';
 import {
-	BatchOperationResult,
-	BatchOperationResultFailure,
-	CopyFiles,
-	File,
-	FolderLifecycleRule,
-	GetFile,
-	ListFiles,
-	ObjectKeysRecursive,
-	S3Config,
+	type BatchOperationResult,
+	type BatchOperationResultFailure,
+	type CopyFiles,
+	type File,
+	type FolderLifecycleRule,
+	type GetFile,
+	type ListFiles,
+	type ObjectKeysRecursive,
+	type S3Config,
 } from './interface';
 import { S3ClientActionLoggable } from './loggable';
 

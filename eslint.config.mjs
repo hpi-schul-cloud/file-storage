@@ -2,7 +2,9 @@ import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
 import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import checkFile from 'eslint-plugin-check-file';
 import jest from 'eslint-plugin-jest';
+import noOnlyTests from 'eslint-plugin-no-only-tests';
 import globals from 'globals';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +25,9 @@ export default [
 	{
 		plugins: {
 			'@typescript-eslint': typescriptEslintEslintPlugin,
+			'check-file': checkFile,
 			jest,
+			'no-only-tests': noOnlyTests,
 		},
 
 		languageOptions: {
@@ -86,6 +90,12 @@ export default [
 					allowSingleExtends: true,
 				},
 			],
+			'check-file/filename-naming-convention': [
+				'error',
+				{ '**/*.ts': 'KEBAB_CASE' },
+				{ ignoreMiddleExtensions: true },
+			],
+			'no-only-tests/no-only-tests': 'error',
 		},
 	},
 	{
@@ -93,6 +103,7 @@ export default [
 
 		plugins: {
 			jest,
+			'no-only-tests': noOnlyTests,
 		},
 
 		languageOptions: {
@@ -138,6 +149,63 @@ export default [
 		],
 		rules: {
 			'max-classes-per-file': ['error', 2],
+		},
+	},
+	{
+		files: ['**/*.dto.ts', '**/*.params.ts', '**/*.response.ts', '**/*.query.ts', '**/*.body.ts'],
+		rules: {
+			'@typescript-eslint/explicit-member-accessibility': [
+				'error',
+				{
+					accessibility: 'no-public',
+					overrides: {
+						accessors: 'no-public',
+						constructors: 'no-public',
+						methods: 'no-public',
+						properties: 'no-public',
+						parameterProperties: 'no-public',
+					},
+				},
+			],
+			'no-restricted-syntax': [
+				'error',
+				{
+					selector: 'MethodDefinition[kind="method"]',
+					message: 'Methods are not allowed in DTOs. DTOs should only be data holders.',
+				},
+			],
+		},
+	},
+	{
+		files: ['src/infra/**'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						{
+							group: ['@modules/**'],
+							message: 'Imports from @modules are not allowed in infra.',
+						},
+					],
+				},
+			],
+		},
+	},
+	{
+		files: ['src/modules/**'],
+		rules: {
+			'no-restricted-imports': [
+				'warn',
+				{
+					patterns: [
+						{
+							group: ['@modules/*/**', '!@modules/*/testing', '!@modules/*/testing/**'],
+							message: 'Do not deep import from a module. Import from the module index instead.',
+						},
+					],
+				},
+			],
 		},
 	},
 ];

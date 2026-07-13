@@ -1,12 +1,12 @@
 import { PreviewInputMimeTypes } from '@infra/preview-generator';
 import { BadRequestException } from '@nestjs/common';
-import { AuthorizableObject, DomainObject } from '@shared/domain/domain-object';
-import { EntityId } from '@shared/domain/types';
+import { type AuthorizableObject, DomainObject } from '@shared/domain/domain-object';
+import { type EntityId } from '@shared/domain/types';
 import path from 'node:path';
 import { ErrorType } from './error';
-import { FileRecordParentType, StorageLocation } from './interface';
+import { type FileRecordParentType, type StorageLocation } from './interface';
 import { FolderExpirationDays, StorageType } from './storage-paths.const';
-import { FileRecordSecurityCheck, FileRecordSecurityCheckProps, ScanStatus } from './vo';
+import { FileRecordSecurityCheck, type FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
 export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',

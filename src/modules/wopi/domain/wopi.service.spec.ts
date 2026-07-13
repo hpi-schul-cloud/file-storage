@@ -1,10 +1,10 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { FilesStorageService, ScanStatus } from '@modules/files-storage';
 import { fileRecordTestFactory, GetFileResponseTestFactory } from '@modules/files-storage/testing';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { Readable } from 'node:stream';
-import { WOPI_CONFIG_TOKEN, WopiConfig } from '../wopi.config';
+import { WOPI_CONFIG_TOKEN, type WopiConfig } from '../wopi.config';
 import { WopiService } from './wopi.service';
 
 describe('WopiService', () => {

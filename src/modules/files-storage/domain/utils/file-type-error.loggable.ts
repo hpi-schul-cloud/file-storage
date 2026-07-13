@@ -1,4 +1,4 @@
-import { Loggable, LogMessage } from '@infra/logger';
+import { type Loggable, type LogMessage } from '@infra/logger';
 
 export class FileTypeErrorLoggable implements Loggable {
 	constructor(private readonly message: string) {}

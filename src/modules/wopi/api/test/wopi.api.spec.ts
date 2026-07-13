@@ -1,13 +1,13 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import {
 	accessTokenPayloadResponseTestFactory,
 	accessTokenResponseTestFactory,
 } from '@infra/authorization-client/testing';
 import { CollaboraService } from '@infra/collabora';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { type S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
-import { FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '@modules/files-storage';
+import { FILES_STORAGE_S3_CONNECTION, type FileStorageConfig } from '@modules/files-storage';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing';
 import { ScanStatus } from '@modules/files-storage/domain';
 import { FILE_STORAGE_CONFIG_TOKEN } from '@modules/files-storage/files-storage.config';
@@ -17,7 +17,7 @@ import {
 	fileRecordSecurityCheckEmbeddableFactory,
 	GetFileResponseTestFactory,
 } from '@modules/files-storage/testing';
-import { ForbiddenException, INestApplication, InternalServerErrorException } from '@nestjs/common';
+import { ForbiddenException, type INestApplication, InternalServerErrorException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { TestApiClient } from '@testing/test-api-client';
 import mock from 'mock-fs';
@@ -29,8 +29,8 @@ import {
 	wopiAccessTokenParamsTestFactory,
 	wopiPayloadTestFactory,
 } from '../../testing';
-import { WOPI_CONFIG_TOKEN, WopiConfig } from '../../wopi.config';
-import { EditorMode, WopiFileInfoResponse } from '../dto';
+import { WOPI_CONFIG_TOKEN, type WopiConfig } from '../../wopi.config';
+import { EditorMode, type WopiFileInfoResponse } from '../dto';
 
 jest.mock('../../../files-storage/domain/utils/detect-mime-type.utils');
 

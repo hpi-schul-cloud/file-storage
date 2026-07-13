@@ -1,8 +1,8 @@
-import { EntityId } from '@shared/domain/types';
+import { type EntityId } from '@shared/domain/types';
 import type { Readable } from 'node:stream';
-import { FileRecord, PreviewOutputMimeTypes } from '../file-record.do';
-import { PreviewWidth } from './preview-width.enum';
-import { StorageLocation } from './storage-location.enum';
+import { type FileRecord, type PreviewOutputMimeTypes } from '../file-record.do';
+import { type PreviewWidth } from './preview-width.enum';
+import { type StorageLocation } from './storage-location.enum';
 
 export interface GetFileResponse {
 	data: Readable;

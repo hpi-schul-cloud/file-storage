@@ -1,6 +1,6 @@
-import { ErrorLogMessage, Loggable } from '@infra/logger';
+import { type ErrorLogMessage, type Loggable } from '@infra/logger';
 import { UnprocessableEntityException } from '@nestjs/common';
-import { PreviewFileOptions } from '../interface';
+import { type PreviewFileOptions } from '../interface';
 import { ErrorType } from '../interface/error-status.enum';
 
 export class PreviewNotPossibleException extends UnprocessableEntityException implements Loggable {

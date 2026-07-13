@@ -1,7 +1,7 @@
-import { LogMessage, Loggable } from '@infra/logger';
-import { EntityId } from '@shared/domain/types';
-import { FileRecord } from '../file-record.do';
-import { ParentInfo } from '../interface';
+import { type LogMessage, type Loggable } from '@infra/logger';
+import { type EntityId } from '@shared/domain/types';
+import { type FileRecord } from '../file-record.do';
+import { type ParentInfo } from '../interface';
 
 interface FileStorageActionsLoggableParams {
 	action: string;

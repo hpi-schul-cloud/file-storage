@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthGuardModule, AuthGuardOptions } from './auth-guard.module';
 import { JwtStrategy, XApiKeyStrategy } from './strategy';
 

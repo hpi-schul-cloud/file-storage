@@ -1,16 +1,20 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { type S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { ForbiddenException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { Test, type TestingModule } from '@nestjs/testing';
+import {
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	type FileStorageConfig,
+} from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory } from '../factory';
-import { CopyFileResult, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { type CopyFileResult, FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 

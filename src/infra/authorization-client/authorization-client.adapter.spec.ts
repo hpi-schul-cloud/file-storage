@@ -1,22 +1,22 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { generateNanoId } from '@infra/authorization-client/testing';
 import { AxiosErrorLoggable } from '@infra/error/loggable';
 import { REQUEST } from '@nestjs/core';
-import { Test, TestingModule } from '@nestjs/testing';
-import { AxiosResponse } from 'axios';
-import { Request } from 'express';
+import { Test, type TestingModule } from '@nestjs/testing';
+import { type AxiosResponse } from 'axios';
+import { type Request } from 'express';
 import { randomBytes } from 'node:crypto';
 import {
-	AccessTokenPayloadResponse,
-	AccessTokenResponse,
+	type AccessTokenPayloadResponse,
+	type AccessTokenResponse,
 	AuthorizationApi,
-	AuthorizationBodyParams,
+	type AuthorizationBodyParams,
 	AuthorizationBodyParamsReferenceType,
 	AuthorizationContextParamsAction,
 	AuthorizationContextParamsRequiredPermissions,
-	AuthorizationManyReferencesBodyParams,
-	AuthorizedByReferenceResponse,
-	AuthorizedResponse,
+	type AuthorizationManyReferencesBodyParams,
+	type AuthorizedByReferenceResponse,
+	type AuthorizedResponse,
 } from './authorization-api-client';
 import { AuthorizationClientAdapter } from './authorization-client.adapter';
 import {
@@ -26,7 +26,7 @@ import {
 	AuthorizationManyReferencesForbiddenLoggableException,
 	ResolveTokenErrorLoggableException,
 } from './error';
-import { AccessToken, ReferenceAuthorizationInfo } from './vo';
+import { AccessToken, type ReferenceAuthorizationInfo } from './vo';
 
 jest.mock('@infra/error/loggable');
 

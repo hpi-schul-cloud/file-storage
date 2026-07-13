@@ -1,7 +1,7 @@
-import { ErrorLogMessage } from '@infra/logger';
-import { Loggable } from '@infra/logger/interfaces';
+import { type ErrorLogMessage } from '@infra/logger';
+import { type Loggable } from '@infra/logger/interfaces';
 import { ForbiddenException } from '@nestjs/common';
-import { ReferenceAuthorizationInfo } from '../vo';
+import { type ReferenceAuthorizationInfo } from '../vo';
 
 export class AuthorizationManyReferencesForbiddenLoggableException extends ForbiddenException implements Loggable {
 	constructor(private readonly references: ReferenceAuthorizationInfo[]) {

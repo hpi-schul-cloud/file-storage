@@ -1,4 +1,4 @@
-import { Dictionary, IPrimaryKey } from '@mikro-orm/mongodb';
+import { type Dictionary, type IPrimaryKey } from '@mikro-orm/mongodb';
 import { NotFoundException } from '@nestjs/common';
 
 export const findOneOrFailHandler = (entityName: string, where: Dictionary | IPrimaryKey): NotFoundException =>

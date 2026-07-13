@@ -1,5 +1,5 @@
 import { Factory } from 'fishery';
-import { ObjectKeysRecursive } from '../interface';
+import { type ObjectKeysRecursive } from '../interface';
 
 export const s3ObjectKeysRecursiveFactory = Factory.define<ObjectKeysRecursive>(({ sequence }) => {
 	const object: ObjectKeysRecursive = {

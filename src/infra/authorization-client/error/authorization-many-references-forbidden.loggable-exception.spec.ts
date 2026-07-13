@@ -1,5 +1,5 @@
 import { AuthorizationBodyParamsReferenceType } from '../authorization-api-client';
-import { ReferenceAuthorizationInfo } from '../vo';
+import { type ReferenceAuthorizationInfo } from '../vo';
 import { AuthorizationManyReferencesForbiddenLoggableException } from './authorization-many-references-forbidden.loggable-exception';
 
 describe('AuthorizationManyReferencesForbiddenLoggableException', () => {

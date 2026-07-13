@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { BaseFactory } from '@testing/factory/base.factory';
-import { JwtPayload } from '../interface';
+import { type JwtPayload } from '../interface';
 
 class JwtPayloadImpl implements JwtPayload {
 	accountId: string;

@@ -1,5 +1,5 @@
 import { generateNanoId } from '@infra/authorization-client/testing';
-import { AuthorizedCollaboraDocumentUrl } from '../domain';
+import { type AuthorizedCollaboraDocumentUrl } from '../domain';
 
 class AuthorizedCollaboraDocumentUrlTestFactory {
 	private readonly props: AuthorizedCollaboraDocumentUrl = {

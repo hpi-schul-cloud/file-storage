@@ -1,5 +1,5 @@
-import { AccessToken } from '@infra/authorization-client';
-import { EntityId } from '@shared/domain/types';
+import { type AccessToken } from '@infra/authorization-client';
+import { type EntityId } from '@shared/domain/types';
 import { AuthorizedCollaboraDocumentUrl } from '../vo';
 
 export class AuthorizedCollaboraDocumentUrlFactory {

@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { RabbitMQWrapperTestModule } from '../rabbitmq';
 import { AntivirusModule } from './antivirus.module';
 import { AntivirusService } from './antivirus.service';

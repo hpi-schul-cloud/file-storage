@@ -1,7 +1,7 @@
-import { DeepPartial } from 'fishery';
+import { type DeepPartial } from 'fishery';
 import { PassThrough } from 'node:stream';
-import { FileDto } from '../domain';
-import { PassThroughFileDto } from '../domain/dto';
+import { type FileDto } from '../domain';
+import { type PassThroughFileDto } from '../domain/dto';
 import { PassThroughFileDtoFactory } from '../domain/factory';
 import { fileDtoTestFactory } from './file-dto.test.factory';
 

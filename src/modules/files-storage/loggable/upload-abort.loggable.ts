@@ -1,4 +1,4 @@
-import { LogMessage, Loggable } from '@infra/logger';
+import { type LogMessage, type Loggable } from '@infra/logger';
 
 export class UploadAbortLoggable implements Loggable {
 	constructor(

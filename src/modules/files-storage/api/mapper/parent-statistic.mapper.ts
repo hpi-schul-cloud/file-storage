@@ -1,5 +1,5 @@
-import { ParentStatistic } from '../../domain';
-import { ParentStatisticResponse } from '../dto';
+import { type ParentStatistic } from '../../domain';
+import { type ParentStatisticResponse } from '../dto';
 
 export class ParentStatisticMapper {
 	public static toParentStatisticResponse(parentStatistic: ParentStatistic): ParentStatisticResponse {

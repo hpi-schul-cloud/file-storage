@@ -1,4 +1,4 @@
-import { FileRecord } from '@modules/files-storage/domain';
+import { type FileRecord } from '@modules/files-storage/domain';
 import { InternalServerErrorException } from '@nestjs/common';
 import { PutFileResponse } from '../dto';
 

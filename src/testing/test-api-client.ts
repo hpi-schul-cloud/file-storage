@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { type INestApplication } from '@nestjs/common';
 import type { Server } from 'node:net';
 import supertest from 'supertest';
 import { currentUserFactory, type CurrentUser } from './factory/currentuser.factory';

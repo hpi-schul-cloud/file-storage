@@ -1,6 +1,6 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { currentUserFactory } from '@testing/factory/currentuser.factory';
-import { CreateJwtPayload } from '../interface';
+import { type CreateJwtPayload } from '../interface';
 import { JwtPayloadFactory } from './jwt.factory';
 
 describe('JwtPayloadFactory', () => {

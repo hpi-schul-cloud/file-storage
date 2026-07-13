@@ -1,11 +1,11 @@
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { Logger } from '@infra/logger';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { ErrorMapper } from '../rabbitmq';
 import { FilesPreviewEvents, FilesPreviewExchange } from './files-preview.exchange';
-import { PreviewFileOptions } from './interface';
-import { PREVIEW_GENERATOR_CONFIG_TOKEN, PreviewGeneratorConfig } from './preview-generator.config';
+import { type PreviewFileOptions } from './interface';
+import { PREVIEW_GENERATOR_CONFIG_TOKEN, type PreviewGeneratorConfig } from './preview-generator.config';
 import { PreviewProducer } from './preview.producer';
 
 describe('PreviewProducer', () => {

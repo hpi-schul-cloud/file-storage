@@ -1,4 +1,4 @@
-import { ErrorLogMessage, Loggable } from '@infra/logger';
+import { type ErrorLogMessage, type Loggable } from '@infra/logger';
 
 export class RpcTimeoutException extends Error implements Loggable {
 	constructor(private readonly error?: Error) {

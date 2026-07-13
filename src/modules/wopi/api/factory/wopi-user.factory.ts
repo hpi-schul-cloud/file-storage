@@ -1,5 +1,5 @@
-import { EntityId } from '@shared/domain/types';
-import { WopiPayload } from '../../domain';
+import { type EntityId } from '@shared/domain/types';
+import { type WopiPayload } from '../../domain';
 
 export interface WopiUser {
 	id: EntityId;

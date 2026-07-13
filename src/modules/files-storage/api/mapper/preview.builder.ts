@@ -1,7 +1,7 @@
-import { EntityId } from '@shared/domain/types';
+import { type EntityId } from '@shared/domain/types';
 import crypto from 'node:crypto';
-import { FileRecord, PreviewFileParams } from '../../domain';
-import { PreviewParams } from '../dto';
+import { FileRecord, type PreviewFileParams } from '../../domain';
+import { type PreviewParams } from '../dto';
 
 export class PreviewBuilder {
 	public static buildParams(

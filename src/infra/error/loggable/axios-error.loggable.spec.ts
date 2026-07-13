@@ -1,5 +1,5 @@
 import { axiosErrorFactory } from '@testing/factory/axios-error.factory';
-import { AxiosError } from 'axios';
+import { type AxiosError } from 'axios';
 import { AxiosErrorLoggable } from './axios-error.loggable';
 
 describe(AxiosErrorLoggable.name, () => {

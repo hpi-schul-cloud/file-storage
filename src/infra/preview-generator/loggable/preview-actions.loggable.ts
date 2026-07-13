@@ -1,5 +1,5 @@
-import { LogMessage, Loggable } from '@infra/logger';
-import { PreviewFileOptions } from '../interface';
+import { type LogMessage, type Loggable } from '@infra/logger';
+import { type PreviewFileOptions } from '../interface';
 
 export class PreviewActionsLoggable implements Loggable {
 	constructor(

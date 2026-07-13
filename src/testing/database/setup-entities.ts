@@ -1,4 +1,4 @@
-import { AnyEntity, EntityClass, MikroORM } from '@mikro-orm/mongodb';
+import { type AnyEntity, type EntityClass, MikroORM } from '@mikro-orm/mongodb';
 
 /**
  * Test-Setup to make all entities available without a database connection.

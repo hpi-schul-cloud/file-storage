@@ -1,10 +1,10 @@
-import { Loggable, LogMessage } from '@infra/logger';
+import { type Loggable, type LogMessage } from '@infra/logger';
 import {
-	FileRecordIdentifier,
-	MultipleFileRecordIdentifier,
-	ParentIdentifier,
+	type FileRecordIdentifier,
+	type MultipleFileRecordIdentifier,
+	type ParentIdentifier,
 } from '@shared/domain/interface/file-record.interface';
-import { Request } from 'express';
+import { type Request } from 'express';
 
 type AllowedProperties = keyof FileRecordIdentifier | keyof MultipleFileRecordIdentifier | keyof ParentIdentifier;
 

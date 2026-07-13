@@ -1,13 +1,13 @@
-import { S3Client, S3ServiceException } from '@aws-sdk/client-s3';
+import { type S3Client, S3ServiceException } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
-import { DeepMocked, createMock } from '@golevelup/ts-jest';
-import { DomainErrorHandler } from '@infra/error';
+import { type DeepMocked, createMock } from '@golevelup/ts-jest';
+import { type DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
-import { Logger } from '@infra/logger';
+import { type Logger } from '@infra/logger';
 import { HttpException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PassThrough, Readable } from 'node:stream';
 import { BatchOperationResultFactory } from './batch-operation-result.factory';
-import { File, FolderLifecycleRule, S3Config } from './interface';
+import { type File, type FolderLifecycleRule, type S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 import { createListObjectsV2CommandOutput, createS3Error } from './testing';
 

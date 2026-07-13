@@ -1,4 +1,4 @@
-import { Loggable, LogMessage, LogMessageData } from '@infra/logger';
+import { type Loggable, type LogMessage, type LogMessageData } from '@infra/logger';
 
 interface AppStartInfo {
 	appName: string;

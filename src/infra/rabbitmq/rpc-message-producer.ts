@@ -1,7 +1,7 @@
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import { type AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { ErrorMapper } from './error.mapper';
 import { RpcTimeoutException } from './loggable';
-import { RpcMessage } from './rpc-message';
+import { type RpcMessage } from './rpc-message';
 
 export abstract class RpcMessageProducer {
 	constructor(

@@ -1,23 +1,23 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { type S3ClientAdapter } from '@infra/s3-client';
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
-import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { type INestApplication } from '@nestjs/common';
+import { Test, type TestingModule } from '@nestjs/testing';
 
 import { AuthorizationClientAdapter } from '@infra/authorization-client';
 import { AuthorizationManyReferencesForbiddenLoggableException } from '@infra/authorization-client/error';
-import { ApiValidationError } from '@infra/error';
+import { type ApiValidationError } from '@infra/error';
 import { FilesStorageTestModule } from '@modules/files-storage-app/testing/files-storage.test.module';
 import { FileRecordEntity } from '@modules/files-storage/repo';
-import { EntityId } from '@shared/domain/types';
+import { type EntityId } from '@shared/domain/types';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
 import { FileRecordParentType, PreviewStatus } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import { FILES_STORAGE_S3_CONNECTION } from '../../../files-storage.config';
 import { fileRecordEntityFactory } from '../../../testing';
-import { FileRecordListResponse, FileRecordResponse } from '../../dto';
+import { type FileRecordListResponse, type FileRecordResponse } from '../../dto';
 import { availableParentTypes } from './mocks';
 
 const baseRouteName = '/file';

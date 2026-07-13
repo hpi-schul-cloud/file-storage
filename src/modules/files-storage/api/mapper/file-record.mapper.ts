@@ -1,5 +1,15 @@
-import { FileRecord, FileRecordStatus, FileRecordWithStatus, StorageLocationParams } from '../../domain';
-import { DeleteByStorageLocationResponse, FileRecordListResponse, FileRecordResponse, PaginationParams } from '../dto';
+import {
+	type FileRecord,
+	type FileRecordStatus,
+	type FileRecordWithStatus,
+	type StorageLocationParams,
+} from '../../domain';
+import {
+	DeleteByStorageLocationResponse,
+	FileRecordListResponse,
+	FileRecordResponse,
+	type PaginationParams,
+} from '../dto';
 
 export class FileRecordMapper {
 	public static mapToFileRecordResponse(fileRecord: FileRecord, status: FileRecordStatus): FileRecordResponse {

@@ -1,6 +1,6 @@
 export class ValidationErrorDetailResponse {
 	constructor(
-		public readonly field: string[],
-		public readonly errors: string[]
+		readonly field: string[],
+		readonly errors: string[]
 	) {}
 }

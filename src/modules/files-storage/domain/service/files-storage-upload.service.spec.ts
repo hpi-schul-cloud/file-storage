@@ -1,28 +1,32 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { AntivirusService } from '@infra/antivirus';
 import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
-import { S3ClientAdapter } from '@infra/s3-client';
+import { type S3ClientAdapter } from '@infra/s3-client';
 import {
 	BadRequestException,
 	ConflictException,
 	ForbiddenException,
 	InternalServerErrorException,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
-import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import {
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	type FileStorageConfig,
+} from '../../files-storage.config';
 import {
 	fileDtoTestFactory,
 	fileRecordTestFactory,
 	ParentInfoTestFactory,
 	passThroughFileDtoTestFactory,
 } from '../../testing';
-import { FileDto } from '../dto';
+import { type FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { DocumentType, FILE_RECORD_REPO, FileRecordRepo } from '../interface';
+import { DocumentType, FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
 import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import * as documentReaderUtils from '../utils/document-reader.utils';

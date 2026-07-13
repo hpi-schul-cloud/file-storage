@@ -1,4 +1,4 @@
-import { EntityId } from '@shared/domain/types';
+import { type EntityId } from '@shared/domain/types';
 
 /**
  * Base interface for parameters that reference a file record

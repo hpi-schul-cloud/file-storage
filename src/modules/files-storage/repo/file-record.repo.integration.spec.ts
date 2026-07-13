@@ -1,6 +1,6 @@
 import { EntityManager, ObjectId } from '@mikro-orm/mongodb';
 import { NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { cleanupCollections, MongoMemoryDatabaseModule } from '@testing/database';
 import { FileRecord, FileRecordParentType, StorageLocation, StorageType } from '../domain';
 import { TEST_ENTITIES } from '../files-storage.entity.imports';

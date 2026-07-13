@@ -1,6 +1,6 @@
-import { Readable } from 'node:stream';
+import { type Readable } from 'node:stream';
 import { FileDto } from '../dto';
-import { StorageType } from '../storage-paths.const';
+import { type StorageType } from '../storage-paths.const';
 
 export class FileDtoFactory {
 	public static create(

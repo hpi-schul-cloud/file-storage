@@ -1,10 +1,10 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { ConfiguredRetryStrategy, RETRY_MODES } from '@aws-sdk/util-retry';
-import { DomainErrorHandler } from '@infra/error';
-import { Logger } from '@infra/logger';
+import { type DomainErrorHandler } from '@infra/error';
+import { type Logger } from '@infra/logger';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { Agent } from 'node:https';
-import { FolderLifecycleRule, S3Config } from './interface';
+import { type FolderLifecycleRule, type S3Config } from './interface';
 import { S3ClientAdapter } from './s3-client.adapter';
 
 export class S3ClientFactory {

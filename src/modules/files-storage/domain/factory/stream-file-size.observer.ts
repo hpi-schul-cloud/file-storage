@@ -1,4 +1,4 @@
-import { PassThrough } from 'node:stream';
+import { type PassThrough } from 'node:stream';
 
 interface HasFileSizeAndPassThrough {
 	fileSize: number;

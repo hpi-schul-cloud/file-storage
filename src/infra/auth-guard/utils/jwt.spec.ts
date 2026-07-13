@@ -1,8 +1,8 @@
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { createMock, type DeepMocked } from '@golevelup/ts-jest';
 import { UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
+import { type Request } from 'express';
 import { randomBytes } from 'node:crypto';
-import { JwtFromRequestFunction } from 'passport-jwt';
+import { type JwtFromRequestFunction } from 'passport-jwt';
 import { JwtExtractor } from './jwt';
 
 describe('JwtExtractor', () => {
