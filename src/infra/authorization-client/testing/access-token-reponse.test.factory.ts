@@ -1,5 +1,5 @@
 import type { AccessTokenResponse } from '../authorization-api-client/models/access-token-response';
-import { generateNanoId } from '../testing';
+import { generateNanoId } from './nanoid.test.factory';
 
 class AccessTokenResponseTestFactory {
 	private readonly props: AccessTokenResponse = {
