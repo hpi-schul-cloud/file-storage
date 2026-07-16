@@ -111,3 +111,20 @@
     when: WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool
     tags:
       - ingress
+
+  - name: Add file-storage default allow network policy
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: default-allow-networkpolicy.yml.j2
+    tags:
+      - networkPolicy
+
+  - name: Apply Filestorage egress network policy
+    kubernetes.core.k8s:
+      kubeconfig: ~/.kube/config
+      namespace: "{{ NAMESPACE }}"
+      template: network-policy.yml.j2
+      state: "{{ 'present' if WITH_FILESTORAGE is defined and WITH_FILESTORAGE|bool else 'absent' }}"
+    tags:
+      - networkPolicy
