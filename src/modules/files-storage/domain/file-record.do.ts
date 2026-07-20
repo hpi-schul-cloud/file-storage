@@ -4,7 +4,8 @@ import { type AuthorizableObject, DomainObject } from '@shared/domain/domain-obj
 import { type EntityId } from '@shared/domain/types';
 import path from 'node:path';
 import { ErrorType } from './error';
-import { type FileRecordParentType, type StorageLocation } from './interface';
+import { type FileRecordParentType } from './interface/file-storage-parent-type.enum';
+import { type StorageLocation } from './interface/storage-location.enum';
 import { FolderExpirationDays, StorageType } from './storage-paths.const';
 import { FileRecordSecurityCheck, type FileRecordSecurityCheckProps, ScanStatus } from './vo';
 

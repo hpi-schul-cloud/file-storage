@@ -100,4 +100,4 @@ jobs:
       - name: Build
         run: npm run build
       - name: Check circular dependencies
-        run: npx madge@latest --circular .
+        run: npx madge@latest src --circular --extensions ts --ts-config tsconfig.json

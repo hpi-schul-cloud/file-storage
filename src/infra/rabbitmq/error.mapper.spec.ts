@@ -1,4 +1,3 @@
-import { type RpcError } from '@infra/rabbitmq';
 import {
 	BadRequestException,
 	ConflictException,
@@ -7,6 +6,7 @@ import {
 	UnprocessableEntityException,
 } from '@nestjs/common';
 import { ErrorMapper } from './error.mapper';
+import { type RpcError } from './rpc-message';
 
 describe('ErrorMapper', () => {
 	describe('mapErrorToDomainError', () => {
