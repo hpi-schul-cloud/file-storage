@@ -96,4 +96,4 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Check circular dependencies
-        run: npx madge@latest src --circular --extensions ts --ts-config tsconfig.json
+        run: npx madge@latest src scripts --circular --extensions ts --ts-config tsconfig.json
