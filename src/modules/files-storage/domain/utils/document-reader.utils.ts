@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { type FileDto } from '../dto';
-import { FileDtoFactory } from '../factory/file-dto.factory';
+import { FileDtoFactory } from '../factory';
 import { DocumentType } from '../interface';
 import { StorageType } from '../storage-paths.const';
 
