@@ -239,7 +239,7 @@ export class FilesStorageService {
 	}
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
-		StreamFileSizeObserver.observe(file);
+		StreamFileSizeObserver.observe(file, this.config.filesStorageMaxFileSize);
 		await this.uploadAndScan(fileRecord, file);
 		await this.throwOnIncompleteStream(file);
 

@@ -20,7 +20,7 @@ import { Upload } from '@aws-sdk/lib-storage';
 import { type DomainErrorHandler } from '@infra/error';
 import { ErrorUtils } from '@infra/error/utils';
 import { type Logger } from '@infra/logger';
-import { InternalServerErrorException, NotFoundException, type OnModuleInit } from '@nestjs/common';
+import { HttpException, InternalServerErrorException, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { TypeGuard } from '@shared/guard';
 import { PassThrough, Readable } from 'node:stream';
 import { BatchOperationResultFactory } from './batch-operation-result.factory';
@@ -665,6 +665,9 @@ export class S3ClientAdapter implements OnModuleInit {
 			await this.createBucket();
 
 			return await this.create(path, file);
+		}
+		if (err instanceof HttpException) {
+			throw err;
 		}
 
 		throw new InternalServerErrorException('S3ClientAdapter:create', ErrorUtils.createHttpExceptionOptions(err));
