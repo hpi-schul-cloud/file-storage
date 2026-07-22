@@ -1,79 +1,22 @@
 import { PreviewInputMimeTypes } from '@infra/preview-generator';
 import { BadRequestException } from '@nestjs/common';
-import { type AuthorizableObject, DomainObject } from '@shared/domain/domain-object';
+import { DomainObject } from '@shared/domain/domain-object';
 import { type EntityId } from '@shared/domain/types';
 import path from 'node:path';
 import { ErrorType } from './error';
-import { type FileRecordParentType } from './interface/file-storage-parent-type.enum';
-import { type StorageLocation } from './interface/storage-location.enum';
+import {
+	CollaboraMimeTypes,
+	type FileRecordProps,
+	type ParentReference,
+	type PreviewOutputMimeTypes,
+	PreviewStatus,
+	type StorageReference,
+} from './interface';
 import { FolderExpirationDays, StorageType } from './storage-paths.const';
 import { FileRecordSecurityCheck, type FileRecordSecurityCheckProps, ScanStatus } from './vo';
 
-export enum PreviewOutputMimeTypes {
-	IMAGE_WEBP = 'image/webp',
-}
-
-export interface StorageReference {
-	storageLocationId: EntityId;
-	storageLocation: StorageLocation;
-	storageType: StorageType;
-}
-
-export interface ParentReference {
-	parentId: EntityId;
-	parentType: FileRecordParentType;
-}
-
-export enum PreviewStatus {
-	PREVIEW_POSSIBLE = 'preview_possible',
-	AWAITING_SCAN_STATUS = 'awaiting_scan_status',
-	PREVIEW_NOT_POSSIBLE_SCAN_STATUS_ERROR = 'preview_not_possible_scan_status_error',
-	PREVIEW_NOT_POSSIBLE_SCAN_STATUS_WONT_CHECK = 'preview_not_possible_scan_status_wont_check',
-	PREVIEW_NOT_POSSIBLE_SCAN_STATUS_BLOCKED = 'preview_not_possible_scan_status_blocked',
-	PREVIEW_NOT_POSSIBLE_WRONG_MIME_TYPE = 'preview_not_possible_wrong_mime_type',
-}
-
 const SECONDS_PER_DAY = 24 * 60 * 60;
 export const TEMP_FILE_EXPIRY_SECONDS = FolderExpirationDays[StorageType.TEMP] * SECONDS_PER_DAY;
-
-export enum CollaboraMimeTypes {
-	DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	DOTX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
-	DOC = 'application/msword',
-	ODT = 'application/vnd.oasis.opendocument.text',
-	RTF = 'application/rtf',
-	TXT = 'text/plain',
-	XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-	XLTX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
-	XLS = 'application/vnd.ms-excel',
-	ODS = 'application/vnd.oasis.opendocument.spreadsheet',
-	CSV = 'text/csv',
-	PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-	POTX = 'application/vnd.openxmlformats-officedocument.presentationml.template',
-	PPSX = 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
-	PPT = 'application/vnd.ms-powerpoint',
-	ODP = 'application/vnd.oasis.opendocument.presentation',
-}
-
-export interface FileRecordProps extends AuthorizableObject {
-	id: EntityId;
-	size: number;
-	name: string;
-	mimeType: string;
-	parentType: FileRecordParentType;
-	parentId: EntityId;
-	creatorId?: EntityId;
-	storageLocation: StorageLocation;
-	storageLocationId: EntityId;
-	deletedSince?: Date;
-	isCopyFrom?: EntityId;
-	isUploading?: boolean;
-	previewGenerationFailed?: boolean;
-	createdAt: Date;
-	updatedAt: Date;
-	contentLastModifiedAt?: Date;
-	storageType: StorageType;
-}
 
 export class FileRecord extends DomainObject<FileRecordProps> {
 	constructor(

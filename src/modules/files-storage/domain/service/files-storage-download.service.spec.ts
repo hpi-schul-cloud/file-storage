@@ -7,14 +7,14 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { ScanStatus } from '../../domain';
 import {
-	FILE_STORAGE_CONFIG_TOKEN,
-	FILES_STORAGE_S3_CONNECTION,
-	type FileStorageConfig,
+    FILE_STORAGE_CONFIG_TOKEN,
+    FILES_STORAGE_S3_CONNECTION,
+    type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
-import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 

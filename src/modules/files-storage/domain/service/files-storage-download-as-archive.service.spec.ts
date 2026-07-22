@@ -5,17 +5,17 @@ import { Logger } from '@infra/logger';
 import { type GetFile, type S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import {
-	FILE_STORAGE_CONFIG_TOKEN,
-	FILES_STORAGE_S3_CONNECTION,
-	type FileStorageConfig,
+    FILE_STORAGE_CONFIG_TOKEN,
+    FILES_STORAGE_S3_CONNECTION,
+    type FileStorageConfig,
 } from '@modules/files-storage/files-storage.config';
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { Archiver } from 'archiver';
 import { Readable } from 'stream';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { ArchiveFactory } from '../factory';
-import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 

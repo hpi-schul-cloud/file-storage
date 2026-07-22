@@ -1,3 +1,4 @@
+export * from './contract';
 export { FileDto } from './dto';
 export { ErrorType } from './error';
 export { FileDtoFactory, FileRecordFactory, ParentStatisticFactory } from './factory';
@@ -12,5 +13,6 @@ export {
 	FileRecordSecurityCheckProps,
 	ParentStatistic,
 	ParentStatisticProps,
-	ScanStatus,
+	ScanStatus
 } from './vo';
+

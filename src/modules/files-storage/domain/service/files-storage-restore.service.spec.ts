@@ -10,9 +10,10 @@ import {
 	type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { FilePathFactory, FileRecordFactory } from '../factory';
-import { FileRecord, type FileRecordProps } from '../file-record.do';
-import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
+import { FileRecord } from '../file-record.do';
+import { type FileRecordProps } from '../interface';
 import { FileRecordSecurityCheck, type FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 

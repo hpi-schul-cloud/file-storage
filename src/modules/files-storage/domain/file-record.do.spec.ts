@@ -2,14 +2,8 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { BadRequestException } from '@nestjs/common';
 import { fileRecordTestFactory } from '../testing';
 import { ErrorType } from './error';
-import {
-	CollaboraMimeTypes,
-	FileRecord,
-	PreviewOutputMimeTypes,
-	PreviewStatus,
-	TEMP_FILE_EXPIRY_SECONDS,
-} from './file-record.do';
-import { FileRecordParentType } from './interface';
+import { FileRecord, TEMP_FILE_EXPIRY_SECONDS } from './file-record.do';
+import { CollaboraMimeTypes, FileRecordParentType, PreviewOutputMimeTypes, PreviewStatus } from './interface';
 import { StorageType } from './storage-paths.const';
 import { ScanStatus } from './vo';
 

@@ -15,6 +15,7 @@ import { Counted, EntityId } from '@shared/domain/types';
 import type { Archiver } from 'archiver';
 import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
+import { FILE_RECORD_REPO, FileRecordRepo, FileRecordWithStatus } from '../contract';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import {
@@ -26,19 +27,14 @@ import {
 } from '../factory';
 import { FileRecord } from '../file-record.do';
 import {
+	CollaboraEditabilityStatus,
 	CopyFileResult,
 	DocumentType,
-	FILE_RECORD_REPO,
-	FileRecordRepo,
+	FileRecordStatus,
 	GetFileResponse,
 	ParentInfo,
 	StorageLocationParams,
 } from '../interface';
-import {
-	CollaboraEditabilityStatus,
-	FileRecordStatus,
-	FileRecordWithStatus,
-} from '../interface/file-record-status.interface';
 import { FileStorageActionsLoggable, StorageLocationDeleteLoggableException } from '../loggable';
 import { FileResponseFactory, ScanResultDtoMapper } from '../mapper';
 import { StorageType } from '../storage-paths.const';

@@ -6,10 +6,10 @@ import { NotFoundException, UnprocessableEntityException } from '@nestjs/common'
 import { Test, type TestingModule } from '@nestjs/testing';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from '../../testing';
+import { type PreviewFileParams } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
-import { PreviewOutputMimeTypes } from '../file-record.do';
-import { type PreviewFileParams, PreviewWidth } from '../interface';
+import { PreviewOutputMimeTypes, PreviewWidth } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';

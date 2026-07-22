@@ -11,10 +11,11 @@ import {
 	type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
-import { FileRecord, type FileRecordProps } from '../file-record.do';
-import { FILE_RECORD_REPO, type FileRecordRepo, StorageLocation } from '../interface';
+import { FileRecord } from '../file-record.do';
+import { FileRecordProps, StorageLocation } from '../interface';
 import { StorageLocationDeleteLoggableException } from '../loggable';
 import { type FileRecordSecurityCheckProps } from '../vo';
 import { FilesStorageService } from './files-storage.service';
