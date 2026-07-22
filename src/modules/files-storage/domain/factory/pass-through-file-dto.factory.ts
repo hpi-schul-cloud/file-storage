@@ -12,7 +12,6 @@ export class PassThroughFileDtoFactory {
 		storageType?: StorageType
 	): PassThroughFileDto {
 		const streamCompletion = awaitStreamCompletion(passThrough, sourceFile.abortSignal);
-		void streamCompletion.catch(() => undefined);
 		const file = new PassThroughFileDto({
 			name: newFileName ?? sourceFile.name,
 			data: passThrough,
