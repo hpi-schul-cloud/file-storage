@@ -6,8 +6,7 @@
  *********************************************************** */
 
 export { ErrorMapper } from './error.mapper';
-export { AmqpConnectionLostLoggable } from './loggable/amqp-connection-lost.loggable';
-export { RpcTimeoutException } from './loggable/rpc-timeout.exception';
+export { AmqpConnectionLostLoggable, RpcTimeoutException } from './loggable';
 export { RABBITMQ_CONFIG_TOKEN, RabbitMqConfig } from './rabbitmq.config';
 export { RabbitMQWrapperModule, RabbitMQWrapperTestModule } from './rabbitmq.module';
 export { RpcError, RpcMessage } from './rpc-message';

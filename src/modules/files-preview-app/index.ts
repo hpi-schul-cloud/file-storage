@@ -4,5 +4,3 @@
  * Do not use wildcard exports.                              *
  * Do not export *.app.module.ts here; import them directly. *
  *********************************************************** */
-
-export { PreviewGeneratorAMQPModule } from './files-preview-amqp.app.module';

@@ -4,6 +4,3 @@
  * Do not use wildcard exports.                              *
  * Do not export *.app.module.ts here; import them directly. *
  *********************************************************** */
-
-export { FilesStorageAMQPModule } from './files-storage-amqp.app.module';
-export { FilesStorageAppModule } from './files-storage.app.module';
