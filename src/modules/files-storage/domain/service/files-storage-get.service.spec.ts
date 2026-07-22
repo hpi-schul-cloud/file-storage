@@ -6,9 +6,9 @@ import { type S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
-    FILE_STORAGE_CONFIG_TOKEN,
-    FILES_STORAGE_S3_CONNECTION,
-    type FileStorageConfig,
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory, parentStatisticTestFactory } from '../../testing';
 import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';

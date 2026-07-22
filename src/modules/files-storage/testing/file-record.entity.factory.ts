@@ -1,7 +1,7 @@
 import { ObjectId } from '@mikro-orm/mongodb';
 import { EntityFactory } from '@testing/factory/entity.factory';
 import { randomInt } from 'node:crypto';
-import { type FileRecordProps } from '../domain';
+import { type FileRecordProps } from '../domain/file-record.do';
 import { FileRecordParentType, StorageLocation } from '../domain/interface';
 import { StorageType } from '../domain/storage-paths.const';
 import { FileRecordEntity } from '../repo/file-record.entity';

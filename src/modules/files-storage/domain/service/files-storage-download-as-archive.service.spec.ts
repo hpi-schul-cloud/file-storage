@@ -5,9 +5,9 @@ import { Logger } from '@infra/logger';
 import { type GetFile, type S3ClientAdapter } from '@infra/s3-client';
 import { ObjectId } from '@mikro-orm/mongodb';
 import {
-    FILE_STORAGE_CONFIG_TOKEN,
-    FILES_STORAGE_S3_CONNECTION,
-    type FileStorageConfig,
+	FILE_STORAGE_CONFIG_TOKEN,
+	FILES_STORAGE_S3_CONNECTION,
+	type FileStorageConfig,
 } from '@modules/files-storage/files-storage.config';
 import { fileRecordTestFactory } from '@modules/files-storage/testing';
 import { NotFoundException } from '@nestjs/common';

@@ -9,7 +9,8 @@ import { fileRecordTestFactory, GetFileTestFactory, ParentInfoTestFactory } from
 import { type PreviewFileParams } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
-import { PreviewOutputMimeTypes, PreviewWidth } from '../interface';
+import { PreviewOutputMimeTypes } from '../file-record.do';
+import { PreviewWidth } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';

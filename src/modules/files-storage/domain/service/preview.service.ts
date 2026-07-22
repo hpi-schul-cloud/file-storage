@@ -6,8 +6,8 @@ import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
 import { PreviewFileParams } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
-import { FileRecord } from '../file-record.do';
-import { GetFileResponse, PreviewStatus } from '../interface';
+import { FileRecord, PreviewStatus } from '../file-record.do';
+import { GetFileResponse } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseFactory, PreviewFileOptionsMapper } from '../mapper';
 

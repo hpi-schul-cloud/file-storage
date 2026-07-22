@@ -15,7 +15,7 @@ import { Counted, EntityId } from '@shared/domain/types';
 import type { Archiver } from 'archiver';
 import { PassThrough } from 'node:stream';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from '../../files-storage.config';
-import { FILE_RECORD_REPO, FileRecordRepo, FileRecordWithStatus } from '../contract';
+import { FILE_RECORD_REPO, type FileRecordRepo, type FileRecordStatus, type FileRecordWithStatus } from '../contract';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { ErrorType } from '../error';
 import {
@@ -30,7 +30,6 @@ import {
 	CollaboraEditabilityStatus,
 	CopyFileResult,
 	DocumentType,
-	FileRecordStatus,
 	GetFileResponse,
 	ParentInfo,
 	StorageLocationParams,

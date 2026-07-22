@@ -1,5 +1,5 @@
 import { type FileRecord } from '../file-record.do';
-import { type PreviewInfo } from '../interface';
+import { type PreviewInfo } from './preview-info.interface';
 
 export interface PreviewFileParams {
 	fileRecord: FileRecord;
