@@ -2,7 +2,7 @@ import type { ErrorLogMessage, Loggable, LogMessageDataObject, ValidationErrorLo
 import { type ValidationError } from '@nestjs/common';
 import { getMetadataStorage } from 'class-validator';
 import util from 'node:util';
-import { ApiValidationError } from '../domain';
+import { ApiValidationError } from '../domain/api-validation.error';
 import { ErrorUtils } from '../utils/error.utils';
 
 export class ErrorLoggable implements Loggable {

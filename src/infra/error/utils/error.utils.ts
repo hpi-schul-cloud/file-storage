@@ -1,5 +1,5 @@
 import { HttpException, type HttpExceptionOptions } from '@nestjs/common';
-import { BusinessError } from '../domain';
+import { BusinessError } from '../domain/business.error';
 
 export class ErrorUtils {
 	public static isBusinessError(error: unknown): error is BusinessError {

@@ -1,5 +1,5 @@
 import { type PreviewFileOptions } from '@infra/preview-generator';
-import { type PreviewFileParams } from '../interface';
+import { type PreviewFileParams } from '../contract';
 
 export class PreviewFileOptionsMapper {
 	public static fromPreviewFileParams(

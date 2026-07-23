@@ -13,9 +13,9 @@ import {
 	type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { ErrorType } from '../error';
 import { type FileRecord } from '../file-record.do';
-import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
 import { ScanResultDtoMapper } from '../mapper';
 import { StorageType } from '../storage-paths.const';
 import { FilesStorageService } from './files-storage.service';

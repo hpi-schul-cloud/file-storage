@@ -14,8 +14,8 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { Archiver } from 'archiver';
 import { Readable } from 'stream';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { ArchiveFactory } from '../factory';
-import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
 import { FileResponseFactory } from '../mapper';
 import { FilesStorageService } from './files-storage.service';
 
