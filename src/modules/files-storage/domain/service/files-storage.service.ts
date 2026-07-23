@@ -5,6 +5,7 @@ import { CopyFiles, S3ClientAdapter } from '@infra/s3-client';
 import {
 	ConflictException,
 	ForbiddenException,
+	HttpException,
 	Inject,
 	Injectable,
 	InternalServerErrorException,
@@ -240,8 +241,13 @@ export class FilesStorageService {
 
 	private async storeAndScanFile(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
 		StreamFileSizeObserver.observe(file, this.config.filesStorageMaxFileSize);
-		await this.uploadAndScan(fileRecord, file);
-		await this.throwOnIncompleteStream(file);
+
+		const [uploadResult, streamResult] = await Promise.allSettled([
+			this.uploadAndScan(fileRecord, file),
+			file.streamCompletion,
+		]);
+
+		this.handleUploadAndStreamPromiseResults(uploadResult, streamResult);
 
 		fileRecord.markAsUploaded(
 			file.fileSize,
@@ -253,6 +259,24 @@ export class FilesStorageService {
 		if (this.needsAsyncAntivirusScan(fileRecord)) {
 			await this.antivirusService.send(fileRecord.getSecurityToken());
 		}
+	}
+
+	private handleUploadAndStreamPromiseResults(
+		uploadResult: PromiseSettledResult<void>,
+		streamResult: PromiseSettledResult<void>
+	): void {
+		if (streamResult.status === 'rejected') {
+			this.throwStreamError(streamResult.reason);
+		}
+
+		if (uploadResult.status === 'rejected') {
+			throw uploadResult.reason;
+		}
+	}
+
+	private throwStreamError(reason: unknown): never {
+		if (reason instanceof HttpException) throw reason;
+		throw new InternalServerErrorException('File stream error', { cause: reason });
 	}
 
 	private async uploadAndScan(fileRecord: FileRecord, file: PassThroughFileDto): Promise<void> {
@@ -269,14 +293,6 @@ export class FilesStorageService {
 			fileRecord.updateSecurityCheckStatus(status, reason);
 		} else {
 			await this.storageClient.create(filePath, file);
-		}
-	}
-
-	private async throwOnIncompleteStream(file: PassThroughFileDto): Promise<void> {
-		try {
-			await file.streamCompletion;
-		} catch (err) {
-			throw new InternalServerErrorException('File stream error', { cause: err });
 		}
 	}
 

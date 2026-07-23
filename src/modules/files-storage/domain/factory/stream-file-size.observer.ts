@@ -1,6 +1,6 @@
+import { BadRequestException } from '@nestjs/common';
 import { type PassThrough } from 'node:stream';
 import { ErrorType } from '../error';
-import { BadRequestException } from '@nestjs/common';
 
 interface HasFileSizeAndPassThrough {
 	fileSize: number;
@@ -14,6 +14,7 @@ export class StreamFileSizeObserver {
 			obj.fileSize += chunk.length;
 			if (obj.fileSize > maxFileSize) {
 				obj.data.emit('error', new BadRequestException(ErrorType.FILE_TOO_BIG));
+				obj.data.destroy();
 			}
 		});
 	}
