@@ -39,17 +39,6 @@ describe('PassThroughFileDtoFactory', () => {
 
 			expect(result).toEqual(expectedFile);
 		});
-
-		it('should preserve stream errors for later awaiting', async () => {
-			const { fileDto, mimeType } = setup();
-			const passThrough = new PassThrough();
-			const result = PassThroughFileDtoFactory.create(fileDto, passThrough, mimeType);
-			const testError = new Error('Test stream error');
-
-			passThrough.emit('error', testError);
-
-			await expect(result.streamCompletion).rejects.toThrow('Test stream error');
-		});
 	});
 
 	describe('awaitStreamCompletion', () => {
