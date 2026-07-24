@@ -21,7 +21,7 @@
 		"build": "nest build",
 		"format": "prettier --write \"src/**/*.ts\"",
 		"start:files-storage": "nest start files-storage & nest start files-storage-amqp & nest start preview-generator-amqp",
-		"start:files-storage:dev": "nest start files-storage --watch & nest start files-storage-amqp --watch & nest start preview-generator-amqp --watch",
+		"start:files-storage:dev": "concurrently \"nest start files-storage --watch\" \"nest start files-storage-amqp --watch\" \"nest start preview-generator-amqp --watch\"",
 		"start:files-storage:debug": "nest start files-storage --debug --watch & nest start files-storage-amqp --debug --watch  & nest start preview-generator-amqp --debug --watch",
 		"start:files-storage:prod": "node dist/apps/files-storage.app",
 		"start:files-storage-amqp:prod": "node dist/apps/files-storage-consumer.app",
