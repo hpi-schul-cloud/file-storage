@@ -11,9 +11,11 @@ import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
 import { HttpService } from '@nestjs/axios';
 import {
+	Inject,
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
+	PayloadTooLargeException,
 	UnprocessableEntityException,
 } from '@nestjs/common';
 import { Counted, EntityId } from '@shared/domain/types';
@@ -33,6 +35,7 @@ import {
 	StorageLocation,
 	StorageType,
 } from '../../domain';
+import { FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN, FileStoragePublicApiConfig } from '../../files-storage.config';
 import { UploadAbortLoggable } from '../../loggable';
 import {
 	AddDocumentToParentParams,
@@ -71,7 +74,8 @@ export class FilesStorageUC {
 		private readonly previewService: PreviewService,
 		// maybe better to pass the request context from controller and avoid em at this place
 		private readonly em: EntityManager,
-		private readonly domainErrorHandler: DomainErrorHandler
+		private readonly domainErrorHandler: DomainErrorHandler,
+		@Inject(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN) private readonly config: FileStoragePublicApiConfig
 	) {
 		this.logger.setContext(FilesStorageUC.name);
 	}
@@ -82,6 +86,7 @@ export class FilesStorageUC {
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
+		this.checkContentLength(req);
 
 		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.STANDARD);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -142,6 +147,7 @@ export class FilesStorageUC {
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
+		this.checkContentLength(req);
 
 		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.TEMP);
 
@@ -435,7 +441,13 @@ export class FilesStorageUC {
 		return parentStatisticResponse;
 	}
 
-	// private: stream helper
+	private checkContentLength(req: Request): void {
+		const contentLength = parseInt(req.headers['content-length'] ?? '0', 10);
+		if (contentLength > this.config.filesStorageMaxFileSize) {
+			throw new PayloadTooLargeException(ErrorType.FILE_TOO_BIG);
+		}
+	}
+
 	private uploadFileWithBusboy(
 		userId: EntityId,
 		params: FileRecordParams,
