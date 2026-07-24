@@ -1,26 +1,21 @@
 import { PreviewInputMimeTypes } from '@infra/preview-generator';
 import { BadRequestException } from '@nestjs/common';
-import { type AuthorizableObject, DomainObject } from '@shared/domain/domain-object';
+import { DomainObject, type AuthorizableObject } from '@shared/domain/domain-object';
 import { type EntityId } from '@shared/domain/types';
 import path from 'node:path';
 import { ErrorType } from './error';
-import { type FileRecordParentType, type StorageLocation } from './interface';
+import { type FileRecordParentType, type ParentReference, type StorageLocation } from './interface';
 import { FolderExpirationDays, StorageType } from './storage-paths.const';
-import { FileRecordSecurityCheck, type FileRecordSecurityCheckProps, ScanStatus } from './vo';
+import { FileRecordSecurityCheck, ScanStatus, type FileRecordSecurityCheckProps } from './vo';
 
 export enum PreviewOutputMimeTypes {
 	IMAGE_WEBP = 'image/webp',
 }
 
-export interface StorageReference {
+interface StorageReference {
 	storageLocationId: EntityId;
 	storageLocation: StorageLocation;
 	storageType: StorageType;
-}
-
-export interface ParentReference {
-	parentId: EntityId;
-	parentType: FileRecordParentType;
 }
 
 export enum PreviewStatus {
@@ -53,7 +48,6 @@ export enum CollaboraMimeTypes {
 	PPT = 'application/vnd.ms-powerpoint',
 	ODP = 'application/vnd.oasis.opendocument.presentation',
 }
-
 export interface FileRecordProps extends AuthorizableObject {
 	id: EntityId;
 	size: number;

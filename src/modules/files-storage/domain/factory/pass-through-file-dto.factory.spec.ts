@@ -2,7 +2,7 @@ import { passThroughFileDtoTestFactory } from '@modules/files-storage/testing';
 import { PassThrough, Readable } from 'stream';
 import { FileDto, PassThroughFileDto } from '../dto';
 import { StorageType } from '../storage-paths.const';
-import { awaitStreamCompletion } from '../utils';
+import { awaitStreamCompletion } from '../utils/stream.utils';
 import { PassThroughFileDtoFactory } from './pass-through-file-dto.factory';
 
 describe('PassThroughFileDtoFactory', () => {

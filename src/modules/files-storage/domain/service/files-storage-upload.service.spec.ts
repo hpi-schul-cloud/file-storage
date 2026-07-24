@@ -22,11 +22,12 @@ import {
 	ParentInfoTestFactory,
 	passThroughFileDtoTestFactory,
 } from '../../testing';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { type FileDto } from '../dto';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory, PassThroughFileDtoFactory } from '../factory';
 import { FileRecord } from '../file-record.do';
-import { DocumentType, FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
+import { DocumentType } from '../interface';
 import { StorageType } from '../storage-paths.const';
 import detectMimeTypeUtils from '../utils/detect-mime-type.utils';
 import * as documentReaderUtils from '../utils/document-reader.utils';

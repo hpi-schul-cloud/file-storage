@@ -1,8 +1,7 @@
 import { type EntityId } from '@shared/domain/types';
-import { type ParentReference } from './parent-reference.interface';
 import { type StorageLocation } from './storage-location.enum';
 
-export interface ParentInfo extends ParentReference {
+export interface StorageLocationParams {
 	storageLocationId: EntityId;
 	storageLocation: StorageLocation;
 }

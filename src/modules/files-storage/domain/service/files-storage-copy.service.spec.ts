@@ -12,9 +12,10 @@ import {
 	type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory, ParentInfoTestFactory } from '../../testing';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory, FileRecordFactory } from '../factory';
-import { type CopyFileResult, FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
+import { type CopyFileResult } from '../interface';
 import { ScanStatus } from '../vo';
 import { FilesStorageService } from './files-storage.service';
 

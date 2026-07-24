@@ -11,7 +11,7 @@ import {
 	type FileStorageConfig,
 } from '../../files-storage.config';
 import { fileRecordTestFactory } from '../../testing';
-import { FILE_RECORD_REPO, type FileRecordRepo } from '../interface';
+import { FILE_RECORD_REPO, type FileRecordRepo } from '../contract';
 import { FilesStorageService } from './files-storage.service';
 
 const buildFileRecord = () => {

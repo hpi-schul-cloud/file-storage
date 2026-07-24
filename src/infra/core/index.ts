@@ -1,2 +1,9 @@
-export * from './core.module';
-export * from './pipe';
+/** **********************************************************
+ * This is a module facade.                                  *
+ * Export only what is allowed to be used externally.        *
+ * Do not use wildcard exports.                              *
+ * Do not export *.app.module.ts here; import them directly. *
+ *********************************************************** */
+
+export { CoreModule } from './core.module';
+export { GlobalValidationPipe } from './pipe';
