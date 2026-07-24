@@ -1,5 +1,5 @@
-import { generateNanoId } from '../testing';
 import { type AccessToken, AccessTokenFactory } from '../vo';
+import { generateNanoId } from './nanoid.test.factory';
 
 class AccessTokenTestFactory {
 	private readonly props: AccessToken = {

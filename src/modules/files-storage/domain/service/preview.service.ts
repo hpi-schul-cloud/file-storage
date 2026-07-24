@@ -3,10 +3,11 @@ import { PreviewProducer } from '@infra/preview-generator';
 import { S3ClientAdapter } from '@infra/s3-client';
 import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { FILES_STORAGE_S3_CONNECTION } from '../../files-storage.config';
+import { PreviewFileParams } from '../contract';
 import { ErrorType } from '../error';
 import { FilePathFactory } from '../factory';
 import { FileRecord, PreviewStatus } from '../file-record.do';
-import { GetFileResponse, PreviewFileParams } from '../interface';
+import { GetFileResponse } from '../interface';
 import { FileStorageActionsLoggable } from '../loggable';
 import { FileResponseFactory, PreviewFileOptionsMapper } from '../mapper';
 
