@@ -1,6 +1,6 @@
 import { ConfigProperty, Configuration } from '@infra/configuration';
 import { StringToBoolean, StringToNumber } from '@shared/transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUrl, Min } from 'class-validator';
 
 export const FILES_STORAGE_S3_CONNECTION = 'FILES_STORAGE_S3_CONNECTION';
 
@@ -12,6 +12,7 @@ export const INCOMING_REQUEST_TIMEOUT_COPY_API_KEY = 'incomingRequestTimeoutCopy
 @Configuration()
 export class FileStoragePublicApiConfig {
 	@IsNumber()
+	@Min(64000)
 	@StringToNumber()
 	@ConfigProperty('FILES_STORAGE_MAX_FILE_SIZE')
 	filesStorageMaxFileSize = 2684354560;
