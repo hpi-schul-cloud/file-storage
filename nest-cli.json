@@ -6,7 +6,7 @@
   "typeCheck": true,
   "monorepo": true,
   "compilerOptions": {
-    "deleteOutDir": true,
+    "deleteOutDir": false,
     "assets": [{ "include": "modules/files-storage/assets/**/*", "outDir": "dist" }]
   },
   "projects": {
