@@ -442,7 +442,7 @@ export class FilesStorageUC {
 	}
 
 	private checkContentLength(req: Request): void {
-		const contentLength = parseInt(req.headers['content-length'] ?? '0', 10);
+		const contentLength = Number.parseInt(req.headers['content-length'] ?? '0', 10);
 		if (contentLength > this.config.filesStorageMaxFileSize) {
 			throw new PayloadTooLargeException(ErrorType.FILE_TOO_BIG);
 		}
