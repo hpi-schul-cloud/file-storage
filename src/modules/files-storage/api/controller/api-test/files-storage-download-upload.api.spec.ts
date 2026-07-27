@@ -263,6 +263,69 @@ describe('files-storage controller (API)', () => {
 				expect(response.status).toEqual(403);
 			});
 		});
+
+		describe('when content-length header exceeds max file size', () => {
+			let defaultMaxFileSize: number;
+
+			afterEach(() => {
+				config.filesStorageMaxFileSize = defaultMaxFileSize;
+			});
+
+			it('should return status 413 when content-length exceeds the configured limit', async () => {
+				const { loggedInClient, validId } = setup();
+
+				defaultMaxFileSize = config.filesStorageMaxFileSize;
+				config.filesStorageMaxFileSize = 1; // smaller than any multipart envelope
+
+				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+				expect(response.status).toEqual(413);
+			});
+		});
+
+		/* 		describe('when content-length is absent but actual file exceeds limit', () => {
+			// Simulates a client that omits Content-Length (e.g. chunked upload).
+			// The Content-Length pre-check defaults to 0 and passes.
+			// StreamFileSizeObserver is the only enforcement and must catch the oversize file.
+			let defaultMaxFileSize: number;
+
+			afterEach(() => {
+				config.filesStorageMaxFileSize = defaultMaxFileSize;
+			});
+
+			it('should return status 413 from the stream size check when actual file bytes exceed the limit', async () => {
+				const { loggedInClient, validId } = setup();
+
+				defaultMaxFileSize = config.filesStorageMaxFileSize;
+				config.filesStorageMaxFileSize = 10; // 10 bytes — much less than the 50-byte file content
+
+				const boundary = '----WebKitFormBoundarytest';
+				const multipartBody =
+					`--${boundary}\r\n` +
+					`Content-Disposition: form-data; name="file"; filename="test.txt"\r\n` +
+					`Content-Type: text/plain\r\n` +
+					`\r\n` +
+					`${'x'.repeat(50)}\r\n` + // 50 bytes — exceeds the 10-byte limit
+					`--${boundary}--\r\n`;
+
+				// Call .write() directly on the supertest Request to send raw body bytes
+				// without going through form-data. superagent's .write() triggers
+				// this.request() which creates the http.ClientRequest with all headers
+				// already applied, but leaves _endCalled = false so `await req` can
+				// still register the response callback via end(fn).
+				// Without Content-Length, Node.js uses Transfer-Encoding: chunked →
+				// pre-check sees undefined → passes → stream check fires.
+				const req = loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.set('content-type', `multipart/form-data; boundary=${boundary}`)
+					.set('content-length', '5');
+
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(req as any).write(Buffer.from(multipartBody));
+
+				const response = await req;
+				expect(response.status).toEqual(413);
+			});
+		}); */
 	});
 
 	describe('upload from url action', () => {
