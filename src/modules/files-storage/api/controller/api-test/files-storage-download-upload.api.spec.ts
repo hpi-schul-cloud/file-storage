@@ -14,8 +14,10 @@ import { ErrorType, ScanStatus, StorageType } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import {
 	FILE_STORAGE_CONFIG_TOKEN,
+	FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN,
 	FILES_STORAGE_S3_CONNECTION,
 	FileStorageConfig,
+	FileStoragePublicApiConfig,
 } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
@@ -32,6 +34,7 @@ describe('files-storage controller (API)', () => {
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
 	let config: DeepMocked<FileStorageConfig>;
+	let publicApiConfig: DeepMocked<FileStoragePublicApiConfig>;
 
 	const baseRouteName = '/file';
 
@@ -51,6 +54,8 @@ describe('files-storage controller (API)', () => {
 			.useValue(createMock<AuthorizationClientAdapter>())
 			.overrideProvider(FILE_STORAGE_CONFIG_TOKEN)
 			.useValue(new FileStorageConfig())
+			.overrideProvider(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN)
+			.useValue(new FileStoragePublicApiConfig())
 			.compile();
 
 		app = module.createNestApplication();
@@ -60,6 +65,7 @@ describe('files-storage controller (API)', () => {
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
+		publicApiConfig = module.get(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN);
 	});
 
 	afterAll(async () => {
@@ -268,14 +274,14 @@ describe('files-storage controller (API)', () => {
 			let defaultMaxFileSize: number;
 
 			afterEach(() => {
-				config.filesStorageMaxFileSize = defaultMaxFileSize;
+				publicApiConfig.filesStorageMaxFileSize = defaultMaxFileSize;
 			});
 
 			it('should return status 413 when content-length exceeds the configured limit', async () => {
 				const { loggedInClient, validId } = setup();
 
-				defaultMaxFileSize = config.filesStorageMaxFileSize;
-				config.filesStorageMaxFileSize = 1; // smaller than any multipart envelope
+				defaultMaxFileSize = publicApiConfig.filesStorageMaxFileSize;
+				publicApiConfig.filesStorageMaxFileSize = 1; // smaller than any multipart envelope
 
 				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				expect(response.status).toEqual(413);

@@ -35,7 +35,7 @@ import {
 	StorageLocation,
 	StorageType,
 } from '../../domain';
-import { FILE_STORAGE_CONFIG_TOKEN, FileStorageConfig } from '../../files-storage.config';
+import { FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN, FileStoragePublicApiConfig } from '../../files-storage.config';
 import { UploadAbortLoggable } from '../../loggable';
 import {
 	AddDocumentToParentParams,
@@ -75,7 +75,7 @@ export class FilesStorageUC {
 		// maybe better to pass the request context from controller and avoid em at this place
 		private readonly em: EntityManager,
 		private readonly domainErrorHandler: DomainErrorHandler,
-		@Inject(FILE_STORAGE_CONFIG_TOKEN) private readonly config: FileStorageConfig
+		@Inject(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN) private readonly config: FileStoragePublicApiConfig
 	) {
 		this.logger.setContext(FilesStorageUC.name);
 	}

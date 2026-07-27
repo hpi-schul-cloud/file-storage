@@ -12,12 +12,7 @@ import {
 	FilesStorageController,
 	FilesStorageUC,
 } from './api';
-import {
-	FILE_STORAGE_CONFIG_TOKEN,
-	FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN,
-	FileStorageConfig,
-	FileStoragePublicApiConfig,
-} from './files-storage.config';
+import { FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN, FileStoragePublicApiConfig } from './files-storage.config';
 import { FilesStorageModule } from './files-storage.module';
 
 const imports = [
@@ -28,7 +23,6 @@ const imports = [
 	HttpModule,
 	AuthGuardModule.register([AuthGuardOptions.JWT]),
 	ConfigurationModule.register(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN, FileStoragePublicApiConfig),
-	ConfigurationModule.register(FILE_STORAGE_CONFIG_TOKEN, FileStorageConfig),
 ];
 const providers = [FilesStorageUC, FilesStorageAdminUC];
 const controllers = [FilesStorageController, FilesStorageAdminController, FileSecurityController];
