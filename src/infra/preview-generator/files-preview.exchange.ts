@@ -1,5 +1,5 @@
 export const FilesPreviewExchange = 'files-preview';
 
 export enum FilesPreviewEvents {
-	'GENERATE_PREVIEW' = 'generate-preview',
+	GENERATE_PREVIEW = 'generate-preview',
 }

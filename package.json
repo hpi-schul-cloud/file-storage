@@ -36,7 +36,9 @@
 	},
 	"overrides": {
 		"multer": "2.2.0",
-		"js-yaml": "4.2.0",
+		"js-yaml": "4.3.0",
+		"brace-expansion": "5.0.8",
+		"minimatch": "^10.0.3",
 		"@typescript-eslint/parser": "$@typescript-eslint/parser"
 	},
 	"dependencies": {
@@ -79,7 +81,6 @@
 		"winston": "^3.19.0"
 	},
 	"devDependencies": {
-		"@eslint/eslintrc": "^3.3.6",
 		"@eslint/js": "^10.0.1",
 		"@golevelup/ts-jest": "^3.0.0",
 		"@nestjs/cli": "^11.0.24",

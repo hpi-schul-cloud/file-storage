@@ -1,27 +1,17 @@
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
 import typescriptEslintEslintPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import checkFile from 'eslint-plugin-check-file';
 import jest from 'eslint-plugin-jest';
 import noOnlyTests from 'eslint-plugin-no-only-tests';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-	baseDirectory: __dirname,
-	recommendedConfig: js.configs.recommended,
-	allConfig: js.configs.all,
-});
 
 export default [
 	{
 		ignores: ['**/eslint.config.mjs', '**/ansible', '**/.github'],
 	},
-	...compat.extends('plugin:@typescript-eslint/stylistic-type-checked', 'plugin:prettier/recommended'),
+	...typescriptEslintEslintPlugin.configs['flat/stylistic-type-checked'],
+	prettierRecommended,
 	{
 		plugins: {
 			'@typescript-eslint': typescriptEslintEslintPlugin,
