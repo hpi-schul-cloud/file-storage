@@ -86,7 +86,7 @@ export class FilesStorageUC {
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
-		this.checkContentLength(req);
+		//this.checkContentLength(req);
 
 		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.STANDARD);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
