@@ -260,6 +260,11 @@ export class FilesStorageService {
 		uploadResult: PromiseSettledResult<void>,
 		streamResult: PromiseSettledResult<void>
 	): void {
+		// Stream error takes priority over upload error.
+		// When the stream size limit is exceeded, StreamFileSizeObserver emits an error and destroys
+		// the stream, which causes the S3 upload to abort and reject with its own error.
+		// Throwing the stream error first ensures the meaningful PayloadTooLargeException reaches
+		// the caller instead of the opaque S3 abort error.
 		if (streamResult.status === 'rejected') {
 			this.throwStreamError(streamResult.reason);
 		}
