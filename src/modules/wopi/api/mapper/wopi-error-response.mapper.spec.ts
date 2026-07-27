@@ -58,29 +58,27 @@ describe('WopiErrorResponseMapper', () => {
 		});
 	});
 
-	describe('when error is BadRequest', () => {
-		describe('when error has FILE_TOO_BIG message', () => {
-			it('should return a BadRequestException', () => {
-				const message = ErrorType.FILE_TOO_BIG;
-				const error = new BadRequestException(message);
+	describe('when error is PayloadTooLarge', () => {
+		it('should return the PayloadTooLargeException as-is', () => {
+			const message = ErrorType.FILE_TOO_BIG;
+			const error = new PayloadTooLargeException(message);
 
-				const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
+			const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-				expect(result).toEqual(new PayloadTooLargeException(message, { cause: error }));
-				expect(result.message).toBe(message);
-			});
+			expect(result).toEqual(error);
+			expect(result.message).toBe(message);
 		});
+	});
 
-		describe('when error has other message', () => {
-			it('should return a BadRequestException', () => {
-				const message = 'Invalid request';
-				const error = new BadRequestException(message);
+	describe('when error is BadRequest', () => {
+		it('should return an InternalServerErrorException', () => {
+			const message = 'Invalid request';
+			const error = new BadRequestException(message);
 
-				const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
+			const result = WopiErrorResponseMapper.mapErrorToWopiError(error);
 
-				expect(result).toEqual(new InternalServerErrorException(message, { cause: error }));
-				expect(result.message).toBe(message);
-			});
+			expect(result).toEqual(new InternalServerErrorException(message, { cause: error }));
+			expect(result.message).toBe(message);
 		});
 	});
 });
