@@ -8,7 +8,12 @@ import { install as sourceMapInstall } from 'source-map-support';
 import { Logger, LOGGER_CONFIG_TOKEN } from '@infra/logger';
 import { MetricsModule, ResponseTimeMetricsInterceptor } from '@infra/metrics';
 import { FilesStorageAppModule } from '@modules/files-storage-app/files-storage.app.module';
-import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
+import {
+	AppStartLoggable,
+	createDisableKeepAliveMiddleware,
+	createRequestLoggerMiddleware,
+	enableOpenApiDocs,
+} from './helpers';
 
 async function bootstrap(): Promise<void> {
 	sourceMapInstall();
@@ -20,6 +25,7 @@ async function bootstrap(): Promise<void> {
 
 	const config = nestApp.get(LOGGER_CONFIG_TOKEN);
 
+	nestApp.use(createDisableKeepAliveMiddleware());
 	nestApp.use(createRequestLoggerMiddleware(config.loggerGlobalRequestLoggingEnabled));
 	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());
 
@@ -38,16 +44,20 @@ async function bootstrap(): Promise<void> {
 		logger.info(appStartLoggable);
 	});
 
+	appServer.keepAliveTimeout = 0;
 	appServer.requestTimeout = 0;
 
 	const metricsPort = 9090;
 	const metricsApp = await NestFactory.create(MetricsModule);
+	metricsApp.use(createDisableKeepAliveMiddleware());
 
-	await metricsApp.listen(metricsPort, async () => {
+	const metricsServer = await metricsApp.listen(metricsPort, async () => {
 		const logger = await metricsApp.resolve(Logger);
 		const appStartLoggable = new AppStartLoggable({ appName: 'Metrics Server', port: metricsPort });
 		logger.setContext('METRICS');
 		logger.info(appStartLoggable);
 	});
+
+	metricsServer.keepAliveTimeout = 0;
 }
 void bootstrap();
