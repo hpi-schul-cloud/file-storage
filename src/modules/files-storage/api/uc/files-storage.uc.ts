@@ -9,6 +9,7 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { RpcTimeoutException } from '@infra/rabbitmq';
 import { EntityManager, RequestContext } from '@mikro-orm/mongodb';
+import { DEFAULT_CHUNK_SIZE } from '@modules/files-storage/domain/utils';
 import { HttpService } from '@nestjs/axios';
 import {
 	Inject,
@@ -86,7 +87,7 @@ export class FilesStorageUC {
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
-		//this.checkContentLength(req);
+		this.checkContentLength(req);
 
 		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.STANDARD);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -458,7 +459,7 @@ export class FilesStorageUC {
 		storageType: StorageType
 	): Promise<FileRecord> {
 		return new Promise<FileRecord>((resolve, reject) => {
-			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8' });
+			const bb = busboy({ headers: req.headers, defParamCharset: 'utf8', highWaterMark: DEFAULT_CHUNK_SIZE });
 			const abortController = new AbortController();
 			let fileRecordPromise: Promise<FileRecord> | undefined;
 			let isResolved = false;
