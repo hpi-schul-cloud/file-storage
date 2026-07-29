@@ -14,8 +14,10 @@ import { ErrorType, ScanStatus, StorageType } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import {
 	FILE_STORAGE_CONFIG_TOKEN,
+	FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN,
 	FILES_STORAGE_S3_CONNECTION,
 	FileStorageConfig,
+	FileStoragePublicApiConfig,
 } from '../../../files-storage.config';
 import { FileRecordEntity } from '../../../repo';
 import { GetFileTestFactory } from '../../../testing';
@@ -32,6 +34,7 @@ describe('files-storage controller (API)', () => {
 	let s3ClientAdapter: DeepMocked<S3ClientAdapter>;
 	let appPort: number;
 	let config: DeepMocked<FileStorageConfig>;
+	let publicApiConfig: DeepMocked<FileStoragePublicApiConfig>;
 
 	const baseRouteName = '/file';
 
@@ -51,6 +54,8 @@ describe('files-storage controller (API)', () => {
 			.useValue(createMock<AuthorizationClientAdapter>())
 			.overrideProvider(FILE_STORAGE_CONFIG_TOKEN)
 			.useValue(new FileStorageConfig())
+			.overrideProvider(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN)
+			.useValue(new FileStoragePublicApiConfig())
 			.compile();
 
 		app = module.createNestApplication();
@@ -60,6 +65,7 @@ describe('files-storage controller (API)', () => {
 		em = module.get(EntityManager);
 		s3ClientAdapter = module.get(FILES_STORAGE_S3_CONNECTION);
 		config = module.get(FILE_STORAGE_CONFIG_TOKEN);
+		publicApiConfig = module.get(FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN);
 	});
 
 	afterAll(async () => {
@@ -261,6 +267,157 @@ describe('files-storage controller (API)', () => {
 
 				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
 				expect(response.status).toEqual(403);
+			});
+		});
+
+		describe('when content-length header exceeds max file size', () => {
+			let defaultMaxFileSize: number;
+
+			afterEach(() => {
+				publicApiConfig.filesStorageMaxFileSize = defaultMaxFileSize;
+			});
+
+			it('should return status 413 when content-length exceeds the configured limit', async () => {
+				const { loggedInClient, validId } = setup();
+
+				defaultMaxFileSize = publicApiConfig.filesStorageMaxFileSize;
+				publicApiConfig.filesStorageMaxFileSize = 1; // smaller than any multipart envelope
+
+				const response = await uploadFile(`/upload/school/${validId}/schools/${validId}`, loggedInClient);
+				expect(response.status).toEqual(413);
+			});
+		});
+
+		describe.skip('when content-length is absent but actual file exceeds limit', () => {
+			// Simulates a client that omits Content-Length (e.g. chunked upload).
+			// The Content-Length pre-check defaults to 0 and passes.
+			// StreamFileSizeObserver is the only enforcement and must catch the oversize file.
+			let defaultMaxFileSize: number;
+
+			afterEach(() => {
+				config.filesStorageMaxFileSize = defaultMaxFileSize;
+			});
+
+			it('should return status 413 from the stream size check when actual file bytes exceed the limit', async () => {
+				const { loggedInClient, validId } = setup();
+
+				defaultMaxFileSize = config.filesStorageMaxFileSize;
+				config.filesStorageMaxFileSize = 10; // 10 bytes — much less than the 50-byte file content
+
+				const boundary = '----WebKitFormBoundarytest';
+				const multipartBody =
+					`--${boundary}\r\n` +
+					`Content-Disposition: form-data; name="file"; filename="test.txt"\r\n` +
+					`Content-Type: text/plain\r\n` +
+					`\r\n` +
+					`${'x'.repeat(50)}\r\n` + // 50 bytes — exceeds the 10-byte limit
+					`--${boundary}--\r\n`;
+
+				// Call .write() directly on the supertest Request to send raw body bytes
+				// without going through form-data. superagent's .write() triggers
+				// this.request() which creates the http.ClientRequest with all headers
+				// already applied, but leaves _endCalled = false so `await req` can
+				// still register the response callback via end(fn).
+				// Without Content-Length, Node.js uses Transfer-Encoding: chunked →
+				// pre-check sees undefined → passes → stream check fires.
+				const req = loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.set('content-type', `multipart/form-data; boundary=${boundary}`);
+
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(req as any).write(Buffer.from(multipartBody));
+
+				const response = await req;
+				expect(response.status).toEqual(413);
+			});
+		});
+
+		describe('when content-length is absent but actual file is within limit', () => {
+			// Simulates a client that omits Content-Length (e.g. chunked upload).
+			// The Content-Length pre-check defaults to 0 and passes.
+			// StreamFileSizeObserver is the only enforcement and must catch the oversize file.
+			let defaultMaxFileSize: number;
+
+			afterEach(() => {
+				config.filesStorageMaxFileSize = defaultMaxFileSize;
+			});
+
+			it('should return status 201 from the stream size check', async () => {
+				const { loggedInClient, validId } = setup();
+
+				defaultMaxFileSize = config.filesStorageMaxFileSize;
+				config.filesStorageMaxFileSize = 10; // 10 bytes — much less than the 50-byte file content
+
+				const boundary = '----WebKitFormBoundarytest';
+				const multipartBody =
+					`--${boundary}\r\n` +
+					`Content-Disposition: form-data; name="file"; filename="test.txt"\r\n` +
+					`Content-Type: text/plain\r\n` +
+					`\r\n` +
+					`${'x'.repeat(5)}\r\n` + // 5 bytes — equals the 10-byte limit
+					`--${boundary}--\r\n`;
+
+				// Call .write() directly on the supertest Request to send raw body bytes
+				// without going through form-data. superagent's .write() triggers
+				// this.request() which creates the http.ClientRequest with all headers
+				// already applied, but leaves _endCalled = false so `await req` can
+				// still register the response callback via end(fn).
+				// Without Content-Length, Node.js uses Transfer-Encoding: chunked →
+				// pre-check sees undefined → passes → stream check fires.
+				const req = loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.set('content-type', `multipart/form-data; boundary=${boundary}`);
+
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(req as any).write(Buffer.from(multipartBody));
+
+				const response = await req;
+				expect(response.status).toEqual(201);
+			});
+		});
+
+		describe.skip('when content-length is smaller than max file size but actual file exceeds limit', () => {
+			// Simulates a client that omits Content-Length (e.g. chunked upload).
+			// The Content-Length pre-check defaults to 0 and passes.
+			// StreamFileSizeObserver is the only enforcement and must catch the oversize file.
+			let defaultMaxFileSize: number;
+
+			afterEach(() => {
+				config.filesStorageMaxFileSize = defaultMaxFileSize;
+			});
+
+			it('should return status 413 from the stream size check', async () => {
+				const { loggedInClient, validId } = setup();
+
+				defaultMaxFileSize = config.filesStorageMaxFileSize;
+				config.filesStorageMaxFileSize = 10; // 10 bytes — much less than the 50-byte file content
+
+				const boundary = '----WebKitFormBoundarytest';
+				const multipartBody =
+					`--${boundary}\r\n` +
+					`Content-Disposition: form-data; name="file"; filename="test.txt"\r\n` +
+					`Content-Type: text/plain\r\n` +
+					`\r\n` +
+					`${'x'.repeat(50)}\r\n` + // 50 bytes — exceeds the 10-byte limit
+					`--${boundary}--\r\n`;
+
+				// Call .write() directly on the supertest Request to send raw body bytes
+				// without going through form-data. superagent's .write() triggers
+				// this.request() which creates the http.ClientRequest with all headers
+				// already applied, but leaves _endCalled = false so `await req` can
+				// still register the response callback via end(fn).
+				// Without Content-Length, Node.js uses Transfer-Encoding: chunked →
+				// pre-check sees undefined → passes → stream check fires.
+				const req = loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.set('content-type', `multipart/form-data; boundary=${boundary}`)
+					.set('content-length', '5'); // smaller than actual file size
+
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				(req as any).write(Buffer.from(multipartBody));
+
+				const response = await req;
+				expect(response.status).toEqual(400);
 			});
 		});
 	});

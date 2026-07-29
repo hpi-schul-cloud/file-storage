@@ -4,10 +4,10 @@ import { DomainErrorHandler } from '@infra/error';
 import { Logger } from '@infra/logger';
 import { type S3ClientAdapter } from '@infra/s3-client';
 import {
-	BadRequestException,
 	ConflictException,
 	ForbiddenException,
 	InternalServerErrorException,
+	PayloadTooLargeException,
 } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { PassThrough, Readable } from 'node:stream';
@@ -327,7 +327,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should pass error and call storageClient.delete and fileRecordRepo.delete', async () => {
 				const { params, file, userId } = setup();
 
-				const error = new BadRequestException(ErrorType.FILE_TOO_BIG);
+				const error = new PayloadTooLargeException(ErrorType.FILE_TOO_BIG);
 				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(error);
 				expect(storageClient.delete).toHaveBeenCalled();
 				expect(fileRecordRepo.delete).toHaveBeenCalled();
@@ -419,6 +419,62 @@ describe('FilesStorageService upload methods', () => {
 				const resultPromise = service.uploadFile(userId, params, file);
 
 				await expect(resultPromise).rejects.toThrow(InternalServerErrorException);
+			});
+		});
+
+		describe('WHEN stream emits an HttpException', () => {
+			const setup = () => {
+				const sourceFile = passThroughFileDtoTestFactory().asTiff().build();
+				const fileRecord = fileRecordTestFactory().build(sourceFile);
+				const fileDtoWithHttpStreamError = passThroughFileDtoTestFactory().build(sourceFile);
+				const params = ParentInfoTestFactory.build(fileRecord.getProps());
+
+				fileDtoWithHttpStreamError.streamCompletion = Promise.reject(
+					new PayloadTooLargeException(ErrorType.FILE_TOO_BIG)
+				);
+
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(sourceFile.mimeType);
+				fileRecordRepo.save.mockResolvedValue();
+				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithHttpStreamError);
+
+				return { params, file: sourceFile, userId: params.parentId };
+			};
+
+			it('should throw the HttpException directly without wrapping in InternalServerErrorException', async () => {
+				const { params, file, userId } = setup();
+
+				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(
+					new PayloadTooLargeException(ErrorType.FILE_TOO_BIG)
+				);
+			});
+		});
+
+		describe('WHEN both stream and upload fail simultaneously', () => {
+			const setup = () => {
+				const sourceFile = passThroughFileDtoTestFactory().asTiff().build();
+				const fileRecord = fileRecordTestFactory().build(sourceFile);
+				const fileDtoWithFailingStream = passThroughFileDtoTestFactory().build(sourceFile);
+				const params = ParentInfoTestFactory.build(fileRecord.getProps());
+
+				// Simulates StreamFileSizeObserver destroying the stream, which causes the S3
+				// upload to abort with its own error alongside the stream's PayloadTooLargeException.
+				const streamError = new PayloadTooLargeException(ErrorType.FILE_TOO_BIG);
+				fileDtoWithFailingStream.streamCompletion = Promise.reject(streamError);
+				storageClient.create.mockRejectedValueOnce(new Error('S3 upload aborted'));
+
+				jest.spyOn(service, 'getFileRecordsByParentAndStorageType').mockResolvedValue([[fileRecord], 1]);
+				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(sourceFile.mimeType);
+				fileRecordRepo.save.mockResolvedValue();
+				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithFailingStream);
+
+				return { params, file: sourceFile, userId: params.parentId, streamError };
+			};
+
+			it('should throw the stream error rather than the upload abort error', async () => {
+				const { params, file, userId, streamError } = setup();
+
+				await expect(service.uploadFile(userId, params, file)).rejects.toThrow(streamError);
 			});
 		});
 	});
@@ -657,7 +713,7 @@ describe('FilesStorageService upload methods', () => {
 			it('should pass error', async () => {
 				const { file, fileRecord } = setup();
 
-				const expectedError = new BadRequestException(ErrorType.FILE_TOO_BIG);
+				const expectedError = new PayloadTooLargeException(ErrorType.FILE_TOO_BIG);
 				await expect(service.updateFileContents(fileRecord, file)).rejects.toThrow(expectedError);
 			});
 		});
@@ -839,6 +895,31 @@ describe('FilesStorageService upload methods', () => {
 				const resultPromise = service.updateFileContents(fileRecord, file);
 
 				await expect(resultPromise).rejects.toThrow(InternalServerErrorException);
+			});
+		});
+
+		describe('WHEN stream emits an HttpException during updateFileContents', () => {
+			const setup = () => {
+				const file = passThroughFileDtoTestFactory().asPng().build();
+				const fileRecord = fileRecordTestFactory().build(file);
+				const fileDtoWithHttpStreamError = passThroughFileDtoTestFactory().build(file);
+
+				fileDtoWithHttpStreamError.streamCompletion = Promise.reject(
+					new PayloadTooLargeException(ErrorType.FILE_TOO_BIG)
+				);
+
+				jest.spyOn(detectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValueOnce(file.mimeType);
+				jest.spyOn(PassThroughFileDtoFactory, 'create').mockReturnValueOnce(fileDtoWithHttpStreamError);
+
+				return { file, fileRecord };
+			};
+
+			it('should throw the HttpException directly without wrapping in InternalServerErrorException', async () => {
+				const { file, fileRecord } = setup();
+
+				await expect(service.updateFileContents(fileRecord, file)).rejects.toThrow(
+					new PayloadTooLargeException(ErrorType.FILE_TOO_BIG)
+				);
 			});
 		});
 	});
