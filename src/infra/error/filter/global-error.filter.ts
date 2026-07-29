@@ -1,10 +1,10 @@
 import { RpcError, RpcMessage } from '@infra/rabbitmq';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, InternalServerErrorException } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { ApiValidationError, BusinessError, DomainErrorHandler } from '../domain';
 import { ErrorResponse } from '../dto';
-import { ApiValidationErrorResponseFactory } from '../factory';
 import { ErrorUtils } from '../utils';
+import { ApiValidationErrorResponseFactory } from '../factory';
 
 // We are receiving rmq instead of rpc and rmq is missing in context type.
 // @nestjs/common export type ContextType = 'http' | 'ws' | 'rpc';
@@ -40,20 +40,7 @@ export class GlobalErrorFilter<E extends RpcError> implements ExceptionFilter<E>
 	private sendHttpResponse(error: E, host: ArgumentsHost): void {
 		const errorResponse = this.createErrorResponse(error);
 		const httpArgumentHost = host.switchToHttp();
-		const request = httpArgumentHost.getRequest<Request>();
 		const response = httpArgumentHost.getResponse<Response>();
-
-		// Drain any unread request body before sending the error response.
-		// Without this, Node.js closes the TCP connection while the client is still
-		// writing the body, which causes a TCP RST. Safari (and other WebKit browsers)
-		// interpret the RST as a network error and discard the response — showing
-		// "network error" instead of the actual status code and message.
-		// Calling resume() lets the remaining bytes flow through and be discarded,
-		// so the connection shuts down with a graceful FIN that the client can read.
-		if (!request.readableEnded) {
-			request.resume();
-		}
-
 		response.status(errorResponse.code).json(errorResponse);
 	}
 

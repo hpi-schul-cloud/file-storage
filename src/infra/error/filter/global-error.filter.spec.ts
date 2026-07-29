@@ -3,7 +3,7 @@ import { type ErrorLogMessage, type Loggable } from '@infra/logger';
 import { type ArgumentsHost, BadRequestException, HttpStatus, InternalServerErrorException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { AxiosError } from 'axios';
-import { type Request, type Response } from 'express';
+import { type Response } from 'express';
 import { BusinessError, DomainErrorHandler } from '../domain';
 import { ErrorResponse } from '../dto';
 import { ErrorUtils } from '../utils';
@@ -304,44 +304,6 @@ describe('GlobalErrorFilter', () => {
 					expect(
 						argumentsHost.switchToHttp().getResponse<Response>().status(HttpStatus.INTERNAL_SERVER_ERROR).json
 					).toHaveBeenCalledWith(expectedResponse);
-				});
-			});
-
-			describe('when request body has not been fully read', () => {
-				const setup = () => {
-					const argumentsHost = mockHttpArgumentsHost();
-					const request = argumentsHost.switchToHttp().getRequest<Request>();
-					Object.defineProperty(request, 'readableEnded', { value: false, configurable: true });
-					const error = new BadRequestException();
-
-					return { error, argumentsHost, request };
-				};
-
-				it('should call resume() to drain the unread request body', () => {
-					const { error, argumentsHost, request } = setup();
-
-					service.catch(error, argumentsHost);
-
-					expect(request.resume).toHaveBeenCalled();
-				});
-			});
-
-			describe('when request body has already been fully read', () => {
-				const setup = () => {
-					const argumentsHost = mockHttpArgumentsHost();
-					const request = argumentsHost.switchToHttp().getRequest<Request>();
-					Object.defineProperty(request, 'readableEnded', { value: true, configurable: true });
-					const error = new BadRequestException();
-
-					return { error, argumentsHost, request };
-				};
-
-				it('should not call resume()', () => {
-					const { error, argumentsHost, request } = setup();
-
-					service.catch(error, argumentsHost);
-
-					expect(request.resume).not.toHaveBeenCalled();
 				});
 			});
 		});
