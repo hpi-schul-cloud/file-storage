@@ -96,6 +96,17 @@ spec:
         - port: 8443
           protocol: TCP
 
+    # Telepresence traffic-manager in the ambassador namespace.
+    # Required for telepresence replace/intercepts when the agent sidecar
+    # dials the manager over gRPC on 8081.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ambassador
+      ports:
+        - port: 8081
+          protocol: TCP
+
     # Block all other local egress traffic, but allow all outgoing traffic to the outside world
     - to:
         - ipBlock:
