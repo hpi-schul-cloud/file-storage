@@ -9,6 +9,7 @@ export const FILE_STORAGE_CONFIG_TOKEN = 'FILE_STORAGE_CONFIG_TOKEN';
 export const FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN = 'FILE_STORAGE_PUBLIC_API_CONFIG_TOKEN';
 
 export const INCOMING_REQUEST_TIMEOUT_COPY_API_KEY = 'incomingRequestTimeoutCopyApiMs';
+export const INCOMING_REQUEST_TIMEOUT_DELETE_API_KEY = 'incomingRequestTimeoutDeleteApiMs';
 
 @Configuration()
 export class FileStoragePublicApiConfig {

@@ -29,7 +29,10 @@ import { ApiConsumes, ApiHeader, ApiOperation, ApiProduces, ApiResponse, ApiTags
 import { RequestTimeout } from '@shared/decorator';
 import { Request, Response } from 'express';
 import { GetFileResponse } from '../../domain';
-import { INCOMING_REQUEST_TIMEOUT_COPY_API_KEY } from '../../files-storage.config';
+import {
+	INCOMING_REQUEST_TIMEOUT_COPY_API_KEY,
+	INCOMING_REQUEST_TIMEOUT_DELETE_API_KEY,
+} from '../../files-storage.config';
 import {
 	AddDocumentToParentParams,
 	ArchiveFileParams,
@@ -329,6 +332,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@RequestTimeout(INCOMING_REQUEST_TIMEOUT_DELETE_API_KEY)
 	@Delete('/delete/:storageLocation/:storageLocationId/:parentType/:parentId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteByParent(@Param() params: FileRecordParams): Promise<FileRecordListResponse> {
@@ -342,6 +346,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@RequestTimeout(INCOMING_REQUEST_TIMEOUT_DELETE_API_KEY)
 	@Delete('/delete/:fileRecordId')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFile(@Param() params: SingleFileParams): Promise<FileRecordResponse> {
@@ -355,6 +360,7 @@ export class FilesStorageController {
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 403, type: ForbiddenException })
 	@ApiResponse({ status: 500, type: InternalServerErrorException })
+	@RequestTimeout(INCOMING_REQUEST_TIMEOUT_DELETE_API_KEY)
 	@Delete('/delete')
 	@UseInterceptors(RequestLoggingInterceptor)
 	public async deleteFiles(@Body() params: MultiFileParams): Promise<FileRecordListResponse> {
