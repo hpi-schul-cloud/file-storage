@@ -1,3 +1,4 @@
+delete min.io
 # File Storage Service
 
 This project provides a file storage service with integrated antivirus scanning, authorization, and preview generation. It is designed for use in secure environments and supports integration with external services such as S3-compatible storage, antivirus servers, Collabora and authorization APIs.
