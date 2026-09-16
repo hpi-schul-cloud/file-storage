@@ -328,7 +328,12 @@ export class FilesStorageUC {
 		]);
 
 		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(params.parentId);
-		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, fileRecords, targetParams);
+		const copyFileResults = await this.filesStorageService.copyFilesToParent(
+			userId,
+			fileRecords,
+			targetParams,
+			StorageType.STANDARD
+		);
 
 		return [copyFileResults, count];
 	}
@@ -346,7 +351,12 @@ export class FilesStorageUC {
 			this.checkPermission(targetParams, FileStorageAuthorizationContext.create),
 		]);
 
-		const copyFileResults = await this.filesStorageService.copyFilesToParent(userId, [fileRecord], targetParams);
+		const copyFileResults = await this.filesStorageService.copyFilesToParent(
+			userId,
+			[fileRecord],
+			targetParams,
+			StorageType.STANDARD
+		);
 		const result = copyFileResults[0];
 
 		if (!result) {

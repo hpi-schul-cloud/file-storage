@@ -536,7 +536,8 @@ export class FilesStorageService {
 	public async copyFilesToParent(
 		userId: EntityId,
 		sourceFileRecords: FileRecord[],
-		targetParentInfo: ParentInfo
+		targetParentInfo: ParentInfo,
+		targetStorageType?: StorageType
 	): Promise<CopyFileResult[]> {
 		this.logCopy(sourceFileRecords, targetParentInfo);
 		if (sourceFileRecords.length === 0) return [];
@@ -549,7 +550,7 @@ export class FilesStorageService {
 			try {
 				this.checkDownloadable(sourceFile);
 
-				const targetFile = await this.copyFileRecord(sourceFile, targetParentInfo, userId);
+				const targetFile = await this.copyFileRecord(sourceFile, targetParentInfo, userId, targetStorageType);
 				const copyFileResult = await this.copyFilesWithRollbackOnError(sourceFile, targetFile);
 
 				return copyFileResult;
@@ -574,9 +575,10 @@ export class FilesStorageService {
 	private async copyFileRecord(
 		sourceFile: FileRecord,
 		targetParentInfo: ParentInfo,
-		userId: EntityId
+		userId: EntityId,
+		targetStorageType?: StorageType
 	): Promise<FileRecord> {
-		const fileRecord = FileRecordFactory.copy(sourceFile, userId, targetParentInfo);
+		const fileRecord = FileRecordFactory.copy(sourceFile, userId, targetParentInfo, targetStorageType);
 		await this.fileRecordRepo.save(fileRecord);
 
 		return fileRecord;
