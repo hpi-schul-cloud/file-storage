@@ -120,7 +120,6 @@ describe('detectFileTypeFromStream', () => {
 			const fileTypeResult = { mime: 'image/png', ext: 'png' };
 			const fallbackMimeType = 'application/octet-stream';
 
-			//@ts-ignore
 			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 			expect(result).toBe('image/png');
@@ -137,7 +136,6 @@ describe('detectFileTypeFromStream', () => {
 		it('should return fallback mime type when mime is undefined', () => {
 			const fallbackMimeType = 'video/mp4';
 
-			//@ts-ignore
 			const result = resolveMimeType(fallbackMimeType, { mime: undefined });
 
 			expect(result).toBe('video/mp4');
@@ -147,10 +145,38 @@ describe('detectFileTypeFromStream', () => {
 			const fileTypeResult = { mime: 'application/x-cfb', ext: 'cfb' };
 			const fallbackMimeType = 'video/mp4';
 
-			//@ts-ignore
 			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 			expect(result).toBe('video/mp4');
+		});
+
+		describe('when detected mime type is application/zip', () => {
+			it('should return fallback mime type when it is a known OOXML mime type', () => {
+				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
+				const fallbackMimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+
+				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
+
+				expect(result).toBe(fallbackMimeType);
+			});
+
+			it('should return fallback mime type when it is a known ODF mime type', () => {
+				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
+				const fallbackMimeType = 'application/vnd.oasis.opendocument.text';
+
+				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
+
+				expect(result).toBe(fallbackMimeType);
+			});
+
+			it('should return detected application/zip when fallback mime type is not a known office mime type', () => {
+				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
+				const fallbackMimeType = 'application/octet-stream';
+
+				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
+
+				expect(result).toBe('application/zip');
+			});
 		});
 	});
 });

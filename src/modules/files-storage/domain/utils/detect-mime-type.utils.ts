@@ -1,5 +1,6 @@
 import { type Logger } from '@infra/logger';
 import { type PassThrough } from 'node:stream';
+import { zipBasedCollaboraMimeTypes } from '../file-record.do';
 import { FileTypeErrorLoggable } from './file-type-error.loggable';
 import { type FileTypeResult, detectFileTypeFromStream } from './file-type-stream.import';
 
@@ -15,11 +16,19 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 	return !unsupportedMimeTypes.includes(mimeType);
 };
 
+// OOXML/ODF documents are ZIP containers; file-type's bounded ZIP scan can abandon before
+// reaching the entries that identify the concrete format when a single embedded media entry
+// is large, misreporting the file as a generic ZIP archive.
+// In that specific case we trust the caller-declared mime type over the generic zip detection.
 export const resolveMimeType = (fallbackMimeType: string, fileTypeResult?: FileTypeResult): string => {
-	const detectedMimeType = fileTypeResult?.mime;
-	const mimeType = filterDetectedMimeType(detectedMimeType) ?? fallbackMimeType;
+	const genericZipMimeType = 'application/zip';
+	const detectedMimeType = filterDetectedMimeType(fileTypeResult?.mime);
 
-	return mimeType;
+	if (detectedMimeType === genericZipMimeType && zipBasedCollaboraMimeTypes.has(fallbackMimeType)) {
+		return fallbackMimeType;
+	}
+
+	return detectedMimeType ?? fallbackMimeType;
 };
 
 const filterDetectedMimeType = (mimeType?: string): string | undefined => {
