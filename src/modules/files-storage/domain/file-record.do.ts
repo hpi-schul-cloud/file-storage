@@ -48,6 +48,20 @@ export enum CollaboraMimeTypes {
 	PPT = 'application/vnd.ms-powerpoint',
 	ODP = 'application/vnd.oasis.opendocument.presentation',
 }
+
+// legacy, non-ZIP-based Collabora mime types (OLE/CFB binary or plain text)
+const nonZipCollaboraMimeTypes = new Set<string>([
+	CollaboraMimeTypes.DOC,
+	CollaboraMimeTypes.XLS,
+	CollaboraMimeTypes.PPT,
+	CollaboraMimeTypes.RTF,
+	CollaboraMimeTypes.TXT,
+	CollaboraMimeTypes.CSV,
+]);
+export const zipBasedCollaboraMimeTypes = new Set(
+	Object.values<string>(CollaboraMimeTypes).filter((mimeType) => !nonZipCollaboraMimeTypes.has(mimeType))
+);
+
 export interface FileRecordProps extends AuthorizableObject {
 	id: EntityId;
 	size: number;
