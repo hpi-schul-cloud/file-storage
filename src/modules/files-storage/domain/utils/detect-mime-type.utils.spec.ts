@@ -120,7 +120,6 @@ describe('detectFileTypeFromStream', () => {
 			const fileTypeResult = { mime: 'image/png', ext: 'png' };
 			const fallbackMimeType = 'application/octet-stream';
 
-			//@ts-ignore
 			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 			expect(result).toBe('image/png');
@@ -137,7 +136,6 @@ describe('detectFileTypeFromStream', () => {
 		it('should return fallback mime type when mime is undefined', () => {
 			const fallbackMimeType = 'video/mp4';
 
-			//@ts-ignore
 			const result = resolveMimeType(fallbackMimeType, { mime: undefined });
 
 			expect(result).toBe('video/mp4');
@@ -147,7 +145,6 @@ describe('detectFileTypeFromStream', () => {
 			const fileTypeResult = { mime: 'application/x-cfb', ext: 'cfb' };
 			const fallbackMimeType = 'video/mp4';
 
-			//@ts-ignore
 			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 			expect(result).toBe('video/mp4');
@@ -158,7 +155,6 @@ describe('detectFileTypeFromStream', () => {
 				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
 				const fallbackMimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
-				//@ts-ignore
 				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 				expect(result).toBe(fallbackMimeType);
@@ -168,7 +164,6 @@ describe('detectFileTypeFromStream', () => {
 				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
 				const fallbackMimeType = 'application/vnd.oasis.opendocument.text';
 
-				//@ts-ignore
 				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 				expect(result).toBe(fallbackMimeType);
@@ -178,7 +173,6 @@ describe('detectFileTypeFromStream', () => {
 				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
 				const fallbackMimeType = 'application/octet-stream';
 
-				//@ts-ignore
 				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
 				expect(result).toBe('application/zip');
