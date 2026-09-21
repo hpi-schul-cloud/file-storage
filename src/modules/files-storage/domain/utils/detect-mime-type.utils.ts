@@ -1,5 +1,6 @@
 import { type Logger } from '@infra/logger';
 import { type PassThrough } from 'node:stream';
+import { zipBasedCollaboraMimeTypes } from '../file-record.do';
 import { FileTypeErrorLoggable } from './file-type-error.loggable';
 import { type FileTypeResult, detectFileTypeFromStream } from './file-type-stream.import';
 
@@ -18,30 +19,16 @@ const isFileTypePackageSupported = (mimeType: string): boolean => {
 // OOXML/ODF documents are ZIP containers; file-type's bounded ZIP scan can abandon before
 // reaching the entries that identify the concrete format when a single embedded media entry
 // is large, misreporting the file as a generic ZIP archive.
-const genericZipMimeType = 'application/zip';
-const officeZipBasedMimeTypes = new Set<string>([
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-	'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
-	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-	'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
-	'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-	'application/vnd.openxmlformats-officedocument.presentationml.template',
-	'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
-	'application/vnd.oasis.opendocument.text',
-	'application/vnd.oasis.opendocument.spreadsheet',
-	'application/vnd.oasis.opendocument.presentation',
-]);
-
+// In that specific case we trust the caller-declared mime type over the generic zip detection.
 export const resolveMimeType = (fallbackMimeType: string, fileTypeResult?: FileTypeResult): string => {
+	const genericZipMimeType = 'application/zip';
 	const detectedMimeType = filterDetectedMimeType(fileTypeResult?.mime);
 
-	if (detectedMimeType === genericZipMimeType && officeZipBasedMimeTypes.has(fallbackMimeType)) {
+	if (detectedMimeType === genericZipMimeType && zipBasedCollaboraMimeTypes.has(fallbackMimeType)) {
 		return fallbackMimeType;
 	}
 
-	const mimeType = detectedMimeType ?? fallbackMimeType;
-
-	return mimeType;
+	return detectedMimeType ?? fallbackMimeType;
 };
 
 const filterDetectedMimeType = (mimeType?: string): string | undefined => {
