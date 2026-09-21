@@ -153,34 +153,36 @@ describe('detectFileTypeFromStream', () => {
 			expect(result).toBe('video/mp4');
 		});
 
-		it('should return fallback mime type when detected mime is application/zip and fallback is a known OOXML mime type', () => {
-			const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
-			const fallbackMimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+		describe('when detected mime type is application/zip', () => {
+			it('should return fallback mime type when it is a known OOXML mime type', () => {
+				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
+				const fallbackMimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
-			//@ts-ignore
-			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
+				//@ts-ignore
+				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
-			expect(result).toBe(fallbackMimeType);
-		});
+				expect(result).toBe(fallbackMimeType);
+			});
 
-		it('should return fallback mime type when detected mime is application/zip and fallback is a known ODF mime type', () => {
-			const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
-			const fallbackMimeType = 'application/vnd.oasis.opendocument.text';
+			it('should return fallback mime type when it is a known ODF mime type', () => {
+				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
+				const fallbackMimeType = 'application/vnd.oasis.opendocument.text';
 
-			//@ts-ignore
-			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
+				//@ts-ignore
+				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
-			expect(result).toBe(fallbackMimeType);
-		});
+				expect(result).toBe(fallbackMimeType);
+			});
 
-		it('should return detected application/zip when fallback is not a known office mime type', () => {
-			const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
-			const fallbackMimeType = 'application/octet-stream';
+			it('should return detected application/zip when fallback mime type is not a known office mime type', () => {
+				const fileTypeResult = { mime: 'application/zip', ext: 'zip' };
+				const fallbackMimeType = 'application/octet-stream';
 
-			//@ts-ignore
-			const result = resolveMimeType(fallbackMimeType, fileTypeResult);
+				//@ts-ignore
+				const result = resolveMimeType(fallbackMimeType, fileTypeResult);
 
-			expect(result).toBe('application/zip');
+				expect(result).toBe('application/zip');
+			});
 		});
 	});
 });
