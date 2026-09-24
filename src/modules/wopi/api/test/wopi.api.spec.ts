@@ -1307,10 +1307,11 @@ describe('Wopi Controller (API)', () => {
 
 				await em.persistAndFlush(fileRecord);
 
+				const filePath = path.join(__dirname, 'mocked-file.txt');
 				mock({
-					'./mocked-file.txt': 'test content for the mock',
+					[filePath]: 'test content for the mock',
 				});
-				const filePath = path.join(__dirname, './mocked-file.txt');
+
 				const stream = fs.createReadStream(filePath);
 				stream.on('data', () => {
 					stream.emit('error', new Error('Stream error'));

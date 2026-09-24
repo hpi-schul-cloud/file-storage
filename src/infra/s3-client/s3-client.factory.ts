@@ -1,5 +1,5 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { ConfiguredRetryStrategy, RETRY_MODES } from '@aws-sdk/util-retry';
+import { ConfiguredRetryStrategy, RETRY_MODES } from '@smithy/util-retry';
 import { type DomainErrorHandler } from '@infra/error';
 import { type Logger } from '@infra/logger';
 import { NodeHttpHandler } from '@smithy/node-http-handler';

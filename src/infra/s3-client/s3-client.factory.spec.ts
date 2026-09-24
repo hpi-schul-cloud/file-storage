@@ -1,5 +1,5 @@
 import { S3Client } from '@aws-sdk/client-s3';
-import { ConfiguredRetryStrategy, RETRY_MODES } from '@aws-sdk/util-retry';
+import { ConfiguredRetryStrategy, RETRY_MODES } from '@smithy/util-retry';
 import { createMock } from '@golevelup/ts-jest';
 import { type DomainErrorHandler } from '@infra/error';
 import { type Logger } from '@infra/logger';
@@ -10,8 +10,8 @@ import { S3ClientAdapter } from './s3-client.adapter';
 import { S3ClientFactory } from './s3-client.factory';
 
 jest.mock('@aws-sdk/client-s3');
-jest.mock('@aws-sdk/util-retry', () => ({
-	...jest.requireActual('@aws-sdk/util-retry'),
+jest.mock('@smithy/util-retry', () => ({
+	...jest.requireActual('@smithy/util-retry'),
 	ConfiguredRetryStrategy: jest.fn(),
 }));
 jest.mock('@smithy/node-http-handler');
