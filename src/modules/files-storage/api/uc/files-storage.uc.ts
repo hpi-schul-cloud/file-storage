@@ -42,11 +42,14 @@ import {
 	AddDocumentToParentParams,
 	ArchiveFileParams,
 	CopyFileResponse,
+	CreateFolderParams,
 	DownloadFileParams,
 	FileRecordListResponse,
 	FileRecordParams,
 	FileRecordResponse,
 	FileUrlParams,
+	FolderQueryParams,
+	MoveFileParams,
 	MultiFileParams,
 	PaginationParams,
 	ParentParams,
@@ -82,21 +85,35 @@ export class FilesStorageUC {
 	}
 
 	// upload
-	public async upload(userId: EntityId, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
+	public async upload(
+		userId: EntityId,
+		params: FileRecordParams,
+		req: Request,
+		folderQuery?: FolderQueryParams
+	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 		this.checkContentLength(req);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.STANDARD);
+		const fileRecord = await this.uploadFileWithBusboy(
+			userId,
+			{ ...params, folderId: folderQuery?.folderId },
+			req,
+			StorageType.STANDARD
+		);
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
 		return fileRecordResponse;
 	}
 
-	public async uploadFromUrl(userId: EntityId, params: FileRecordParams & FileUrlParams): Promise<FileRecordResponse> {
+	public async uploadFromUrl(
+		userId: EntityId,
+		params: FileRecordParams & FileUrlParams,
+		folderQuery?: FolderQueryParams
+	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
@@ -105,7 +122,11 @@ export class FilesStorageUC {
 		const response = await this.getResponse(params);
 		const abortSignal = undefined;
 		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response, StorageType.STANDARD, abortSignal);
-		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
+		const fileRecord = await this.filesStorageService.uploadFile(
+			userId,
+			{ ...params, folderId: folderQuery?.folderId },
+			fileDto
+		);
 		await this.checkMimeTypeAndRollbackIfNotAllowed(fileRecord);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
@@ -123,7 +144,8 @@ export class FilesStorageUC {
 
 	public async addDocumentToParent(
 		userId: EntityId,
-		params: FileRecordParams & AddDocumentToParentParams
+		params: FileRecordParams & AddDocumentToParentParams,
+		folderQuery?: FolderQueryParams
 	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
@@ -132,7 +154,7 @@ export class FilesStorageUC {
 
 		const fileRecord = await this.filesStorageService.uploadDocumentToParent(
 			userId,
-			params,
+			{ ...params, folderId: folderQuery?.folderId },
 			params.fileName,
 			params.documentType
 		);
@@ -143,14 +165,24 @@ export class FilesStorageUC {
 		return fileRecordResponse;
 	}
 
-	public async tempUpload(userId: string, params: FileRecordParams, req: Request): Promise<FileRecordResponse> {
+	public async tempUpload(
+		userId: string,
+		params: FileRecordParams,
+		req: Request,
+		folderQuery?: FolderQueryParams
+	): Promise<FileRecordResponse> {
 		await Promise.all([
 			this.checkPermission(params, FileStorageAuthorizationContext.create),
 			this.checkStorageLocationCanRead(params.storageLocation, params.storageLocationId),
 		]);
 		this.checkContentLength(req);
 
-		const fileRecord = await this.uploadFileWithBusboy(userId, params, req, StorageType.TEMP);
+		const fileRecord = await this.uploadFileWithBusboy(
+			userId,
+			{ ...params, folderId: folderQuery?.folderId },
+			req,
+			StorageType.TEMP
+		);
 
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
@@ -237,7 +269,10 @@ export class FilesStorageUC {
 
 		await this.checkDeletePermission([parentReference]);
 
-		await this.deletePreviewsAndFiles([fileRecord]);
+		const recordsToDelete = await this.expandFoldersToDescendants([fileRecord]);
+
+		await this.deletePreviewsAndFiles(recordsToDelete);
+
 		const status = this.filesStorageService.getFileRecordStatus(fileRecord);
 		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(fileRecord, status);
 
@@ -245,16 +280,35 @@ export class FilesStorageUC {
 	}
 
 	public async deleteMultipleFiles(params: MultiFileParams): Promise<FileRecordListResponse> {
-		const [fileRecords, count] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
+		const [fileRecords] = await this.filesStorageService.getFileRecords(params.fileRecordIds);
 		const parentReferences = FileRecord.getUniqueParentReferences(fileRecords);
 
 		await this.checkDeletePermission(parentReferences);
 
-		await this.deletePreviewsAndFiles(fileRecords);
-		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);
-		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(fileRecordWithStatus, count);
+		const recordsToDelete = await this.expandFoldersToDescendants(fileRecords);
+
+		await this.deletePreviewsAndFiles(recordsToDelete);
+		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(recordsToDelete);
+		const fileRecordListResponse = FileRecordMapper.mapToFileRecordListResponse(
+			fileRecordWithStatus,
+			recordsToDelete.length
+		);
 
 		return fileRecordListResponse;
+	}
+
+	/**
+	 * Expands any folder in the given list into itself plus every nested descendant, so batch
+	 * deletes cascade correctly. Non-folder records pass through unchanged.
+	 */
+	private async expandFoldersToDescendants(fileRecords: FileRecord[]): Promise<FileRecord[]> {
+		const expanded = await Promise.all(
+			fileRecords.map((fileRecord) =>
+				fileRecord.isFolderRecord() ? this.filesStorageService.getFolderAndDescendants(fileRecord) : [fileRecord]
+			)
+		);
+
+		return expanded.flat();
 	}
 
 	private async deletePreviewsAndFiles(fileRecords: FileRecord[]): Promise<void> {
@@ -358,6 +412,38 @@ export class FilesStorageUC {
 		return result;
 	}
 
+	// folders
+	public async createFolder(
+		userId: EntityId,
+		params: FileRecordParams,
+		body: CreateFolderParams
+	): Promise<FileRecordResponse> {
+		await this.checkPermission(params, FileStorageAuthorizationContext.create);
+
+		const folder = await this.filesStorageService.createFolder(
+			userId,
+			{ ...params, folderId: body.folderId },
+			body.name
+		);
+		const status = this.filesStorageService.getFileRecordStatus(folder);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(folder, status);
+
+		return fileRecordResponse;
+	}
+
+	public async moveFile(params: SingleFileParams, body: MoveFileParams): Promise<FileRecordResponse> {
+		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
+		const parentReference = fileRecord.getParentReference();
+
+		await this.checkPermission(parentReference, FileStorageAuthorizationContext.update);
+
+		const movedRecord = await this.filesStorageService.moveRecord(fileRecord, body.folderId);
+		const status = this.filesStorageService.getFileRecordStatus(movedRecord);
+		const fileRecordResponse = FileRecordMapper.mapToFileRecordResponse(movedRecord, status);
+
+		return fileRecordResponse;
+	}
+
 	// update
 	public async patchFilename(params: SingleFileParams, data: RenameFileParams): Promise<FileRecordResponse> {
 		const fileRecord = await this.filesStorageService.getFileRecord(params.fileRecordId);
@@ -394,13 +480,14 @@ export class FilesStorageUC {
 
 	public async getFileRecordsOfParent(
 		params: FileRecordParams,
-		pagination: PaginationParams
+		pagination: PaginationParams,
+		folderQuery?: FolderQueryParams
 	): Promise<FileRecordListResponse> {
 		await this.checkPermission(params, FileStorageAuthorizationContext.read);
 
-		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByParentAndStorageType(
+		const [fileRecords, count] = await this.filesStorageService.getFileRecordsByFolderScope(
 			params.parentId,
-			undefined,
+			folderQuery?.folderId,
 			{ pagination }
 		);
 		const fileRecordWithStatus = this.filesStorageService.getFileRecordsWithStatus(fileRecords);

@@ -66,6 +66,8 @@ export interface FileRecordProps extends AuthorizableObject {
 	updatedAt: Date;
 	contentLastModifiedAt?: Date;
 	storageType: StorageType;
+	isFolder?: boolean;
+	folderId?: EntityId;
 }
 
 export class FileRecord extends DomainObject<FileRecordProps> {
@@ -173,7 +175,7 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 	}
 
 	public isDownloadable(): boolean {
-		return !this.securityCheck.isBlocked() && !this.props.isUploading;
+		return !this.securityCheck.isBlocked() && !this.props.isUploading && !this.isFolderRecord();
 	}
 
 	public isBlocked(): boolean {
@@ -277,6 +279,18 @@ export class FileRecord extends DomainObject<FileRecordProps> {
 		const { parentId, parentType } = this.props;
 
 		return { parentId, parentType };
+	}
+
+	public isFolderRecord(): boolean {
+		return this.props.isFolder === true;
+	}
+
+	public getFolderId(): EntityId | undefined {
+		return this.props.folderId;
+	}
+
+	public setFolderId(folderId: EntityId | undefined): void {
+		this.props.folderId = folderId;
 	}
 
 	public getStorageReference(): StorageReference {

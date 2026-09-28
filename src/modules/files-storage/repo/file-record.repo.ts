@@ -67,6 +67,21 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		return result;
 	}
 
+	public async findByParentAndFolderId(
+		parentId: EntityId,
+		folderId?: EntityId,
+		options?: FindOptions<FileRecordEntity>
+	): Promise<Counted<FileRecord[]>> {
+		const scope = new FileRecordScope()
+			.byParentId(parentId)
+			.byFolderId(folderId)
+			.byMarkedForDelete(false)
+			.byStorageType();
+		const result = await this.findAndCount(scope, options);
+
+		return result;
+	}
+
 	public async findMarkedForDeleteByParentId(
 		parentId: EntityId,
 		options?: FindOptions<FileRecordEntity>

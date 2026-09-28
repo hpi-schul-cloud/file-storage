@@ -20,6 +20,19 @@ export interface FileRecordRepo {
 		storageType?: StorageType
 	): Promise<Counted<FileRecord[]>>;
 
+	/**
+	 * Lists only the direct children of one nesting level within parentId's scope
+	 * (folderId undefined = the folder-element's own root level). Unlike findByParentId,
+	 * this does NOT return descendants nested deeper than one level - used for UI folder
+	 * browsing only. Whole-parent operations (delete/restore/copy/stats of a FileFolderElement)
+	 * intentionally keep using findByParentId so they still affect every nested file.
+	 */
+	findByParentAndFolderId(
+		parentId: EntityId,
+		folderId?: EntityId,
+		options?: FindOptions<FileRecord>
+	): Promise<Counted<FileRecord[]>>;
+
 	findMarkedForDeleteByParentId(parentId: EntityId, options?: FindOptions<FileRecord>): Promise<Counted<FileRecord[]>>;
 
 	markForDeleteByStorageLocation(storageLocation: StorageLocation, storageLocationId: EntityId): Promise<number>;

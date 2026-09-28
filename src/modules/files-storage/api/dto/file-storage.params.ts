@@ -47,6 +47,13 @@ export class FileRecordParams implements ParentInfo, ParentIdentifier {
 	@ApiProperty({ enum: FileRecordParentType, enumName: 'FileRecordParentType' })
 	@IsEnum(FileRecordParentType)
 	parentType!: FileRecordParentType;
+
+	@ApiPropertyOptional({
+		description: 'Id of the subfolder to scope this request to. Not part of the URL - set programmatically.',
+	})
+	@IsOptional()
+	@IsMongoId()
+	folderId?: EntityId;
 }
 
 export class FileUrlParams {
@@ -184,4 +191,37 @@ export class ParentParams implements ParentIdentifier {
 	@ApiProperty({ enum: FileRecordParentType, enumName: 'FileRecordParentType' })
 	@IsEnum(FileRecordParentType)
 	parentType!: FileRecordParentType;
+}
+
+export class FolderQueryParams {
+	@ApiPropertyOptional({
+		description: 'Id of the subfolder to scope the request to. Omit for the root level of the parent.',
+	})
+	@IsOptional()
+	@IsMongoId()
+	folderId?: EntityId;
+}
+
+export class CreateFolderParams {
+	@ApiProperty()
+	@IsString()
+	@IsNotEmpty()
+	@SanitizeHtml()
+	name!: string;
+
+	@ApiPropertyOptional({
+		description: 'Id of the parent folder this new folder is created in. Omit to create it at the root level.',
+	})
+	@IsOptional()
+	@IsMongoId()
+	folderId?: EntityId;
+}
+
+export class MoveFileParams {
+	@ApiPropertyOptional({
+		description: 'Id of the target folder. Omit to move the item to the root level.',
+	})
+	@IsOptional()
+	@IsMongoId()
+	folderId?: EntityId;
 }

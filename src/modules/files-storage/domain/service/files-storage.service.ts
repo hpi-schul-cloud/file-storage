@@ -95,6 +95,22 @@ export class FilesStorageService {
 		return countedFileRecords;
 	}
 
+	/**
+	 * Lists only the direct children of one nesting level (folderId undefined = root level of
+	 * the FileFolderElement). Used for UI folder browsing and for scoping duplicate-name checks
+	 * to siblings within the same folder, so files with identical names may exist in different
+	 * subfolders.
+	 */
+	public async getFileRecordsByFolderScope(
+		parentId: EntityId,
+		folderId?: EntityId,
+		options?: FindOptions<FileRecord>
+	): Promise<Counted<FileRecord[]>> {
+		const countedFileRecords = await this.fileRecordRepo.findByParentAndFolderId(parentId, folderId, options);
+
+		return countedFileRecords;
+	}
+
 	public async getFileRecordsMarkedForDeleteByParent(
 		parentId: EntityId,
 		options?: FindOptions<FileRecord>
@@ -145,12 +161,18 @@ export class FilesStorageService {
 
 	// upload
 	public async uploadFile(userId: EntityId, parentInfo: ParentInfo, sourceFile: FileDto): Promise<FileRecord> {
-		const [fileRecordsOfParent, count] = await this.getFileRecordsByParentAndStorageType(
+		if (parentInfo.folderId) {
+			await this.assertIsFolderWithinSameParent(parentInfo.folderId, parentInfo.parentId);
+		}
+
+		const [, totalCountOfParent] = await this.getFileRecordsByParentAndStorageType(
 			parentInfo.parentId,
 			sourceFile.storageType
 		);
-		this.checkFileLimitPerParent(count);
-		const fileName = this.resolveFileName(sourceFile.name, count, fileRecordsOfParent);
+		this.checkFileLimitPerParent(totalCountOfParent);
+
+		const [siblingsInFolder] = await this.getFileRecordsByFolderScope(parentInfo.parentId, parentInfo.folderId);
+		const fileName = this.resolveFileName(sourceFile.name, siblingsInFolder.length, siblingsInFolder);
 		const file = await this.createPassThroughFileDto(sourceFile, fileName);
 		const fileRecord = await this.prepareFileRecordWithUploadingFlag(file, parentInfo, userId);
 
@@ -324,10 +346,9 @@ export class FilesStorageService {
 
 	public async patchFilename(fileRecord: FileRecord, fileName: string): Promise<FileRecord> {
 		const { parentId } = fileRecord.getParentReference();
-		const { storageType } = fileRecord.getStorageReference();
-		const [fileRecords] = await this.getFileRecordsByParentAndStorageType(parentId, storageType);
+		const [siblingsInFolder] = await this.getFileRecordsByFolderScope(parentId, fileRecord.getFolderId());
 
-		this.checkDuplicatedNames(fileRecords, fileName, fileRecord.id);
+		this.checkDuplicatedNames(siblingsInFolder, fileName, fileRecord.id);
 		fileRecord.setName(fileName);
 		await this.fileRecordRepo.save(fileRecord);
 
@@ -491,6 +512,101 @@ export class FilesStorageService {
 		}
 	}
 
+	/**
+	 * Collects a folder together with every file/subfolder nested underneath it, so the caller
+	 * can delete them all in one batch (including preview cleanup, which lives outside this
+	 * service). Walks the folderId chain one level at a time (no materialized paths) - O(depth)
+	 * queries, acceptable for the expected shallow/moderate folder trees in a file element.
+	 */
+	public async getFolderAndDescendants(folder: FileRecord): Promise<FileRecord[]> {
+		const descendants = await this.collectDescendants(folder);
+
+		return [folder, ...descendants];
+	}
+
+	private async collectDescendants(folder: FileRecord): Promise<FileRecord[]> {
+		const { parentId } = folder.getParentReference();
+		const [children] = await this.getFileRecordsByFolderScope(parentId, folder.id);
+
+		const nestedDescendants = await Promise.all(
+			children.filter((child) => child.isFolderRecord()).map((childFolder) => this.collectDescendants(childFolder))
+		);
+
+		return [...children, ...nestedDescendants.flat()];
+	}
+
+	// folders
+	public async createFolder(userId: EntityId, parentInfo: ParentInfo, name: string): Promise<FileRecord> {
+		if (parentInfo.folderId) {
+			await this.assertIsFolderWithinSameParent(parentInfo.folderId, parentInfo.parentId);
+		}
+
+		const [, totalCountOfParent] = await this.getFileRecordsByParentAndStorageType(parentInfo.parentId);
+		this.checkFileLimitPerParent(totalCountOfParent);
+
+		const [siblingsInFolder] = await this.getFileRecordsByFolderScope(parentInfo.parentId, parentInfo.folderId);
+
+		if (FileRecord.hasDuplicateName(siblingsInFolder, name)) {
+			throw new ConflictException(ErrorType.FILE_NAME_EXISTS);
+		}
+
+		const folder = FileRecordFactory.buildFolder(name, parentInfo, userId);
+		await this.fileRecordRepo.save(folder);
+
+		return folder;
+	}
+
+	/**
+	 * Moves a file or folder to a different folder (or to the root) within the same
+	 * FileFolderElement. Moving across different parentId scopes is not supported, since
+	 * parentId is what the authorization check is keyed on.
+	 */
+	public async moveRecord(record: FileRecord, targetFolderId?: EntityId): Promise<FileRecord> {
+		const { parentId } = record.getParentReference();
+
+		if (targetFolderId) {
+			await this.assertIsFolderWithinSameParent(targetFolderId, parentId);
+		}
+
+		if (record.isFolderRecord() && targetFolderId) {
+			await this.assertNoCycle(record.id, targetFolderId);
+		}
+
+		const [siblingsInTargetFolder] = await this.getFileRecordsByFolderScope(parentId, targetFolderId);
+		const otherSiblings = siblingsInTargetFolder.filter((sibling) => sibling.id !== record.id);
+
+		if (FileRecord.hasDuplicateName(otherSiblings, record.getName())) {
+			throw new ConflictException(ErrorType.FILE_NAME_EXISTS);
+		}
+
+		record.setFolderId(targetFolderId);
+		await this.fileRecordRepo.save(record);
+
+		return record;
+	}
+
+	private async assertIsFolderWithinSameParent(targetFolderId: EntityId, expectedParentId: EntityId): Promise<void> {
+		const targetFolder = await this.fileRecordRepo.findOneById(targetFolderId);
+		const { parentId } = targetFolder.getParentReference();
+
+		if (!targetFolder.isFolderRecord() || parentId !== expectedParentId) {
+			throw new NotFoundException(ErrorType.FILE_NOT_FOUND);
+		}
+	}
+
+	private async assertNoCycle(movedFolderId: EntityId, targetFolderId: EntityId): Promise<void> {
+		let currentId: EntityId | undefined = targetFolderId;
+
+		while (currentId) {
+			if (currentId === movedFolderId) {
+				throw new ConflictException(ErrorType.FOLDER_CANNOT_BE_MOVED_INTO_ITSELF);
+			}
+
+			const currentFolder: FileRecord = await this.fileRecordRepo.findOneById(currentId);
+			currentId = currentFolder.getFolderId();
+		}
+	}
+
 	public async permanentlyDeleteFiles(fileRecords: FileRecord[]): Promise<void> {
 		if (fileRecords.length === 0) return;
 
@@ -540,6 +656,10 @@ export class FilesStorageService {
 	): Promise<CopyFileResult[]> {
 		this.logCopy(sourceFileRecords, targetParentInfo);
 		if (sourceFileRecords.length === 0) return [];
+
+		if (targetParentInfo.folderId) {
+			await this.assertIsFolderWithinSameParent(targetParentInfo.folderId, targetParentInfo.parentId);
+		}
 
 		const [, count] = await this.getFileRecordsByParentAndStorageType(targetParentInfo.parentId);
 

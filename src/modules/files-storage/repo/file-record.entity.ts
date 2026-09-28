@@ -79,6 +79,13 @@ export class FileRecordEntity extends BaseEntityWithTimestamps implements FileRe
 	@Property({ type: ObjectIdType, fieldName: 'isCopyFrom', nullable: true })
 	isCopyFrom?: EntityId;
 
+	@Property({ nullable: true })
+	isFolder?: boolean;
+
+	@Index()
+	@Property({ type: ObjectIdType, fieldName: 'folder', nullable: true })
+	folderId?: EntityId;
+
 	@Property({ persist: false })
 	domainObject: FileRecord | undefined;
 

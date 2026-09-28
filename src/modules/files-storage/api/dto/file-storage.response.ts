@@ -36,6 +36,8 @@ export class FileRecordResponse {
 		this.exceedsCollaboraEditableFileSize = status.exceedsCollaboraEditableFileSize;
 		this.contentLastModifiedAt = props.contentLastModifiedAt;
 		this.expiresAt = expiresAt;
+		this.isFolder = props.isFolder;
+		this.folderId = props.folderId;
 	}
 
 	@ApiProperty()
@@ -92,6 +94,12 @@ export class FileRecordResponse {
 
 	@ApiPropertyOptional()
 	expiresAt?: Date;
+
+	@ApiPropertyOptional({ description: 'True if this entry represents a folder rather than an uploaded file.' })
+	isFolder?: boolean;
+
+	@ApiPropertyOptional({ description: 'Id of the containing folder. Omitted/undefined for the root level.' })
+	folderId?: string;
 }
 
 export class FileRecordListResponse extends PaginationResponse<FileRecordResponse[]> {

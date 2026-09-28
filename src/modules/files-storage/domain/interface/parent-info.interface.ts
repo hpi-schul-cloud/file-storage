@@ -5,4 +5,5 @@ import { type StorageLocation } from './storage-location.enum';
 export interface ParentInfo extends ParentReference {
 	storageLocationId: EntityId;
 	storageLocation: StorageLocation;
+	folderId?: EntityId;
 }

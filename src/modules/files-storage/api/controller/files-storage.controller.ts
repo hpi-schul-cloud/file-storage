@@ -39,12 +39,15 @@ import {
 	CopyFileListResponse,
 	CopyFileParams,
 	CopyFileResponse,
+	CreateFolderParams,
 	DownloadFileParams,
 	FileParams,
 	FileRecordListResponse,
 	FileRecordParams,
 	FileRecordResponse,
 	FileUrlParams,
+	FolderQueryParams,
+	MoveFileParams,
 	MultiFileParams,
 	PaginationParams,
 	ParentParams,
@@ -72,9 +75,10 @@ export class FilesStorageController {
 	public async uploadFromUrl(
 		@Body() body: FileUrlParams,
 		@Param() params: FileRecordParams,
+		@Query() folderQuery: FolderQueryParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...body, ...params });
+		const response = await this.filesStorageUC.uploadFromUrl(currentUser.userId, { ...body, ...params }, folderQuery);
 
 		return response;
 	}
@@ -89,9 +93,14 @@ export class FilesStorageController {
 	public async addDocumentToParent(
 		@Body() body: AddDocumentToParentParams,
 		@Param() params: FileRecordParams,
+		@Query() folderQuery: FolderQueryParams,
 		@CurrentUser() currentUser: ICurrentUser
 	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.addDocumentToParent(currentUser.userId, { ...body, ...params });
+		const response = await this.filesStorageUC.addDocumentToParent(
+			currentUser.userId,
+			{ ...body, ...params },
+			folderQuery
+		);
 
 		return response;
 	}
@@ -108,10 +117,11 @@ export class FilesStorageController {
 	public async upload(
 		@Body() _: FileParams,
 		@Param() params: FileRecordParams,
+		@Query() folderQuery: FolderQueryParams,
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request
 	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.upload(currentUser.userId, params, req);
+		const response = await this.filesStorageUC.upload(currentUser.userId, params, req, folderQuery);
 
 		return response;
 	}
@@ -128,10 +138,11 @@ export class FilesStorageController {
 	public async tempUpload(
 		@Body() _: FileParams,
 		@Param() params: FileRecordParams,
+		@Query() folderQuery: FolderQueryParams,
 		@CurrentUser() currentUser: ICurrentUser,
 		@Req() req: Request
 	): Promise<FileRecordResponse> {
-		const response = await this.filesStorageUC.tempUpload(currentUser.userId, params, req);
+		const response = await this.filesStorageUC.tempUpload(currentUser.userId, params, req, folderQuery);
 
 		return response;
 	}
@@ -282,9 +293,39 @@ export class FilesStorageController {
 	@Get('/list/:storageLocation/:storageLocationId/:parentType/:parentId')
 	public async list(
 		@Param() params: FileRecordParams,
-		@Query() pagination: PaginationParams
+		@Query() pagination: PaginationParams,
+		@Query() folderQuery: FolderQueryParams
 	): Promise<FileRecordListResponse> {
-		const response = await this.filesStorageUC.getFileRecordsOfParent(params, pagination);
+		const response = await this.filesStorageUC.getFileRecordsOfParent(params, pagination, folderQuery);
+
+		return response;
+	}
+
+	@ApiOperation({ summary: 'Create a subfolder within a parent entityId (or within another folder).' })
+	@ApiResponse({ status: 201, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 409, type: ConflictException, description: 'A folder with the same name already exists.' })
+	@Post('/folder/:storageLocation/:storageLocationId/:parentType/:parentId')
+	public async createFolder(
+		@Body() body: CreateFolderParams,
+		@Param() params: FileRecordParams,
+		@CurrentUser() currentUser: ICurrentUser
+	): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.createFolder(currentUser.userId, params, body);
+
+		return response;
+	}
+
+	@ApiOperation({ summary: 'Move a file or folder to a different folder (or to the root) within the same parent.' })
+	@ApiResponse({ status: 200, type: FileRecordResponse })
+	@ApiResponse({ status: 400, type: ApiValidationError })
+	@ApiResponse({ status: 403, type: ForbiddenException })
+	@ApiResponse({ status: 404, type: NotFoundException })
+	@ApiResponse({ status: 409, type: ConflictException })
+	@Patch('/move/:fileRecordId')
+	public async move(@Param() params: SingleFileParams, @Body() body: MoveFileParams): Promise<FileRecordResponse> {
+		const response = await this.filesStorageUC.moveFile(params, body);
 
 		return response;
 	}
