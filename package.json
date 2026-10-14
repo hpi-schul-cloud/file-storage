@@ -88,7 +88,7 @@
 		"@nestjs/cli": "^11.0.24",
 		"@nestjs/schematics": "^11.1.0",
 		"@nestjs/testing": "^11.1.28",
-		"@openapitools/openapi-generator-cli": "^2.40.1",
+		"@openapitools/openapi-generator-cli": "^2.41.0",
 		"@swc/cli": "^0.8.1",
 		"@swc/core": "^1.15.46",
 		"@types/archiver": "^7.0.0",

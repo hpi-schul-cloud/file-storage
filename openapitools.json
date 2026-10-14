@@ -2,7 +2,7 @@
 	"$schema": "./node_modules/@openapitools/openapi-generator-cli/config.schema.json",
 	"spaces": 2,
 	"generator-cli": {
-		"version": "7.6.0",
+		"version": "7.25.0",
 		"generators": {
 			"authorization-api": {
 				"generatorName": "typescript-axios",
@@ -14,6 +14,8 @@
 					"FILTER": "operationId:AuthorizationReferenceController_authorizeByReference|AuthorizationReferenceController_authorizeByReferences|AuthorizationReferenceController_createToken|AuthorizationReferenceController_resolveToken"
 				},
 				"globalProperty": {
+					"apiDocs": false,
+					"modelDocs": false,
 					"models": "AuthorizationBodyParams:AuthorizationContextParams:AuthorizedResponse:CreateAccessTokenParams:AccessTokenResponse:AccessTokenParams:AccessTokenPayloadResponse:AuthorizedByReferenceResponse:AuthorizationManyReferencesBodyParams",
 					"apis": "",
 					"supportingFiles": ""

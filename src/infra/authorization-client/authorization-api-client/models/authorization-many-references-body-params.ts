@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 /**
  * Schulcloud-Verbund-Software Server API
@@ -16,16 +17,9 @@
 // @ts-ignore
 import type { AuthorizationBodyParams } from './authorization-body-params';
 
-/**
- * 
- * @export
- * @interface AuthorizationManyReferencesBodyParams
- */
 export interface AuthorizationManyReferencesBodyParams {
     /**
      * List of references to authorize against.
-     * @type {Array<AuthorizationBodyParams>}
-     * @memberof AuthorizationManyReferencesBodyParams
      */
     'references': Array<AuthorizationBodyParams>;
 }
