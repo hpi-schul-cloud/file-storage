@@ -8,7 +8,7 @@ import globals from 'globals';
 
 export default [
 	{
-		ignores: ['**/eslint.config.mjs', '**/ansible', '**/.github'],
+		ignores: ['**/eslint.config.mjs', '**/ansible', '**/.github', 'src/infra/*client/**',],
 	},
 	...typescriptEslintEslintPlugin.configs['flat/stylistic-type-checked'],
 	prettierRecommended,
