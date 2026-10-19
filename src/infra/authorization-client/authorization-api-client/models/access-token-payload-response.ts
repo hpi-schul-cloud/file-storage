@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 /**
  * Schulcloud-Verbund-Software Server API
@@ -13,17 +14,7 @@
 
 
 
-/**
- * 
- * @export
- * @interface AccessTokenPayloadResponse
- */
 export interface AccessTokenPayloadResponse {
-    /**
-     * 
-     * @type {object}
-     * @memberof AccessTokenPayloadResponse
-     */
     'payload': object;
 }
 

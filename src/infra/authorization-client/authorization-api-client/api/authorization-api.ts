@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 /**
  * Schulcloud-Verbund-Software Server API
@@ -17,7 +18,7 @@ import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../common';
+import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction, replaceWithSerializableTypeIfNeeded } from '../common';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
@@ -38,7 +39,6 @@ import type { AuthorizedResponse } from '../models';
 import type { CreateAccessTokenParams } from '../models';
 /**
  * AuthorizationApi - axios parameter creator
- * @export
  */
 export const AuthorizationApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
@@ -68,9 +68,8 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-
-    
             localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -108,9 +107,8 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-
-    
             localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -147,9 +145,8 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             // http bearer authentication required
             await setBearerAuthToObject(localVarHeaderParameter, configuration)
 
-
-    
             localVarHeaderParameter['Content-Type'] = 'application/json';
+            localVarHeaderParameter['Accept'] = 'application/json';
 
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
@@ -174,8 +171,8 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             // verify required parameter 'tokenTtlInSeconds' is not null or undefined
             assertParamExists('authorizationReferenceControllerResolveToken', 'tokenTtlInSeconds', tokenTtlInSeconds)
             const localVarPath = `/authorization/resolve-token/{token}/ttl/{tokenTtlInSeconds}`
-                .replace(`{${"token"}}`, encodeURIComponent(String(token)))
-                .replace(`{${"tokenTtlInSeconds"}}`, encodeURIComponent(String(tokenTtlInSeconds)));
+                .replace('{token}', encodeURIComponent(String(token)))
+                .replace('{tokenTtlInSeconds}', encodeURIComponent(String(tokenTtlInSeconds)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -187,8 +184,8 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
 
+            localVarHeaderParameter['Accept'] = 'application/json';
 
-    
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -203,7 +200,6 @@ export const AuthorizationApiAxiosParamCreator = function (configuration?: Confi
 
 /**
  * AuthorizationApi - functional programming interface
- * @export
  */
 export const AuthorizationApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = AuthorizationApiAxiosParamCreator(configuration)
@@ -264,7 +260,6 @@ export const AuthorizationApiFp = function(configuration?: Configuration) {
 
 /**
  * AuthorizationApi - factory interface
- * @export
  */
 export const AuthorizationApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = AuthorizationApiFp(configuration)
@@ -276,7 +271,7 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: any): AxiosPromise<AuthorizedResponse> {
+        authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<AuthorizedResponse> {
             return localVarFp.authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams, options).then((request) => request(axios, basePath));
         },
         /**
@@ -286,7 +281,7 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: any): AxiosPromise<Array<AuthorizedByReferenceResponse>> {
+        authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<Array<AuthorizedByReferenceResponse>> {
             return localVarFp.authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams, options).then((request) => request(axios, basePath));
         },
         /**
@@ -295,7 +290,7 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: any): AxiosPromise<AccessTokenResponse> {
+        authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: RawAxiosRequestConfig): AxiosPromise<AccessTokenResponse> {
             return localVarFp.authorizationReferenceControllerCreateToken(createAccessTokenParams, options).then((request) => request(axios, basePath));
         },
         /**
@@ -305,7 +300,7 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        authorizationReferenceControllerResolveToken(token: string, tokenTtlInSeconds: number, options?: any): AxiosPromise<AccessTokenPayloadResponse> {
+        authorizationReferenceControllerResolveToken(token: string, tokenTtlInSeconds: number, options?: RawAxiosRequestConfig): AxiosPromise<AccessTokenPayloadResponse> {
             return localVarFp.authorizationReferenceControllerResolveToken(token, tokenTtlInSeconds, options).then((request) => request(axios, basePath));
         },
     };
@@ -313,8 +308,6 @@ export const AuthorizationApiFactory = function (configuration?: Configuration, 
 
 /**
  * AuthorizationApi - interface
- * @export
- * @interface AuthorizationApi
  */
 export interface AuthorizationApiInterface {
     /**
@@ -323,7 +316,6 @@ export interface AuthorizationApiInterface {
      * @param {AuthorizationBodyParams} authorizationBodyParams 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApiInterface
      */
     authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<AuthorizedResponse>;
 
@@ -333,7 +325,6 @@ export interface AuthorizationApiInterface {
      * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApiInterface
      */
     authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: RawAxiosRequestConfig): AxiosPromise<Array<AuthorizedByReferenceResponse>>;
 
@@ -342,7 +333,6 @@ export interface AuthorizationApiInterface {
      * @param {CreateAccessTokenParams} createAccessTokenParams 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApiInterface
      */
     authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: RawAxiosRequestConfig): AxiosPromise<AccessTokenResponse>;
 
@@ -352,7 +342,6 @@ export interface AuthorizationApiInterface {
      * @param {number} tokenTtlInSeconds Lifetime of token
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApiInterface
      */
     authorizationReferenceControllerResolveToken(token: string, tokenTtlInSeconds: number, options?: RawAxiosRequestConfig): AxiosPromise<AccessTokenPayloadResponse>;
 
@@ -360,9 +349,6 @@ export interface AuthorizationApiInterface {
 
 /**
  * AuthorizationApi - object-oriented interface
- * @export
- * @class AuthorizationApi
- * @extends {BaseAPI}
  */
 export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterface {
     /**
@@ -371,7 +357,6 @@ export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterfa
      * @param {AuthorizationBodyParams} authorizationBodyParams 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApi
      */
     public authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams: AuthorizationBodyParams, options?: RawAxiosRequestConfig) {
         return AuthorizationApiFp(this.configuration).authorizationReferenceControllerAuthorizeByReference(authorizationBodyParams, options).then((request) => request(this.axios, this.basePath));
@@ -383,7 +368,6 @@ export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterfa
      * @param {AuthorizationManyReferencesBodyParams} authorizationManyReferencesBodyParams 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApi
      */
     public authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams: AuthorizationManyReferencesBodyParams, options?: RawAxiosRequestConfig) {
         return AuthorizationApiFp(this.configuration).authorizationReferenceControllerAuthorizeByReferences(authorizationManyReferencesBodyParams, options).then((request) => request(this.axios, this.basePath));
@@ -394,7 +378,6 @@ export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterfa
      * @param {CreateAccessTokenParams} createAccessTokenParams 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApi
      */
     public authorizationReferenceControllerCreateToken(createAccessTokenParams: CreateAccessTokenParams, options?: RawAxiosRequestConfig) {
         return AuthorizationApiFp(this.configuration).authorizationReferenceControllerCreateToken(createAccessTokenParams, options).then((request) => request(this.axios, this.basePath));
@@ -406,7 +389,6 @@ export class AuthorizationApi extends BaseAPI implements AuthorizationApiInterfa
      * @param {number} tokenTtlInSeconds Lifetime of token
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof AuthorizationApi
      */
     public authorizationReferenceControllerResolveToken(token: string, tokenTtlInSeconds: number, options?: RawAxiosRequestConfig) {
         return AuthorizationApiFp(this.configuration).authorizationReferenceControllerResolveToken(token, tokenTtlInSeconds, options).then((request) => request(this.axios, this.basePath));
