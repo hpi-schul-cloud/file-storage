@@ -48,8 +48,13 @@ export class FileRecordFactory {
 		return fileRecord;
 	}
 
-	public static copy(fileRecord: FileRecord, userId: EntityId, targetParentInfo: ParentInfo): FileRecord {
-		const { size, name, mimeType, id, storageType } = fileRecord.getProps();
+	public static copy(
+		fileRecord: FileRecord,
+		userId: EntityId,
+		targetParentInfo: ParentInfo,
+		storageType: StorageType = fileRecord.getProps().storageType
+	): FileRecord {
+		const { size, name, mimeType, id } = fileRecord.getProps();
 		const { parentType, parentId, storageLocation, storageLocationId } = targetParentInfo;
 		const newSecurityCheck = fileRecord.createSecurityScanBasedOnStatus();
 
