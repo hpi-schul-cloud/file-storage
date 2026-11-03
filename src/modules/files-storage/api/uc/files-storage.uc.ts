@@ -25,6 +25,7 @@ import busboy from 'busboy';
 import { Request } from 'express';
 import internal from 'node:stream';
 import { firstValueFrom } from 'rxjs';
+import { validatePreviewImage } from '../../domain/utils/validate-preview-image.utils';
 import {
 	ErrorType,
 	FileRecord,
@@ -104,7 +105,8 @@ export class FilesStorageUC {
 
 		const response = await this.getResponse(params);
 		const abortSignal = undefined;
-		const fileDto = FileDtoMapper.mapFromAxiosResponse(params.fileName, response, StorageType.STANDARD, abortSignal);
+		const sourceFile = FileDtoMapper.mapFromAxiosResponse(params.fileName, response, StorageType.STANDARD, abortSignal);
+		const fileDto = params.previewOnly ? await validatePreviewImage(sourceFile) : sourceFile;
 		const fileRecord = await this.filesStorageService.uploadFile(userId, params, fileDto);
 		await this.checkMimeTypeAndRollbackIfNotAllowed(fileRecord);
 

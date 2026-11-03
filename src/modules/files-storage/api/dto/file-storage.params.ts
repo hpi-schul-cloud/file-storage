@@ -50,6 +50,15 @@ export class FileRecordParams implements ParentInfo, ParentIdentifier {
 }
 
 export class FileUrlParams {
+	@ApiPropertyOptional({
+		description: 'Require PNG, JPEG, GIF or WebP content matching the HTTP Content-Type before storing the file.',
+		default: false,
+	})
+	@IsOptional()
+	@IsBoolean()
+	@StringToBoolean()
+	previewOnly?: boolean;
+
 	@ApiProperty()
 	@IsString()
 	@IsNotEmpty()

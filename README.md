@@ -13,6 +13,25 @@ This project provides a file storage service with integrated antivirus scanning,
 - **MongoDB Support**: Stores file metadata.
 - **Collabora Support**: Integrates online office document collaboration.
 
+## Remote preview-image imports
+
+Link-preview callers must send `previewOnly: true` in the body of
+`POST /file/upload-from-url/:storageLocation/:storageLocationId/:parentType/:parentId`.
+This mode checks the downloaded bytes before creating a file record or storing the
+original. Only detected PNG, JPEG, GIF and WebP content is accepted, and the HTTP
+`Content-Type` (case-insensitive, ignoring parameters) must match the detected type.
+Missing or mismatched content types, SVG/XML, unsupported or unknown content, and
+detection failures return HTTP 422 with `MIME_TYPE_MISMATCH`.
+
+Omitting the flag preserves the existing general media-import behavior. Ordinary
+multipart uploads are unchanged. Deploying this backend capability alone does not
+protect link-preview callers that have not yet enabled the flag.
+
+Preview responses include `X-Content-Type-Options: nosniff` and
+`Content-Security-Policy: default-src 'none'; sandbox`, including conditional
+HTTP 304 responses. Existing originals, generated previews and persisted link
+references are not migrated or removed by this change.
+
 ## Environment Variables
 
 Configuration is managed via the `.env` file. Key variables include:
