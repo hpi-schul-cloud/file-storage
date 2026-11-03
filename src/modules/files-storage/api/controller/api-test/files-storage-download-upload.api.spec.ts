@@ -10,6 +10,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { currentUserFactory } from '@testing/factory/currentuser.factory';
 import { TestApiClient } from '@testing/test-api-client';
 import NodeClam from 'clamscan';
+import { Readable } from 'node:stream';
 import { ErrorType, ScanStatus, StorageType } from '../../../domain';
 import DetectMimeTypeUtils from '../../../domain/utils/detect-mime-type.utils';
 import {
@@ -855,6 +856,95 @@ describe('files-storage controller (API)', () => {
 					expect(result.body.message).toEqual(ErrorType.MIME_TYPE_MISMATCH);
 				});
 			});
+		});
+	});
+
+	describe('preview-only URL imports', () => {
+		const png = Buffer.from(
+			'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+			'base64'
+		);
+
+		const setup = async (content: string | Buffer, mimeType = 'image/png') => {
+			const loggedInClient = TestApiClient.createWithJwt(app, baseRouteName);
+			const validId = new ObjectId().toHexString();
+			jest.spyOn(DetectMimeTypeUtils, 'detectMimeTypeByStream').mockResolvedValue('image/png');
+			jest.replaceProperty(config, 'filesStorageUseStreamToAntivirus', false);
+			const uploaded = await loggedInClient
+				.post(`/upload/school/${validId}/schools/${validId}`)
+				.attach('file', png, 'source.png');
+			expect(uploaded.status).toBe(201);
+			const source = uploaded.body as FileRecordEntity;
+			s3ClientAdapter.get.mockResolvedValueOnce({
+				...GetFileTestFactory.build({ mimeType }),
+				data: Readable.from(content),
+				contentLength: Buffer.byteLength(content),
+			});
+			s3ClientAdapter.create.mockClear();
+			const storedChunks: Buffer[] = [];
+			s3ClientAdapter.create.mockImplementationOnce(async (_path, file) => {
+				for await (const chunk of file.data) storedChunks.push(Buffer.from(chunk));
+
+				return { $metadata: {} };
+			});
+			const body = {
+				url: `http://localhost:${appPort}/file/download/${source.id}/source.png`,
+				fileName: 'poc.svg.png',
+				headers: { authorization: loggedInClient.getAuthHeader() },
+				previewOnly: true,
+			};
+			const recordCount = await em.count(FileRecordEntity);
+
+			return { loggedInClient, validId, body, recordCount, storedChunks };
+		};
+
+		it('rejects SVG labelled as PNG without persisting an original or file record', async () => {
+			const { loggedInClient, validId, body, recordCount } = await setup(
+				'<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>'
+			);
+
+			const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+			expect(response.status).toBe(422);
+			expect(response.body.message).toBe(ErrorType.MIME_TYPE_MISMATCH);
+			expect(s3ClientAdapter.create).not.toHaveBeenCalled();
+			expect(await em.count(FileRecordEntity)).toBe(recordCount);
+		});
+
+		it.each([false, 'false'])('preserves general media imports when previewOnly is %s', async (previewOnly) => {
+			const { loggedInClient, validId, body } = await setup('<svg/>');
+
+			const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, {
+				...body,
+				previewOnly,
+			});
+
+			expect(response.status).toBe(201);
+			expect(s3ClientAdapter.create).toHaveBeenCalledTimes(1);
+		});
+
+		it('accepts a real PNG and stores the complete original', async () => {
+			const { loggedInClient, validId, body, recordCount, storedChunks } = await setup(png);
+
+			const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+			expect(response.status).toBe(201);
+			expect(response.body.mimeType).toBe('image/png');
+			expect(response.body.size).toBe(png.length);
+			expect(Buffer.concat(storedChunks)).toEqual(png);
+			expect(s3ClientAdapter.create).toHaveBeenCalledTimes(1);
+			expect(await em.count(FileRecordEntity)).toBe(recordCount + 1);
+		});
+
+		it('rejects a real PNG with a mismatched HTTP content type before persistence', async () => {
+			const { loggedInClient, validId, body, recordCount } = await setup(png, 'image/jpeg');
+
+			const response = await loggedInClient.post(`/upload-from-url/school/${validId}/schools/${validId}`, body);
+
+			expect(response.status).toBe(422);
+			expect(response.body.message).toBe(ErrorType.MIME_TYPE_MISMATCH);
+			expect(s3ClientAdapter.create).not.toHaveBeenCalled();
+			expect(await em.count(FileRecordEntity)).toBe(recordCount);
 		});
 	});
 

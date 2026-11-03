@@ -238,6 +238,8 @@ describe('File Controller (API) - preview', () => {
 
 						expect(response.status).toEqual(200);
 						expect(result).toEqual(buffer);
+						expect(response.headers['x-content-type-options']).toBe('nosniff');
+						expect(response.headers['content-security-policy']).toBe("default-src 'none'; sandbox");
 					});
 
 					it('should return status 206 and required headers for the successful partial file stream download', async () => {
@@ -252,6 +254,8 @@ describe('File Controller (API) - preview', () => {
 						expect(response.status).toEqual(206);
 						expect(headers['accept-ranges']).toMatch('bytes');
 						expect(headers['content-range']).toMatch('bytes 0-3/4');
+						expect(headers['x-content-type-options']).toBe('nosniff');
+						expect(headers['content-security-policy']).toBe("default-src 'none'; sandbox");
 					});
 				});
 
@@ -335,6 +339,8 @@ describe('File Controller (API) - preview', () => {
 								.set('If-None-Match', etag);
 
 							expect(response.status).toEqual(304);
+							expect(response.headers['x-content-type-options']).toBe('nosniff');
+							expect(response.headers['content-security-policy']).toBe("default-src 'none'; sandbox");
 						});
 
 						it('should set Content-Disposition header with encoded filename on 304 response', async () => {

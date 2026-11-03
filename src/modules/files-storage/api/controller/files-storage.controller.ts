@@ -64,6 +64,7 @@ export class FilesStorageController {
 
 	@ApiOperation({ summary: 'Upload file from url' })
 	@ApiResponse({ status: 201, type: FileRecordResponse })
+	@ApiResponse({ status: 422, type: UnprocessableEntityException })
 	@ApiResponse({ status: 400, type: ApiValidationError })
 	@ApiResponse({ status: 400, type: BadRequestException })
 	@ApiResponse({ status: 403, type: ForbiddenException })
@@ -190,7 +191,11 @@ export class FilesStorageController {
 	): Promise<StreamableFile | void> {
 		const fileResponse = await this.filesStorageUC.downloadPreview(params, previewParams, bytesRange);
 
-		response.set({ ETag: fileResponse.etag });
+		response.set({
+			ETag: fileResponse.etag,
+			'X-Content-Type-Options': 'nosniff',
+			'Content-Security-Policy': "default-src 'none'; sandbox",
+		});
 
 		if (etag === fileResponse.etag) {
 			response.status(HttpStatus.NOT_MODIFIED);

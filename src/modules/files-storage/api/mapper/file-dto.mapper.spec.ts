@@ -7,6 +7,17 @@ import { FileDtoMapper } from './file-dto.mapper';
 
 describe('FileDtoMapper', () => {
 	describe('mapFromAxiosResponse', () => {
+		it('reads the lowercase content-type header returned by Axios', () => {
+			const response = createMock<AxiosResponse<Readable>>({
+				data: Readable.from('image bytes'),
+				headers: { 'content-type': 'image/png' },
+			});
+
+			const result = FileDtoMapper.mapFromAxiosResponse('image.png', response, StorageType.STANDARD);
+
+			expect(result.mimeType).toBe('image/png');
+		});
+
 		describe('when response has content-type header', () => {
 			const setup = () => {
 				const name = 'test.txt';
