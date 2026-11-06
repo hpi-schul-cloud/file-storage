@@ -27,6 +27,7 @@ import internal from 'node:stream';
 import { firstValueFrom } from 'rxjs';
 import {
 	ErrorType,
+	FileDto,
 	FileRecord,
 	FilesStorageMapper,
 	FilesStorageService,
@@ -513,7 +514,15 @@ export class FilesStorageUC {
 			bb.on('file', (_name, file, info) => {
 				if (isResolved) return; // Already resolved/rejected
 
-				const fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, storageType, abortController.signal);
+				let fileDto: FileDto;
+				try {
+					fileDto = FileDtoMapper.mapFromBusboyFileInfo(info, file, storageType, abortController.signal);
+				} catch (error) {
+					file.resume();
+					safeReject(error);
+
+					return;
+				}
 
 				fileRecordPromise = RequestContext.create(this.em, () => {
 					return this.filesStorageService.uploadFile(userId, params, fileDto);
