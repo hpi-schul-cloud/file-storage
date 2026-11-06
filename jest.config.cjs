@@ -6,7 +6,7 @@ module.exports = {
 	// node_modules stays untouched so CJS singletons (e.g. reflect-metadata / class-transformer
 	// decorator metadata) are not re-compiled and corrupted.
 	transformIgnorePatterns: [
-		'node_modules/(?!(sanitize-html|htmlparser2|entities|dom-serializer|domhandler|domutils|domelementtype)/)',
+		'node_modules/(?!(sanitize-html|htmlparser2|entities|dom-serializer|domhandler|domutils|domelementtype|promise-breaker)/)',
 	],
 	transform: {
 		'^.+\\.tsx?$': [
