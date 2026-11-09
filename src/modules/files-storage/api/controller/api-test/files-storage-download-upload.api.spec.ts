@@ -114,6 +114,27 @@ describe('files-storage controller (API)', () => {
 		});
 
 		describe('with bad request data', () => {
+			it('should return status 400 without storing a file when filename is missing', async () => {
+				const { loggedInClient, validId } = setup();
+				const boundary = '----WebKitFormBoundaryMissingFilename';
+				const multipartBody =
+					`--${boundary}\r\n` +
+					`Content-Disposition: form-data; name="file"\r\n` +
+					`Content-Type: application/octet-stream\r\n` +
+					`\r\n` +
+					`abcd\r\n` +
+					`--${boundary}--\r\n`;
+
+				const result = await loggedInClient
+					.post(`/upload/school/${validId}/schools/${validId}`)
+					.set('content-type', `multipart/form-data; boundary=${boundary}`)
+					.send(Buffer.from(multipartBody));
+
+				expect(result.status).toEqual(400);
+				expect(result.body.message).toEqual(ErrorType.FILE_NAME_EMPTY);
+				expect(s3ClientAdapter.create).not.toHaveBeenCalled();
+			});
+
 			it('should return status 400 for invalid schoolId', async () => {
 				const { loggedInClient, validId } = setup();
 

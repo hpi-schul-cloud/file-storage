@@ -1,7 +1,8 @@
 import { createMock } from '@golevelup/ts-jest';
+import { BadRequestException } from '@nestjs/common';
 import { type AxiosResponse } from 'axios';
 import { Readable } from 'node:stream';
-import { FileDto, StorageType } from '../../domain';
+import { ErrorType, FileDto, StorageType } from '../../domain';
 import { busboyFileInfoTestFactory } from '../../testing';
 import { FileDtoMapper } from './file-dto.mapper';
 
@@ -64,14 +65,27 @@ describe('FileDtoMapper', () => {
 	});
 
 	describe('mapFromBusboyFileInfo', () => {
+		describe.each([undefined, ''])('when filename is %p', (filename) => {
+			it('should throw a bad request error', () => {
+				const fileInfo = busboyFileInfoTestFactory().build({ filename });
+				const readable = Readable.from('abc');
+				const abortController = new AbortController();
+
+				expect(() =>
+					FileDtoMapper.mapFromBusboyFileInfo(fileInfo, readable, StorageType.STANDARD, abortController.signal)
+				).toThrow(new BadRequestException(ErrorType.FILE_NAME_EMPTY));
+			});
+		});
+
 		describe('when storageType is provided', () => {
 			const setup = () => {
 				const abortController = new AbortController();
 				const readable = Readable.from('abc');
 				const storageType = StorageType.TEMP;
-				const busboyFileInfo = busboyFileInfoTestFactory().build();
+				const filename = 'test.txt';
+				const busboyFileInfo = busboyFileInfoTestFactory().build({ filename });
 				const expectedFile = new FileDto({
-					name: busboyFileInfo.filename,
+					name: filename,
 					data: readable,
 					mimeType: busboyFileInfo.mimeType,
 					storageType,

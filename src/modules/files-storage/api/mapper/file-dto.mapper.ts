@@ -1,7 +1,8 @@
+import { BadRequestException } from '@nestjs/common';
 import { type AxiosResponse } from 'axios';
 import { type FileInfo as BusboyFileInfo } from 'busboy';
 import { type Readable } from 'node:stream';
-import { type FileDto, FileDtoFactory, type StorageType } from '../../domain';
+import { ErrorType, type FileDto, FileDtoFactory, type StorageType } from '../../domain';
 
 export class FileDtoMapper {
 	public static mapFromAxiosResponse(
@@ -25,6 +26,10 @@ export class FileDtoMapper {
 		storageType: StorageType,
 		abortSignal: AbortSignal
 	): FileDto {
+		if (!fileInfo.filename) {
+			throw new BadRequestException(ErrorType.FILE_NAME_EMPTY);
+		}
+
 		const file = FileDtoFactory.create(fileInfo.filename, stream, fileInfo.mimeType, storageType, abortSignal);
 
 		return file;
