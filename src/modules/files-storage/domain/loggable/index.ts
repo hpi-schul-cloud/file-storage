@@ -1,3 +1,4 @@
 export * from './create-archive.loggable';
 export * from './file-storage-actions.loggable';
 export * from './storage-location-delete-exception.loggable';
+export * from './stored-svg-preview-cleanup.loggable';

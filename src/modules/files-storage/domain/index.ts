@@ -29,7 +29,7 @@ export {
 } from './interface';
 export { FileStorageActionsLoggable } from './loggable';
 export { FilesStorageMapper } from './mapper';
-export { FilesStorageService, PreviewService } from './service';
+export { FilesStorageService, PreviewService, StoredSvgPreviewCleanupService } from './service';
 export { FolderExpirationDays, StorageFolders, StorageType } from './storage-paths.const';
 export {
 	FileRecordSecurityCheck,

@@ -28,6 +28,8 @@ export interface FileRecordRepo {
 
 	findByCreatorId(creatorId: EntityId): Promise<Counted<FileRecord[]>>;
 
+	findStoredSvgPreviewCandidates(afterId: EntityId | undefined, limit: number): Promise<FileRecord[]>;
+
 	save(fileRecord: FileRecord | FileRecord[]): Promise<void>;
 
 	delete(fileRecord: FileRecord | FileRecord[]): Promise<void>;

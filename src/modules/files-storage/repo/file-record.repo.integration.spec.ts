@@ -602,4 +602,47 @@ describe('FileRecordRepo', () => {
 			expect(statistic.totalSizeInBytes).toBe(300);
 		});
 	});
+
+	describe('findStoredSvgPreviewCandidates', () => {
+		it('returns raster records and disguised raster names, in id order, after the cursor', async () => {
+			const png = fileRecordEntityFactory.build({ mimeType: 'image/png', name: 'photo.png' });
+			const parameterizedPng = fileRecordEntityFactory.build({
+				mimeType: 'image/PNG; charset=binary',
+				name: 'parameterized.png',
+			});
+			const disguised = fileRecordEntityFactory.build({ mimeType: 'image/svg+xml', name: 'poc.png' });
+			const xmlNamedAsJpeg = fileRecordEntityFactory.build({ mimeType: 'text/xml', name: 'Poc.JPEG' });
+			const honestSvg = fileRecordEntityFactory.build({ mimeType: 'image/svg+xml', name: 'diagram.svg' });
+			const pdf = fileRecordEntityFactory.build({ mimeType: 'application/pdf', name: 'notes.pdf' });
+			const deletedPng = fileRecordEntityFactory.withDeletedSince().build({ mimeType: 'image/gif', name: 'gone.gif' });
+			const uploadingPng = fileRecordEntityFactory.build({
+				mimeType: 'image/webp',
+				name: 'uploading.webp',
+				isUploading: true,
+			});
+
+			await em.persistAndFlush([
+				png,
+				parameterizedPng,
+				disguised,
+				xmlNamedAsJpeg,
+				honestSvg,
+				pdf,
+				deletedPng,
+				uploadingPng,
+			]);
+			em.clear();
+
+			const candidates = await repo.findStoredSvgPreviewCandidates(undefined, 10);
+			const orderedIds = [png, parameterizedPng, disguised, xmlNamedAsJpeg].map((fileRecord) => fileRecord.id).sort();
+
+			expect(candidates.map((fileRecord) => fileRecord.id)).toEqual(orderedIds);
+
+			const cursor = orderedIds[0];
+			const afterCursor = await repo.findStoredSvgPreviewCandidates(cursor, 1);
+
+			expect(afterCursor).toHaveLength(1);
+			expect(afterCursor[0].id).toBe(orderedIds[1]);
+		});
+	});
 });

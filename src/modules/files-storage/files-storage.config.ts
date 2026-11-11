@@ -37,6 +37,15 @@ export class FileStorageConfig extends FileStoragePublicApiConfig {
 	@ConfigProperty('FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS')
 	filesStorageUseStreamToAntivirus = true;
 
+	/**
+	 * On a production start, remove stored files whose bytes are SVG or XML but that were saved as raster previews.
+	 * A completed run is recorded and is not repeated.
+	 */
+	@IsBoolean()
+	@StringToBoolean()
+	@ConfigProperty('FILES_STORAGE_CLEANUP_STORED_SVG_XML_PREVIEWS')
+	cleanupStoredSvgXmlPreviews = true;
+
 	@IsUrl({ require_tld: false })
 	@ConfigProperty('FILES_STORAGE_S3_ENDPOINT')
 	endpoint!: string;

@@ -1,7 +1,12 @@
+import { type FilterQuery } from '@mikro-orm/mongodb';
 import { type EntityId } from '@shared/domain/types';
 import { Scope } from '@shared/repo/scope';
 import { type StorageLocation, StorageType } from '../domain';
 import { type FileRecordEntity } from './file-record.entity';
+
+const RASTER_MIME_PATTERN = String.raw`^image/(png|jpeg|jpg|pjpeg|x-png|gif|webp)(\s*;.*)?$`;
+const DISGUISED_MIME_PATTERN = String.raw`^(image/svg\+xml|image/svg|text/xml|application/xml|application/xhtml\+xml|text/html|application/octet-stream|binary/octet-stream)(\s*;.*)?$`;
+const RASTER_FILE_NAME_PATTERN = String.raw`\.(png|jpe?g|gif|webp)$`;
 
 export class FileRecordScope extends Scope<FileRecordEntity> {
 	public byParentId(parentId: EntityId): this {
@@ -55,6 +60,39 @@ export class FileRecordScope extends Scope<FileRecordEntity> {
 
 	public byStorageType(storageType = StorageType.STANDARD): this {
 		this.addQuery({ storageType });
+
+		return this;
+	}
+
+	public byIdGreaterThan(id: EntityId): this {
+		this.addQuery({ id: { $gt: id } });
+
+		return this;
+	}
+
+	public byNotUploading(): this {
+		this.addQuery({ isUploading: { $ne: true } });
+
+		return this;
+	}
+
+	/**
+	 * Raster records, plus SVG/XML or generic binaries whose names end like a raster image.
+	 * Honest SVG documents such as diagram.svg stay: a file record does not say whether it was a link preview.
+	 */
+	public byStoredSvgPreviewCandidate(): this {
+		const candidateQuery = {
+			$or: [
+				{ mimeType: { $regex: RASTER_MIME_PATTERN, $options: 'i' } },
+				{
+					$and: [
+						{ mimeType: { $regex: DISGUISED_MIME_PATTERN, $options: 'i' } },
+						{ name: { $regex: RASTER_FILE_NAME_PATTERN, $options: 'i' } },
+					],
+				},
+			],
+		} as unknown as FilterQuery<FileRecordEntity>;
+		this.addQuery(candidateQuery);
 
 		return this;
 	}

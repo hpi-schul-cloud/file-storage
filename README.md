@@ -24,13 +24,53 @@ Missing or mismatched content types, SVG/XML, unsupported or unknown content, an
 detection failures return HTTP 422 with `MIME_TYPE_MISMATCH`.
 
 Omitting the flag preserves the existing general media-import behavior. Ordinary
-multipart uploads are unchanged. Deploying this backend capability alone does not
-protect link-preview callers that have not yet enabled the flag.
+multipart uploads are unchanged.
 
-Preview responses include `X-Content-Type-Options: nosniff` and
-`Content-Security-Policy: default-src 'none'; sandbox`, including conditional
-HTTP 304 responses. Existing originals, generated previews and persisted link
-references are not migrated or removed by this change.
+The link-preview upload is nuxt-client `LinkContentElement` (`createPreviewImage`),
+which sends `previewOnly: true` (nuxt-client #4386). `LinkContentElementDisplay`
+embeds that stored preview only as an `<img>` (`data-testid="link-preview-image"`).
+It does not use `<object>`, `<embed>`, `<iframe>`, or inline SVG, and the card
+navigates to the page URL rather than the image file. schulcloud-server OpenGraph
+(`MetaTagExternalUrlService`) returns `originalImageUrl` and does not call
+`uploadFromUrl`, so there is no second store path to flag. `preview-generator`
+only resizes an object that is already stored. Other `uploadFromUrl` callers
+(external-tool logos, the legacy CKEditor file copy) are general media imports
+and leave the flag off. A link preview is checked only when its caller sends the
+flag, so a new importer has to opt in the same way.
+
+Preview responses (`GET /file/preview/...`, including 200, 206, and conditional
+304) and stored-file downloads (`GET /file/download/...`, including 200 and 206)
+include `X-Content-Type-Options: nosniff` and
+`Content-Security-Policy: default-src 'none'; sandbox`. Inline PDF downloads
+keep `nosniff` and omit the sandbox policy so the browser PDF viewer can render
+them. That covers a stored link image, including an older `image/svg+xml`
+record opened directly.
+
+### Stored SVG/XML previews
+
+A production process removes stored files whose bytes are SVG or XML but that were
+saved as raster previews. `FILES_STORAGE_CLEANUP_STORED_SVG_XML_PREVIEWS` defaults
+to `true`. The first production start scans once, soft-deletes each match, moves
+the object to trash, and deletes generated previews. Completion is stored in
+`filestoragemaintenance` (`_id`: `svsdev-470-stored-svg-xml-preview-cleanup`), so
+later restarts do not scan again. Set the variable to `false` to skip the run.
+Delete that document to run it again.
+
+A file is removed only when its leading bytes are SVG or XML (a raster signature
+is left alone, including a PNG or JPEG that also contains SVG later) and either:
+
+- the declared type is `image/png`, `image/jpeg`, `image/jpg`, `image/pjpeg`,
+  `image/x-png`, `image/gif`, or `image/webp` (case and parameters ignored), or
+- the declared type is SVG, XML, HTML, or generic binary and the name ends in
+  `.png`, `.jpg`, `.jpeg`, `.gif`, or `.webp`.
+
+That covers a previously stored `poc.png` whose body is `<svg>`.
+
+Honest `image/svg+xml` or XML originals, such as `diagram.svg`, are not deleted.
+File records do not record whether a file was a link preview or a course document,
+and ordinary uploads can still store SVG. SVSDEV-470 accepts a new link that cannot
+store SVG. Board references live in other services; once a disguised file is
+removed, that preview no longer resolves.
 
 ## Environment Variables
 
@@ -43,6 +83,7 @@ Configuration is managed via the `.env` file. Key variables include:
 | ANTIVIRUS_SERVICE_PORT                    | Antivirus server port                   |
 | FILE_STORAGE_SERVICE_URL                  | Base URL for the file storage service   |
 | FILES_STORAGE_USE_STREAM_TO_ANTIVIRUS     | Use streaming for antivirus checks      |
+| FILES_STORAGE_CLEANUP_STORED_SVG_XML_PREVIEWS | Clean disguised SVG/XML previews once on production start |
 | AUTHORIZATION_API_URL                     | URL of the authorization API            |
 | LOGGER_LOG_LEVEL                          | Logging level (e.g., debug, info, warn) |
 | RABBITMQ_URI                              | RabbitMQ connection URI                 |

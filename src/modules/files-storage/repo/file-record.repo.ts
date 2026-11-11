@@ -107,6 +107,22 @@ export class FileRecordMikroOrmRepo implements FileRecordRepo {
 		return result;
 	}
 
+	public async findStoredSvgPreviewCandidates(afterId: EntityId | undefined, limit: number): Promise<FileRecord[]> {
+		const scope = new FileRecordScope().byMarkedForDelete(false).byNotUploading().byStoredSvgPreviewCandidate();
+
+		if (afterId) {
+			scope.byIdGreaterThan(afterId);
+		}
+
+		const em = this.em.fork();
+		const entities = await em.find(FileRecordEntity, scope.query, {
+			limit,
+			orderBy: { id: SortOrder.asc },
+		});
+
+		return entities.map((entity) => FileRecordEntityMapper.mapEntityToDo(entity));
+	}
+
 	public async save(fileRecord: FileRecord | FileRecord[]): Promise<void> {
 		const fileRecords = Utils.asArray(fileRecord);
 

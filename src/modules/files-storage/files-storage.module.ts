@@ -11,6 +11,7 @@ import {
 	FolderExpirationDays,
 	PreviewService,
 	StorageFolders,
+	StoredSvgPreviewCleanupService,
 	StorageType,
 } from './domain';
 import { FILE_STORAGE_CONFIG_TOKEN, FILES_STORAGE_S3_CONNECTION, FileStorageConfig } from './files-storage.config';
@@ -47,6 +48,7 @@ const imports = [
 const providers = [
 	FilesStorageService,
 	PreviewService,
+	StoredSvgPreviewCleanupService,
 	{ provide: FILE_RECORD_REPO, useClass: FileRecordMikroOrmRepo },
 ];
 

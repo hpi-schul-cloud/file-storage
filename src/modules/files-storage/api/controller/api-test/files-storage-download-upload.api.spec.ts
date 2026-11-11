@@ -1040,6 +1040,8 @@ describe('files-storage controller (API)', () => {
 					const response = await loggedInClient.get(`/download/${uploadedFile.id}/${uploadedFile.name}`);
 
 					expect(response.status).toEqual(200);
+					expect(response.headers['x-content-type-options']).toBe('nosniff');
+					expect(response.headers['content-security-policy']).toBe("default-src 'none'; sandbox");
 				});
 
 				it('should return status 206 and required headers for the successful partial file stream download', async () => {
@@ -1054,6 +1056,8 @@ describe('files-storage controller (API)', () => {
 
 					expect(headers['accept-ranges']).toMatch('bytes');
 					expect(headers['content-range']).toMatch('bytes 0-3/4');
+					expect(headers['x-content-type-options']).toBe('nosniff');
+					expect(headers['content-security-policy']).toBe("default-src 'none'; sandbox");
 				});
 
 				it('should set content-disposition header to attachment', async () => {
@@ -1097,6 +1101,8 @@ describe('files-storage controller (API)', () => {
 					const headers = response.headers as Record<string, string>;
 
 					expect(headers['content-disposition']).toMatch('inline');
+					expect(headers['x-content-type-options']).toBe('nosniff');
+					expect(headers['content-security-policy']).toBeUndefined();
 				});
 			});
 

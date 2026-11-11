@@ -56,6 +56,11 @@ import {
 import { StreamableFileMapper } from '../mapper';
 import { FilesStorageUC } from '../uc';
 
+const ACTIVE_CONTENT_SECURITY_HEADERS = {
+	'X-Content-Type-Options': 'nosniff',
+	'Content-Security-Policy': "default-src 'none'; sandbox",
+} as const;
+
 @ApiTags('file')
 @JwtAuthentication()
 @Controller('file')
@@ -163,6 +168,15 @@ export class FilesStorageController {
 	): Promise<StreamableFile> {
 		const fileResponse = await this.filesStorageUC.download(params, bytesRange);
 
+		// Stored previews are served here. nosniff plus a sandbox CSP stops an old
+		// image/svg+xml record from executing script when opened directly.
+		// Inline PDFs omit the sandbox policy: the browser PDF viewer does not render under it.
+		const securityHeaders: Record<string, string> = { ...ACTIVE_CONTENT_SECURITY_HEADERS };
+		if (fileResponse.contentType === 'application/pdf') {
+			delete securityHeaders['Content-Security-Policy'];
+		}
+		response.set(securityHeaders);
+
 		const streamableFile = this.streamFileToClient(req, fileResponse, response, bytesRange);
 
 		return streamableFile;
@@ -193,8 +207,7 @@ export class FilesStorageController {
 
 		response.set({
 			ETag: fileResponse.etag,
-			'X-Content-Type-Options': 'nosniff',
-			'Content-Security-Policy': "default-src 'none'; sandbox",
+			...ACTIVE_CONTENT_SECURITY_HEADERS,
 		});
 
 		if (etag === fileResponse.etag) {
