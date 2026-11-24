@@ -83,7 +83,7 @@ npm run test
 ### Collabora installation
 
 For more information about local Collabora setup, please check
-https://documentation.dbildungscloud.dev/docs/services/collabora/Local%20setup
+https://documentation.dbildungscloud.dev/docs/topics/collabora/Local%20setup
 
 
 ## Project Structure
