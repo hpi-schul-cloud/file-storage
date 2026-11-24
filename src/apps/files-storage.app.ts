@@ -8,7 +8,12 @@ import { install as sourceMapInstall } from 'source-map-support';
 import { Logger, LOGGER_CONFIG_TOKEN } from '@infra/logger';
 import { MetricsModule, ResponseTimeMetricsInterceptor } from '@infra/metrics';
 import { FilesStorageAppModule } from '@modules/files-storage-app/files-storage.app.module';
-import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
+import {
+	AppStartLoggable,
+	cookieCredentialCsrfMiddleware,
+	createRequestLoggerMiddleware,
+	enableOpenApiDocs,
+} from './helpers';
 
 async function bootstrap(): Promise<void> {
 	sourceMapInstall();
@@ -21,6 +26,7 @@ async function bootstrap(): Promise<void> {
 	const config = nestApp.get(LOGGER_CONFIG_TOKEN);
 
 	nestApp.use(createRequestLoggerMiddleware(config.loggerGlobalRequestLoggingEnabled));
+	nestApp.use(cookieCredentialCsrfMiddleware);
 	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());
 
 	enableOpenApiDocs(nestApp, 'api/v3/file/docs');
