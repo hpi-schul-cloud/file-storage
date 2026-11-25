@@ -14,6 +14,7 @@ interface RequestOptions {
 }
 
 let createCalls = 0;
+let accessTokenCalls = 0;
 
 @Controller('items')
 class ItemsController {
@@ -26,6 +27,16 @@ class ItemsController {
 
 	@Get()
 	public find(): { ok: boolean } {
+		return { ok: true };
+	}
+}
+
+@Controller()
+class WopiController {
+	@Get('wopi/authorized-collabora-document-url')
+	public authorize(): { ok: boolean } {
+		accessTokenCalls += 1;
+
 		return { ok: true };
 	}
 }
@@ -207,8 +218,14 @@ describe('cookieCredentialCsrfMiddleware', () => {
 			allow(createRequest({ method: 'GET', path: '/file/list/school/location/courses/parent', headers: { cookie } }));
 		});
 
-		it('ignores safe methods other than the listed GET', () => {
-			allow(createRequest({ method: 'HEAD', headers: { cookie, 'sec-fetch-site': 'cross-site' } }));
+		it('ignores safe methods other than the listed GET and its HEAD', () => {
+			allow(
+				createRequest({
+					method: 'HEAD',
+					path: '/file/list/school/location/courses/parent',
+					headers: { cookie, 'sec-fetch-site': 'cross-site' },
+				})
+			);
 			next.mockClear();
 			allow(createRequest({ method: 'OPTIONS', headers: { cookie, 'sec-fetch-site': 'cross-site' } }));
 		});
@@ -220,9 +237,32 @@ describe('cookieCredentialCsrfMiddleware', () => {
 			['/api/v3/wopi/authorized-collabora-document-url/', 'none', true],
 			['/wopi/files/file-1', 'cross-site', true],
 			['/wopi/authorized-collabora-document-url/extra', 'cross-site', true],
+			['/WOPI/AUTHORIZED-COLLABORA-DOCUMENT-URL', 'cross-site', false],
+			['/api/v3/Wopi/Authorized-Collabora-Document-Url', 'same-origin', true],
 		])('protects the access-token GET %s when Sec-Fetch-Site is %s (allowed=%s)', (path, fetchSite, allowed) => {
 			const request = createRequest({
 				method: 'GET',
+				path,
+				headers: { cookie, 'sec-fetch-site': fetchSite },
+			});
+
+			if (allowed) {
+				allow(request);
+
+				return;
+			}
+
+			deny(request);
+		});
+
+		it.each([
+			['/wopi/authorized-collabora-document-url', 'cross-site', false],
+			['/wopi/authorized-collabora-document-url', 'same-origin', true],
+			['/WOPI/AUTHORIZED-COLLABORA-DOCUMENT-URL', 'cross-site', false],
+			['/wopi/files/file-1', 'cross-site', true],
+		])('protects HEAD %s when Sec-Fetch-Site is %s (allowed=%s)', (path, fetchSite, allowed) => {
+			const request = createRequest({
+				method: 'HEAD',
 				path,
 				headers: { cookie, 'sec-fetch-site': fetchSite },
 			});
@@ -251,7 +291,7 @@ describe('cookieCredentialCsrfMiddleware on a Nest app', () => {
 	let app: INestApplication;
 
 	beforeAll(async () => {
-		const moduleRef = await Test.createTestingModule({ controllers: [ItemsController] }).compile();
+		const moduleRef = await Test.createTestingModule({ controllers: [ItemsController, WopiController] }).compile();
 		app = moduleRef.createNestApplication();
 		app.use(cookieCredentialCsrfMiddleware);
 		await app.init();
@@ -263,6 +303,7 @@ describe('cookieCredentialCsrfMiddleware on a Nest app', () => {
 
 	beforeEach(() => {
 		createCalls = 0;
+		accessTokenCalls = 0;
 	});
 
 	it('denies a cross-site cookie POST before the handler runs', async () => {
@@ -358,13 +399,45 @@ describe('cookieCredentialCsrfMiddleware on a Nest app', () => {
 			.get('/wopi/authorized-collabora-document-url')
 			.set('Cookie', 'jwt=token')
 			.set('Sec-Fetch-Site', 'cross-site');
+
+		expect(denied.status).toBe(HttpStatus.FORBIDDEN);
+		expect(accessTokenCalls).toBe(0);
+
 		const allowed = await supertest(app.getHttpServer() as Server)
 			.get('/wopi/authorized-collabora-document-url')
 			.set('Cookie', 'jwt=token')
 			.set('Sec-Fetch-Site', 'same-origin');
 
+		expect(allowed.status).toBe(HttpStatus.OK);
+		expect(accessTokenCalls).toBe(1);
+	});
+
+	it('denies a mixed-case cross-site GET before the handler runs', async () => {
+		const response = await supertest(app.getHttpServer() as Server)
+			.get('/WOPI/AUTHORIZED-COLLABORA-DOCUMENT-URL')
+			.set('Cookie', 'jwt=token')
+			.set('Sec-Fetch-Site', 'cross-site');
+
+		expect(response.status).toBe(HttpStatus.FORBIDDEN);
+		expect(accessTokenCalls).toBe(0);
+	});
+
+	it('denies a cross-site HEAD to the access-token route before the handler runs', async () => {
+		const denied = await supertest(app.getHttpServer() as Server)
+			.head('/wopi/authorized-collabora-document-url')
+			.set('Cookie', 'jwt=token')
+			.set('Sec-Fetch-Site', 'cross-site');
+
 		expect(denied.status).toBe(HttpStatus.FORBIDDEN);
-		expect(allowed.status).not.toBe(HttpStatus.FORBIDDEN);
+		expect(accessTokenCalls).toBe(0);
+
+		const allowed = await supertest(app.getHttpServer() as Server)
+			.head('/wopi/authorized-collabora-document-url')
+			.set('Cookie', 'jwt=token')
+			.set('Sec-Fetch-Site', 'same-origin');
+
+		expect(allowed.status).toBe(HttpStatus.OK);
+		expect(accessTokenCalls).toBe(1);
 	});
 });
 

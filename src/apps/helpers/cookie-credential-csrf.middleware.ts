@@ -12,10 +12,12 @@ const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 /**
  * GETs that create or persist state. SameSite=Lax still sends the jwt cookie on a
  * cross-site top-level navigation, so these cannot be treated as ordinary reads.
+ * Express dispatches HEAD to the GET handler, and route matching is case-insensitive,
+ * so HEAD and any capitalization of this path are checked the same way.
  *
  * GET /wopi/authorized-collabora-document-url is @JwtAuthentication() and creates an access token.
  */
-const PROTECTED_GET_PATH = /^\/(?:api\/v3\/)?wopi\/authorized-collabora-document-url$/;
+const PROTECTED_GET_PATH = /^\/(?:api\/v3\/)?wopi\/authorized-collabora-document-url$/i;
 
 const SAME_ORIGIN_FETCH_SITES = new Set(['same-origin', 'none']);
 
@@ -50,7 +52,7 @@ function isStateChanging(request: Request): boolean {
 		return true;
 	}
 
-	if (method !== 'GET') {
+	if (method !== 'GET' && method !== 'HEAD') {
 		return false;
 	}
 
