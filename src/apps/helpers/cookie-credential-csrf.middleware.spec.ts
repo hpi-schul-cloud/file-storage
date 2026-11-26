@@ -5,6 +5,7 @@ import { type NextFunction, type Request, type Response } from 'express';
 import { type Server } from 'node:http';
 import supertest from 'supertest';
 import { COOKIE_CREDENTIAL_CSRF_MESSAGE, cookieCredentialCsrfMiddleware } from './cookie-credential-csrf.middleware';
+import { cookieCredentialCsrfMiddleware as exportedCookieCredentialCsrfMiddleware } from './index';
 
 interface RequestOptions {
 	method: string;
@@ -40,6 +41,12 @@ class WopiController {
 		return { ok: true };
 	}
 }
+
+describe('helpers barrel', () => {
+	it('exports the cookie CSRF middleware', () => {
+		expect(exportedCookieCredentialCsrfMiddleware).toBe(cookieCredentialCsrfMiddleware);
+	});
+});
 
 describe('cookieCredentialCsrfMiddleware', () => {
 	const next = jest.fn() as jest.MockedFunction<NextFunction>;
@@ -216,6 +223,10 @@ describe('cookieCredentialCsrfMiddleware', () => {
 
 		it('allows an ordinary cookie GET', () => {
 			allow(createRequest({ method: 'GET', path: '/file/list/school/location/courses/parent', headers: { cookie } }));
+		});
+
+		it('allows a cookie GET for the root path', () => {
+			allow(createRequest({ method: 'GET', path: '/', headers: { cookie } }));
 		});
 
 		it('ignores safe methods other than the listed GET and its HEAD', () => {
