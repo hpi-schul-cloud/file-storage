@@ -1021,13 +1021,15 @@ describe('files-storage controller (API)', () => {
 					return { uploadedFile, loggedInClient };
 				};
 
-				it('should set content-disposition to inline', async () => {
+				it('should set content-disposition to attachment', async () => {
 					const { uploadedFile, loggedInClient } = await setup();
 
 					const response = await loggedInClient.get(`/download/${uploadedFile.id}/${uploadedFile.name}`);
 					const headers = response.headers as Record<string, string>;
 
-					expect(headers['content-disposition']).toMatch('inline');
+					expect(headers['content-disposition']).toBe(
+						`attachment; filename="${uploadedFile.name}"; filename*=UTF-8''${uploadedFile.name}`
+					);
 				});
 			});
 

@@ -14,7 +14,7 @@ describe('FilesStorageMapper', () => {
 				return { fileResponse };
 			};
 
-			it('should return StreamableFile with inline disposition', () => {
+			it('should return StreamableFile with attachment disposition', () => {
 				const { fileResponse } = setup();
 
 				const result = StreamableFileMapper.fromResponse(fileResponse);
@@ -24,9 +24,7 @@ describe('FilesStorageMapper', () => {
 				const options = result.options;
 				expect(options.type).toBe('application/pdf');
 				expect(options.length).toBe(8);
-				expect(options.disposition).toContain('inline;');
-				expect(options.disposition).toContain('filename="test.pdf"');
-				expect(options.disposition).toContain("filename*=UTF-8''test.pdf");
+				expect(options.disposition).toBe(`attachment; filename="test.pdf"; filename*=UTF-8''test.pdf`);
 			});
 		});
 
@@ -50,9 +48,7 @@ describe('FilesStorageMapper', () => {
 				const options = result.options;
 				expect(options.type).toBe('text/plain');
 				expect(options.length).toBe(8);
-				expect(options.disposition).toContain('attachment;');
-				expect(options.disposition).toContain('filename="test.txt"');
-				expect(options.disposition).toContain("filename*=UTF-8''test.txt");
+				expect(options.disposition).toBe(`attachment; filename="test.txt"; filename*=UTF-8''test.txt`);
 			});
 		});
 
