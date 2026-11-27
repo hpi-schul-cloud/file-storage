@@ -1,6 +1,6 @@
 import { JwtExtractor } from '@infra/auth-guard/utils/jwt';
 import { ForbiddenException } from '@nestjs/common';
-import { type NextFunction, type Request, type Response } from 'express';
+import { type NextFunction, type Request, type RequestHandler, type Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
 
 const JWT_COOKIE_NAME = 'jwt';
@@ -26,13 +26,34 @@ export const COOKIE_CREDENTIAL_CSRF_MESSAGE = 'Cross-site cookie-credentialed re
 /**
  * Rejects cookie-credentialed state-changing requests that are not same-origin.
  * A request is cookie-credentialed when a jwt cookie is present and Authorization: Bearer is absent.
+ *
+ * The Origin/Referer fallback compares against the configured public origin instead of the request's
+ * protocol and Host header, because TLS terminates at the ingress and forwarded headers are not trusted.
  */
-export function cookieCredentialCsrfMiddleware(request: Request, _response: Response, next: NextFunction): void {
-	if (isCookieCredentialed(request) && isStateChanging(request) && !isTrustedBrowserRequest(request)) {
-		throw new ForbiddenException(COOKIE_CREDENTIAL_CSRF_MESSAGE);
+export function createCookieCredentialCsrfMiddleware(publicOrigin: string): RequestHandler {
+	const expectedOrigin = toPublicOrigin(publicOrigin);
+
+	return (request: Request, _response: Response, next: NextFunction): void => {
+		if (
+			isCookieCredentialed(request) &&
+			isStateChanging(request) &&
+			!isTrustedBrowserRequest(request, expectedOrigin)
+		) {
+			throw new ForbiddenException(COOKIE_CREDENTIAL_CSRF_MESSAGE);
+		}
+
+		next();
+	};
+}
+
+function toPublicOrigin(publicOrigin: string): string {
+	const url = parseUrl(publicOrigin);
+
+	if (!url || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
+		throw new Error(`Invalid public origin for cookie CSRF protection: ${publicOrigin}`);
 	}
 
-	next();
+	return url.origin;
 }
 
 function isCookieCredentialed(request: Request): boolean {
@@ -59,7 +80,7 @@ function isStateChanging(request: Request): boolean {
 	return PROTECTED_GET_PATH.test(normalizePath(request.path || '/'));
 }
 
-function isTrustedBrowserRequest(request: Request): boolean {
+function isTrustedBrowserRequest(request: Request, expectedOrigin: string): boolean {
 	const fetchSite = headerValue(request, 'sec-fetch-site')?.toLowerCase();
 
 	if (fetchSite) {
@@ -69,37 +90,20 @@ function isTrustedBrowserRequest(request: Request): boolean {
 	const origin = headerValue(request, 'origin');
 
 	if (origin) {
-		return hasSameSchemeAndHost(request, origin);
+		return hasExpectedOrigin(origin, expectedOrigin);
 	}
 
 	const referer = headerValue(request, 'referer') ?? headerValue(request, 'referrer');
 
 	if (referer) {
-		return hasSameSchemeAndHost(request, referer);
+		return hasExpectedOrigin(referer, expectedOrigin);
 	}
 
 	return false;
 }
 
-function hasSameSchemeAndHost(request: Request, candidate: string): boolean {
-	const candidateUrl = parseUrl(candidate);
-	const target = requestTarget(request);
-
-	if (!candidateUrl || !target) {
-		return false;
-	}
-
-	return candidateUrl.protocol === target.protocol && candidateUrl.host === target.host;
-}
-
-function requestTarget(request: Request): URL | undefined {
-	const host = request.get('host')?.trim();
-
-	if (!host) {
-		return undefined;
-	}
-
-	return parseUrl(`${request.protocol}://${host}`);
+function hasExpectedOrigin(candidate: string, expectedOrigin: string): boolean {
+	return parseUrl(candidate)?.origin === expectedOrigin;
 }
 
 function parseUrl(value: string): URL | undefined {

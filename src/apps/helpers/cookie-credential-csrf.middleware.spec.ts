@@ -4,8 +4,13 @@ import { Test } from '@nestjs/testing';
 import { type NextFunction, type Request, type Response } from 'express';
 import { type Server } from 'node:http';
 import supertest from 'supertest';
-import { COOKIE_CREDENTIAL_CSRF_MESSAGE, cookieCredentialCsrfMiddleware } from './cookie-credential-csrf.middleware';
-import { cookieCredentialCsrfMiddleware as exportedCookieCredentialCsrfMiddleware } from './index';
+import {
+	COOKIE_CREDENTIAL_CSRF_MESSAGE,
+	createCookieCredentialCsrfMiddleware,
+} from './cookie-credential-csrf.middleware';
+import { createCookieCredentialCsrfMiddleware as exportedCreateCookieCredentialCsrfMiddleware } from './index';
+
+const PUBLIC_ORIGIN = 'https://app.example';
 
 interface RequestOptions {
 	method: string;
@@ -43,12 +48,19 @@ class WopiController {
 }
 
 describe('helpers barrel', () => {
-	it('exports the cookie CSRF middleware', () => {
-		expect(exportedCookieCredentialCsrfMiddleware).toBe(cookieCredentialCsrfMiddleware);
+	it('exports the cookie CSRF middleware factory', () => {
+		expect(exportedCreateCookieCredentialCsrfMiddleware).toBe(createCookieCredentialCsrfMiddleware);
+	});
+});
+
+describe('createCookieCredentialCsrfMiddleware', () => {
+	it.each(['', 'not a url', 'ftp://app.example', 'app.example'])('rejects the invalid public origin "%s"', (origin) => {
+		expect(() => createCookieCredentialCsrfMiddleware(origin)).toThrow(Error);
 	});
 });
 
 describe('cookieCredentialCsrfMiddleware', () => {
+	const cookieCredentialCsrfMiddleware = createCookieCredentialCsrfMiddleware(PUBLIC_ORIGIN);
 	const next = jest.fn() as jest.MockedFunction<NextFunction>;
 
 	beforeEach(() => {
@@ -142,7 +154,7 @@ describe('cookieCredentialCsrfMiddleware', () => {
 
 		describe('when Sec-Fetch-Site is absent', () => {
 			describe('Origin', () => {
-				it('allows an Origin with the same scheme and host', () => {
+				it('allows an Origin that matches the public origin', () => {
 					allow(
 						createRequest({
 							method: 'POST',
@@ -178,34 +190,48 @@ describe('cookieCredentialCsrfMiddleware', () => {
 					deny(createRequest({ method: 'POST', headers: { cookie, host: 'app.example', origin: 'null' } }));
 				});
 
-				it('treats default ports as the same host', () => {
+				it('treats default ports as the same origin', () => {
+					allow(createRequest({ method: 'POST', headers: { cookie, origin: 'https://app.example:443' } }));
+				});
+
+				it('denies a different port or scheme than the public origin', () => {
+					deny(createRequest({ method: 'POST', headers: { cookie, origin: 'https://app.example:4444' } }));
+					next.mockClear();
+					deny(createRequest({ method: 'POST', headers: { cookie, origin: 'http://app.example' } }));
+				});
+
+				it('allows the public origin when TLS terminates before the app', () => {
 					allow(
 						createRequest({
 							method: 'POST',
-							headers: { cookie, host: 'app.example:443', origin: 'https://app.example' },
-						})
-					);
-				});
-
-				it('denies a different port or scheme', () => {
-					deny(
-						createRequest({
-							method: 'POST',
-							headers: { cookie, host: 'app.example:4444', origin: 'https://app.example' },
-						})
-					);
-					next.mockClear();
-					deny(
-						createRequest({
-							method: 'POST',
 							protocol: 'http',
-							headers: { cookie, host: 'app.example', origin: 'https://app.example' },
+							headers: { cookie, host: 'file-storage-svc:4444', origin: 'https://app.example' },
 						})
 					);
 				});
 
-				it('denies when the request host is missing', () => {
-					deny(createRequest({ method: 'POST', headers: { cookie, origin: 'https://app.example' } }));
+				it('ignores the request host and protocol', () => {
+					deny(
+						createRequest({
+							method: 'POST',
+							protocol: 'https',
+							headers: { cookie, host: 'evil.example', origin: 'https://evil.example' },
+						})
+					);
+				});
+
+				it('ignores forwarded headers', () => {
+					deny(
+						createRequest({
+							method: 'POST',
+							headers: {
+								cookie,
+								origin: 'https://evil.example',
+								'x-forwarded-host': 'evil.example',
+								'x-forwarded-proto': 'https',
+							},
+						})
+					);
 				});
 			});
 
@@ -316,6 +342,7 @@ describe('cookieCredentialCsrfMiddleware', () => {
 });
 
 describe('cookieCredentialCsrfMiddleware on a Nest app', () => {
+	const cookieCredentialCsrfMiddleware = createCookieCredentialCsrfMiddleware(PUBLIC_ORIGIN);
 	let app: INestApplication;
 
 	beforeAll(async () => {
@@ -409,12 +436,12 @@ describe('cookieCredentialCsrfMiddleware on a Nest app', () => {
 			expect(createCalls).toBe(0);
 		});
 
-		it('allows cookie POST when Origin matches the host', async () => {
+		it('allows cookie POST over plain HTTP when Origin matches the public HTTPS origin', async () => {
 			const response = await supertest(app.getHttpServer() as Server)
 				.post('/items')
 				.set('Cookie', 'jwt=token')
-				.set('Host', 'app.example')
-				.set('Origin', 'http://app.example')
+				.set('Host', 'file-storage-svc:4444')
+				.set('Origin', PUBLIC_ORIGIN)
 				.send({});
 
 			expect(response.status).toBe(HttpStatus.CREATED);
