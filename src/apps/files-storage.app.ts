@@ -7,8 +7,17 @@ import { install as sourceMapInstall } from 'source-map-support';
 // application imports
 import { Logger, LOGGER_CONFIG_TOKEN } from '@infra/logger';
 import { MetricsModule, ResponseTimeMetricsInterceptor } from '@infra/metrics';
+import {
+	FILES_STORAGE_APP_PUBLIC_ORIGIN_CONFIG_TOKEN,
+	PublicOriginConfig,
+} from '@modules/files-storage-app/files-storage-app.config';
 import { FilesStorageAppModule } from '@modules/files-storage-app/files-storage.app.module';
-import { AppStartLoggable, createRequestLoggerMiddleware, enableOpenApiDocs } from './helpers';
+import {
+	AppStartLoggable,
+	createCookieCredentialCsrfMiddleware,
+	createRequestLoggerMiddleware,
+	enableOpenApiDocs,
+} from './helpers';
 
 async function bootstrap(): Promise<void> {
 	sourceMapInstall();
@@ -21,6 +30,8 @@ async function bootstrap(): Promise<void> {
 	const config = nestApp.get(LOGGER_CONFIG_TOKEN);
 
 	nestApp.use(createRequestLoggerMiddleware(config.loggerGlobalRequestLoggingEnabled));
+	const publicOriginConfig = nestApp.get<PublicOriginConfig>(FILES_STORAGE_APP_PUBLIC_ORIGIN_CONFIG_TOKEN);
+	nestApp.use(createCookieCredentialCsrfMiddleware(publicOriginConfig.publicOrigin));
 	nestApp.useGlobalInterceptors(new ResponseTimeMetricsInterceptor());
 
 	enableOpenApiDocs(nestApp, 'api/v3/file/docs');
